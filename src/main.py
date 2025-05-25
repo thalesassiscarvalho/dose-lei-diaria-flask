@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_replace_in_prod') # Use environment variable for secret key
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') # Use environment variable for secret key
 
 # --- Database Configuration ---
 # Use environment variables for database credentials for security
