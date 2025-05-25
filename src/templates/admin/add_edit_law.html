@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}{% if law %}Editar Lei{% else %}Adicionar Lei{% endif %} - Admin{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Ensure Quill editor has a reasonable height */
+    #editor-container {
+        height: 300px;
+        background-color: white; /* Ensure white background for editor */
+        color: black; /* Ensure black text color */
+        border: 1px solid #ccc;
+        border-radius: 0.25rem;
+    }
+    .ql-toolbar {
+        background-color: #f8f9fa;
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
+        border-bottom: 1px solid #ccc;
+    }
+    .ql-editor {
+        color: black; /* Ensure text inside editor is black */
+    }
+    .ql-toolbar .ql-stroke {
+        stroke: black;
+    }
+    .ql-toolbar .ql-fill {
+        fill: black;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-brand-purple mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
+
+<form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+    <div class="mb-4">
+        <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
+        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+    </div>
+
+    <div class="mb-4">
+        <label for="subject_id" class="block text-brand-text text-sm font-bold mb-2">Matéria:</label>
+        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent bg-white">
+            <option value="None">-- Nenhuma --</option> {# Option for no subject #}
+            {% for subject in subjects %}
+                <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
+            {% endfor %}
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Você pode gerenciar as matérias <a href="{{ url_for("admin.manage_subjects") }}" class="text-brand-purple hover:underline">aqui</a>.</p>
+    </div>
+
+    <div class="mb-4">
+        <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
+        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">{{ law.description if law else "" }}</textarea>
+    </div>
+
+    <div class="mb-6">
+        <label for="editor-container" class="block text-brand-text text-sm font-bold mb-2">Conteúdo:</label>
+        <!-- Create the editor container -->
+        <div id="editor-container">{{ law.content | safe if law else "" }}</div>
+        <!-- Hidden input to store Quill content -->
+        <input type="hidden" name="content" id="content-input">
+    </div>
+
+    <div class="flex items-center justify-between">
+        <button type="submit" class="bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+            {% if law %}Salvar Alterações{% else %}Adicionar Lei{% endif %}
+        </button>
+        <a href="{{ url_for("admin.dashboard") }}" class="inline-block align-baseline font-bold text-sm text-brand-purple hover:text-brand-purple-dark">
+            Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Quill editor
+    var quill = new Quill("#editor-container", {
+        theme: "snow",
+        modules: {
+            toolbar: [
+                [{ "header": [1, 2, 3, false] }],
+                ["bold", "italic", "underline", "strike"],
+                [{ "list": "ordered"}, { "list": "bullet" }],
+                [{ "color": [] }, { "background": [] }],
+                ["link"],
+                ["clean"] 
+            ]
+        },
+        placeholder: "Digite o conteúdo da legislação aqui..."
+    });
+
+    // Get the form and the hidden input field
+    var form = document.getElementById("law-form");
+    var contentInput = document.getElementById("content-input");
+
+    // Add event listener for form submission
+    form.addEventListener("submit", function(event) {
+        // Get the HTML content from the Quill editor
+        var quillContent = quill.root.innerHTML;
+        // Set the value of the hidden input field
+        contentInput.value = quillContent;
+    });
+
+</script>
+{% endblock %}
+
