@@ -3,135 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Lei Seca - Treino Turbo{% endblock %}</title>
+    <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Include Quill CSS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- Adicionar biblioteca de animações -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        /* Custom base styles for White/Purple Theme */
+        /* === MODO NOTURNO === */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #d1d5db;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-card: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-color: #4b5563;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
         body {
-            background-color: #FFFFFF; /* White background */
-            color: #374151; /* Dark Gray text for readability */
-        }
-        /* Alert styles adjusted for light background */
-        .alert {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid transparent;
-            border-radius: .25rem;
-            animation: fadeInDown 0.5s;
-            transition: all 0.3s ease;
-        }
-        /* Using purple tones for alerts where appropriate */
-        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
-        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
-        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
-        .alert-info { color: #5b21b6; background-color: #ede9fe; border-color: #ddd6fe; } /* Purple for info */
-
-        /* Footer style */
-        footer {
-            color: #6B7280; /* Medium gray for footer text */
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Custom scrollbar for light theme (optional) */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .bg-card {
+            background-color: var(--bg-card);
+            transition: background-color 0.3s ease;
         }
-        ::-webkit-scrollbar-track {
-            background: #E5E7EB; /* Light gray track */
+
+        .text-secondary {
+            color: var(--text-secondary);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #A78BFA; /* Light Purple thumb */
-            border-radius: 4px;
+
+        .border-custom {
+            border-color: var(--border-color);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #8B5CF6; /* Medium Purple thumb */
+
+        .shadow-custom {
+            box-shadow: 0 1px 3px var(--shadow);
         }
-        
-        /* Animações e efeitos visuais */
-        .btn-transition {
+
+        /* Botão do modo noturno */
+        .theme-toggle {
+            background: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            font-size: 16px;
         }
-        
-        .btn-transition:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
-        }
-        
-        .btn-transition:active {
-            transform: translateY(0);
-        }
-        
-        .btn-transition::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
+
+        .theme-toggle:hover {
             background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: all 0.3s ease;
+            border-color: rgba(255, 255, 255, 0.5);
         }
-        
-        .btn-transition:hover::after {
-            opacity: 1;
+
+        /* === SEÇÃO DE LEGISLAÇÕES SEMPRE CLARA === */
+        .legislacoes-section {
+            background-color: transparent !important;
+            color: var(--text-primary);
+            margin-top: 20px;
         }
-        
-        .nav-link {
-            position: relative;
-            transition: all 0.3s ease;
+
+        .legislacoes-section h2 {
+            color: var(--text-primary) !important;
+            margin-bottom: 20px;
         }
-        
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -4px;
-            left: 0;
-            background-color: white;
-            transition: width 0.3s ease;
+
+        /* Área de filtros em bloco claro */
+        .filtros-section {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
-        .nav-link:hover::after {
-            width: 100%;
+
+        .filtros-section input,
+        .filtros-section select,
+        .filtros-section button {
+            background-color: #f9fafb !important;
+            color: #111827 !important;
+            border-color: #d1d5db !important;
         }
-        
-        .card-hover {
-            transition: all 0.3s ease;
+
+        .filtros-section input:focus,
+        .filtros-section select:focus {
+            border-color: #9333ea !important;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1) !important;
         }
-        
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+
+        /* Cards individuais das legislações sempre claros */
+        .legislacao-card {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            padding: 20px !important;
+            margin-bottom: 16px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.3s ease !important;
         }
-        
-        .form-input-focus {
-            transition: all 0.3s ease;
+
+        .legislacao-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-1px) !important;
         }
-        
-        .form-input-focus:focus {
-            transform: scale(1.01);
+
+        .legislacao-card h3 {
+            color: #111827 !important;
+            margin-bottom: 8px !important;
         }
+
+        .legislacao-card p {
+            color: #6b7280 !important;
+            margin-bottom: 8px !important;
+        }
+
+        .legislacao-card a {
+            background-color: #9333ea !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            margin-top: 12px !important;
+            transition: background-color 0.3s ease !important;
+        }
+
+        .legislacao-card a:hover {
+            background-color: #7c3aed !important;
+        }
+
+        /* === PROTEÇÕES ANTI-IMPRESSÃO E ANTI-SCREENSHOT === */
+        {% if current_user.is_authenticated and current_user.role != 'admin' %}
         
-        /* Animações para entrada de elementos */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        /* 1. PROTEÇÃO ANTI-IMPRESSÃO */
+        @media print {
+            body * {
+                visibility: hidden !important;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            body::before {
+                content: "⚠️ IMPRESSÃO NÃO PERMITIDA ⚠️\A\AEste conteúdo é protegido e não pode ser impresso.\A\APara dúvidas, entre em contato conosco." !important;
+                visibility: visible !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                font-size: 24px !important;
+                font-weight: bold !important;
+                color: #dc2626 !important;
+                text-align: center !important;
+                white-space: pre !important;
+                z-index: 9999 !important;
+                background: white !important;
+                padding: 40px !important;
+                border: 3px solid #dc2626 !important;
+                border-radius: 10px !important;
             }
         }
-        
+
+        /* 2. DESABILITAR SELEÇÃO DE TEXTO */
+        body {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        /* 3. BLUR QUANDO PERDE FOCO (POSSÍVEL SCREENSHOT) */
+        body.blurred {
+            filter: blur(5px) !important;
+            pointer-events: none !important;
+        }
+
+        {% endif %}
+
+        /* === ESTILOS GERAIS === */
+        .fade-in-down {
+            animation: fadeInDown 0.5s ease-out;
+        }
+
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -142,127 +210,485 @@
                 transform: translateY(0);
             }
         }
-        
-        .fade-in-up {
-            animation: fadeInUp 0.5s;
+
+        /* Estilos do Quill adaptados para modo noturno */
+        .ql-toolbar {
+            border-top: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            background-color: var(--bg-card);
         }
-        
-        .fade-in-down {
-            animation: fadeInDown 0.5s;
+
+        .ql-container {
+            border-bottom: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
         }
-        
-        /* Efeito de pulse para chamar atenção */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
+
+        [data-theme="dark"] .ql-editor {
+            color: var(--text-primary);
         }
-        
-        .pulse-effect {
-            animation: pulse 2s infinite;
+
+        [data-theme="dark"] .ql-toolbar .ql-stroke {
+            stroke: var(--text-primary);
         }
-        
-        /* Efeito de loading */
-        .loading-spinner {
-            border: 3px solid rgba(124, 58, 237, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid #7C3AED;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
+
+        [data-theme="dark"] .ql-toolbar .ql-fill {
+            fill: var(--text-primary);
+        }
+
+        .html-paste-area {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            border: 2px dashed #9333ea;
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            transition: background-color 0.3s ease;
+        }
+
+        .html-paste-area.show {
+            display: block;
+        }
+
+        .html-paste-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .btn-html-paste {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
             margin-right: 8px;
+            transition: all 0.2s;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .btn-html-paste:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+        }
+
+        .html-tips {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--bg-secondary);
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        /* Inputs adaptados para modo noturno */
+        input, select, textarea {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #9333ea !important;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1) !important;
+        }
+
+        /* Cards e elementos com fundo */
+        .bg-white {
+            background-color: var(--bg-card) !important;
+            transition: background-color 0.3s ease;
+        }
+
+        .text-gray-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        .text-gray-700 {
+            color: var(--text-primary) !important;
+        }
+
+        .border-gray-300 {
+            border-color: var(--border-color) !important;
         }
     </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'brand-purple': '#7C3AED', // Violet 500 - Main Purple
-                        'brand-purple-dark': '#6D28D9', // Violet 600 - Darker Purple
-                        'brand-purple-light': '#A78BFA', // Violet 400 - Lighter Purple
-                        'brand-bg': '#FFFFFF', // White background
-                        'brand-text': '#374151', // Dark Gray text
-                        'brand-text-light': '#6B7280', // Medium Gray text
-                    }
-                }
-            }
-        }
-    </script>
-    {% block head_extra %}{% endblock %}
 </head>
-<body class="font-sans bg-brand-bg text-brand-text">
-    <nav class="bg-brand-purple text-white p-4 shadow-md">
-        <div class="container mx-auto flex flex-col items-center">
-            <a href="{{ url_for("index") }}" class="text-2xl font-bold mb-2 fade-in-down">Lei Seca - Treino Turbo</a>
-            <div class="flex space-x-6 fade-in-up">
-                {% if current_user.is_authenticated %}
-                    <span class="text-purple-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
-                    {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-purple-200">Painel Admin</a>
-                    {% else %}
-                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-purple-200">Meu Painel</a>
-                    {% endif %}
-                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-purple-200">Sair</a>
-                {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-purple-200">Login</a>
-                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-purple-200">Cadastro</a>
-                {% endif %}
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <a href="{{ url_for("index") }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
+                    <nav class="flex space-x-4 mt-2">
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('admin.dashboard') }}" class="hover:text-purple-200 transition-colors">Painel Admin</a>
+                            {% else %}
+                                <a href="{{ url_for('student.dashboard') }}" class="hover:text-purple-200 transition-colors">Meu Painel</a>
+                            {% endif %}
+                            <a href="{{ url_for('auth.logout') }}" class="hover:text-purple-200 transition-colors">Sair</a>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="hover:text-purple-200 transition-colors">Login</a>
+                            <a href="{{ url_for('auth.register') }}" class="hover:text-purple-200 transition-colors">Cadastro</a>
+                        {% endif %}
+                    </nav>
+                </div>
+                
+                <!-- Botão do Modo Noturno -->
+                <button onclick="toggleTheme()" class="theme-toggle" title="Alternar modo noturno">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="container mx-auto px-4 py-8 fade-in-up" style="animation-delay: 0.2s;">
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="mb-4">
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category or 'info' }}" role="alert">
+                    <div class="mb-4 p-4 rounded-lg shadow-custom {% if category == 'error' %}bg-red-100 text-red-700 border border-red-300{% elif category == 'success' %}bg-green-100 text-green-700 border border-green-300{% else %}bg-blue-100 text-blue-700 border border-blue-300{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
-                </div>
             {% endif %}
         {% endwith %}
-        {% block content %}
-        {% endblock %}
+
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 text-brand-text-light fade-in-up" style="animation-delay: 0.4s;">
-        <div class="mb-4">
-            <p class="font-semibold mb-2 text-brand-text">Entre em contato:</p>
-            <div class="flex justify-center items-center space-x-4">
-                <a href="https://wa.me/5521967406536" target="_blank" class="hover:text-brand-purple transition-all duration-300 ease-in-out" title="WhatsApp">
-                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21) 96740-6536
-                </a>
-                <span class="text-gray-300">|</span>
-                <a href="https://treinoturbo.com.br/" target="_blank" class="hover:text-brand-purple transition-all duration-300 ease-in-out" title="Site Principal">
-                    <i class="fas fa-globe fa-lg mr-1"></i> treinoturbo.com.br
-                </a>
-                <span class="text-gray-300">|</span>
-                <a href="https://www.instagram.com/treinoturboconcursos" target="_blank" class="hover:text-brand-purple transition-all duration-300 ease-in-out" title="Instagram">
-                    <i class="fab fa-instagram fa-lg mr-1"></i> @treinoturboconcursos
-                </a>
-            </div>
-        </div>
-        <p>&copy; {{ now().year }} Treino Turbo Concursos. Todos os direitos reservados.</p>
+    <!-- Footer -->
+    <footer class="text-center py-6 mt-8 border-t border-custom">
+        <p class="text-secondary mb-2">Entre em contato:</p>
+        <a href="https://wa.me/5521999157700?text=Olá,%20vim%20do%20site%20da%20lei%20seca" 
+           target="_blank" 
+           class="text-green-600 hover:text-green-800 transition-colors">
+            <i class="fab fa-whatsapp"></i> (21) 99915-7700
+        </a>
+        <p class="text-secondary text-sm mt-2">Todos os direitos reservados.</p>
     </footer>
 
-    <!-- Include Quill JS -->
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <!-- JavaScript para Modo Noturno -->
+    <script>
+        // Função para alternar tema
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const currentTheme = html.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                html.removeAttribute('data-theme');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Aplicar tema salvo ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+                icon.className = 'fas fa-sun';
+            } else {
+                html.removeAttribute('data-theme');
+                icon.className = 'fas fa-moon';
+            }
+        });
+    </script>
+
+    <!-- JavaScript para Proteções Anti-Pirataria -->
+    {% if current_user.is_authenticated and current_user.role != 'admin' %}
+    <script>
+        (function() {
+            'use strict';
+            
+            // 1. BLOQUEAR TECLAS DE SCREENSHOT E FERRAMENTAS
+            document.addEventListener('keydown', function(e) {
+                // Print Screen
+                if (e.key === 'PrintScreen') {
+                    e.preventDefault();
+                    alert('⚠️ Screenshot não permitido!');
+                    return false;
+                }
+                
+                // F12 (DevTools)
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    alert('⚠️ DevTools desabilitadas!');
+                    return false;
+                }
+                
+                // Ctrl+Shift+I/J/C (DevTools)
+                if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+                    e.preventDefault();
+                    alert('⚠️ DevTools desabilitadas!');
+                    return false;
+                }
+                
+                // Ctrl+P (Impressão)
+                if (e.ctrlKey && e.key === 'p') {
+                    e.preventDefault();
+                    alert('⚠️ Impressão não permitida!');
+                    return false;
+                }
+                
+                // Ctrl+S (Salvar página)
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    alert('⚠️ Salvar página não permitido!');
+                    return false;
+                }
+                
+                // Ctrl+A (Selecionar tudo)
+                if (e.ctrlKey && e.key === 'a') {
+                    e.preventDefault();
+                    alert('⚠️ Seleção não permitida!');
+                    return false;
+                }
+                
+                // Ctrl+C (Copiar)
+                if (e.ctrlKey && e.key === 'c') {
+                    e.preventDefault();
+                    alert('⚠️ Cópia não permitida!');
+                    return false;
+                }
+            });
+
+            // 2. DESABILITAR MENU DE CONTEXTO (BOTÃO DIREITO)
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                alert('⚠️ Menu de contexto desabilitado!');
+                return false;
+            });
+
+            // 3. DETECTAR FERRAMENTAS DE DESENVOLVEDOR
+            let devtools = {
+                open: false,
+                orientation: null
+            };
+            
+            const threshold = 160;
+            
+            setInterval(function() {
+                if (window.outerHeight - window.innerHeight > threshold || 
+                    window.outerWidth - window.innerWidth > threshold) {
+                    if (!devtools.open) {
+                        devtools.open = true;
+                        alert('⚠️ DevTools detectadas! Fechando...');
+                        window.location.reload();
+                    }
+                } else {
+                    devtools.open = false;
+                }
+            }, 500);
+
+            // 4. BLUR QUANDO PERDE FOCO (POSSÍVEL SCREENSHOT)
+            window.addEventListener('blur', function() {
+                document.body.classList.add('blurred');
+            });
+            
+            window.addEventListener('focus', function() {
+                document.body.classList.remove('blurred');
+            });
+
+            // 5. DETECTAR MUDANÇA DE VISIBILIDADE DA PÁGINA
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    document.body.classList.add('blurred');
+                } else {
+                    document.body.classList.remove('blurred');
+                }
+            });
+
+            // 6. BLOQUEAR DRAG AND DROP
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+
+            // 7. APLICAR PROTEÇÕES QUANDO A PÁGINA CARREGA
+            window.addEventListener('load', function() {
+                // Desabilitar seleção via JavaScript também
+                document.onselectstart = function() {
+                    return false;
+                };
+                
+                document.onmousedown = function() {
+                    return false;
+                };
+            });
+
+        })();
+    </script>
+    {% endif %}
+
+    <!-- Scripts Gerais -->
+    <script>
+        // Função para mostrar/esconder área de colar HTML
+        function toggleHtmlPaste() {
+            const area = document.getElementById('htmlPasteArea');
+            if (area) {
+                area.classList.toggle('show');
+                if (area.classList.contains('show')) {
+                    document.getElementById('htmlTextarea').focus();
+                }
+            }
+        }
+
+        // Função para aplicar HTML no editor Quill
+        function applyHtmlToQuill() {
+            const textarea = document.getElementById('htmlTextarea');
+            const quillEditor = window.quillEditor;
+            
+            if (textarea && quillEditor && textarea.value.trim()) {
+                // Insertar HTML no Quill
+                const delta = quillEditor.clipboard.convert(textarea.value);
+                quillEditor.setContents(delta);
+                
+                // Limpar textarea e esconder área
+                textarea.value = '';
+                document.getElementById('htmlPasteArea').classList.remove('show');
+                
+                alert('✅ HTML aplicado com sucesso!');
+            } else {
+                alert('⚠️ Por favor, cole o HTML na área de texto primeiro.');
+            }
+        }
+
+        // Função para limpar conteúdo do editor
+        function clearQuillContent() {
+            const quillEditor = window.quillEditor;
+            if (quillEditor) {
+                quillEditor.setContents([]);
+                alert('🗑️ Conteúdo limpo!');
+            }
+        }
+
+        // Aplicar classes para manter seção de legislações sempre clara
+        document.addEventListener('DOMContentLoaded', function() {
+            // Procurar por elementos que contenham "Legislações Disponíveis"
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            
+            headings.forEach(function(heading) {
+                if (heading.textContent.includes('Legislações Disponíveis')) {
+                    // Aplicar classe ao título
+                    heading.classList.add('legislacoes-section');
+                    
+                    // Encontrar e envolver área de filtros
+                    let currentElement = heading.nextElementSibling;
+                    const filtrosElements = [];
+                    
+                    // Coletar elementos de filtro (busca, select, botão)
+                    while (currentElement && !currentElement.textContent.includes('CTN') && 
+                           !currentElement.textContent.includes('teste') && 
+                           !currentElement.textContent.includes('Princípios')) {
+                        
+                        if (currentElement.querySelector('input') || 
+                            currentElement.querySelector('select') || 
+                            currentElement.querySelector('button') ||
+                            currentElement.tagName === 'FORM') {
+                            filtrosElements.push(currentElement);
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                    
+                    // Criar wrapper para filtros se existirem
+                    if (filtrosElements.length > 0) {
+                        const filtrosWrapper = document.createElement('div');
+                        filtrosWrapper.className = 'filtros-section';
+                        
+                        // Inserir wrapper antes do primeiro elemento de filtro
+                        filtrosElements[0].parentNode.insertBefore(filtrosWrapper, filtrosElements[0]);
+                        
+                        // Mover elementos de filtro para o wrapper
+                        filtrosElements.forEach(function(el) {
+                            filtrosWrapper.appendChild(el);
+                        });
+                    }
+                    
+                    // Encontrar e envolver cards de legislação individuais
+                    const allElements = Array.from(heading.parentElement.children);
+                    let startIndex = allElements.indexOf(heading) + 1;
+                    
+                    for (let i = startIndex; i < allElements.length; i++) {
+                        const element = allElements[i];
+                        
+                        // Verificar se é um card de legislação (contém link "Ler Legislação")
+                        if (element.querySelector('a') && 
+                            element.querySelector('a').textContent.includes('Ler Legislação')) {
+                            
+                            // Criar wrapper individual para cada legislação
+                            const cardWrapper = document.createElement('div');
+                            cardWrapper.className = 'legislacao-card';
+                            
+                            // Inserir wrapper antes do elemento
+                            element.parentNode.insertBefore(cardWrapper, element);
+                            
+                            // Mover o elemento para dentro do wrapper
+                            cardWrapper.appendChild(element);
+                            
+                            // Aplicar estilos aos elementos internos
+                            const title = cardWrapper.querySelector('h3, h4, h5, h6');
+                            if (title) {
+                                title.style.marginBottom = '8px';
+                                title.style.color = '#111827';
+                            }
+                            
+                            const paragraphs = cardWrapper.querySelectorAll('p');
+                            paragraphs.forEach(function(p) {
+                                p.style.marginBottom = '8px';
+                                p.style.color = '#6b7280';
+                            });
+                            
+                            const link = cardWrapper.querySelector('a');
+                            if (link) {
+                                link.style.marginTop = '12px';
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
+
