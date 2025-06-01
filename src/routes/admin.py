@@ -188,6 +188,44 @@ def deny_user(user_id):
             print(f"Error deleting user {user_id}: {e}") # Log the error
     return redirect(url_for("admin.manage_users"))
 
+# --- Password Reset ---
+@admin_bp.route("/users/reset-password/<int:user_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def reset_user_password(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == "admin" and user.id != current_user.id:
+        flash("Não é possível redefinir a senha de outro administrador.", "danger")
+        return redirect(url_for("admin.manage_users"))
+    
+    if request.method == "POST":
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+        
+        if not new_password:
+            flash("A nova senha não pode estar vazia.", "danger")
+            return render_template("admin/reset_password.html", user=user)
+        
+        if new_password != confirm_password:
+            flash("As senhas não coincidem.", "danger")
+            return render_template("admin/reset_password.html", user=user)
+        
+        # Atualiza a senha do usuário
+        user.set_password(new_password)
+        
+        try:
+            db.session.commit()
+            flash(f"Senha do usuário {user.email} redefinida com sucesso!", "success")
+            return redirect(url_for("admin.manage_users"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao redefinir a senha: {e}", "danger")
+            return render_template("admin/reset_password.html", user=user)
+    
+    # GET request: renderiza o template de redefinição de senha
+    return render_template("admin/reset_password.html", user=user)
+
 # --- Announcement Management ---
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
@@ -231,4 +269,3 @@ def delete_announcement(announcement_id):
     db.session.commit()
     flash("Aviso excluído com sucesso!", "success")
     return redirect(url_for("admin.manage_announcements"))
-

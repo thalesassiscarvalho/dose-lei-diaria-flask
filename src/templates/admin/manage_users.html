@@ -16,83 +16,87 @@
         {% endif %}
     {% endwith %}
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-purple-100">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
-                        Nome Completo
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
-                        Email
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
-                        Telefone
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-purple-700 uppercase tracking-wider">
-                        Ações
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% if users %}
-                    {% for user in users %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
+        <div class="min-w-full inline-block align-middle">
+            <div class="overflow-hidden overflow-x-scroll">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-purple-100">
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {{ user.full_name or 'N/A' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {{ user.email }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {{ user.phone or 'N/A' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                {% if user.is_approved %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Aprovado
-                                    </span>
-                                {% else %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Pendente
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                                {% if not user.is_approved %}
-                                    <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="inline-block">
-                                        <button type="submit" class="text-green-600 hover:text-green-900">Aprovar</button>
-                                    </form>
-                                {% endif %}
-                                {% if user.is_approved %}
-                                    <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
-                                    </form>
-                                {% else %}
-                                     <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
-                                    </form>
-                                {% endif %}
-                                {# Add delete user functionality later if needed #}
-                            </td>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Nome Completo
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Email
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Telefone
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Ações
+                            </th>
                         </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                            Nenhum usuário estudante cadastrado.
-                        </td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% if users %}
+                            {% for user in users %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ user.full_name or 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        {{ user.email }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        {{ user.phone or 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        {% if user.is_approved %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Aprovado
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                Pendente
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                        {% if not user.is_approved %}
+                                            <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <button type="submit" class="text-green-600 hover:text-green-900">Aprovar</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if user.is_approved %}
+                                            <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
+                                            </form>
+                                        {% else %}
+                                             <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
+                                            </form>
+                                        {% endif %}
+                                        <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900">Redefinir Senha</a>
+                                        {# Add delete user functionality later if needed #}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                    Nenhum usuário estudante cadastrado.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <div class="mt-6">
          <a href="{{ url_for('admin.dashboard') }}" class="text-purple-600 hover:text-purple-800">&larr; Voltar ao Painel</a>
     </div>
 </div>
 {% endblock %}
-

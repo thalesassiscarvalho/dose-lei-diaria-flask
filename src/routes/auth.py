@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from src.models.user import db, User
@@ -74,6 +74,11 @@ def signup():
         phone = request.form.get("phone")
         password = request.form.get("password")
 
+        # Validate required fields
+        if not email or not full_name or not phone or not password:
+            flash("Todos os campos são obrigatórios.", "danger")
+            return redirect(url_for("auth.signup"))
+
         # Check if email already exists
         user = User.query.filter_by(email=email).first()
 
@@ -100,7 +105,7 @@ def signup():
 
     # GET request: render the signup template
     return render_template("signup.html")
-
+    
 @auth_bp.route("/logout")
 @login_required
 def logout():
@@ -109,4 +114,3 @@ def logout():
     logging.info(f"[AUTH DEBUG] User logged out: {user_email}") # ADDED LOG
     flash("Você foi desconectado.", "info")
     return redirect(url_for("auth.login"))
-
