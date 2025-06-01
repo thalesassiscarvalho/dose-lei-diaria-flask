@@ -27,6 +27,64 @@
     .ql-toolbar .ql-fill {
         fill: black;
     }
+    
+    /* Custom HTML paste button */
+    .html-paste-container {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+    
+    .html-paste-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .html-paste-btn:hover {
+        background-color: #218838;
+    }
+    
+    .html-clear-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .html-clear-btn:hover {
+        background-color: #c82333;
+    }
+    
+    .html-textarea {
+        width: 100%;
+        height: 100px;
+        margin-top: 10px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        background-color: white;
+        display: none;
+    }
+    
+    .html-help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
 </style>
 {% endblock %}
 
@@ -57,6 +115,21 @@
 
     <div class="mb-6">
         <label for="editor-container" class="block text-brand-text text-sm font-bold mb-2">Conteúdo:</label>
+        
+        <!-- HTML Paste Helper -->
+        <div class="html-paste-container">
+            <button type="button" id="show-html-paste" class="html-paste-btn">📋 Colar HTML Formatado</button>
+            <button type="button" id="clear-content" class="html-clear-btn">🗑️ Limpar Conteúdo</button>
+            <div class="html-help-text">
+                💡 Use o botão "Colar HTML Formatado" para inserir conteúdo com formatação avançada (cores, estilos, etc.)
+            </div>
+            <textarea id="html-paste-area" class="html-textarea" placeholder="Cole seu HTML formatado aqui e clique em 'Aplicar HTML' para inserir no editor..."></textarea>
+            <div id="html-paste-actions" style="display: none; margin-top: 10px;">
+                <button type="button" id="apply-html" class="html-paste-btn">✅ Aplicar HTML</button>
+                <button type="button" id="cancel-html" class="html-clear-btn">❌ Cancelar</button>
+            </div>
+        </div>
+        
         <!-- Create the editor container -->
         <div id="editor-container">{{ law.content | safe if law else "" }}</div>
         <!-- Hidden input to store Quill content -->
@@ -76,27 +149,75 @@
 
 {% block scripts %}
 <script>
-    // Initialize Quill editor
+    // Initialize Quill editor with enhanced toolbar
     var quill = new Quill("#editor-container", {
         theme: "snow",
         modules: {
             toolbar: [
-                [{ "header": [1, 2, 3, false] }],
+                [{ "header": [1, 2, 3, 4, 5, 6, false] }],
                 ["bold", "italic", "underline", "strike"],
+                [{ "script": "sub"}, { "script": "super" }],
                 [{ "list": "ordered"}, { "list": "bullet" }],
+                [{ "indent": "-1"}, { "indent": "+1" }],
                 [{ "color": [] }, { "background": [] }],
-                ["link"],
-                ["clean"] 
+                [{ "font": [] }],
+                [{ "align": [] }],
+                ["link", "image"],
+                ["blockquote", "code-block"],
+                ["clean"]
             ]
         },
         placeholder: "Digite o conteúdo da legislação aqui..."
     });
 
-    // Get the form and the hidden input field
+    // Get form elements
     var form = document.getElementById("law-form");
     var contentInput = document.getElementById("content-input");
+    var showHtmlPasteBtn = document.getElementById("show-html-paste");
+    var clearContentBtn = document.getElementById("clear-content");
+    var htmlPasteArea = document.getElementById("html-paste-area");
+    var htmlPasteActions = document.getElementById("html-paste-actions");
+    var applyHtmlBtn = document.getElementById("apply-html");
+    var cancelHtmlBtn = document.getElementById("cancel-html");
 
-    // Add event listener for form submission
+    // Show HTML paste area
+    showHtmlPasteBtn.addEventListener("click", function() {
+        htmlPasteArea.style.display = "block";
+        htmlPasteActions.style.display = "block";
+        htmlPasteArea.focus();
+    });
+
+    // Apply HTML to editor
+    applyHtmlBtn.addEventListener("click", function() {
+        var htmlContent = htmlPasteArea.value;
+        if (htmlContent.trim()) {
+            // Insert HTML directly into Quill
+            quill.root.innerHTML = htmlContent;
+            htmlPasteArea.value = "";
+            htmlPasteArea.style.display = "none";
+            htmlPasteActions.style.display = "none";
+            alert("HTML aplicado com sucesso! ✅");
+        } else {
+            alert("Por favor, cole o HTML na área de texto primeiro.");
+        }
+    });
+
+    // Cancel HTML paste
+    cancelHtmlBtn.addEventListener("click", function() {
+        htmlPasteArea.value = "";
+        htmlPasteArea.style.display = "none";
+        htmlPasteActions.style.display = "none";
+    });
+
+    // Clear all content
+    clearContentBtn.addEventListener("click", function() {
+        if (confirm("Tem certeza que deseja limpar todo o conteúdo?")) {
+            quill.root.innerHTML = "";
+            htmlPasteArea.value = "";
+        }
+    });
+
+    // Form submission handler
     form.addEventListener("submit", function(event) {
         // Get the HTML content from the Quill editor
         var quillContent = quill.root.innerHTML;
@@ -106,4 +227,3 @@
 
 </script>
 {% endblock %}
-
