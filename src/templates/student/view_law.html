@@ -11,17 +11,11 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* Proteção contra seleção de texto */
+        /* Proteção contra seleção de texto para cópia */
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        /* Proteção contra arrastar */
-        -webkit-user-drag: none;
-        -khtml-user-drag: none;
-        -moz-user-drag: none;
-        -o-user-drag: none;
-        user-drag: none;
     }
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
         color: #4c1d95; /* Purple headings */
@@ -71,39 +65,6 @@
         border: 1px solid #e5e7eb; /* Gray 200 */
         border-radius: 0.5rem;
     }
-    
-    /* Proteção visual adicional */
-    .protected-content {
-        position: relative;
-    }
-    
-    .protected-content::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 1;
-        pointer-events: none;
-    }
-    
-    /* Aviso de proteção */
-    .protection-notice {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        font-size: 0.875rem;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .protection-notice i {
-        margin-right: 0.5rem;
-    }
 </style>
 {% endblock %}
 
@@ -113,12 +74,6 @@
     <a href="{{ url_for("student.dashboard") }}" class="text-purple-600 hover:text-purple-800">
         <i class="fas fa-arrow-left mr-2"></i> Voltar ao Painel
     </a>
-</div>
-
-<!-- Aviso de Proteção -->
-<div class="protection-notice">
-    <i class="fas fa-shield-alt"></i>
-    <strong>Conteúdo Protegido:</strong> Este material é exclusivo para estudantes. Cópia, impressão e captura de tela estão desabilitadas.
 </div>
 
 {% if is_completed %}
@@ -131,7 +86,7 @@
 </div>
 {% endif %}
 
-<div class="law-content-container protected-content">
+<div class="law-content-container">
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
     {% endif %}
@@ -167,110 +122,43 @@
 
 {% block scripts %}
 <script>
-// 🛡️ PROTEÇÕES ANTI-PIRATARIA - VISUALIZAÇÃO DE LEIS
-
-console.log('🛡️ Iniciando proteções anti-pirataria para conteúdo das leis...');
+// 🛡️ PROTEÇÕES DISCRETAS - APENAS CÓPIA E IMPRESSÃO
 
 // ✅ Anti-impressão (Ctrl+P)
 document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         e.stopPropagation();
-        showProtectionAlert('🚫 Impressão Bloqueada', 'A impressão deste conteúdo não é permitida para proteger os direitos autorais.');
+        alert('Impressão não permitida neste conteúdo.');
         return false;
     }
 });
 
-// ✅ Anti-screenshot (Print Screen)
+// ✅ Anti-cópia (Ctrl+C, Ctrl+A, Ctrl+X)
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'PrintScreen') {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('📸 Captura Bloqueada', 'Capturas de tela não são permitidas neste conteúdo protegido.');
-        return false;
-    }
-});
-
-// ✅ Anti-DevTools (F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+C, Ctrl+Shift+J)
-document.addEventListener('keydown', function(e) {
-    // F12
-    if (e.key === 'F12') {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('🔧 DevTools Bloqueado', 'Ferramentas de desenvolvedor não são permitidas.');
-        return false;
-    }
-    
-    // Ctrl+Shift+I (DevTools)
-    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('🔧 DevTools Bloqueado', 'Ferramentas de desenvolvedor não são permitidas.');
-        return false;
-    }
-    
-    // Ctrl+U (View Source)
-    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('📄 Código Fonte Bloqueado', 'Visualização do código fonte não é permitida.');
-        return false;
-    }
-    
-    // Ctrl+Shift+C (Inspect Element)
-    if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('🔍 Inspeção Bloqueada', 'Inspeção de elementos não é permitida.');
-        return false;
-    }
-    
-    // Ctrl+Shift+J (Console)
-    if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('💻 Console Bloqueado', 'Acesso ao console não é permitido.');
-        return false;
-    }
-});
-
-// ✅ Anti-cópia (Ctrl+C, Ctrl+A, Ctrl+X, Ctrl+S)
-document.addEventListener('keydown', function(e) {
+    // Bloquear Ctrl+C (copiar)
     if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
         e.preventDefault();
         e.stopPropagation();
-        showProtectionAlert('📋 Cópia Bloqueada', 'Cópia de conteúdo não é permitida para proteger os direitos autorais.');
+        alert('Cópia de conteúdo não permitida.');
         return false;
     }
     
+    // Bloquear Ctrl+A (selecionar tudo)
     if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
         e.stopPropagation();
-        showProtectionAlert('🔄 Seleção Bloqueada', 'Seleção total do conteúdo não é permitida.');
+        alert('Seleção total não permitida.');
         return false;
     }
     
+    // Bloquear Ctrl+X (recortar)
     if (e.ctrlKey && (e.key === 'x' || e.key === 'X')) {
         e.preventDefault();
         e.stopPropagation();
-        showProtectionAlert('✂️ Recorte Bloqueado', 'Recorte de conteúdo não é permitido.');
+        alert('Recorte não permitido.');
         return false;
     }
-    
-    if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionAlert('💾 Salvamento Bloqueado', 'Salvamento da página não é permitido.');
-        return false;
-    }
-});
-
-// ✅ Menu de contexto desabilitado (botão direito)
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    showProtectionAlert('🖱️ Menu Bloqueado', 'Menu de contexto desabilitado para proteger o conteúdo.');
-    return false;
 });
 
 // ✅ Proteção contra seleção de texto
@@ -279,193 +167,12 @@ document.addEventListener('selectstart', function(e) {
     return false;
 });
 
-// ✅ Proteção contra arrastar elementos
-document.addEventListener('dragstart', function(e) {
+// ✅ Menu de contexto desabilitado (botão direito)
+document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
+    alert('Menu de contexto desabilitado.');
     return false;
 });
-
-// ✅ Blur quando perde foco
-let isBlurred = false;
-let blurTimeout;
-
-window.addEventListener('blur', function() {
-    if (!isBlurred) {
-        // Pequeno delay para evitar falsos positivos
-        blurTimeout = setTimeout(function() {
-            document.body.style.filter = 'blur(8px)';
-            document.body.style.pointerEvents = 'none';
-            isBlurred = true;
-            
-            // Mostrar aviso
-            showFocusWarning();
-        }, 100);
-    }
-});
-
-window.addEventListener('focus', function() {
-    if (blurTimeout) {
-        clearTimeout(blurTimeout);
-    }
-    
-    if (isBlurred) {
-        document.body.style.filter = 'none';
-        document.body.style.pointerEvents = 'auto';
-        isBlurred = false;
-        
-        // Remover aviso
-        removeFocusWarning();
-    }
-});
-
-// ✅ Detecção avançada de DevTools
-let devtools = {open: false, orientation: null};
-let devtoolsCheckInterval = setInterval(function() {
-    const threshold = 160;
-    
-    if (window.outerHeight - window.innerHeight > threshold || 
-        window.outerWidth - window.innerWidth > threshold) {
-        if (!devtools.open) {
-            devtools.open = true;
-            showProtectionAlert('⚠️ DevTools Detectado', 'Ferramentas de desenvolvedor foram detectadas e bloqueadas!');
-            
-            // Tentar fechar a janela (pode não funcionar em todos os browsers)
-            try {
-                window.close();
-            } catch(e) {
-                // Se não conseguir fechar, redirecionar
-                window.location.href = "{{ url_for('student.dashboard') }}";
-            }
-        }
-    } else {
-        devtools.open = false;
-    }
-}, 500);
-
-// ✅ Proteção contra zoom excessivo
-document.addEventListener('wheel', function(e) {
-    if (e.ctrlKey) {
-        e.preventDefault();
-        showProtectionAlert('🔍 Zoom Bloqueado', 'Zoom não é permitido neste conteúdo.');
-        return false;
-    }
-});
-
-// ✅ Proteção contra teclas de função
-document.addEventListener('keydown', function(e) {
-    // Bloquear F1-F12 (exceto F5 para refresh)
-    if (e.key.startsWith('F') && e.key !== 'F5') {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-});
-
-// Função para mostrar alertas de proteção personalizados
-function showProtectionAlert(title, message) {
-    // Remover alerta anterior se existir
-    const existingAlert = document.getElementById('protection-alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-    
-    const alert = document.createElement('div');
-    alert.id = 'protection-alert';
-    alert.innerHTML = `
-        <div style="position: fixed; top: 20px; right: 20px; 
-                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
-                    color: white; padding: 15px 20px; 
-                    border-radius: 10px; z-index: 10000; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                    max-width: 300px; animation: slideIn 0.3s ease;">
-            <div style="font-weight: bold; margin-bottom: 5px;">${title}</div>
-            <div style="font-size: 14px;">${message}</div>
-        </div>
-        <style>
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        </style>
-    `;
-    
-    document.body.appendChild(alert);
-    
-    // Remover após 4 segundos
-    setTimeout(function() {
-        if (alert && alert.parentNode) {
-            alert.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => alert.remove(), 300);
-        }
-    }, 4000);
-}
-
-// Função para mostrar aviso de foco
-function showFocusWarning() {
-    const warning = document.createElement('div');
-    warning.id = 'focus-warning';
-    warning.innerHTML = `
-        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                    background: rgba(0,0,0,0.95); color: white; padding: 30px; 
-                    border-radius: 15px; z-index: 10000; text-align: center;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                    border: 2px solid #7c3aed;">
-            <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
-            <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #fbbf24;">Atenção!</h3>
-            <p style="margin: 0 0 20px 0; font-size: 16px;">
-                Você saiu da área de estudo.<br>
-                Clique aqui para continuar estudando.
-            </p>
-            <div style="font-size: 14px; color: #d1d5db;">
-                O conteúdo foi desfocado por segurança.
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(warning);
-    
-    warning.addEventListener('click', function() {
-        window.focus();
-    });
-}
-
-// Função para remover aviso de foco
-function removeFocusWarning() {
-    const warning = document.getElementById('focus-warning');
-    if (warning) {
-        warning.remove();
-    }
-}
-
-// ✅ Proteção contra debug via console
-(function() {
-    let devtools = false;
-    Object.defineProperty(window, 'console', {
-        get: function() {
-            devtools = true;
-            showProtectionAlert('💻 Console Detectado', 'Acesso ao console foi detectado e bloqueado!');
-            return {};
-        }
-    });
-})();
-
-// ✅ Limpeza ao sair da página
-window.addEventListener('beforeunload', function() {
-    if (devtoolsCheckInterval) {
-        clearInterval(devtoolsCheckInterval);
-    }
-});
-
-// Mensagem final
-console.log('🛡️ Todas as proteções anti-pirataria foram ativadas com sucesso!');
-console.log('📚 Conteúdo protegido - Treino Turbo Concursos');
-
-// Proteção adicional: sobrescrever console
-setTimeout(function() {
-    if (typeof console !== 'undefined') {
-        console.log = console.warn = console.error = console.info = console.debug = function() {};
-    }
-}, 1000);
 </script>
 {% endblock %}
 
