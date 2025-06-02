@@ -104,6 +104,7 @@
                         id="data_inicial_{{ user.id }}"
                         name="data_inicial_{{ user.id }}"
                         class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
+                        value=""
                       >
                     </td>
 
@@ -128,8 +129,8 @@
                         type="date"
                         id="data_final_{{ user.id }}"
                         name="data_final_{{ user.id }}"
-                        class="border border-gray-300 rounded px-2 py-1 w-full text-sm bg-gray-100"
-                        readonly
+                        class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
+                        value=""
                       >
                     </td>
 
@@ -184,71 +185,4 @@
     <a href="{{ url_for('admin.dashboard') }}" class="text-purple-600 hover:text-purple-800">&larr; Voltar ao Painel</a>
   </div>
 </div>
-
-{% endblock %}
-
-{% block scripts %}
-  {{ super() }}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      {% for user in users %}
-        (function() {
-          const userId = {{ user.id }};
-          const inputDataInicial = document.getElementById(`data_inicial_${userId}`);
-          const selectPlano      = document.getElementById(`plano_${userId}`);
-          const inputDataFinal   = document.getElementById(`data_final_${userId}`);
-
-          function calcularDataFinal() {
-            const dataInicialVal = inputDataInicial.value;
-            const planoVal       = selectPlano.value;
-
-            if (!dataInicialVal || !planoVal) {
-              inputDataFinal.value = '';
-              return;
-            }
-
-            // Converte "YYYY-MM-DD" em objeto Date
-            const partes = dataInicialVal.split('-');
-            const ano    = parseInt(partes[0], 10);
-            const mes    = parseInt(partes[1], 10) - 1; // JS Date usa 0–11
-            const dia    = parseInt(partes[2], 10);
-            const dt     = new Date(ano, mes, dia);
-
-            let mesesParaAdicionar = 0;
-            switch (planoVal) {
-              case 'mensal':
-                mesesParaAdicionar = 1;
-                break;
-              case 'trimestral':
-                mesesParaAdicionar = 3;
-                break;
-              case 'semestral':
-                mesesParaAdicionar = 6;
-                break;
-              case 'anual':
-                mesesParaAdicionar = 12;
-                break;
-              default:
-                mesesParaAdicionar = 0;
-            }
-
-            if (mesesParaAdicionar > 0) {
-              dt.setMonth(dt.getMonth() + mesesParaAdicionar);
-              const anoFinal = dt.getFullYear();
-              const mesFinal = dt.getMonth() + 1; // volta para 1–12
-              const diaFinal = dt.getDate();
-              const mesFinalStr = mesFinal < 10 ? `0${mesFinal}` : `${mesFinal}`;
-              const diaFinalStr = diaFinal < 10 ? `0${diaFinal}` : `${diaFinal}`;
-              inputDataFinal.value = `${anoFinal}-${mesFinalStr}-${diaFinalStr}`;
-            } else {
-              inputDataFinal.value = '';
-            }
-          }
-
-          inputDataInicial.addEventListener('change', calcularDataFinal);
-          selectPlano.addEventListener('change', calcularDataFinal);
-        })();
-      {% endfor %}
-    });
-  </script>
 {% endblock %}
