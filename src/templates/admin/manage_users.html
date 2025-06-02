@@ -32,6 +32,9 @@
                                 Telefone
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                                Origem
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
                                 Status
                             </th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-purple-700 uppercase tracking-wider">
@@ -51,6 +54,19 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {{ user.phone or 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        <form action="{{ url_for('admin.update_user_source', user_id=user.id) }}" method="POST" class="inline-block w-full">
+                                            <div class="flex items-center space-x-2">
+                                                <input type="text" name="source" value="{{ user.source or '' }}" 
+                                                       placeholder="Ex: Instagram, Google, Indicação..."
+                                                       class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                       maxlength="100">
+                                                <button type="submit" class="px-2 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500" title="Salvar origem">
+                                                    <i class="fas fa-save"></i>
+                                                </button>
+                                            </div>
+                                        </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         {% if user.is_approved %}
@@ -85,7 +101,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                     Nenhum usuário estudante cadastrado.
                                 </td>
                             </tr>
@@ -99,4 +115,33 @@
          <a href="{{ url_for('admin.dashboard') }}" class="text-purple-600 hover:text-purple-800">&larr; Voltar ao Painel</a>
     </div>
 </div>
+
+<script>
+// Auto-submit form quando o usuário parar de digitar por 2 segundos
+document.addEventListener('DOMContentLoaded', function() {
+    const sourceInputs = document.querySelectorAll('input[name="source"]');
+    
+    sourceInputs.forEach(function(input) {
+        let timeout;
+        
+        input.addEventListener('input', function() {
+            clearTimeout(timeout);
+            
+            // Adicionar indicador visual de que está sendo editado
+            input.style.borderColor = '#fbbf24'; // amarelo
+            
+            timeout = setTimeout(function() {
+                // Auto-submit após 2 segundos de inatividade
+                input.closest('form').submit();
+            }, 2000);
+        });
+        
+        // Remover indicador visual quando o campo perde o foco
+        input.addEventListener('blur', function() {
+            input.style.borderColor = '#d1d5db'; // cinza padrão
+        });
+    });
+});
+</script>
 {% endblock %}
+
