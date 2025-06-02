@@ -338,6 +338,7 @@
                     </div>
                 {% endfor %}
             {% endif %}
+        {% endwith %}
 </style>
 {% if current_user.is_authenticated and current_user.role != 'admin' %}
 <style>
