@@ -29,11 +29,11 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production') # Use environment variable for secret key
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') # Use environment variable for secret key
 
 # --- Database Configuration ---
 # Use environment variables for database credentials for security
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///treino_turbo.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 db.init_app(app)
 
@@ -172,19 +172,6 @@ with app.app_context():
                 db.session.rollback()
         else:
             logging.debug("'phone' column already exists in user.")
-
-        # Migration for 'source' - NOVA FUNCIONALIDADE
-        if 'source' not in user_column_names:
-            logging.info("Attempting to add 'source' column to user...")
-            try:
-                db.session.execute(text("ALTER TABLE user ADD COLUMN source VARCHAR(100) NULL"))
-                db.session.commit()
-                logging.info("'source' column added successfully.")
-            except OperationalError as e:
-                logging.error(f"Error adding 'source' column: {e}")
-                db.session.rollback()
-        else:
-            logging.debug("'source' column already exists in user.")
 
         # --- User Progress Table Migrations ---
         progress_columns = inspector.get_columns('user_progress')
@@ -342,4 +329,3 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port, debug=True)
-
