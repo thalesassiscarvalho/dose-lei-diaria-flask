@@ -28,6 +28,8 @@ def update_user(user_id):
     data = request.json
     user.username = data.get('username', user.username)
     user.email = data.get('email', user.email)
+    # Adicionado suporte para atualizar origem
+    user.source = data.get('source', user.source)
     db.session.commit()
     return jsonify(user.to_dict())
 
@@ -37,3 +39,28 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return '', 204
+
+# Nova rota para atualizar apenas a origem do usuário
+@user_bp.route('/users/<int:user_id>/source', methods=['PUT'])
+def update_user_source(user_id):
+    user = User.query.get_or_404(user_id)
+    data = request.json
+    
+    source = data.get('source', '').strip()
+    
+    # Validação do tamanho
+    if len(source) > 100:
+        return jsonify({'error': 'Origem deve ter no máximo 100 caracteres'}), 400
+    
+    user.source = source if source else None
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'message': 'Origem atualizada com sucesso',
+            'user': user.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Erro ao atualizar origem: {str(e)}'}), 500
+
