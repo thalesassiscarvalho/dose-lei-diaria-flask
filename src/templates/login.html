@@ -4,29 +4,29 @@
 
 {% block content %}
 <div class="max-w-md mx-auto mt-12 bg-white border border-gray-200 shadow-lg rounded-lg p-8 card-hover fade-in-up login-container">
-    <h1 class="text-3xl font-bold text-center text-brand-purple mb-8">Login</h1>
+    <h1 class="text-3xl font-bold text-center text-brand-blue mb-8">Login</h1>
     <form method="POST" action="{{ url_for("auth.login") }}">
         <div class="mb-5">
             <label for="email" class="block text-brand-text text-sm font-bold mb-2">Email:</label>
             <input type="email" id="email" name="email" required 
-                   class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple-light focus:border-transparent placeholder-gray-400 form-input-focus">
+                   class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-blue-light focus:border-transparent placeholder-gray-400 form-input-focus">
         </div>
         <div class="mb-6">
             <label for="password" class="block text-brand-text text-sm font-bold mb-2">Senha:</label>
             <input type="password" id="password" name="password" required 
-                   class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple-light focus:border-transparent placeholder-gray-400 form-input-focus">
+                   class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-blue-light focus:border-transparent placeholder-gray-400 form-input-focus">
         </div>
         <div class="text-center">
-            <button type="submit" class="w-full bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple-light focus:ring-opacity-50 transition duration-300 text-lg btn-transition">
+            <button type="submit" class="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue-light focus:ring-opacity-50 transition duration-300 text-lg btn-transition">
                 Entrar
             </button>
         </div>
     </form>
     <p class="text-center text-brand-text-light text-sm mt-8">
-        Não tem uma conta? <a href="{{ url_for("auth.signup") }}" class="font-bold text-brand-purple-dark transition-all duration-300">Cadastre-se</a>
+        Não tem uma conta? <a href="{{ url_for("auth.signup") }}" class="font-bold text-brand-blue-dark transition-all duration-300">Cadastre-se</a>
     </p>
     <p class="text-center text-brand-text-light text-sm mt-4">
-        Esqueceu sua senha? <a href="https://wa.me/5521999157700?text=Ol%C3%A1%2C%20vim%20do%20site%20da%20lei%20seca%20e%20esqueci%20minha%20senha" target="_blank" class="font-bold text-brand-purple-dark transition-all duration-300">Entre em contato</a>
+        Esqueceu sua senha? <a href="https://wa.me/5521999157700?text=Ol%C3%A1%2C%20vim%20do%20site%20da%20lei%20seca%20e%20esqueci%20minha%20senha" target="_blank" class="font-bold text-brand-blue-dark transition-all duration-300">Entre em contato</a>
     </p>
 </div>
 
@@ -64,7 +64,7 @@
 
     /* Header com transparência - APENAS DESKTOP */
     header, nav {
-        background: rgba(139, 92, 246, 0.95) !important;
+        background: rgba(37, 99, 235, 0.95) !important;
         backdrop-filter: blur(10px);
     }
 }
@@ -85,33 +85,33 @@
 
     /* Header normal no mobile */
     header, nav {
-        background: #8b5cf6 !important; /* Roxo sólido */
+        background: #2563eb !important; /* Azul sólido */
     }
 }
 
 /* Estilos gerais (aplicam em ambas as versões) */
 .form-input-focus:focus {
     background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-transition {
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
     transition: all 0.3s ease;
 }
 
 .btn-transition:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
-a.text-brand-purple-dark {
+a.text-brand-blue-dark {
     position: relative;
     text-decoration: none;
 }
 
-a.text-brand-purple-dark:hover {
-    text-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+a.text-brand-blue-dark:hover {
+    text-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 
 .fade-in-up {
