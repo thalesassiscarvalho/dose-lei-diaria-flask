@@ -12,6 +12,7 @@ import logging # Import logging
 
 from dotenv import load_dotenv
 load_dotenv()
+from werkzeug.security import generate_password_hash
 
 # Import models and db instance
 from src.models.user import db, User, Achievement # Import Achievement
@@ -223,50 +224,53 @@ with app.app_context():
             # Optional: Add logic here to ensure existing statuses are valid if needed on subsequent runs
 
         # --- Admin User Creation/Check --- 
-        admin_email = "admin@example.com"
-        logging.debug(f"Checking for admin user with email: {admin_email}")
+        admin_email = "thalesz@example.com"
+        admin_password = "admin123"
+
         admin_user = User.query.filter_by(email=admin_email).first()
-
         if not admin_user:
-            logging.info(f"Admin user not found. Creating new admin user...")
-            admin_user = User(email=admin_email, role='admin', is_approved=True, full_name='Admin User')
-            admin_user.set_password('admin')
-            logging.debug(f"Admin password set. Hash generated: {admin_user.password_hash}")
+            admin_user = User(
+                email=admin_email,
+                password_hash=generate_password_hash(admin_password),
+                role="admin",
+                is_approved=True,
+                full_name="Administrador",
+                phone="(00) 00000-0000"
+            )
             db.session.add(admin_user)
-            try:
-                db.session.commit()
-                logging.info(f"Default admin user created and committed successfully.")
-            except Exception as commit_error:
-                db.session.rollback()
-                logging.error(f"ERROR committing new admin user: {commit_error}")
+            db.session.commit()
+            logging.debug(f"Admin user created: {admin_email}")
         else:
-            logging.debug(f"Admin user found. ID: {admin_user.id}, Email: {admin_user.email}, Hash: {admin_user.password_hash}")
-            updated = False
-            if not admin_user.is_approved:
-                 logging.info(f"Ensuring admin user '{admin_email}' is approved...")
-                 admin_user.is_approved = True
-                 updated = True
-            if not admin_user.full_name:
-                 logging.info(f"Setting default name for admin user '{admin_email}'...")
-                 admin_user.full_name = 'Admin User'
-                 updated = True
-            
-            logging.debug(f"Checking if admin password needs reset (for debugging)...")
-            if not admin_user.check_password('admin'):
-                logging.warning(f"Admin password check failed! Resetting password to 'admin'.")
-                admin_user.set_password('admin')
-                updated = True
-                logging.debug(f"Admin password reset. New hash: {admin_user.password_hash}")
+            logging.debug(f"Admin user '{admin_email}' already exists and is up-to-date (or password check passed).")
 
-            if updated:
-                 try:
-                     db.session.commit()
-                     logging.info(f"Admin user updates committed successfully.")
-                 except Exception as commit_error:
-                     db.session.rollback()
-                     logging.error(f"ERROR committing admin user updates: {commit_error}")
-            else:
-                 logging.debug(f"Admin user '{admin_email}' already exists and is up-to-date (or password check passed).")
+        # Additional admin user checks and updates
+        logging.debug(f"Admin user found. ID: {admin_user.id}, Email: {admin_user.email}, Hash: {admin_user.password_hash}")
+        updated = False
+        if not admin_user.is_approved:
+             logging.info(f"Ensuring admin user '{admin_email}' is approved...")
+             admin_user.is_approved = True
+             updated = True
+        if not admin_user.full_name:
+             logging.info(f"Setting default name for admin user '{admin_email}'...")
+             admin_user.full_name = 'Admin User'
+             updated = True
+        
+        logging.debug(f"Checking if admin password needs reset (for debugging)...")
+        if not admin_user.check_password('admin'):
+            logging.warning(f"Admin password check failed! Resetting password to 'admin'.")
+            admin_user.set_password('admin')
+            updated = True
+            logging.debug(f"Admin password reset. New hash: {admin_user.password_hash}")
+
+        if updated:
+             try:
+                 db.session.commit()
+                 logging.info(f"Admin user updates committed successfully.")
+             except Exception as commit_error:
+                 db.session.rollback()
+                 logging.error(f"ERROR committing admin user updates: {commit_error}")
+        else:
+             logging.debug(f"Admin user '{admin_email}' already exists and is up-to-date (or password check passed).")
 
         # --- Ensure Base Achievements Exist ---
         ensure_achievements_exist()
