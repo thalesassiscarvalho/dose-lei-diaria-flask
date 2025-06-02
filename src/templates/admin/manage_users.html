@@ -44,18 +44,6 @@
                 <th scope="col" class="px-6 py-3 text-xs font-medium text-purple-700 uppercase tracking-wider">
                   Origem
                 </th>
-                <!-- Data Inicial -->
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-purple-700 uppercase tracking-wider">
-                  Data Inicial
-                </th>
-                <!-- Plano -->
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-purple-700 uppercase tracking-wider">
-                  Plano
-                </th>
-                <!-- Data Final -->
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-purple-700 uppercase tracking-wider">
-                  Data Final
-                </th>
                 <!-- Status -->
                 <th scope="col" class="px-6 py-3 text-xs font-medium text-purple-700 uppercase tracking-wider">
                   Status
@@ -92,44 +80,7 @@
                         type="text"
                         name="origem_{{ user.id }}"
                         class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
-                        placeholder="De onde ele veio?"
-                        value=""
-                      >
-                    </td>
-
-                    <!-- Data Inicial -->
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <input
-                        type="date"
-                        id="data_inicial_{{ user.id }}"
-                        name="data_inicial_{{ user.id }}"
-                        class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
-                        value=""
-                      >
-                    </td>
-
-                    <!-- Plano -->
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <select
-                        id="plano_{{ user.id }}"
-                        name="plano_{{ user.id }}"
-                        class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
-                      >
-                        <option value="">-- Selecione --</option>
-                        <option value="mensal">Mensal</option>
-                        <option value="trimestral">Trimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
-                      </select>
-                    </td>
-
-                    <!-- Data Final -->
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <input
-                        type="date"
-                        id="data_final_{{ user.id }}"
-                        name="data_final_{{ user.id }}"
-                        class="border border-gray-300 rounded px-2 py-1 w-full text-sm"
+                        placeholder="Origem do aluno..."
                         value=""
                       >
                     </td>
@@ -169,7 +120,7 @@
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="9" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                  <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                     Nenhum usuário estudante cadastrado.
                   </td>
                 </tr>
