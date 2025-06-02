@@ -5,60 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Include Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    {% if current_user.is_authenticated and current_user.role != 'admin' %}
+    <!-- Adicionar biblioteca de animações -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
-        /* === PROTEÇÕES ANTI-IMPRESSÃO E ANTI-SCREENSHOT === */
-
-        /* 1. PROTEÇÃO ANTI-IMPRESSÃO */
-        @media print {
-            body * {
-                visibility: hidden !important;
-            }
-            body::before {
-                content: "⚠️ IMPRESSÃO NÃO PERMITIDA ⚠️\A\AEste conteúdo é protegido e não pode ser impresso.\A\APara dúvidas, entre em contato conosco." !important;
-                visibility: visible !important;
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                font-size: 24px !important;
-                font-weight: bold !important;
-                color: #dc2626 !important;
-                text-align: center !important;
-                white-space: pre !important;
-                z-index: 9999 !important;
-                background: white !important;
-                padding: 40px !important;
-                border: 3px solid #dc2626 !important;
-                border-radius: 10px !important;
-            }
-        }
-
-        /* 2. DESABILITAR SELEÇÃO DE TEXTO */
+        /* Custom base styles for White/Purple Theme */
         body {
-            -webkit-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            user-select: none !important;
-            -webkit-touch-callout: none !important;
-            -webkit-tap-highlight-color: transparent !important;
+            background-color: #FFFFFF; /* White background */
+            color: #374151; /* Dark Gray text for readability */
+        }
+        /* Alert styles adjusted for light background */
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem;
+            animation: fadeInDown 0.5s;
+            transition: all 0.3s ease;
+        }
+        /* Using purple tones for alerts where appropriate */
+        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
+        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
+        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
+        .alert-info { color: #5b21b6; background-color: #ede9fe; border-color: #ddd6fe; } /* Purple for info */
+
+        /* Footer style */
+        footer {
+            color: #6B7280; /* Medium gray for footer text */
         }
 
-        /* 3. BLUR QUANDO PERDE FOCO (POSSÍVEL SCREENSHOT) */
-        body.blurred {
-            filter: blur(5px) !important;
-            pointer-events: none !important;
+        /* Custom scrollbar for light theme (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-    </style>
-    {% endif %}
-    <style>
-        /* === ESTILOS GERAIS === */
-        .fade-in-down {
-            animation: fadeInDown 0.5s ease-out;
+        ::-webkit-scrollbar-track {
+            background: #E5E7EB; /* Light gray track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #A78BFA; /* Light Purple thumb */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8B5CF6; /* Medium Purple thumb */
+        }
+
+        /* Animações e efeitos visuais */
+        .btn-transition {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-transition:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+        }
+
+        .btn-transition:active {
+            transform: translateY(0);
+        }
+
+        .btn-transition::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .btn-transition:hover::after {
+            opacity: 1;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+        }
+
+        .form-input-focus {
+            transition: all 0.3s ease;
+        }
+
+        .form-input-focus:focus {
+            transform: scale(1.01);
+        }
+
+        /* Animações para entrada de elementos */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes fadeInDown {
@@ -72,303 +143,118 @@
             }
         }
 
-        .ql-toolbar {
-            border-top: 1px solid #ccc;
-            border-left: 1px solid #ccc;
-            border-right: 1px solid #ccc;
+        .fade-in-up {
+            animation: fadeInUp 0.5s;
         }
 
-        .ql-container {
-            border-bottom: 1px solid #ccc;
-            border-left: 1px solid #ccc;
-            border-right: 1px solid #ccc;
+        .fade-in-down {
+            animation: fadeInDown 0.5s;
         }
 
-        .html-paste-area {
-            display: none;
-            margin-top: 10px;
-            padding: 15px;
-            border: 2px dashed #9333ea;
-            border-radius: 8px;
-            background-color: #f8fafc;
+        /* Efeito de pulse para chamar atenção */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
-        .html-paste-area.show {
-            display: block;
+        .pulse-effect {
+            animation: pulse 2s infinite;
         }
 
-        .html-paste-textarea {
-            width: 100%;
-            min-height: 150px;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            resize: vertical;
-        }
-
-        .btn-html-paste {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
+        /* Efeito de loading */
+        .loading-spinner {
+            border: 3px solid rgba(124, 58, 237, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #7C3AED;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
             margin-right: 8px;
-            transition: all 0.2s;
         }
 
-        .btn-html-paste:hover {
-            background: linear-gradient(135deg, #059669, #047857);
-            transform: translateY(-1px);
-        }
-
-        .btn-clear {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-clear:hover {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            transform: translateY(-1px);
-        }
-
-        .html-tips {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #eff6ff;
-            border-left: 4px solid #3b82f6;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #1e40af;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-purple': '#7C3AED', // Violet 500 - Main Purple
+                        'brand-purple-dark': '#6D28D9', // Violet 600 - Darker Purple
+                        'brand-purple-light': '#A78BFA', // Violet 400 - Lighter Purple
+                        'brand-bg': '#FFFFFF', // White background
+                        'brand-text': '#374151', // Dark Gray text
+                        'brand-text-light': '#6B7280', // Medium Gray text
+                    }
+                }
+            }
+        }
+    </script>
+    {% block head_extra %}{% endblock %}
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <a href="{{ url_for("index") }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
-            <nav class="flex space-x-4 mt-2">
+<body class="font-sans bg-brand-bg text-brand-text">
+    <nav class="bg-brand-purple text-white p-4 shadow-md">
+        <div class="container mx-auto flex flex-col items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
+            <div class="flex space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
+                    <span class="text-purple-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
                     {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="hover:text-purple-200 transition-colors">Painel Admin</a>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-purple-200">Painel Admin</a>
                     {% else %}
-                        <a href="{{ url_for('student.dashboard') }}" class="hover:text-purple-200 transition-colors">Meu Painel</a>
+                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-purple-200">Meu Painel</a>
                     {% endif %}
-                    <a href="{{ url_for('auth.logout') }}" class="hover:text-purple-200 transition-colors">Sair</a>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-purple-200">Sair</a>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="hover:text-purple-200 transition-colors">Login</a>
-                    <a href="{{ url_for('auth.signup') }}" class="hover:text-purple-200 transition-colors">Cadastro</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-purple-200">Login</a>
+                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-purple-200">Cadastro</a>
                 {% endif %}
-            </nav>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8 fade-in-up" style="animation-delay: 0.2s;">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div class="mb-4">
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 border border-red-300{% elif category == 'success' %}bg-green-100 text-green-700 border border-green-300{% else %}bg-blue-100 text-blue-700 border border-blue-300{% endif %}">
+                    <div class="alert alert-{{ category or 'info' }}" role="alert">
                         {{ message }}
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
-
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center py-6 mt-8 border-t border-gray-300">
-        <p class="text-gray-600 mb-2">Entre em contato:</p>
-        <a href="https://wa.me/5521999157700?text=Olá,%20vim%20do%20site%20da%20lei%20seca" 
-           target="_blank" 
-           class="text-green-600 hover:text-green-800 transition-colors">
-            <i class="fab fa-whatsapp"></i> (21) 99915-7700
-        </a>
-        <p class="text-gray-500 text-sm mt-2">Todos os direitos reservados.</p>
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 text-brand-text-light fade-in-up" style="animation-delay: 0.4s;">
+        <div class="mb-4">
+            <p class="font-semibold mb-2 text-brand-text">Entre em contato:</p>
+            <div class="flex justify-center items-center">
+                <a href="https://wa.me/5521999157700" target="_blank" class="hover:text-brand-purple transition-all duration-300 ease-in-out" title="WhatsApp">
+                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21) 99915-7700
+                </a>
+            </div>
+        </div>
+        <p>&copy; 2025 Todos os direitos reservados.</p>
     </footer>
 
-    <!-- JavaScript para Proteções Anti-Pirataria -->
-    {% if current_user.is_authenticated and current_user.role != 'admin' %}
-    <script>
-        (function() {
-            'use strict';
-            
-            // 1. BLOQUEAR TECLAS DE SCREENSHOT E FERRAMENTAS
-            document.addEventListener('keydown', function(e) {
-                // Print Screen
-                if (e.key === 'PrintScreen') {
-                    e.preventDefault();
-                    alert('⚠️ Screenshot não permitido!');
-                    return false;
-                }
-                
-                // F12 (DevTools)
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    alert('⚠️ DevTools desabilitadas!');
-                    return false;
-                }
-                
-                // Ctrl+Shift+I/J/C (DevTools)
-                if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
-                    e.preventDefault();
-                    alert('⚠️ DevTools desabilitadas!');
-                    return false;
-                }
-                
-                // Ctrl+P (Impressão)
-                if (e.ctrlKey && e.key === 'p') {
-                    e.preventDefault();
-                    alert('⚠️ Impressão não permitida!');
-                    return false;
-                }
-                
-                // Ctrl+S (Salvar página)
-                if (e.ctrlKey && e.key === 's') {
-                    e.preventDefault();
-                    alert('⚠️ Salvar página não permitido!');
-                    return false;
-                }
-                
-                // Ctrl+A (Selecionar tudo)
-                if (e.ctrlKey && e.key === 'a') {
-                    e.preventDefault();
-                    alert('⚠️ Seleção não permitida!');
-                    return false;
-                }
-                
-                // Ctrl+C (Copiar)
-                if (e.ctrlKey && e.key === 'c') {
-                    e.preventDefault();
-                    alert('⚠️ Cópia não permitida!');
-                    return false;
-                }
-            });
-
-            // 2. DESABILITAR MENU DE CONTEXTO (BOTÃO DIREITO)
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                alert('⚠️ Menu de contexto desabilitado!');
-                return false;
-            });
-
-            // 3. DETECTAR FERRAMENTAS DE DESENVOLVEDOR
-            let devtools = {
-                open: false,
-                orientation: null
-            };
-            
-            const threshold = 160;
-            
-            setInterval(function() {
-                if (window.outerHeight - window.innerHeight > threshold || 
-                    window.outerWidth - window.innerWidth > threshold) {
-                    if (!devtools.open) {
-                        devtools.open = true;
-                        alert('⚠️ DevTools detectadas! Fechando...');
-                        window.location.reload();
-                    }
-                } else {
-                    devtools.open = false;
-                }
-            }, 500);
-
-            // 4. BLUR QUANDO PERDE FOCO (POSSÍVEL SCREENSHOT)
-            window.addEventListener('blur', function() {
-                document.body.classList.add('blurred');
-            });
-            
-            window.addEventListener('focus', function() {
-                document.body.classList.remove('blurred');
-            });
-
-            // 5. DETECTAR MUDANÇA DE VISIBILIDADE DA PÁGINA
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    document.body.classList.add('blurred');
-                } else {
-                    document.body.classList.remove('blurred');
-                }
-            });
-
-            // 6. BLOQUEAR DRAG AND DROP
-            document.addEventListener('dragstart', function(e) {
-                e.preventDefault();
-                return false;
-            });
-
-            // 7. APLICAR PROTEÇÕES QUANDO A PÁGINA CARREGA
-            window.addEventListener('load', function() {
-                // Desabilitar seleção via JavaScript também
-                document.onselectstart = function() {
-                    return false;
-                };
-                
-                document.onmousedown = function() {
-                    return false;
-                };
-            });
-
-        })();
-    </script>
-    {% endif %}
-
-    <!-- Scripts Gerais -->
-    <script>
-        // Função para mostrar/esconder área de colar HTML
-        function toggleHtmlPaste() {
-            const area = document.getElementById('htmlPasteArea');
-            if (area) {
-                area.classList.toggle('show');
-                if (area.classList.contains('show')) {
-                    document.getElementById('htmlTextarea').focus();
-                }
-            }
-        }
-
-        // Função para aplicar HTML no editor Quill
-        function applyHtmlToQuill() {
-            const textarea = document.getElementById('htmlTextarea');
-            const quillEditor = window.quillEditor;
-            
-            if (textarea && quillEditor && textarea.value.trim()) {
-                // Insertar HTML no Quill
-                const delta = quillEditor.clipboard.convert(textarea.value);
-                quillEditor.setContents(delta);
-                
-                // Limpar textarea e esconder área
-                textarea.value = '';
-                document.getElementById('htmlPasteArea').classList.remove('show');
-                
-                alert('✅ HTML aplicado com sucesso!');
-            } else {
-                alert('⚠️ Por favor, cole o HTML na área de texto primeiro.');
-            }
-        }
-
-        // Função para limpar conteúdo do editor
-        function clearQuillContent() {
-            const quillEditor = window.quillEditor;
-            if (quillEditor) {
-                quillEditor.setContents([]);
-                alert('🗑️ Conteúdo limpo!');
-            }
-        }
-    </script>
-
+    <!-- Include Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
