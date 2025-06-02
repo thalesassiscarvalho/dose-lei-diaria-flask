@@ -11,7 +11,7 @@
     <!-- Adicionar biblioteca de animações -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
-        /* Custom base styles for White/Purple Theme */
+        /* Custom base styles for White/Blue Theme */
         body {
             background-color: #FFFFFF; /* White background */
             color: #374151; /* Dark Gray text for readability */
@@ -25,18 +25,18 @@
             animation: fadeInDown 0.5s;
             transition: all 0.3s ease;
         }
-        /* Using purple tones for alerts where appropriate */
+        /* Using blue tones for alerts where appropriate */
         .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
         .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
         .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
-        .alert-info { color: #5b21b6; background-color: #ede9fe; border-color: #ddd6fe; } /* Purple for info */
+        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; } /* Blue for info */
 
         /* Footer style */
         footer {
             color: #6B7280; /* Medium gray for footer text */
         }
 
-        /* Custom scrollbar for light theme (optional) */
+        /* Custom scrollbar for light theme (optional ) */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -44,11 +44,11 @@
             background: #E5E7EB; /* Light gray track */
         }
         ::-webkit-scrollbar-thumb {
-            background: #A78BFA; /* Light Purple thumb */
+            background: #60a5fa; /* Light Blue thumb */
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #8B5CF6; /* Medium Purple thumb */
+            background: #3b82f6; /* Medium Blue thumb */
         }
 
         /* Animações e efeitos visuais */
@@ -60,7 +60,7 @@
 
         .btn-transition:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         .btn-transition:active {
@@ -109,7 +109,7 @@
 
         .card-hover:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
         }
 
         .form-input-focus {
@@ -170,9 +170,9 @@
 
         /* Efeito de loading */
         .loading-spinner {
-            border: 3px solid rgba(124, 58, 237, 0.1);
+            border: 3px solid rgba(37, 99, 235, 0.1);
             border-radius: 50%;
-            border-top: 3px solid #7C3AED;
+            border-top: 3px solid #2563eb;
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
@@ -191,9 +191,9 @@
             theme: {
                 extend: {
                     colors: {
-                        'brand-purple': '#7C3AED', // Violet 500 - Main Purple
-                        'brand-purple-dark': '#6D28D9', // Violet 600 - Darker Purple
-                        'brand-purple-light': '#A78BFA', // Violet 400 - Lighter Purple
+                        'brand-blue': '#3b82f6', // Blue 500 - Main Blue
+                        'brand-blue-dark': '#2563eb', // Blue 600 - Darker Blue
+                        'brand-blue-light': '#60a5fa', // Blue 400 - Lighter Blue
                         'brand-bg': '#FFFFFF', // White background
                         'brand-text': '#374151', // Dark Gray text
                         'brand-text-light': '#6B7280', // Medium Gray text
@@ -205,21 +205,21 @@
     {% block head_extra %}{% endblock %}
 </head>
 <body class="font-sans bg-brand-bg text-brand-text">
-    <nav class="bg-brand-purple text-white p-4 shadow-md">
+    <nav class="bg-brand-blue text-white p-4 shadow-md">
         <div class="container mx-auto flex flex-col items-center">
             <a href="{{ url_for('index') }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
             <div class="flex space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
-                    <span class="text-purple-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
+                    <span class="text-blue-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
                     {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-purple-200">Painel Admin</a>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-blue-200">Painel Admin</a>
                     {% else %}
-                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-purple-200">Meu Painel</a>
+                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-blue-200">Meu Painel</a>
                     {% endif %}
-                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-purple-200">Sair</a>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-blue-200">Sair</a>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-purple-200">Login</a>
-                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-purple-200">Cadastro</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-blue-200">Login</a>
+                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-blue-200">Cadastro</a>
                 {% endif %}
             </div>
         </div>
@@ -245,8 +245,8 @@
         <div class="mb-4">
             <p class="font-semibold mb-2 text-brand-text">Entre em contato:</p>
             <div class="flex justify-center items-center">
-                <a href="https://wa.me/5521999157700" target="_blank" class="hover:text-brand-purple transition-all duration-300 ease-in-out" title="WhatsApp">
-                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21) 99915-7700
+                <a href="https://wa.me/5521999157700" target="_blank" class="hover:text-brand-blue transition-all duration-300 ease-in-out" title="WhatsApp">
+                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
                 </a>
             </div>
         </div>
