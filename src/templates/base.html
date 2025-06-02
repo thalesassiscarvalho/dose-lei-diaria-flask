@@ -36,7 +36,7 @@
             color: #6B7280; /* Medium gray for footer text */
         }
 
-        /* Custom scrollbar for light theme (optional ) */
+        /* Custom scrollbar for light theme (optional  ) */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -241,16 +241,17 @@
         {% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 text-brand-text-light fade-in-up" style="animation-delay: 0.4s;">
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: white;">
         <div class="mb-4">
-            <p class="font-semibold mb-2 text-brand-text">Entre em contato:</p>
+            <p class="font-semibold mb-2" style="color: white;">Entre em contato:</p>
             <div class="flex justify-center items-center">
-                <a href="https://wa.me/5521999157700" target="_blank" class="hover:text-brand-blue transition-all duration-300 ease-in-out" title="WhatsApp">
+                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: white;" title="WhatsApp"
+                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='white'">
                     <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
                 </a>
             </div>
         </div>
-        <p>&copy; 2025 Todos os direitos reservados.</p>
+        <p style="color: white;">&copy; 2025 Todos os direitos reservados.</p>
     </footer>
 
     <!-- Include Quill JS -->
