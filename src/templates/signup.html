@@ -3,7 +3,7 @@
 {% block title %}Cadastro - Dose de Lei Diária{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto mt-12 bg-white border border-gray-200 shadow-lg rounded-lg p-8 card-hover fade-in-up">
+<div class="max-w-md mx-auto mt-12 bg-white border border-gray-200 shadow-lg rounded-lg p-8 card-hover fade-in-up signup-container">
     <h1 class="text-3xl font-bold text-center text-brand-purple mb-8">Criar Conta</h1>
     <form method="POST" action="{{ url_for("auth.signup") }}">
         <div class="mb-4">
@@ -37,4 +37,104 @@
         Já tem uma conta? <a href="{{ url_for("auth.login") }}" class="font-bold text-brand-purple hover:text-brand-purple-dark transition-all duration-300">Faça login</a>
     </p>
 </div>
+
+<style>
+/* APENAS DESKTOP - Fundo com documentos legais */
+@media (min-width: 769px) {
+    body {
+        background-image: url('{{ url_for("static", filename="backgroundlogin.png") }}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    /* Overlay para melhorar legibilidade - APENAS DESKTOP */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.60); /* Ajuste conforme sua preferência */
+        z-index: -1;
+    }
+
+    /* Container do formulário com glass-morphism - APENAS DESKTOP */
+    .signup-container {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Header com transparência - APENAS DESKTOP */
+    header, nav {
+        background: rgba(139, 92, 246, 0.95) !important;
+        backdrop-filter: blur(10px);
+    }
+}
+
+/* MOBILE - Mantém design original */
+@media (max-width: 768px) {
+    body {
+        background: #f8fafc; /* Fundo cinza claro padrão */
+    }
+    
+    .signup-container {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        margin: 10px;
+        margin-top: 2rem;
+    }
+
+    /* Header normal no mobile */
+    header, nav {
+        background: #8b5cf6 !important; /* Roxo sólido */
+    }
+}
+
+/* Estilos gerais (aplicam em ambas as versões) */
+.form-input-focus:focus {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-transition {
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-transition:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+a.text-brand-purple {
+    position: relative;
+    text-decoration: none;
+}
+
+a.text-brand-purple:hover {
+    text-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
 {% endblock %}
