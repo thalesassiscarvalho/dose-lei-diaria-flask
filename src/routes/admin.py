@@ -226,6 +226,39 @@ def reset_user_password(user_id):
     # GET request: renderiza o template de redefinição de senha
     return render_template("admin/reset_password.html", user=user)
 
+# --- Update User Source - NOVA FUNCIONALIDADE ---
+@admin_bp.route("/users/<int:user_id>/update_source", methods=["POST"])
+@login_required
+@admin_required
+def update_user_source(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == "admin":
+        flash("Não é possível editar informações de um administrador.", "danger")
+        return redirect(url_for("admin.manage_users"))
+    
+    source = request.form.get("source", "").strip()
+    
+    # Limitar o tamanho do campo
+    if len(source) > 100:
+        flash("Origem deve ter no máximo 100 caracteres.", "danger")
+        return redirect(url_for("admin.manage_users"))
+    
+    # Atualizar o campo source
+    user.source = source if source else None
+    
+    try:
+        db.session.commit()
+        if source:
+            flash(f"Origem do usuário {user.email} atualizada para: {source}", "success")
+        else:
+            flash(f"Origem do usuário {user.email} removida.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao atualizar origem: {e}", "danger")
+    
+    return redirect(url_for("admin.manage_users"))
+
 # --- Announcement Management ---
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
@@ -269,3 +302,4 @@ def delete_announcement(announcement_id):
     db.session.commit()
     flash("Aviso excluído com sucesso!", "success")
     return redirect(url_for("admin.manage_announcements"))
+
