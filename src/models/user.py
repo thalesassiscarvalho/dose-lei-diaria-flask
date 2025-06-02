@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(10), nullable=False, default="student") # "admin" or "student"
     is_approved = db.Column(db.Boolean, nullable=False, default=False)
     points = db.Column(db.Integer, default=0, nullable=False) # Added points field
+    source = db.Column(db.String(100), nullable=True) # Added source/origin field for admin tracking
 
     # Relationships
     progress = db.relationship("UserProgress", backref="user", lazy=True)
@@ -71,3 +72,4 @@ class Announcement(db.Model):
 
     def __repr__(self):
         return f"<Announcement {self.title}>"
+
