@@ -4,11 +4,11 @@
 
 {% block head_extra %}
 <style>
-    /* Editor base styles (Keep these here as they are specific to this page) */
+    /* Ensure Quill editor has a reasonable height */
     #editor-container {
         height: 300px;
-        background-color: white;
-        color: black;
+        background-color: white; /* Ensure white background for editor */
+        color: black; /* Ensure black text color */
         border: 1px solid #ccc;
         border-radius: 0.25rem;
     }
@@ -19,33 +19,88 @@
         border-bottom: 1px solid #ccc;
     }
     .ql-editor {
-        color: black;
+        color: black; /* Ensure text inside editor is black */
         line-height: 1.6;
     }
-    .ql-toolbar .ql-stroke { stroke: black; }
-    .ql-toolbar .ql-fill { fill: black; }
+    .ql-toolbar .ql-stroke {
+        stroke: black;
+    }
+    .ql-toolbar .ql-fill {
+        fill: black;
+    }
+    
+    /* Custom HTML paste button */
+    .html-paste-container {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+    
+    .html-paste-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .html-paste-btn:hover {
+        background-color: #218838;
+    }
+    
+    .html-clear-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .html-clear-btn:hover {
+        background-color: #c82333;
+    }
+    
+    .html-textarea {
+        width: 100%;
+        height: 120px;
+        margin-top: 10px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        background-color: white;
+        display: none;
+    }
+    
+    .html-help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
 
-    /* HTML Paste Helper styles */
-    .html-paste-container { margin-bottom: 10px; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.25rem; }
-    .html-paste-btn { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px; transition: background-color 0.3s ease; }
-    .html-paste-btn:hover { background-color: #218838; }
-    .html-clear-btn { background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px; transition: background-color 0.3s ease; }
-    .html-clear-btn:hover { background-color: #c82333; }
-    .html-textarea { width: 100%; height: 120px; margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; background-color: white; display: none; }
-    .html-help-text { font-size: 12px; color: #6c757d; margin-top: 5px; }
-    input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px #60a5fa; border-color: transparent; }
+    /* Inputs com foco azul */
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #60a5fa;
+        border-color: transparent;
+    }
 
-    /* Custom CSS classes for content formatting are now defined in base.html */
-    /* Styles to preserve Quill formatting for specific inline styles (if needed for direct pasting) can remain */
+    /* Preserve specific colors in Quill editor */
     .ql-editor p[style*="color: #8b5cf6"],
     .ql-editor h2[style*="color: #8b5cf6"],
     .ql-editor h3[style*="color: #8b5cf6"] {
         color: #8b5cf6 !important;
     }
-    .ql-editor h2[style*="color: #2563eb"],
-    .ql-editor h3[style*="color: #2563eb"] {
-        color: #2563eb !important;
-    }
+    
     .ql-editor p[style*="color: #059669"] {
         color: #059669 !important;
         background-color: #f0fdf4 !important;
@@ -54,6 +109,7 @@
         margin: 15px 0 !important;
         font-style: italic !important;
     }
+    
     .ql-editor p[style*="color: #dc2626"] {
         color: #dc2626 !important;
         background-color: #fef2f2 !important;
@@ -62,6 +118,7 @@
         margin: 15px 0 !important;
         font-weight: bold !important;
     }
+
     .ql-editor p[style*="color: #666"] {
         color: #666 !important;
         font-style: italic !important;
@@ -73,46 +130,51 @@
 <h1 class="text-3xl font-bold mb-6" style="color: #2563eb;">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
 
 <form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-    <!-- Fields: title, subject_id, description -->
     <div class="mb-4">
         <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
-        <input type="text" id="title" name="title" value="{{ law.title if law else '' }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">
+        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">
     </div>
+
     <div class="mb-4">
         <label for="subject_id" class="block text-brand-text text-sm font-bold mb-2">Matéria:</label>
         <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white">
-            <option value="None">-- Nenhuma --</option>
+            <option value="None">-- Nenhuma --</option> {# Option for no subject #}
             {% for subject in subjects %}
                 <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
             {% endfor %}
         </select>
         <p class="text-xs text-gray-500 mt-1">Você pode gerenciar as matérias <a href="{{ url_for("admin.manage_subjects") }}" class="hover:underline" style="color: #2563eb;">aqui</a>.</p>
     </div>
+
     <div class="mb-4">
         <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
-        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">{{ law.description if law else '' }}</textarea>
+        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">{{ law.description if law else "" }}</textarea>
     </div>
 
     <div class="mb-6">
         <label for="editor-container" class="block text-brand-text text-sm font-bold mb-2">Conteúdo:</label>
+        
+        <!-- HTML Paste Helper -->
         <div class="html-paste-container">
-            <button type="button" id="show-html-paste" class="html-paste-btn">📋 Colar HTML (com Classes)</button>
+            <button type="button" id="show-html-paste" class="html-paste-btn">📋 Colar HTML Formatado</button>
             <button type="button" id="clear-content" class="html-clear-btn">🗑️ Limpar Conteúdo</button>
-            <button type="button" id="show-example" class="html-paste-btn" style="background-color: #6366f1;">📄 Ver Exemplo (com Classes)</button>
+            <button type="button" id="show-example" class="html-paste-btn" style="background-color: #6366f1;">📄 Ver Exemplo</button>
             <div class="html-help-text">
-                💡 Cole HTML usando as classes CSS definidas (veja exemplo) em vez de estilos inline.
+                💡 Use o botão "Colar HTML Formatado" para inserir conteúdo com formatação avançada (cores, estilos, etc.)
             </div>
-            <textarea id="html-paste-area" class="html-textarea" placeholder="Cole seu HTML formatado com CLASSES CSS aqui..."></textarea>
+            <textarea id="html-paste-area" class="html-textarea" placeholder="Cole seu HTML formatado aqui e clique em 'Aplicar HTML' para inserir no editor..."></textarea>
             <div id="html-paste-actions" style="display: none; margin-top: 10px;">
                 <button type="button" id="apply-html" class="html-paste-btn">✅ Aplicar HTML</button>
                 <button type="button" id="cancel-html" class="html-clear-btn">❌ Cancelar</button>
             </div>
         </div>
-        <div id="editor-container"></div> 
+        
+        <!-- Create the editor container -->
+        <div id="editor-container">{{ law.content | safe if law else "" }}</div>
+        <!-- Hidden input to store Quill content -->
         <input type="hidden" name="content" id="content-input">
     </div>
 
-    <!-- Buttons: Salvar, Cancelar -->
     <div class="flex items-center justify-between">
         <button type="submit" class="text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300"
                 style="background-color: #2563eb; border: none;"
@@ -132,7 +194,7 @@
 
 {% block scripts %}
 <script>
-    // Initialize Quill editor
+    // Initialize Quill editor with enhanced toolbar and custom formats
     var quill = new Quill("#editor-container", {
         theme: "snow",
         modules: {
@@ -150,7 +212,7 @@
                 ["clean"]
             ]
         },
-        formats: [ /* ... include all formats used by classes ... */ 'header', 'bold', 'italic', 'underline', 'strike', 'script', 'list', 'bullet', 'indent', 'color', 'background', 'font', 'align', 'link', 'image', 'blockquote', 'code-block', 'size', 'direction' ],
+        formats: ['header', 'bold', 'italic', 'underline', 'strike', 'script', 'list', 'bullet', 'indent', 'color', 'background', 'font', 'align', 'link', 'image', 'blockquote', 'code-block', 'size', 'direction'],
         placeholder: "Digite o conteúdo da legislação aqui..."
     });
 
@@ -165,48 +227,37 @@
     var applyHtmlBtn = document.getElementById("apply-html");
     var cancelHtmlBtn = document.getElementById("cancel-html");
 
-    // Load existing content using dangerouslyPasteHTML (preserves classes)
-    var savedContent = {{ law.content | tojson | safe if law else 'null' }};
-    if (savedContent) {
-        // Wait a tiny bit for Quill to be fully ready before pasting
-        setTimeout(() => {
-             quill.clipboard.dangerouslyPasteHTML(0, savedContent, 'silent');
-             console.log('Conteúdo existente carregado via dangerouslyPasteHTML.');
-        }, 100); 
-    }
-
-    // Example HTML content using CSS classes (Matches classes in base.html)
-    var exampleHtmlWithClasses = 
-`<p class="paragrafo-introdutorio-cinza">
+    // Example HTML content
+    var exampleHtml = `<p style="color: #666; font-style: italic; margin-bottom: 20px;">
 Dispositivo inaugural da Constituição de 1988 que estabelece os pilares da República Federativa do Brasil: fundamentos, separação de Poderes, objetivos e princípios das relações internacionais.
 </p>
 
-<h2 class="titulo-lei-roxo">
+<h2 style="color: #8b5cf6; font-weight: bold; margin: 20px 0 15px 0;">
 TESTETÍTULO I – Dos Princípios Fundamentais
 </h2>
 
-<h3 class="subtitulo-lei-roxo">
+<h3 style="color: #8b5cf6; font-weight: bold; margin: 15px 0 10px 0;">
 Estado Democrático de Direito e Fundamentos da República
 </h3>
 
-<p class="paragrafo-normal">
-<span class="texto-negrito">Art. 1º</span> A República Federativa do Brasil, formada pela <span class="texto-negrito">união indissolúvel dos Estados e Municípios e do Distrito Federal</span>, constitui-se em <span class="texto-negrito">Estado Democrático de Direito</span> e tem como fundamentos:
+<p style="margin: 10px 0;">
+<strong>Art. 1º</strong> A República Federativa do Brasil, formada pela <strong>união indissolúvel dos Estados e Municípios e do Distrito Federal</strong>, constitui-se em <strong>Estado Democrático de Direito</strong> e tem como fundamentos:
 </p>
 
-<p class="paragrafo-destaque-verde">
+<p style="color: #059669; font-style: italic; margin: 15px 0; padding: 10px; background-color: #f0fdf4; border-left: 4px solid #059669;">
 Este artigo estabelece a forma de Estado (federação), a forma de governo (república) e o regime político (democrático) do Brasil. O conceito de Estado Democrático de Direito combina os princípios do Estado de Direito (submissão ao ordenamento jurídico) com os do Estado Democrático (participação popular no poder).
 </p>
 
-<p class="paragrafo-importante-vermelho">
-<span class="texto-negrito">Jurisprudência:</span> O STF reconhece a dignidade da pessoa humana como princípio matriz de todos os direitos fundamentais, servindo de base para decisões sobre direitos da personalidade, bioética e condições carcerárias (ADPF 347).
+<p style="color: #dc2626; font-weight: bold; margin: 15px 0; padding: 10px; background-color: #fef2f2; border-left: 4px solid #dc2626;">
+<strong>Jurisprudência:</strong> O STF reconhece a dignidade da pessoa humana como princípio matriz de todos os direitos fundamentais, servindo de base para decisões sobre direitos da personalidade, bioética e condições carcerárias (ADPF 347).
 </p>`;
 
-    // Show example HTML with classes
+    // Show example HTML
     showExampleBtn.addEventListener("click", function() {
-        htmlPasteArea.value = exampleHtmlWithClasses;
+        htmlPasteArea.value = exampleHtml;
         htmlPasteArea.style.display = "block";
         htmlPasteActions.style.display = "block";
-        alert("📄 Exemplo com Classes CSS carregado! Clique em 'Aplicar HTML'.");
+        alert("📄 Exemplo carregado! Clique em 'Aplicar HTML' para ver o resultado.");
     });
 
     // Show HTML paste area
@@ -214,28 +265,36 @@ Este artigo estabelece a forma de Estado (federação), a forma de governo (rep�
         htmlPasteArea.style.display = "block";
         htmlPasteActions.style.display = "block";
         htmlPasteArea.focus();
-        htmlPasteArea.placeholder = "Cole seu HTML com CLASSES CSS aqui...";
+        htmlPasteArea.placeholder = "Cole seu HTML aqui. Use o botão 'Ver Exemplo' para ver a formatação correta.";
     });
 
-    // Apply HTML (using innerHTML, Quill should handle classes better)
+    // Enhanced HTML application with better formatting preservation
     applyHtmlBtn.addEventListener("click", function() {
         var htmlContent = htmlPasteArea.value.trim();
         if (htmlContent) {
             try {
-                quill.setText(''); // Clear first
-                // Use innerHTML for pasting, as dangerouslyPasteHTML might have issues here
-                quill.root.innerHTML = htmlContent; 
-                quill.update(); // Force update to ensure Quill recognizes the content
+                // Clear current content first
+                quill.setText('');
+                
+                // Method 1: Direct innerHTML insertion (preserves all styles)
+                quill.root.innerHTML = htmlContent;
+                
+                // Force Quill to update
+                quill.update();
+                
+                // Clean up
                 htmlPasteArea.value = "";
                 htmlPasteArea.style.display = "none";
                 htmlPasteActions.style.display = "none";
-                alert("✅ HTML com Classes aplicado! Verifique a formatação.");
+                
+                alert("✅ HTML aplicado com sucesso!\n\n🎨 Formatação preservada:\n- Cores específicas mantidas\n- Estilos de fundo preservados\n- Bordas e espaçamentos aplicados");
+                
             } catch (error) {
-                console.error('Erro ao aplicar HTML com Classes:', error);
-                alert("❌ Erro ao aplicar HTML. Verifique o código.");
+                console.error('Erro ao aplicar HTML:', error);
+                alert("❌ Erro ao aplicar HTML. Verifique se o código está correto.\n\nUse o botão 'Ver Exemplo' para ver a formatação correta.");
             }
         } else {
-            alert("Por favor, cole o HTML com Classes na área de texto.");
+            alert("Por favor, cole o HTML na área de texto primeiro.\n\nDica: Use o botão 'Ver Exemplo' para ver um modelo.");
         }
     });
 
@@ -256,18 +315,34 @@ Este artigo estabelece a forma de Estado (federação), a forma de governo (rep�
 
     // Form submission handler
     form.addEventListener("submit", function(event) {
+        // Get the HTML content from the Quill editor
         var quillContent = quill.root.innerHTML;
+        // Set the value of the hidden input field
         contentInput.value = quillContent;
+        
+        // Debug log
         console.log('Conteúdo sendo salvo:', quillContent);
     });
 
-    // Preserve formatting on paste events (might help with direct pastes)
+    // Add keyboard shortcut for HTML paste (Ctrl+Shift+V)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+            e.preventDefault();
+            showHtmlPasteBtn.click();
+        }
+    });
+
+    // Preserve formatting on paste events
     quill.root.addEventListener('paste', function(e) {
+        // Allow natural paste but preserve custom styles
         setTimeout(function() {
-            console.log('Conteúdo colado diretamente, verificando classes...');
-            // Potentially re-apply classes if needed, but rely on CSS in base.html first
+            // Re-apply custom styles after paste
+            var content = quill.root.innerHTML;
+            if (content.includes('style=')) {
+                console.log('Formatação detectada, preservando estilos...');
+                // Styles are preserved by CSS rules above
+            }
         }, 100);
     });
 </script>
 {% endblock %}
-
