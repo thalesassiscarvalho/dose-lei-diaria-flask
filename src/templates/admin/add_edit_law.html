@@ -89,7 +89,7 @@
     /* Inputs com foco azul */
     input:focus, select:focus, textarea:focus {
         outline: none;
-        ring: 2px solid #60a5fa;
+        box-shadow: 0 0 0 2px #60a5fa;
         border-color: transparent;
     }
 </style>
@@ -101,14 +101,12 @@
 <form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
     <div class="mb-4">
         <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
-        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent"
-               style="focus:ring: 2px solid #60a5fa;">
+        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">
     </div>
 
     <div class="mb-4">
         <label for="subject_id" class="block text-brand-text text-sm font-bold mb-2">Matéria:</label>
-        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                style="focus:ring: 2px solid #60a5fa;">
+        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white">
             <option value="None">-- Nenhuma --</option> {# Option for no subject #}
             {% for subject in subjects %}
                 <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
@@ -119,8 +117,7 @@
 
     <div class="mb-4">
         <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
-        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent"
-                  style="focus:ring: 2px solid #60a5fa;">{{ law.description if law else "" }}</textarea>
+        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">{{ law.description if law else "" }}</textarea>
     </div>
 
     <div class="mb-6">
@@ -183,6 +180,7 @@
                 ["clean"]
             ]
         },
+        formats: ['header', 'bold', 'italic', 'underline', 'strike', 'script', 'list', 'bullet', 'indent', 'color', 'background', 'font', 'align', 'link', 'image', 'blockquote', 'code-block'],
         placeholder: "Digite o conteúdo da legislação aqui..."
     });
 
@@ -201,18 +199,43 @@
         htmlPasteArea.style.display = "block";
         htmlPasteActions.style.display = "block";
         htmlPasteArea.focus();
+        htmlPasteArea.placeholder = "Cole seu HTML aqui. Exemplo:\n<h1>TÍTULO I</h1>\n<p><strong>Art. 1º</strong> - Texto do artigo...</p>\n<p style='color: red;'>Texto colorido</p>";
     });
 
-    // Apply HTML to editor
+    // Improved HTML application with better formatting preservation
     applyHtmlBtn.addEventListener("click", function() {
-        var htmlContent = htmlPasteArea.value;
-        if (htmlContent.trim()) {
-            // Insert HTML directly into Quill
-            quill.root.innerHTML = htmlContent;
-            htmlPasteArea.value = "";
-            htmlPasteArea.style.display = "none";
-            htmlPasteActions.style.display = "none";
-            alert("HTML aplicado com sucesso! ✅");
+        var htmlContent = htmlPasteArea.value.trim();
+        if (htmlContent) {
+            try {
+                // Method 1: Use Quill's clipboard module for better HTML parsing
+                var delta = quill.clipboard.convert(htmlContent);
+                quill.setContents(delta);
+                
+                // If that doesn't work well, fallback to direct innerHTML
+                setTimeout(function() {
+                    if (quill.getText().trim() === '') {
+                        console.log('Fallback: usando innerHTML direto');
+                        quill.root.innerHTML = htmlContent;
+                    }
+                }, 100);
+                
+                htmlPasteArea.value = "";
+                htmlPasteArea.style.display = "none";
+                htmlPasteActions.style.display = "none";
+                
+                alert("✅ HTML aplicado com sucesso!\n\n💡 Dicas:\n- Use a barra de ferramentas para ajustar formatação\n- Headers (H1, H2, etc.) são preservados\n- Cores e estilos são mantidos");
+                
+            } catch (error) {
+                console.error('Erro ao aplicar HTML:', error);
+                // Fallback method
+                try {
+                    quill.root.innerHTML = htmlContent;
+                    alert("✅ HTML aplicado (método alternativo)!");
+                } catch (fallbackError) {
+                    console.error('Erro no fallback:', fallbackError);
+                    alert("❌ Erro ao aplicar HTML. Verifique se o código está correto.\n\nDica: Use HTML simples como:\n<h1>Título</h1>\n<p><strong>Texto negrito</strong></p>");
+                }
+            }
         } else {
             alert("Por favor, cole o HTML na área de texto primeiro.");
         }
@@ -228,7 +251,7 @@
     // Clear all content
     clearContentBtn.addEventListener("click", function() {
         if (confirm("Tem certeza que deseja limpar todo o conteúdo?")) {
-            quill.root.innerHTML = "";
+            quill.setText('');
             htmlPasteArea.value = "";
         }
     });
@@ -239,7 +262,26 @@
         var quillContent = quill.root.innerHTML;
         // Set the value of the hidden input field
         contentInput.value = quillContent;
+        
+        // Debug log
+        console.log('Conteúdo sendo salvo:', quillContent);
     });
 
+    // Add keyboard shortcut for HTML paste (Ctrl+Shift+V)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+            e.preventDefault();
+            showHtmlPasteBtn.click();
+        }
+    });
+
+    // Enhanced paste event handler for better HTML support
+    quill.root.addEventListener('paste', function(e) {
+        // Let Quill handle the paste naturally, but log for debugging
+        setTimeout(function() {
+            console.log('Paste detectado, conteúdo atual:', quill.root.innerHTML);
+        }, 100);
+    });
 </script>
 {% endblock %}
+
