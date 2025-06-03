@@ -4,143 +4,97 @@
 
 {% block head_extra %}
 <style>
-    /* Specific styles for student dashboard elements - White/Blue Theme */
+    /* Specific styles for student dashboard elements - Adapted for Dark Mode */
     .law-card {
-        transition: all 0.3s ease;
-        background-color: #FFFFFF; /* White background for cards */
-        border: 1px solid #dbeafe; /* Light blue border */
-        color: #374151; /* Darker gray text */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 170px;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Lighter shadow */
+        @apply transition-all duration-300 bg-white dark:bg-gray-800 border border-blue-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 flex flex-col justify-between min-h-[170px] rounded-xl shadow-md;
     }
     .law-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); /* Blue shadow */
-        border-color: #93c5fd; /* Lighter blue border on hover */
+        @apply transform -translate-y-1 shadow-lg dark:shadow-blue-900/50 border-blue-300 dark:border-blue-700;
     }
     .progress-bar-container {
-        height: 10px;
-        border-radius: 5px;
-        background-color: #dbeafe; /* Light blue background */
-        overflow: hidden;
+        @apply h-2.5 rounded-full bg-blue-100 dark:bg-gray-700 overflow-hidden;
     }
     .progress-bar-fill {
-        height: 100%;
-        border-radius: 5px;
-        background-color: #2563eb; /* Medium Blue fill */
-        transition: width 0.5s ease;
+        @apply h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500 ease-out;
     }
     .completed-badge {
-        background-color: #D1FAE5; /* Light green */
-        color: #065F46; /* Dark green text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
+        @apply bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200 text-xs px-2.5 py-1 rounded-full font-semibold ml-auto;
     }
     .in-progress-badge {
-        background-color: #DBEAFE; /* Light blue */
-        color: #1E40AF; /* Dark blue text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
+        @apply bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200 text-xs px-2.5 py-1 rounded-full font-semibold ml-auto;
     }
     .action-button {
-        background-color: #2563eb; /* brand-blue */
-        color: white;
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        text-align: center;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .action-button:hover {
-        background-color: #1d4ed8; /* brand-blue-dark */
+        @apply bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-sm py-2 px-4 rounded-lg font-medium border-none cursor-pointer transition duration-200 ease-in-out text-center inline-flex items-center justify-center w-full;
     }
     .review-button {
-        background-color: #D1D5DB; /* Gray 300 */
-        color: #4B5563; /* Gray 600 */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 5px;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        margin-top: 10px;
-        align-self: flex-start;
-    }
-    .review-button:hover {
-        background-color: #9CA3AF; /* Gray 400 */
+        @apply bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-xs py-1 px-2 rounded-md font-bold border-none cursor-pointer transition duration-200 ease-in-out mt-2.5 self-start;
     }
     .card-content {
-        flex-grow: 1;
+        @apply flex-grow;
     }
     .card-actions {
-        margin-top: auto;
-        padding-top: 1rem;
+        @apply mt-auto pt-4;
     }
     .achievement-badge {
-        display: inline-flex;
-        align-items: center;
-        background-color: #FEF3C7; /* Light Yellow */
-        color: #92400E; /* Dark Yellow/Brown */
-        font-size: 0.8rem;
-        padding: 0.3rem 0.7rem;
-        border-radius: 15px;
-        font-weight: 500;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        border: 1px solid #FDE68A; /* Slightly darker yellow border */
+        @apply inline-flex items-center bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200 text-xs px-3 py-1.5 rounded-full font-medium mr-2 mb-2 border border-yellow-300 dark:border-yellow-700;
     }
     .achievement-badge i {
-        margin-right: 0.4rem;
-        color: #D97706; /* Amber 600 */
+        @apply mr-1.5 text-yellow-600 dark:text-yellow-400;
     }
     /* Announcement Styles */
     .announcement-box {
-        background-color: #FEF9C3; /* Light Yellow 100 */
-        border: 1px solid #FDE68A; /* Yellow 200 */
-        color: #92400E; /* Yellow 800 */
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 2rem;
+        @apply bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-gray-800 dark:border-yellow-700 dark:text-yellow-300 p-4 rounded-lg mb-8;
     }
     .announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
+        @apply text-lg font-semibold mb-2 flex items-center text-yellow-700 dark:text-yellow-400;
     }
     .announcement-box h2 i {
-        margin-right: 0.5rem;
-        color: #F59E0B; /* Amber 500 */
+        @apply mr-2 text-yellow-500 dark:text-yellow-400;
     }
+    .announcement-box p {
+        @apply text-sm text-yellow-700 dark:text-yellow-300;
+    }
+    .announcement-box .border-t {
+        @apply border-yellow-300 dark:border-yellow-600;
+    }
+    /* Filter Box */
+    .filter-box {
+         @apply mb-8 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700;
+    }
+    .filter-box label {
+         @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+    }
+    .filter-box input[type="text"], .filter-box select {
+         @apply shadow-sm appearance-none border border-gray-300 dark:border-gray-600 rounded-md w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700;
+    }
+    .filter-box .search-input-wrapper {
+         @apply flex items-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm;
+    }
+     .filter-box .search-input-wrapper span {
+         @apply pl-3 pr-2 text-gray-400 dark:text-gray-500;
+     }
+     .filter-box .search-input-wrapper input {
+         @apply flex-grow p-2 bg-transparent placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 border-0;
+     }
+    .filter-button {
+         @apply w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 border-none;
+    }
+    .clear-filter-button {
+         @apply w-full md:w-auto text-center p-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600;
+    }
+
 </style>
 {% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
+{# Added dark mode class to title #}
+<h1 class="text-3xl font-bold mb-8 text-brand-blue dark:text-brand-blue-light">Meu Painel</h1>
 
 <!-- Announcements Section -->
 {% if announcements %}
 <div class="announcement-box">
     {% for announcement in announcements %}
-        <div {% if not loop.first %}class="mt-4 pt-4 border-t border-yellow-300"{% endif %}>
+        <div {% if not loop.first %}class="mt-4 pt-4 border-t"{% endif %}>
             <h2><i class="fas fa-bullhorn"></i>{{ announcement.title }}</h2>
             <p class="text-sm">{{ announcement.content }}</p>
         </div>
@@ -151,58 +105,58 @@
 <!-- Gamification & Progress Overview -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <!-- Progress -->
-    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
-        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
+    {# Added dark mode classes #}
+    <div class="md:col-span-2 bg-white dark:bg-gray-800 border border-blue-100 dark:border-gray-700 shadow-sm rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-brand-text dark:text-gray-200 mb-4">Seu Progresso Geral</h2>
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            <span class="text-sm font-medium text-brand-text-light dark:text-gray-400">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
+            <span class="text-sm font-medium text-brand-blue dark:text-brand-blue-light">{{ "%.0f"|format(progress_percentage) }}%</span>
         </div>
         <div class="progress-bar-container w-full">
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
     <!-- Points -->
-    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
-        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
-        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
-        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
+    {# Added dark mode classes #}
+    <div class="bg-white dark:bg-gray-800 border border-yellow-200 dark:border-gray-700 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
+        <h2 class="text-xl font-semibold text-brand-text dark:text-gray-200 mb-2">Seus Pontos</h2>
+        <div class="text-4xl font-bold text-yellow-500 dark:text-yellow-400">{{ user_points }}</div>
+        <i class="fas fa-star text-yellow-400 dark:text-yellow-300 text-lg mt-1"></i>
     </div>
 </div>
 
 <!-- Achievements -->
-<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
+{# Added dark mode classes #}
+<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-brand-text dark:text-gray-200 mb-4">Suas Conquistas</h2>
     {% if user_achievements %}
         <div>
             {% for achievement in user_achievements %}
                 <span class="achievement-badge" title="{{ achievement.description }}">
-                    <i class="{{ achievement.icon or "fas fa-trophy" }}"></i> {{ achievement.name }}
+                    <i class="{{ achievement.icon or \"fas fa-trophy\" }}"></i> {{ achievement.name }}
                 </span>
             {% endfor %}
         </div>
     {% else %}
-        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+        <p class="text-brand-text-light dark:text-gray-400 italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
 </div>
 
 <!-- Filters and Search -->
-<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
-    <form method="GET" action="{{ url_for("student.dashboard") }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+<div class="filter-box">
+    <form method="GET" action="{{ url_for(\"student.dashboard\") }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <!-- Search Input -->
         <div>
-            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
-            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
-                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
-                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
-                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
-                       value="{{ search_query }}">
+            <label for="search">Buscar Legislação</label>
+            <div class="search-input-wrapper">
+                <span><i class="fas fa-search"></i></span>
+                <input type="text" id="search" name="search" placeholder="Título ou descrição..." value="{{ search_query }}">
             </div>
         </div>
         <!-- Subject Filter -->
         <div>
-            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
+            <label for="subject_id">Filtrar por Matéria</label>
+            <select id="subject_id" name="subject_id">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
                     <option value="{{ subject.id }}" {% if selected_subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
@@ -211,21 +165,19 @@
         </div>
         <!-- Action Buttons -->
         <div class="flex items-center space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
-                    style="background-color: #2563eb; border: none;"
-                    onmouseover="this.style.backgroundColor='#1d4ed8'"
-                    onmouseout="this.style.backgroundColor='#2563eb'">
+            <button type="submit" class="filter-button">
                 Aplicar Filtros
             </button>
             {% if search_query or selected_subject_id %}
-                <a href="{{ url_for("student.dashboard") }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
+                <a href="{{ url_for(\"student.dashboard\") }}" class="clear-filter-button">Limpar</a>
             {% endif %}
         </div>
     </form>
 </div>
 
 <!-- List of Laws -->
-<h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
+{# Added dark mode class to title #}
+<h2 class="text-2xl font-semibold mb-6 text-brand-blue dark:text-brand-blue-light">Legislações Disponíveis</h2>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% if laws %}
@@ -233,7 +185,8 @@
         <div class="law-card p-5">
             <div class="card-content">
                 <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-brand-text mr-2">{{ law.title }}</h3>
+                    {# Added dark mode class #}
+                    <h3 class="text-lg font-semibold text-brand-text dark:text-gray-100 mr-2">{{ law.title }}</h3>
                     {% if law.id in completed_law_ids %}
                         <span class="completed-badge">
                             <i class="fas fa-check mr-1"></i> Concluído
@@ -245,21 +198,23 @@
                     {% endif %}
                 </div>
                 {% if law.subject %}
-                <p class="text-xs font-medium mb-2" style="color: #2563eb;">{{ law.subject.name }}</p>
+                {# Added dark mode class #}
+                <p class="text-xs font-medium mb-2 text-brand-blue dark:text-brand-blue-light">{{ law.subject.name }}</p>
                 {% endif %}
-                <p class="text-sm text-brand-text-light mb-3">{{ law.description or "Acesse para ver o conteúdo." }}</p>
+                {# Added dark mode class #}
+                <p class="text-sm text-brand-text-light dark:text-gray-400 mb-3">{{ law.description or \"Acesse para ver o conteúdo.\" }}</p>
                 <!-- Placeholder for Artigos/Lidos like reference -->
-                <div class="text-xs text-gray-400 mt-2 mb-4">
+                <div class="text-xs text-gray-400 dark:text-gray-500 mt-2 mb-4">
                     <!-- Artigos: X | Lidos: Y -->
                 </div>
             </div>
             <div class="card-actions flex justify-between items-center mt-auto">
-                 <a href="{{ url_for("student.view_law", law_id=law.id) }}" class="action-button w-full">
+                 <a href="{{ url_for(\"student.view_law\", law_id=law.id) }}" class="action-button">
                      <i class="fas fa-book-open mr-2"></i> Ler Legislação
                  </a>
                  {% if law.id in completed_law_ids %}
                     {# Pass current filters to review route to preserve state #}
-                    <form action="{{ url_for("student.review_law", law_id=law.id, search=search_query, subject_id=selected_subject_id) }}" method="POST" class="inline-block ml-2">
+                    <form action="{{ url_for(\"student.review_law\", law_id=law.id, search=search_query, subject_id=selected_subject_id) }}" method="POST" class="inline-block ml-2">
                         <button type="submit" class="review-button" title="Marcar como não concluído para rever">
                             <i class="fas fa-undo-alt"></i>
                         </button>
@@ -269,7 +224,8 @@
         </div>
         {% endfor %}
     {% else %}
-        <p class="text-brand-text-light italic md:col-span-2 lg:col-span-3 text-center py-8">
+        {# Added dark mode class #}
+        <p class="text-brand-text-light dark:text-gray-400 italic md:col-span-2 lg:col-span-3 text-center py-8">
             {% if search_query or selected_subject_id %}
                 Nenhuma legislação encontrada com os filtros aplicados.
             {% else %}
