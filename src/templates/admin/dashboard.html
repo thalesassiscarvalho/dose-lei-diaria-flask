@@ -21,14 +21,29 @@
                 <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-green-100 bg-green-800 rounded-full">{{ active_announcements_count }}</span>
             {% endif %}
         </a>
-        {# Alterei a cor do botão Adicionar Nova Lei para verde #}
-        <a href="{{ url_for("admin.add_law") }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+        <a href="{{ url_for("admin.add_law") }}" class="bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded transition duration-300">
             <i class="fas fa-plus mr-2"></i> Adicionar Nova Lei
         </a>
     </div>
 </div>
 
 <h2 class="text-2xl font-semibold mb-4 text-brand-purple">Gerenciar Leis por Matéria</h2>
+
+<div class="mb-6">
+    <form action="{{ url_for('admin.dashboard') }}" method="GET" class="flex items-center">
+        <label for="subject_filter" class="mr-3 font-medium text-gray-700">Filtrar por matéria:</label>
+        <select id="subject_filter" name="subject_filter" class="form-select rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring focus:ring-brand-purple focus:ring-opacity-50">
+            <option value="all" {% if selected_subject == 'all' %}selected{% endif %}>Todas as matérias</option>
+            {% for subject in all_subjects %}
+                <option value="{{ subject.id }}" {% if selected_subject == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+            {% endfor %}
+            <option value="none" {% if selected_subject == 'none' %}selected{% endif %}>Sem matéria</option>
+        </select>
+        <button type="submit" class="ml-3 bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+            <i class="fas fa-filter mr-2"></i> Filtrar
+        </button>
+    </form>
+</div>
 
 {% if subjects_with_laws or laws_without_subject %}
     {% for subject in subjects_with_laws %}
@@ -57,7 +72,7 @@
                                     <a href="{{ url_for("admin.edit_law", law_id=law.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ url_for("admin.delete_law", law_id=law.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir esta lei?');">
+                                    <form action="{{ url_for("admin.delete_law", law_id=law.id) }}" method="POST" class="inline-block" onsubmit="return confirm("Tem certeza que deseja excluir esta lei?");">
                                         <button type="submit" class="text-red-600 hover:text-red-900 focus:outline-none" title="Excluir">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -99,7 +114,7 @@
                                 <a href="{{ url_for("admin.edit_law", law_id=law.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ url_for("admin.delete_law", law_id=law.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir esta lei?');">
+                                <form action="{{ url_for("admin.delete_law", law_id=law.id) }}" method="POST" class="inline-block" onsubmit="return confirm("Tem certeza que deseja excluir esta lei?");">
                                     <button type="submit" class="text-red-600 hover:text-red-900 focus:outline-none" title="Excluir">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
