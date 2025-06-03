@@ -16,7 +16,8 @@
     <form method="POST" action="{{ url_for("admin.manage_subjects") }}" class="flex items-center">
         <input type="text" name="name" placeholder="Nome da Matéria" required 
                class="flex-grow shadow-sm appearance-none border border-gray-300 rounded-l-md py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
-        <button type="submit" class="bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded-r-md focus:outline-none focus:shadow-outline transition duration-300">
+        {# Alterei a cor do botão Adicionar para verde #}
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-md focus:outline-none focus:shadow-outline transition duration-300">
             <i class="fas fa-plus mr-1"></i> Adicionar
         </button>
     </form>
@@ -47,7 +48,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 {# Add edit functionality if needed later #}
                                 {# <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a> #}
-                                <form action="{{ url_for("admin.delete_subject", subject_id=subject.id) }}" method="POST" class="inline-block" onsubmit="return confirm("Tem certeza que deseja excluir esta matéria? Leis associadas podem impedir a exclusão.");">
+                                <form action="{{ url_for("admin.delete_subject", subject_id=subject.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir esta matéria? Leis associadas podem impedir a exclusão.');">
                                     <button type="submit" class="text-red-600 hover:text-red-800 focus:outline-none">
                                         Excluir
                                     </button>
