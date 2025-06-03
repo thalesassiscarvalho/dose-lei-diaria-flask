@@ -94,16 +94,13 @@
         border-color: transparent;
     }
 
-    /* Preserve specific colors in Quill editor (Keep these for pasting) */
+    /* Preserve specific colors in Quill editor */
     .ql-editor p[style*="color: #8b5cf6"],
     .ql-editor h2[style*="color: #8b5cf6"],
     .ql-editor h3[style*="color: #8b5cf6"] {
         color: #8b5cf6 !important;
     }
-    .ql-editor h2[style*="color: #2563eb"],
-    .ql-editor h3[style*="color: #2563eb"] {
-        color: #2563eb !important;
-    }
+    
     .ql-editor p[style*="color: #059669"] {
         color: #059669 !important;
         background-color: #f0fdf4 !important;
@@ -112,6 +109,7 @@
         margin: 15px 0 !important;
         font-style: italic !important;
     }
+    
     .ql-editor p[style*="color: #dc2626"] {
         color: #dc2626 !important;
         background-color: #fef2f2 !important;
@@ -120,6 +118,7 @@
         margin: 15px 0 !important;
         font-weight: bold !important;
     }
+
     .ql-editor p[style*="color: #666"] {
         color: #666 !important;
         font-style: italic !important;
@@ -133,7 +132,7 @@
 <form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
     <div class="mb-4">
         <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
-        <input type="text" id="title" name="title" value="{{ law.title if law else '' }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">
+        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">
     </div>
 
     <div class="mb-4">
@@ -149,7 +148,7 @@
 
     <div class="mb-4">
         <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
-        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">{{ law.description if law else '' }}</textarea>
+        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent">{{ law.description if law else "" }}</textarea>
     </div>
 
     <div class="mb-6">
@@ -170,8 +169,8 @@
             </div>
         </div>
         
-        <!-- Create the editor container (empty initially) -->
-        <div id="editor-container"></div> 
+        <!-- Create the editor container -->
+        <div id="editor-container">{{ law.content | safe if law else "" }}</div>
         <!-- Hidden input to store Quill content -->
         <input type="hidden" name="content" id="content-input">
     </div>
@@ -228,19 +227,6 @@
     var applyHtmlBtn = document.getElementById("apply-html");
     var cancelHtmlBtn = document.getElementById("cancel-html");
 
-    // --- MODIFICATION START: Load existing content using dangerouslyPasteHTML ---
-    // Get saved content (passed from Flask/Jinja using tojson filter for safety)
-    var savedContent = {{ law.content | tojson | safe if law else 'null' }};
-
-    // If editing and content exists, load it into Quill after initialization
-    if (savedContent) {
-        // Use 'silent' source to avoid triggering 'text-change' event unnecessarily
-        // Use index 0 to paste at the beginning of the editor
-        quill.clipboard.dangerouslyPasteHTML(0, savedContent, 'silent');
-        console.log('Conteúdo existente carregado via dangerouslyPasteHTML.');
-    }
-    // --- MODIFICATION END ---
-
     // Example HTML content
     var exampleHtml = `<p style="color: #666; font-style: italic; margin-bottom: 20px;">
 Dispositivo inaugural da Constituição de 1988 que estabelece os pilares da República Federativa do Brasil: fundamentos, separação de Poderes, objetivos e princípios das relações internacionais.
@@ -291,13 +277,10 @@ Este artigo estabelece a forma de Estado (federação), a forma de governo (rep�
                 quill.setText('');
                 
                 // Method 1: Direct innerHTML insertion (preserves all styles)
-                // quill.root.innerHTML = htmlContent; // Old method, less reliable
+                quill.root.innerHTML = htmlContent;
                 
-                // Method 2: Use dangerouslyPasteHTML (often better preservation)
-                quill.clipboard.dangerouslyPasteHTML(0, htmlContent, 'user');
-                
-                // Force Quill to update (might not be needed with dangerouslyPasteHTML)
-                // quill.update(); 
+                // Force Quill to update
+                quill.update();
                 
                 // Clean up
                 htmlPasteArea.value = "";
@@ -349,18 +332,17 @@ Este artigo estabelece a forma de Estado (federação), a forma de governo (rep�
         }
     });
 
-    // Preserve formatting on paste events (Keep this for regular pastes)
+    // Preserve formatting on paste events
     quill.root.addEventListener('paste', function(e) {
         // Allow natural paste but preserve custom styles
         setTimeout(function() {
             // Re-apply custom styles after paste
             var content = quill.root.innerHTML;
             if (content.includes('style=')) {
-                console.log('Formatação detectada na colagem, preservando estilos...');
+                console.log('Formatação detectada, preservando estilos...');
                 // Styles are preserved by CSS rules above
             }
         }, 100);
     });
 </script>
 {% endblock %}
-
