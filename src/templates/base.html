@@ -1,201 +1,153 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+{# Add dark mode class based on localStorage #}
+<html lang="pt-BR" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
+    <title>{% block title %}Lei Seca - Treino Turbo{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Include Quill CSS -->
+    <!-- Include Quill CSS (kept for potential admin use, though replaced in student view) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <!-- Adicionar biblioteca de animações -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
-        /* Custom base styles for White/Blue Theme */
+        /* Custom base styles for Light/Dark Theme */
         body {
-            background-color: #FFFFFF; /* White background */
-            color: #374151; /* Dark Gray text for readability */
+            @apply bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300;
         }
-        /* Alert styles adjusted for light background */
+        /* Alert styles adjusted for light/dark */
         .alert {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid transparent;
-            border-radius: .25rem;
+            @apply p-4 mb-4 border rounded-md shadow-sm transition-colors duration-300;
             animation: fadeInDown 0.5s;
-            transition: all 0.3s ease;
         }
-        /* Using blue tones for alerts where appropriate */
-        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
-        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
-        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
-        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; } /* Blue for info */
+        .alert-success {
+            @apply text-green-800 bg-green-100 border-green-200 dark:text-green-100 dark:bg-green-900 dark:border-green-700;
+        }
+        .alert-danger {
+            @apply text-red-800 bg-red-100 border-red-200 dark:text-red-100 dark:bg-red-900 dark:border-red-700;
+        }
+        .alert-warning {
+            @apply text-yellow-800 bg-yellow-100 border-yellow-200 dark:text-yellow-100 dark:bg-yellow-900 dark:border-yellow-700;
+        }
+        .alert-info {
+            @apply text-blue-800 bg-blue-100 border-blue-200 dark:text-blue-100 dark:bg-blue-900 dark:border-blue-700;
+        }
 
         /* Footer style */
         footer {
-            color: #6B7280; /* Medium gray for footer text */
+            @apply text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700;
         }
 
-        /* Custom scrollbar for light theme (optional  ) */
+        /* Custom scrollbar for light/dark theme (optional) */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #E5E7EB; /* Light gray track */
+            @apply bg-gray-200 dark:bg-gray-700;
         }
         ::-webkit-scrollbar-thumb {
-            background: #60a5fa; /* Light Blue thumb */
-            border-radius: 4px;
+            @apply bg-purple-400 dark:bg-purple-600 rounded-md;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #2563eb; /* Medium Blue thumb */
+            @apply bg-purple-500 dark:bg-purple-500;
         }
 
-        /* Animações e efeitos visuais */
-        .btn-transition {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+        /* Ensure inputs and textareas adapt */
+        input, select, textarea {
+            @apply dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600;
+        }
+        select option {
+             @apply bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200;
         }
 
-        .btn-transition:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        /* Specific dark mode adjustments */
+        .dark .law-content-container {
+             @apply bg-gray-800 border-blue-800 text-gray-300;
+        }
+        .dark .completed-banner {
+             @apply bg-green-800 border-green-600 text-green-100;
+        }
+        .dark .last-read-info {
+             @apply bg-indigo-800 border-indigo-600 text-indigo-100;
+        }
+         .dark .save-article-form {
+             @apply bg-gray-800 border-gray-700;
+        }
+        .dark label {
+             @apply text-gray-300;
+        }
+        .dark .card {
+             @apply bg-gray-800 border-gray-700 shadow-lg;
+        }
+        .dark .card-title {
+             @apply text-purple-400;
+        }
+        .dark .card-text {
+             @apply text-gray-400;
+        }
+        .dark .progress-bar-bg {
+             @apply bg-gray-700;
+        }
+        .dark .progress-bar-fill {
+             @apply bg-purple-500;
+        }
+        .dark .subject-link {
+             @apply text-purple-400 hover:text-purple-300;
+        }
+        .dark .law-link {
+             @apply text-gray-300 hover:text-white;
+        }
+        .dark .announcement-card {
+             @apply bg-gray-800 border-gray-700;
+        }
+        .dark .announcement-title {
+             @apply text-yellow-400;
+        }
+        .dark .announcement-content {
+             @apply text-gray-300;
         }
 
-        .btn-transition:active {
-            transform: translateY(0);
+        /* Dark mode toggle button */
+        #darkModeToggle {
+            @apply fixed bottom-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg cursor-pointer transition-colors duration-300;
         }
 
-        .btn-transition::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .btn-transition:hover::after {
-            opacity: 1;
-        }
-
-        .nav-link {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -4px;
-            left: 0;
-            background-color: white;
-            transition: width 0.3s ease;
-        }
-
-        .nav-link:hover::after {
-            width: 100%;
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-input-focus {
-            transition: all 0.3s ease;
-        }
-
-        .form-input-focus:focus {
-            transform: scale(1.01);
-        }
-
-        /* Animações para entrada de elementos */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in-up {
-            animation: fadeInUp 0.5s;
-        }
-
-        .fade-in-down {
-            animation: fadeInDown 0.5s;
-        }
-
-        /* Efeito de pulse para chamar atenção */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .pulse-effect {
-            animation: pulse 2s infinite;
-        }
-
-        /* Efeito de loading */
-        .loading-spinner {
-            border: 3px solid rgba(37, 99, 235, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid #2563eb;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        /* Animations (keep as is or adjust if needed) */
+        .btn-transition { transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .btn-transition:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2); }
+        .btn-transition:active { transform: translateY(0); }
+        .btn-transition::after { content: ''; position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: rgba(255, 255, 255, 0.1); opacity: 0; transition: all 0.3s ease; }
+        .btn-transition:hover::after { opacity: 1; }
+        .nav-link { position: relative; transition: all 0.3s ease; }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -4px; left: 0; background-color: white; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1); }
+        .form-input-focus { transition: all 0.3s ease; }
+        .form-input-focus:focus { transform: scale(1.01); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { animation: fadeInUp 0.5s; }
+        .fade-in-down { animation: fadeInDown 0.5s; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .pulse-effect { animation: pulse 2s infinite; }
+        .loading-spinner { border: 3px solid rgba(124, 58, 237, 0.1); border-radius: 50%; border-top: 3px solid #7C3AED; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
     <script>
+        // Tailwind config with dark mode enabled
         tailwind.config = {
+            darkMode: 'class', // Enable class-based dark mode
             theme: {
                 extend: {
                     colors: {
-                        'brand-blue': '#2563eb', // Blue 600 - Main Blue
-                        'brand-blue-dark': '#1d4ed8', // Blue 700 - Darker Blue
-                        'brand-blue-light': '#60a5fa', // Blue 400 - Lighter Blue
-                        'brand-bg': '#FFFFFF', // White background
-                        'brand-text': '#374151', // Dark Gray text
+                        'brand-purple': '#7C3AED', // Violet 500 - Main Purple
+                        'brand-purple-dark': '#6D28D9', // Violet 600 - Darker Purple
+                        'brand-purple-light': '#A78BFA', // Violet 400 - Lighter Purple
+                        // Adjusted default background/text for light mode clarity
+                        'brand-bg': '#f9fafb', // Use a very light gray for light mode background
+                        'brand-text': '#1f2937', // Darker gray for light mode text
                         'brand-text-light': '#6B7280', // Medium Gray text
                     }
                 }
@@ -204,22 +156,30 @@
     </script>
     {% block head_extra %}{% endblock %}
 </head>
+{# Apply dark class dynamically #}
 <body class="font-sans bg-brand-bg text-brand-text">
-    <nav class="bg-brand-blue text-white p-4 shadow-md">
-        <div class="container mx-auto flex flex-col items-center">
-            <a href="{{ url_for('index') }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
-            <div class="flex space-x-6 fade-in-up">
+    {# Adjusted Nav colors for dark mode #}
+    <nav class="bg-brand-purple dark:bg-gray-800 text-white dark:text-purple-300 p-4 shadow-md">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <a href="{{ url_for("index") }}" class="text-2xl font-bold mb-2 sm:mb-0 fade-in-down">Lei Seca - Treino Turbo</a>
+            <div class="flex items-center space-x-4 sm:space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
-                    <span class="text-blue-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
+                    <span class="text-purple-100 dark:text-gray-300">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
                     {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-blue-200">Painel Admin</a>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-purple-200 dark:hover:text-white">Painel Admin</a>
                     {% else %}
-                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-blue-200">Meu Painel</a>
+                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-purple-200 dark:hover:text-white">Meu Painel</a>
                     {% endif %}
-                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-blue-200">Sair</a>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-purple-200 dark:hover:text-white">Sair</a>
+                    {# Dark Mode Toggle Button - Visible only for students #}
+                    {% if current_user.role == 'student' %}
+                        <button id="darkModeToggle" aria-label="Alternar modo escuro">
+                            <i class="fas fa-moon"></i> {# Icon changes via JS #}
+                        </button>
+                    {% endif %}
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-blue-200">Login</a>
-                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-blue-200">Cadastro</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-purple-200 dark:hover:text-white">Login</a>
+                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-purple-200 dark:hover:text-white">Cadastro</a>
                 {% endif %}
             </div>
         </div>
@@ -241,21 +201,65 @@
         {% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: white;">
+    <footer class="text-center py-8 mt-12 text-sm border-t fade-in-up" style="animation-delay: 0.4s;">
         <div class="mb-4">
-            <p class="font-semibold mb-2" style="color: white;">Entre em contato:</p>
-            <div class="flex justify-center items-center">
-                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: white;" title="WhatsApp"
-                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='white'">
-                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
+            <p class="font-semibold mb-2 text-gray-700 dark:text-gray-300">Entre em contato:</p>
+            <div class="flex justify-center items-center space-x-4">
+                <a href="https://wa.me/5521967406536" target="_blank" class="hover:text-brand-purple dark:hover:text-purple-400 transition-all duration-300 ease-in-out" title="WhatsApp">
+                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21) 96740-6536
+                </a>
+                <span class="text-gray-300 dark:text-gray-600">|</span>
+                <a href="https://treinoturbo.com.br/" target="_blank" class="hover:text-brand-purple dark:hover:text-purple-400 transition-all duration-300 ease-in-out" title="Site Principal">
+                    <i class="fas fa-globe fa-lg mr-1"></i> treinoturbo.com.br
+                </a>
+                <span class="text-gray-300 dark:text-gray-600">|</span>
+                <a href="https://www.instagram.com/treinoturboconcursos" target="_blank" class="hover:text-brand-purple dark:hover:text-purple-400 transition-all duration-300 ease-in-out" title="Instagram">
+                    <i class="fab fa-instagram fa-lg mr-1"></i> @treinoturboconcursos
                 </a>
             </div>
         </div>
-        <p style="color: white;">&copy; 2025 Todos os direitos reservados.</p>
+        <p>&copy; {{ now().year }} Treino Turbo Concursos. Todos os direitos reservados.</p>
     </footer>
 
-    <!-- Include Quill JS -->
+    <!-- Include Quill JS (kept for admin) -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    {# Dark Mode Script #}
+    <script>
+        const htmlEl = document.documentElement;
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const moonIcon = 'fa-moon';
+        const sunIcon = 'fa-sun';
+
+        // Function to set theme based on preference
+        function setTheme(isDark) {
+            if (isDark) {
+                htmlEl.classList.add('dark');
+                if (darkModeToggle) darkModeToggle.querySelector('i').className = `fas ${sunIcon}`;
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                htmlEl.classList.remove('dark');
+                if (darkModeToggle) darkModeToggle.querySelector('i').className = `fas ${moonIcon}`;
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        // Check localStorage on initial load
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedMode = localStorage.getItem('darkMode');
+        let isDarkMode = savedMode === 'enabled' || (savedMode === null && prefersDark);
+
+        setTheme(isDarkMode);
+
+        // Add event listener to the toggle button (if it exists)
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                isDarkMode = !isDarkMode;
+                setTheme(isDarkMode);
+            });
+        }
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
