@@ -12,12 +12,11 @@
     <!-- Adicionar biblioteca de animações -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
-        /* Custom base styles for White/Blue Theme */
+        /* Original Custom base styles for White/Blue Theme (Preserved) */
         body {
             background-color: #FFFFFF; /* White background */
             color: #374151; /* Dark Gray text for readability */
         }
-        /* Alert styles adjusted for light background */
         .alert {
             padding: 1rem;
             margin-bottom: 1rem;
@@ -26,33 +25,17 @@
             animation: fadeInDown 0.5s;
             transition: all 0.3s ease;
         }
-        /* Using blue tones for alerts where appropriate */
-        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
-        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
-        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
-        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; } /* Blue for info */
-
-        /* Footer style */
+        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; }
+        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; }
+        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; }
+        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; }
         footer {
             color: #6B7280; /* Medium gray for footer text */
         }
-
-        /* Custom scrollbar for light theme (optional) */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #E5E7EB; /* Light gray track */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #60a5fa; /* Light Blue thumb */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #2563eb; /* Medium Blue thumb */
-        }
-
-        /* Animações e efeitos visuais (Preserved) */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #E5E7EB; }
+        ::-webkit-scrollbar-thumb { background: #60a5fa; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
         .btn-transition { transition: all 0.3s ease; position: relative; overflow: hidden; }
         .btn-transition:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
         .btn-transition:active { transform: translateY(0); }
@@ -74,7 +57,7 @@
         .loading-spinner { border: 3px solid rgba(37, 99, 235, 0.1); border-radius: 50%; border-top: 3px solid #2563eb; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- Dark Mode Styles --- */
+        /* --- Dark Mode Styles (Added) --- */
         html.dark body {
             background-color: #111827; /* Dark Gray background */
             color: #d1d5db; /* Light Gray text */
@@ -87,12 +70,13 @@
             color: #9ca3af; /* Lighter gray for footer text */
             border-color: #374151; /* Darker border */
         }
+        /* Ensure footer text and links are light in dark mode */
         html.dark footer p,
         html.dark footer a {
-            color: #d1d5db; /* Ensure footer text is light */
+            color: #d1d5db !important; /* Use !important to override inline style if needed */
         }
         html.dark footer a:hover {
-            color: #60a5fa; /* Light blue hover */
+            color: #60a5fa !important;
         }
         html.dark ::-webkit-scrollbar-track {
             background: #374151; /* Dark gray track */
@@ -112,12 +96,13 @@
         html.dark .nav-link::after {
             background-color: #93c5fd;
         }
+        /* Style inputs/selects/textareas for dark mode */
         html.dark input,
         html.dark select,
         html.dark textarea {
-            background-color: #374151; /* Dark input background */
-            color: #d1d5db; /* Light input text */
-            border-color: #4b5563; /* Darker border */
+            background-color: #374151 !important; /* Use !important if needed */
+            color: #d1d5db !important;
+            border-color: #4b5563 !important;
         }
         html.dark select option {
             background-color: #374151;
@@ -146,10 +131,9 @@
         html.dark #darkModeToggle:hover {
             color: white;
         }
-
     </style>
     <script>
-        // Enable dark mode in Tailwind config
+        // Enable dark mode in Tailwind config (Added)
         tailwind.config = {
             darkMode: \'class\', // Enable class strategy
             theme: {
@@ -168,12 +152,15 @@
     </script>
     {% block head_extra %}{% endblock %}
 </head>
-<body class="font-sans bg-brand-bg text-brand-text">
-    <nav class="bg-brand-blue text-white p-4 shadow-md">
+{# Added dark:bg-gray-900 dark:text-gray-300 to body #}
+<body class="font-sans bg-brand-bg text-brand-text dark:bg-gray-900 dark:text-gray-300">
+    {# Added dark:bg-gray-800 to nav #}
+    <nav class="bg-brand-blue dark:bg-gray-800 text-white p-4 shadow-md">
         <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
             <a href="{{ url_for(\'index\') }}" class="text-2xl font-bold mb-2 sm:mb-0 fade-in-down">Estudo da Lei Seca</a>
             <div class="flex items-center space-x-4 sm:space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
+                    {# Added dark:text-gray-300 #}
                     <span class="text-blue-100 dark:text-gray-300">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split(\'@\')[0] }}!</span>
                     {% if current_user.role == \'admin\' %}
                         <a href="{{ url_for(\'admin.dashboard\') }}" class="nav-link hover:text-blue-200">Painel Admin</a>
@@ -181,7 +168,7 @@
                         <a href="{{ url_for(\'student.dashboard\') }}" class="nav-link hover:text-blue-200">Meu Painel</a>
                     {% endif %}
                     <a href="{{ url_for(\'auth.logout\') }}" class="nav-link hover:text-blue-200">Sair</a>
-                    {# Dark Mode Toggle Button - Visible only for students #}
+                    {# Dark Mode Toggle Button - Added inside student role check #}
                     {% if current_user.role == \'student\' %}
                         <button id="darkModeToggle" aria-label="Alternar modo escuro" class="focus:outline-none">
                             <i class="fas fa-moon"></i> {# Icon changes via JS #}
@@ -200,6 +187,7 @@
             {% if messages %}
                 <div class="mb-4">
                 {% for category, message in messages %}
+                    {# Added dark mode classes to alerts via CSS #}
                     <div class="alert alert-{{ category or \'info\' }}" role="alert">
                         {{ message }}
                     </div>
@@ -211,24 +199,32 @@
         {% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s;">
+    {# Added dark:border-gray-700 to footer #}
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 dark:border-gray-700 fade-in-up" style="animation-delay: 0.4s;">
         <div class="mb-4">
-            <p class="font-semibold mb-2">Entre em contato:</p>
+            {# Adjusted inline style for dark mode compatibility #}
+            <p class="font-semibold mb-2" style="color: {{ \'#d1d5db\' if request.cookies.get(\'darkMode\
+            ') == \'enabled\' else \'#374151\' }};">Entre em contato:</p>
             <div class="flex justify-center items-center space-x-4">
+                {# Adjusted inline style for dark mode compatibility #}
                 <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" title="WhatsApp"
-                   onmouseover="this.style.color=\'#60a5fa\'" onmouseout="this.style.color=document.documentElement.classList.contains(\'dark\') ? \'#d1d5db\' : \'#6B7280\' ">
+                   style="color: {{ \'#d1d5db\' if request.cookies.get(\'darkMode\
+                   ') == \'enabled\' else \'#6B7280\' }};"
+                   onmouseover="this.style.color=\'#60a5fa\'" 
+                   onmouseout="this.style.color=document.documentElement.classList.contains(\'dark\') ? \'#d1d5db\' : \'#6B7280\'">
                     <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
                 </a>
-                 {# Removed extra contact info as per original file #}
             </div>
         </div>
-        <p>&copy; 2025 Todos os direitos reservados.</p> {# Adjusted year and text as per original #}
+        {# Adjusted inline style for dark mode compatibility #}
+        <p style="color: {{ \'#9ca3af\' if request.cookies.get(\'darkMode\
+        ') == \'enabled\' else \'#6B7280\' }};">&copy; 2025 Todos os direitos reservados.</p>
     </footer>
 
     <!-- Include Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
-    {# Dark Mode Script #}
+    {# Dark Mode Script (Added) #}
     <script>
         const htmlEl = document.documentElement;
         const darkModeToggle = document.getElementById(\'darkModeToggle\');
@@ -238,26 +234,37 @@
         // Function to set theme based on preference
         function setTheme(isDark) {
             const footerLinks = document.querySelectorAll(\'footer a\'); // Select footer links
+            const footerP = document.querySelectorAll(\'footer p\'); // Select footer paragraphs
+            const footerContactP = document.querySelector(\'footer .mb-4 p\'); // Select specific contact paragraph
+
             if (isDark) {
                 htmlEl.classList.add(\'dark\');
                 if (darkModeToggle) darkModeToggle.querySelector(\'i\').className = `fas ${sunIcon}`;
                 localStorage.setItem(\'darkMode\', \'enabled\');
-                // Adjust footer link mouseout color for dark mode
-                footerLinks.forEach(link => link.setAttribute(\'onmouseout\', "this.style.color=\'#d1d5db\'"));
+                document.cookie = "darkMode=enabled;path=/;max-age=31536000"; // Set cookie for server-side access
+                // Adjust footer styles for dark mode
+                footerLinks.forEach(link => { link.style.color = \'#d1d5db\'; link.setAttribute(\'onmouseout\", "this.style.color=\'#d1d5db\'"); });
+                footerP.forEach(p => p.style.color = \'#9ca3af\');
+                if(footerContactP) footerContactP.style.color = \'#d1d5db\';
+
             } else {
                 htmlEl.classList.remove(\'dark\');
                 if (darkModeToggle) darkModeToggle.querySelector(\'i\').className = `fas ${moonIcon}`;
                 localStorage.setItem(\'darkMode\', \'disabled\');
-                // Adjust footer link mouseout color for light mode
-                footerLinks.forEach(link => link.setAttribute(\'onmouseout\', "this.style.color=\'#6B7280\'"));
+                document.cookie = "darkMode=disabled;path=/;max-age=31536000"; // Set cookie for server-side access
+                // Adjust footer styles for light mode
+                footerLinks.forEach(link => { link.style.color = \'#6B7280\'; link.setAttribute(\'onmouseout\", "this.style.color=\'#6B7280\'"); });
+                footerP.forEach(p => p.style.color = \'#6B7280\');
+                 if(footerContactP) footerContactP.style.color = \'#374151\'; // Original light mode color
             }
         }
 
         // Check localStorage on initial load
         const prefersDark = window.matchMedia(\'(prefers-color-scheme: dark)\').matches;
         const savedMode = localStorage.getItem(\'darkMode\');
-        // Default to light mode unless explicitly enabled or system prefers dark and no setting exists
-        let isDarkMode = savedMode === \'enabled\' || (savedMode === null && prefersDark);
+        let isDarkMode = savedMode === \'enabled\'; // Default to light unless explicitly enabled
+        // Removed system preference check to avoid overriding user choice
+        // let isDarkMode = savedMode === \'enabled\' || (savedMode === null && prefersDark);
 
         setTheme(isDarkMode);
 
@@ -268,13 +275,12 @@
                 setTheme(isDarkMode);
             });
         }
-
-        // Ensure footer link initial mouseout color is set correctly on load
-        document.addEventListener(\'DOMContentLoaded\', () => {
-            const currentModeIsDark = htmlEl.classList.contains(\'dark\');
-            const footerLinks = document.querySelectorAll(\'footer a\');
-            const initialColor = currentModeIsDark ? \'#d1d5db\' : \'#6B7280\';
-            footerLinks.forEach(link => link.setAttribute(\'onmouseout\', `this.style.color=\'${initialColor}\'`));
+        
+        // Initial footer style adjustment based on theme, overriding inline styles
+        document.addEventListener(\'DOMContentLoaded\
+        ', () => {
+             setTheme(htmlEl.classList.contains(\'dark\
+             ')); // Re-apply theme styles on DOM load
         });
 
     </script>
