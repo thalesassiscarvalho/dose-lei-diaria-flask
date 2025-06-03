@@ -85,32 +85,42 @@
         color: #6c757d;
         margin-top: 5px;
     }
+
+    /* Inputs com foco azul */
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        ring: 2px solid #60a5fa;
+        border-color: transparent;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-brand-purple mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
+<h1 class="text-3xl font-bold mb-6" style="color: #2563eb;">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
 
 <form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
     <div class="mb-4">
         <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
-        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent"
+               style="focus:ring: 2px solid #60a5fa;">
     </div>
 
     <div class="mb-4">
         <label for="subject_id" class="block text-brand-text text-sm font-bold mb-2">Matéria:</label>
-        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent bg-white">
+        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                style="focus:ring: 2px solid #60a5fa;">
             <option value="None">-- Nenhuma --</option> {# Option for no subject #}
             {% for subject in subjects %}
                 <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
             {% endfor %}
         </select>
-        <p class="text-xs text-gray-500 mt-1">Você pode gerenciar as matérias <a href="{{ url_for("admin.manage_subjects") }}" class="text-brand-purple hover:underline">aqui</a>.</p>
+        <p class="text-xs text-gray-500 mt-1">Você pode gerenciar as matérias <a href="{{ url_for("admin.manage_subjects") }}" class="hover:underline" style="color: #2563eb;">aqui</a>.</p>
     </div>
 
     <div class="mb-4">
         <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
-        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">{{ law.description if law else "" }}</textarea>
+        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent"
+                  style="focus:ring: 2px solid #60a5fa;">{{ law.description if law else "" }}</textarea>
     </div>
 
     <div class="mb-6">
@@ -137,10 +147,16 @@
     </div>
 
     <div class="flex items-center justify-between">
-        <button type="submit" class="bg-brand-purple hover:bg-brand-purple-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+        <button type="submit" class="text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300"
+                style="background-color: #2563eb; border: none;"
+                onmouseover="this.style.backgroundColor='#1d4ed8'"
+                onmouseout="this.style.backgroundColor='#2563eb'">
             {% if law %}Salvar Alterações{% else %}Adicionar Lei{% endif %}
         </button>
-        <a href="{{ url_for("admin.dashboard") }}" class="inline-block align-baseline font-bold text-sm text-brand-purple hover:text-brand-purple-dark">
+        <a href="{{ url_for("admin.dashboard") }}" class="inline-block align-baseline font-bold text-sm transition-all duration-300"
+           style="color: #1d4ed8;"
+           onmouseover="this.style.color='#1e40af'"
+           onmouseout="this.style.color='#1d4ed8'">
             Cancelar
         </a>
     </div>
