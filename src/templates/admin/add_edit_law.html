@@ -3,8 +3,7 @@
 {% block title %}{% if law %}Editar Lei{% else %}Adicionar Lei{% endif %} - Admin{% endblock %}
 
 {% block head_extra %}
-{# Quill styles removed #}
-{# TinyMCE will handle its own styling #}
+{# TinyMCE script is loaded in the scripts block below #}
 {% endblock %}
 
 {% block content %}
@@ -50,26 +49,46 @@
 {% endblock %}
 
 {% block scripts %}
-{# Add TinyMCE script from CDN #}
+{# Add TinyMCE script from CDN with user's API Key #}
 <script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
-{# Initialize TinyMCE #}
+{# Initialize TinyMCE using the configuration provided by TinyMCE website #}
 <script>
   tinymce.init({
-    selector: "textarea#content-editor",
-    plugins: "code table lists link image media wordcount visualblocks visualchars fullscreen preview searchreplace help",
-    toolbar: "undo redo | blocks | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | code fullscreen preview | help",
-    height: 500,
+    selector: "textarea#content-editor", // Target the specific textarea
+    plugins: [
+      // Core editing features
+      "anchor", "autolink", "charmap", "codesample", "emoticons", "image", "link", "lists", "media", "searchreplace", "table", "visualblocks", "wordcount",
+      // Your account includes a free trial of TinyMCE premium features
+      // Try the most popular premium features until Jun 17, 2025:
+      "checklist", "mediaembed", "casechange", "formatpainter", "pageembed", "a11ychecker", "tinymcespellchecker", "permanentpen", "powerpaste", "advtable", "advcode", "editimage", "advtemplate", "ai", "mentions", "tinycomments", "tableofcontents", "footnotes", "mergetags", "autocorrect", "typography", "inlinecss", "markdown","importword", "exportword", "exportpdf"
+    ],
+    toolbar: "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat",
+    height: 600, // Increased height for better usability
     menubar: "file edit view insert format tools table help",
-    // Allow style attributes for more flexibility
-    extended_valid_elements: "*[*]", // Be cautious with this, allows all attributes on all elements
-    // Or be more specific if needed:
-    // extended_valid_elements: "p[style],h2[style],h3[style],strong,em,span[style],div[style]",
+    extended_valid_elements: "*[*]", // Allow all elements and attributes for maximum flexibility
     content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-    // Ensure TinyMCE saves the raw HTML content to the textarea
+    tinycomments_mode: "embedded",
+    tinycomments_author: "Admin", // Changed author name
+    mergetags_list: [
+      { value: "First.Name", title: "First Name" },
+      { value: "Email", title: "Email" },
+    ],
+    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
+    // Ensure TinyMCE saves the raw HTML content to the textarea on change
     setup: function (editor) {
         editor.on("change", function () {
             editor.save();
+        });
+        editor.on("init", function() {
+            // Remove the default content TinyMCE might insert if the textarea is empty
+            if (editor.getContent() === "<p>Welcome to TinyMCE!</p>") {
+                 // Check if the original textarea value was actually empty
+                 const originalValue = document.getElementById("content-editor").value;
+                 if (!originalValue || originalValue.trim() === "") {
+                    editor.setContent("");
+                 }
+            }
         });
     }
   });
