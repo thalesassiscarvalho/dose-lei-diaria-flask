@@ -16,11 +16,11 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-         /* LINHA ADICIONADA ABAIXO: */
+        /* Adicionando borda azul clara */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
-        color: #4c1d95; /* Purple headings */
+        /* color: #4c1d95; */ /* Purple headings - Commented out or removed if only the main title needs changing */
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
@@ -71,11 +71,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-4">
-    {# Alterei o tamanho do título de text-3xl para text-2xl #}
-    <h1 class="text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-    <a href="{{ url_for("student.dashboard") }}" class="text-purple-600 hover:text-purple-800">
-        <i class="fas fa-arrow-left mr-2"></i> Voltar ao Painel
+{# Adjusted flex container for better mobile layout #}
+<div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+    {# Applied responsive text size: text-xl on mobile, md:text-2xl on medium screens and up #}
+    <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
+    {# Applied responsive text size and whitespace-nowrap #}
+    <a href="{{ url_for("student.dashboard") }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
+        <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Voltar ao Painel
     </a>
 </div>
 
@@ -178,4 +180,3 @@ document.addEventListener('contextmenu', function(e) {
 });
 </script>
 {% endblock %}
-
