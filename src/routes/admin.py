@@ -22,16 +22,46 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    # Group laws by subject for better overview
-    subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
-    laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
+    # Get subject filter from query parameters
+    subject_filter = request.args.get('subject_filter', 'all')
+    
+    # Get all subjects for the filter dropdown
+    all_subjects = Subject.query.order_by(Subject.name).all()
+    
+    # Initialize variables
+    subjects_with_laws = []
+    laws_without_subject = []
+    
+    # Apply filter based on selection
+    if subject_filter == 'all':
+        # Show all subjects with their laws
+        subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
+        laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
+    elif subject_filter == 'none':
+        # Show only laws without subject
+        laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
+    else:
+        # Show only the selected subject
+        try:
+            subject_id = int(subject_filter)
+            subject = Subject.query.options(db.joinedload(Subject.laws)).filter_by(id=subject_id).first()
+            if subject:
+                subjects_with_laws = [subject]
+        except ValueError:
+            # If subject_filter is not a valid integer, default to showing all
+            subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
+            laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
+    
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count() # Count active announcements
+    
     return render_template("admin/dashboard.html", 
                            subjects_with_laws=subjects_with_laws, 
                            laws_without_subject=laws_without_subject, 
                            pending_users_count=pending_users_count,
-                           active_announcements_count=active_announcements_count) # Pass count to template
+                           active_announcements_count=active_announcements_count,
+                           all_subjects=all_subjects,
+                           selected_subject=subject_filter) # Pass filter variables to template
 
 # --- Subject Management ---
 @admin_bp.route("/subjects", methods=["GET", "POST"])
