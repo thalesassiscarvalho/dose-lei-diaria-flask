@@ -37,92 +37,154 @@
         }
 
         /* Custom scrollbar for light theme (optional  ) */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #E5E7EB; /* Light gray track */ }
-        ::-webkit-scrollbar-thumb { background: #60a5fa; border-radius: 4px; /* Light Blue thumb */ }
-        ::-webkit-scrollbar-thumb:hover { background: #2563eb; /* Medium Blue thumb */ }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E5E7EB; /* Light gray track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #60a5fa; /* Light Blue thumb */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2563eb; /* Medium Blue thumb */
+        }
 
         /* Animações e efeitos visuais */
-        .btn-transition { transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .btn-transition:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        .btn-transition:active { transform: translateY(0); }
-        .btn-transition::after { content: "; position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: rgba(255, 255, 255, 0.1); opacity: 0; transition: all 0.3s ease; }
-        .btn-transition:hover::after { opacity: 1; }
-        .nav-link { position: relative; transition: all 0.3s ease; }
-        .nav-link::after { content: "; position: absolute; width: 0; height: 2px; bottom: -4px; left: 0; background-color: white; transition: width 0.3s ease; }
-        .nav-link:hover::after { width: 100%; }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1); }
-        .form-input-focus { transition: all 0.3s ease; }
-        .form-input-focus:focus { transform: scale(1.01); }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in-up { animation: fadeInUp 0.5s; }
-        .fade-in-down { animation: fadeInDown 0.5s; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .pulse-effect { animation: pulse 2s infinite; }
-        .loading-spinner { border: 3px solid rgba(37, 99, 235, 0.1); border-radius: 50%; border-top: 3px solid #2563eb; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-transition {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-        /* --- START: Custom CSS Classes for Content Formatting (Centralized) --- */
-        /* These classes will be used in the Quill editor and view_law.html */
-        .paragrafo-normal {
-            margin: 10px 0;
+        .btn-transition:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
-        .paragrafo-introdutorio-cinza {
-            color: #666;
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-        .titulo-lei-roxo {
-            color: #8b5cf6;
-            font-weight: bold;
-            margin: 20px 0 15px 0;
-            font-size: 1.5em; /* Equivalent to h2 */
-            display: block; /* Ensure it behaves like a heading */
-        }
-        .subtitulo-lei-roxo {
-            color: #8b5cf6;
-            font-weight: bold;
-            margin: 15px 0 10px 0;
-            font-size: 1.25em; /* Equivalent to h3 */
-            display: block;
-        }
-        .titulo-lei-azul {
-            color: #2563eb;
-            font-weight: bold;
-            margin: 20px 0 15px 0;
-            font-size: 1.5em; /* Equivalent to h2 */
-            display: block;
-        }
-        .subtitulo-lei-azul {
-            color: #2563eb;
-            font-weight: bold;
-            margin: 15px 0 10px 0;
-            font-size: 1.25em; /* Equivalent to h3 */
-            display: block;
-        }
-        .paragrafo-destaque-verde {
-            color: #059669;
-            font-style: italic;
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #f0fdf4;
-            border-left: 4px solid #059669;
-        }
-        .paragrafo-importante-vermelho {
-            color: #dc2626;
-            font-weight: bold;
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #fef2f2;
-            border-left: 4px solid #dc2626;
-        }
-        .texto-negrito {
-            font-weight: bold;
-        }
-        /* --- END: Custom CSS Classes --- */
 
+        .btn-transition:active {
+            transform: translateY(0);
+        }
+
+        .btn-transition::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .btn-transition:hover::after {
+            opacity: 1;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-input-focus {
+            transition: all 0.3s ease;
+        }
+
+        .form-input-focus:focus {
+            transform: scale(1.01);
+        }
+
+        /* Animações para entrada de elementos */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s;
+        }
+
+        .fade-in-down {
+            animation: fadeInDown 0.5s;
+        }
+
+        /* Efeito de pulse para chamar atenção */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse-effect {
+            animation: pulse 2s infinite;
+        }
+
+        /* Efeito de loading */
+        .loading-spinner {
+            border: 3px solid rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #2563eb;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -179,16 +241,17 @@
         {% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: #6B7280;">
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: white;">
         <div class="mb-4">
-            <p class="font-semibold mb-2">Entre em contato:</p>
+            <p class="font-semibold mb-2" style="color: white;">Entre em contato:</p>
             <div class="flex justify-center items-center">
-                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out text-brand-text-light hover:text-brand-blue" title="WhatsApp">
-                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21) 99915-7700
+                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: white;" title="WhatsApp"
+                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='white'">
+                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
                 </a>
             </div>
         </div>
-        <p>&copy; {% now 'local', '%Y' %} Todos os direitos reservados.</p>
+        <p style="color: white;">&copy; 2025 Todos os direitos reservados.</p>
     </footer>
 
     <!-- Include Quill JS -->
@@ -196,4 +259,3 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
