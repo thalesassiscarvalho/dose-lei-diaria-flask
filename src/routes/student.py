@@ -142,6 +142,11 @@ def dashboard():
         
     active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
 
+    # --- CORREÇÃO: Forçar expiração da sessão antes de buscar a última lei --- 
+    logging.debug(f"[DASHBOARD DEBUG] Expiring session cache before querying last accessed progress for user {current_user.id}")
+    db.session.expire_all() # Força a busca dos dados mais recentes do DB
+    # --- FIM CORREÇÃO ---
+
     # --- LOG ADICIONADO: Buscar a última lei acessada --- 
     logging.debug(f"[DASHBOARD DEBUG] Querying last accessed progress for user {current_user.id}")
     last_progress = UserProgress.query.filter_by(user_id=current_user.id).order_by(UserProgress.last_accessed_at.desc()).first()
