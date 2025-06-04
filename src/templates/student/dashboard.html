@@ -179,6 +179,19 @@
 
 {% block content %}
 <h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
+{# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
+{% if last_accessed_law %}
+<div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
+    <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
+        <i class="fas fa-history mr-2"></i> Continuar de onde parou:
+    </h3>
+    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
+       class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
+        {{ last_accessed_law.title }}
+    </a>
+</div>
+{% endif %}
+{# --- FIM NOVO --- #}
 
 <!-- Announcements Section (Mantido da formatação antiga) -->
 {% if announcements %}
@@ -440,4 +453,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {# --- FIM ADICIONADO --- #}
 {% endblock %}
-
