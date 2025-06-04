@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify # Adicionado jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import or_ # Import or_ for searching
 from src.models.user import db, Achievement, Announcement # Import Achievement and Announcement
@@ -25,7 +25,7 @@ def check_and_award_achievements(user):
     
     for achievement in potential_point_achievements:
         if user.points >= achievement.points_threshold:
-            logging.debug(f"[ACHIEVEMENT CHECK] Awarding point achievement 	{achievement.name}	 to user {user.id}")
+            logging.debug(f"[ACHIEVEMENT CHECK] Awarding point achievement \t{achievement.name}\t to user {user.id}")
             user.achievements.append(achievement)
             unlocked_achievements_names.append(achievement.name)
             
@@ -45,7 +45,7 @@ def check_and_award_achievements(user):
 
     for achievement in potential_law_achievements:
         if completed_laws_count >= achievement.laws_completed_threshold:
-            logging.debug(f"[ACHIEVEMENT CHECK] Awarding law achievement 	{achievement.name}	 to user {user.id}")
+            logging.debug(f"[ACHIEVEMENT CHECK] Awarding law achievement \t{achievement.name}\t to user {user.id}")
             user.achievements.append(achievement)
             unlocked_achievements_names.append(achievement.name)
         
@@ -60,24 +60,23 @@ def check_and_award_achievements(user):
 @login_required
 def dashboard():
     search_query = request.args.get("search", "")
-    # Corrected type for subject_id to handle empty string gracefully
     selected_subject_id_str = request.args.get("subject_id", "") 
     selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
-    
-    # --- NOVO: Obter filtro de status ---
     selected_status = request.args.get("status_filter", "")
+    # --- NOVO: Obter filtro de favoritos --- 
+    show_favorites = request.args.get("show_favorites") == 'on' # Checkbox envia 'on' se marcado
 
     # Fetch all subjects for the filter dropdown
     subjects = Subject.query.order_by(Subject.name).all()
 
-    # Base query for laws, potentially joining with Subject
+    # Base query for laws
     laws_query = Law.query.join(Subject, Law.subject_id == Subject.id, isouter=True).order_by(Subject.name, Law.title)
 
-    # Apply subject filter if selected
+    # Apply subject filter
     if selected_subject_id:
         laws_query = laws_query.filter(Law.subject_id == selected_subject_id)
     
-    # Apply search filter if query exists
+    # Apply search filter
     if search_query:
         search_term = f"%{search_query}%"
         laws_query = laws_query.filter(
@@ -87,21 +86,23 @@ def dashboard():
             )
         )
     
-    # Get laws after search/subject filters
     laws_after_initial_filters = laws_query.all()
     
-    # Fetch all progress records for the user
+    # Fetch progress records
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
-    
-    # Use status field for completion and in-progress tracking
     progress_map = {p.law_id: p.status for p in user_progress_records}
     completed_law_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
     in_progress_law_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
+
+    # --- NOVO: Obter IDs das leis favoritas --- 
+    # Usando o relacionamento definido no modelo User (assumindo que foi adicionado como 'favorite_laws')
+    favorite_law_ids = {law.id for law in current_user.favorite_laws}
+    logging.debug(f"[DASHBOARD] User {current_user.id} favorite law IDs: {favorite_law_ids}")
     
-    # --- NOVO: Aplicar filtro de status --- 
-    laws_to_display = []
-    if not selected_status: # Se nenhum status foi selecionado, mostra todas
-        laws_to_display = laws_after_initial_filters
+    # Apply status filter
+    laws_after_status_filter = []
+    if not selected_status:
+        laws_after_status_filter = laws_after_initial_filters
     else:
         for law in laws_after_initial_filters:
             is_completed = law.id in completed_law_ids
@@ -109,28 +110,34 @@ def dashboard():
             is_not_read = not is_completed and not is_in_progress
 
             if selected_status == 'completed' and is_completed:
-                laws_to_display.append(law)
+                laws_after_status_filter.append(law)
             elif selected_status == 'in_progress' and is_in_progress:
-                laws_to_display.append(law)
+                laws_after_status_filter.append(law)
             elif selected_status == 'not_read' and is_not_read:
-                laws_to_display.append(law)
-    # --- Fim do filtro de status ---
+                laws_after_status_filter.append(law)
 
-    total_laws_count = Law.query.count() # Total geral de leis no sistema
-    # completed_count já calculado acima usando completed_law_ids
-    completed_count = len(completed_law_ids) 
+    # --- NOVO: Aplicar filtro de favoritos --- 
+    laws_to_display = []
+    if show_favorites:
+        # Se o filtro de favoritos estiver ativo, filtre a lista que já passou pelo filtro de status
+        laws_to_display = [law for law in laws_after_status_filter if law.id in favorite_law_ids]
+        logging.debug(f"[DASHBOARD] Filtering for favorites. Laws count: {len(laws_to_display)}")
+    else:
+        # Se não, use a lista que passou pelo filtro de status
+        laws_to_display = laws_after_status_filter
+    # --- Fim do filtro de favoritos ---
+
+    total_laws_count = Law.query.count()
+    completed_count = len(completed_law_ids)
     progress_percentage = (completed_count / total_laws_count * 100) if total_laws_count > 0 else 0
 
-    # Fetch user points and achievements
     user_points = current_user.points
-    user_achievements = current_user.achievements # Fetched via relationship
+    user_achievements = current_user.achievements
 
-    # Check for achievements when loading dashboard (for retroactive awards)
     newly_unlocked = check_and_award_achievements(current_user)
     if newly_unlocked:
-        try: # Added try/except for commit
-            db.session.commit() # Commit if any achievements were awarded here
-            # Refetch achievements if any were added
+        try:
+            db.session.commit()
             user_achievements = current_user.achievements
             flash(f"Novas conquistas desbloqueadas: {', '.join(newly_unlocked)}!", "success")
         except Exception as e:
@@ -138,13 +145,12 @@ def dashboard():
             logging.error(f"[DASHBOARD] Error committing achievements for user {current_user.id}: {e}")
             flash("Erro ao atualizar conquistas.", "danger")
         
-    # Fetch active announcements
     active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
     
     return render_template("student/dashboard.html", 
-                           laws=laws_to_display, # <-- Usar a lista filtrada por status
+                           laws=laws_to_display,
                            subjects=subjects, 
-                           selected_subject_id=selected_subject_id, # Passar o ID numérico ou None
+                           selected_subject_id=selected_subject_id,
                            completed_law_ids=completed_law_ids,
                            in_progress_law_ids=in_progress_law_ids, 
                            progress_percentage=progress_percentage,
@@ -154,7 +160,35 @@ def dashboard():
                            user_points=user_points, 
                            user_achievements=user_achievements, 
                            announcements=active_announcements,
-                           selected_status=selected_status) # <-- Passar o status selecionado
+                           selected_status=selected_status,
+                           # --- NOVO: Passar dados de favoritos para o template ---
+                           favorite_law_ids=favorite_law_ids, 
+                           show_favorites=show_favorites # Passar estado do checkbox
+                           )
+
+# --- NOVO: Rota para Adicionar/Remover Favorito ---
+@student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
+@login_required
+def toggle_favorite(law_id):
+    law = Law.query.get_or_404(law_id)
+    is_currently_favorite = law in current_user.favorite_laws
+    
+    try:
+        if is_currently_favorite:
+            current_user.favorite_laws.remove(law)
+            db.session.commit()
+            logging.info(f"[FAVORITE] User {current_user.id} removed law {law_id} from favorites.")
+            return jsonify(success=True, favorited=False)
+        else:
+            current_user.favorite_laws.append(law)
+            db.session.commit()
+            logging.info(f"[FAVORITE] User {current_user.id} added law {law_id} to favorites.")
+            return jsonify(success=True, favorited=True)
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[FAVORITE] Error toggling favorite for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error=str(e)), 500
+# --- FIM NOVO ---
 
 @student_bp.route("/law/<int:law_id>")
 @login_required
@@ -162,7 +196,6 @@ def view_law(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
-    # UPDATED: Use status field
     current_status = progress.status if progress else 'nao_iniciado'
     is_completed = current_status == 'concluido'
     
@@ -171,7 +204,7 @@ def view_law(law_id):
                            law=law, 
                            is_completed=is_completed, 
                            last_read_article=last_read_article,
-                           current_status=current_status) # Pass status to template if needed for display
+                           current_status=current_status)
 
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
@@ -186,7 +219,6 @@ def mark_complete(law_id):
         logging.debug(f"[MARK COMPLETE] No progress found for user {current_user.id}, law {law_id}. Creating new.")
         progress = UserProgress(user_id=current_user.id, law_id=law_id)
         db.session.add(progress)
-        # Status will be updated below
     else:
         logging.debug(f"[MARK COMPLETE] Progress found for user {current_user.id}, law {law_id}. Current status: {progress.status}")
         if progress.status == 'concluido':
@@ -194,25 +226,21 @@ def mark_complete(law_id):
 
     if was_already_completed:
         flash(f"Você já marcou a lei \"{law.title}\" como concluída.", "info")
-        return redirect(url_for("student.view_law", law_id=law_id))
     else:
-        # Award points only if not previously completed
         points_to_award = 10 
         current_user.points += points_to_award
         points_awarded_this_time = points_to_award
-        db.session.add(current_user) # Add user to session to save points
+        db.session.add(current_user)
         logging.debug(f"[MARK COMPLETE] Awarding {points_to_award} points to user {current_user.id}. New total: {current_user.points}")
         
-        # Update progress status and timestamp
         progress.status = 'concluido'
         progress.completed_at = datetime.datetime.utcnow()
         logging.debug(f"[MARK COMPLETE] Setting status to 'concluido' and completed_at for user {current_user.id}, law {law_id}.")
 
-    # Check for achievements AFTER potential point gain and status change
     unlocked_achievements = check_and_award_achievements(current_user)
     
     try:
-        db.session.commit() # Commit points, progress, and achievements together
+        db.session.commit()
         logging.info(f"[MARK COMPLETE] Successfully committed completion for user {current_user.id}, law {law_id}.")
         
         flash_message = f"Lei \"{law.title}\" marcada como concluída!"
@@ -220,12 +248,14 @@ def mark_complete(law_id):
              flash_message += f" Você ganhou {points_awarded_this_time} pontos."
         if unlocked_achievements:
             flash_message += f" Conquistas desbloqueadas: {', '.join(unlocked_achievements)}!"
-        flash(flash_message, "success")
+        if not was_already_completed: # Only flash if it wasn't already completed
+            flash(flash_message, "success")
     except Exception as e:
         db.session.rollback()
         logging.error(f"[MARK COMPLETE] Error committing completion for user {current_user.id}, law {law_id}: {e}")
         flash(f"Erro ao marcar como concluído: {e}", "danger")
 
+    # Redirect back to the law view page after marking complete
     return redirect(url_for("student.view_law", law_id=law_id))
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
@@ -237,13 +267,9 @@ def review_law(law_id):
         law_title = progress.law.title
         logging.debug(f"[REVIEW LAW] User {current_user.id} reviewing law {law_id}. Current status: {progress.status}")
         
-        # UPDATED: Set status to 'em_andamento' and clear completed_at
         progress.status = 'em_andamento' 
         progress.completed_at = None 
-        # Keep progress.last_read_article as is
         logging.debug(f"[REVIEW LAW] Setting status to 'em_andamento' and completed_at to None for user {current_user.id}, law {law_id}.")
-        
-        # Note: Points are not decremented upon review.
         
         try:
             db.session.commit()
@@ -257,16 +283,20 @@ def review_law(law_id):
         logging.warning(f"[REVIEW LAW] Progress record not found for user {current_user.id}, law {law_id}.")
         flash("Não foi possível encontrar o registro de progresso para esta lei.", "warning")
 
-    # --- NOVO: Obter filtros atuais para manter no redirect ---
+    # Get current filters to maintain state on redirect
     search_query = request.args.get("search")
     subject_id = request.args.get("subject_id")
-    status_filter = request.args.get("status_filter") # Obter o filtro de status
-    
-    # --- NOVO: Incluir status_filter no redirect_url ---
+    status_filter = request.args.get("status_filter")
+    # --- NOVO: Obter filtro de favoritos para manter no redirect ---
+    show_favorites_val = request.args.get("show_favorites") # Get the value ('on' or None)
+
     redirect_url = url_for("student.dashboard", 
                            search=search_query, 
                            subject_id=subject_id, 
-                           status_filter=status_filter) # Adicionar status_filter
+                           status_filter=status_filter,
+                           # --- NOVO: Passar filtro de favoritos no redirect ---
+                           show_favorites=show_favorites_val # Pass the value directly
+                           )
     return redirect(redirect_url)
 
 @student_bp.route("/law/save_last_read/<int:law_id>", methods=["POST"])
@@ -281,58 +311,43 @@ def save_last_read(law_id):
 
     if is_new_progress:
         logging.debug(f"[SAVE LAST READ] No progress found. Creating new record.")
-        # CORRECTED: Set initial status correctly based on article presence
         initial_status = 'em_andamento' if last_article else 'nao_iniciado'
         progress = UserProgress(
             user_id=current_user.id,
             law_id=law_id,
             completed_at=None,
-            status=initial_status, # Set status directly on creation
-            last_read_article=last_article if last_article else None # Set article here too
+            status=initial_status,
+            last_read_article=last_article if last_article else None
         )
         db.session.add(progress)
         logging.debug(f"[SAVE LAST READ] New progress created with status: {initial_status}, article: {progress.last_read_article}")
     else:
         logging.debug(f"[SAVE LAST READ] Progress found. Current status: {progress.status}")
-        # Update last read article for existing record
         progress.last_read_article = last_article if last_article else None
         logging.debug(f"[SAVE LAST READ] Updated last_read_article to: {progress.last_read_article}")
 
-        # Update status only for existing records based on changes
         if progress.status == 'nao_iniciado':
             if last_article:
                 progress.status = 'em_andamento'
                 logging.debug(f"[SAVE LAST READ] Status changed from 'nao_iniciado' to 'em_andamento'.")
         elif progress.status == 'em_andamento':
-            if not last_article:
-                # Don't change back to nao_iniciado if article is cleared, keep em_andamento
-                # progress.status = 'nao_iniciado'
-                # logging.debug(f"[SAVE LAST READ] Article cleared, status changed from 'em_andamento' to 'nao_iniciado'.")
-                pass # Keep 'em_andamento' even if article is cleared
-        # Do not change status if it was 'concluido'
+            # Keep 'em_andamento' even if article is cleared
+            pass 
         elif progress.status == 'concluido':
              logging.debug(f"[SAVE LAST READ] Status is 'concluido', not changing status.")
 
-    # Ensure completed_at is None if status is not 'concluido'
     if progress.status != 'concluido':
         progress.completed_at = None 
-        # logging.debug(f"[SAVE LAST READ] Ensuring completed_at is None as status is not 'concluido'.") # Less verbose log
 
     try:
         db.session.commit()
         logging.info(f"[SAVE LAST READ] Successfully committed progress for user {current_user.id}, law {law_id}. New status: {progress.status}")
-        # Removed flash messages for save_last_read as they might be too frequent
-        # if last_article:
-        #     flash(f"Posição salva: Artigo {last_article}.", "success")
-        # else:
-        #     flash("Posição de leitura limpa.", "info")
     except Exception as e:
         db.session.rollback()
         logging.error(f"[SAVE LAST READ] Error committing progress for user {current_user.id}, law {law_id}: {e}")
-        flash(f"Erro ao salvar posição: {e}", "danger")
+        # Return error in JSON for AJAX call
+        return jsonify(success=False, error=str(e)), 500
         
-    # Return a simple success response instead of redirecting to avoid page reload
-    # return redirect(url_for("student.view_law", law_id=law_id))
-    from flask import jsonify
+    # Return success in JSON for AJAX call
     return jsonify(success=True, message="Posição salva."), 200
 
