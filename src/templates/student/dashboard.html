@@ -176,6 +176,7 @@
         <div>
             {% for achievement in user_achievements %}
                 <span class="achievement-badge" title="{{ achievement.description }}">
+                    {# Corrigido: Removido escape desnecessário #}
                     <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
                 </span>
             {% endfor %}
@@ -188,7 +189,8 @@
 <!-- Filters and Search -->
 <div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
     {# Alterado para md:grid-cols-4 para incluir o novo filtro #}
-    <form method="GET" action="{{ url_for(\"student.dashboard\") }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    {# Corrigido: Removido escape desnecessário em url_for #}
+    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <!-- Search Input -->
         <div>
             <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
@@ -206,6 +208,7 @@
                     style="focus:ring: 2px solid #60a5fa;">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
+                    {# Corrigido: Usado subject.id|string para comparação segura #}
                     <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
                 {% endfor %}
             </select>
@@ -231,7 +234,8 @@
             </button>
             {# Condição atualizada para incluir selected_status #}
             {% if search_query or selected_subject_id or selected_status %}
-                <a href="{{ url_for(\"student.dashboard\") }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
+                {# Corrigido: Removido escape desnecessário em url_for #}
+                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
             {% endif %}
         </div>
     </form>
@@ -267,12 +271,14 @@
                 </div>
             </div>
             <div class="card-actions flex justify-between items-center mt-auto">
-                 <a href="{{ url_for(\"student.view_law\", law_id=law.id) }}" class="action-button w-full">
+                 {# Corrigido: Removido escape desnecessário em url_for #}
+                 <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button w-full">
                      <i class="fas fa-book-open mr-2"></i> Ler Legislação
                  </a>
                  {% if law.id in completed_law_ids %}
                     {# Pass current filters (incluindo status) to review route to preserve state #}
-                    <form action="{{ url_for(\"student.review_law\", law_id=law.id, search=search_query, subject_id=selected_subject_id, status_filter=selected_status) }}" method="POST" class="inline-block ml-2">
+                    {# Corrigido: Removido escape desnecessário em url_for #}
+                    <form action="{{ url_for('student.review_law', law_id=law.id, search=search_query, subject_id=selected_subject_id, status_filter=selected_status) }}" method="POST" class="inline-block ml-2">
                         <button type="submit" class="review-button" title="Marcar como não concluído para rever">
                             <i class="fas fa-undo-alt"></i>
                         </button>
