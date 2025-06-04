@@ -25,7 +25,7 @@ def check_and_award_achievements(user):
     
     for achievement in potential_point_achievements:
         if user.points >= achievement.points_threshold:
-            logging.debug(f"[ACHIEVEMENT CHECK] Awarding point achievement '{achievement.name}' to user {user.id}")
+            logging.debug(f"[ACHIEVEMENT CHECK] Awarding point achievement 	{achievement.name}	 to user {user.id}")
             user.achievements.append(achievement)
             unlocked_achievements_names.append(achievement.name)
             
@@ -45,7 +45,7 @@ def check_and_award_achievements(user):
 
     for achievement in potential_law_achievements:
         if completed_laws_count >= achievement.laws_completed_threshold:
-            logging.debug(f"[ACHIEVEMENT CHECK] Awarding law achievement '{achievement.name}' to user {user.id}")
+            logging.debug(f"[ACHIEVEMENT CHECK] Awarding law achievement 	{achievement.name}	 to user {user.id}")
             user.achievements.append(achievement)
             unlocked_achievements_names.append(achievement.name)
         
@@ -60,7 +60,12 @@ def check_and_award_achievements(user):
 @login_required
 def dashboard():
     search_query = request.args.get("search", "")
-    selected_subject_id = request.args.get("subject_id", type=int)
+    # Corrected type for subject_id to handle empty string gracefully
+    selected_subject_id_str = request.args.get("subject_id", "") 
+    selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
+    
+    # --- NOVO: Obter filtro de status ---
+    selected_status = request.args.get("status_filter", "")
 
     # Fetch all subjects for the filter dropdown
     subjects = Subject.query.order_by(Subject.name).all()
@@ -82,18 +87,38 @@ def dashboard():
             )
         )
     
-    laws_list = laws_query.all()
+    # Get laws after search/subject filters
+    laws_after_initial_filters = laws_query.all()
     
     # Fetch all progress records for the user
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     
-    # UPDATED: Use status field for completion and in-progress tracking
+    # Use status field for completion and in-progress tracking
     progress_map = {p.law_id: p.status for p in user_progress_records}
     completed_law_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
     in_progress_law_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     
-    total_laws_count = Law.query.count()
-    completed_count = len(completed_law_ids) # Count based on the status
+    # --- NOVO: Aplicar filtro de status --- 
+    laws_to_display = []
+    if not selected_status: # Se nenhum status foi selecionado, mostra todas
+        laws_to_display = laws_after_initial_filters
+    else:
+        for law in laws_after_initial_filters:
+            is_completed = law.id in completed_law_ids
+            is_in_progress = law.id in in_progress_law_ids
+            is_not_read = not is_completed and not is_in_progress
+
+            if selected_status == 'completed' and is_completed:
+                laws_to_display.append(law)
+            elif selected_status == 'in_progress' and is_in_progress:
+                laws_to_display.append(law)
+            elif selected_status == 'not_read' and is_not_read:
+                laws_to_display.append(law)
+    # --- Fim do filtro de status ---
+
+    total_laws_count = Law.query.count() # Total geral de leis no sistema
+    # completed_count já calculado acima usando completed_law_ids
+    completed_count = len(completed_law_ids) 
     progress_percentage = (completed_count / total_laws_count * 100) if total_laws_count > 0 else 0
 
     # Fetch user points and achievements
@@ -117,9 +142,9 @@ def dashboard():
     active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
     
     return render_template("student/dashboard.html", 
-                           laws=laws_list, 
+                           laws=laws_to_display, # <-- Usar a lista filtrada por status
                            subjects=subjects, 
-                           selected_subject_id=selected_subject_id, 
+                           selected_subject_id=selected_subject_id, # Passar o ID numérico ou None
                            completed_law_ids=completed_law_ids,
                            in_progress_law_ids=in_progress_law_ids, 
                            progress_percentage=progress_percentage,
@@ -128,7 +153,8 @@ def dashboard():
                            search_query=search_query,
                            user_points=user_points, 
                            user_achievements=user_achievements, 
-                           announcements=active_announcements)
+                           announcements=active_announcements,
+                           selected_status=selected_status) # <-- Passar o status selecionado
 
 @student_bp.route("/law/<int:law_id>")
 @login_required
@@ -231,9 +257,16 @@ def review_law(law_id):
         logging.warning(f"[REVIEW LAW] Progress record not found for user {current_user.id}, law {law_id}.")
         flash("Não foi possível encontrar o registro de progresso para esta lei.", "warning")
 
+    # --- NOVO: Obter filtros atuais para manter no redirect ---
     search_query = request.args.get("search")
     subject_id = request.args.get("subject_id")
-    redirect_url = url_for("student.dashboard", search=search_query, subject_id=subject_id)
+    status_filter = request.args.get("status_filter") # Obter o filtro de status
+    
+    # --- NOVO: Incluir status_filter no redirect_url ---
+    redirect_url = url_for("student.dashboard", 
+                           search=search_query, 
+                           subject_id=subject_id, 
+                           status_filter=status_filter) # Adicionar status_filter
     return redirect(redirect_url)
 
 @student_bp.route("/law/save_last_read/<int:law_id>", methods=["POST"])
@@ -272,8 +305,10 @@ def save_last_read(law_id):
                 logging.debug(f"[SAVE LAST READ] Status changed from 'nao_iniciado' to 'em_andamento'.")
         elif progress.status == 'em_andamento':
             if not last_article:
-                progress.status = 'nao_iniciado'
-                logging.debug(f"[SAVE LAST READ] Article cleared, status changed from 'em_andamento' to 'nao_iniciado'.")
+                # Don't change back to nao_iniciado if article is cleared, keep em_andamento
+                # progress.status = 'nao_iniciado'
+                # logging.debug(f"[SAVE LAST READ] Article cleared, status changed from 'em_andamento' to 'nao_iniciado'.")
+                pass # Keep 'em_andamento' even if article is cleared
         # Do not change status if it was 'concluido'
         elif progress.status == 'concluido':
              logging.debug(f"[SAVE LAST READ] Status is 'concluido', not changing status.")
@@ -286,14 +321,18 @@ def save_last_read(law_id):
     try:
         db.session.commit()
         logging.info(f"[SAVE LAST READ] Successfully committed progress for user {current_user.id}, law {law_id}. New status: {progress.status}")
-        if last_article:
-            flash(f"Posição salva: Artigo {last_article}.", "success")
-        else:
-            flash("Posição de leitura limpa.", "info")
+        # Removed flash messages for save_last_read as they might be too frequent
+        # if last_article:
+        #     flash(f"Posição salva: Artigo {last_article}.", "success")
+        # else:
+        #     flash("Posição de leitura limpa.", "info")
     except Exception as e:
         db.session.rollback()
         logging.error(f"[SAVE LAST READ] Error committing progress for user {current_user.id}, law {law_id}: {e}")
         flash(f"Erro ao salvar posição: {e}", "danger")
         
-    return redirect(url_for("student.view_law", law_id=law_id))
+    # Return a simple success response instead of redirecting to avoid page reload
+    # return redirect(url_for("student.view_law", law_id=law_id))
+    from flask import jsonify
+    return jsonify(success=True, message="Posição salva."), 200
 
