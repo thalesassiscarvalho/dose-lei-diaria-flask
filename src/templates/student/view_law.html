@@ -75,6 +75,7 @@
         cursor: pointer;
         transition: background-color 0.2s;
         border: 1px solid #d1d5db; /* gray-300 */
+        white-space: nowrap; /* Evita quebra de linha nos botões */
     }
     .toggle-button:hover {
         background-color: #d1d5db; /* gray-300 */
@@ -163,17 +164,23 @@
 
 {% block scripts %}
 <script>
-// --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
+// --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v5 - Revisado) ---
 document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById("law-content");
     const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
     const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
     const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
 
+    // Verifica se todos os botões existem antes de prosseguir
+    if (!lawContent || !toggleCommentsBtn || !toggleJurisprudenceBtn || !toggleDoutrinaBtn) {
+        console.error("Erro: Elemento de conteúdo ou um dos botões de toggle não encontrado no DOM.");
+        return; // Interrompe a execução se algum elemento essencial faltar
+    }
+
     // Seletores baseados nos estilos inline identificados
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
     const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
-    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
+    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]'; // Cor roxa para doutrina
     const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
 
     // Estado inicial: conteúdo visível
@@ -192,56 +199,46 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    function updateButtonAppearance(button, isVisible, typeName) {
+        if (isVisible) {
+            button.classList.remove("active");
+            button.innerHTML = `<i class="fas fa-eye-slash mr-1"></i> Ocultar ${typeName}`;
+        } else {
+            button.classList.add("active");
+            button.innerHTML = `<i class="fas fa-eye mr-1"></i> Mostrar ${typeName}`;
+        }
+    }
+
     // Event listener para o botão de comentários
     toggleCommentsBtn.addEventListener("click", function () {
-        commentsVisible = !commentsVisible; // Inverte o estado
-        toggleElementsVisibility(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (commentsVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
-        }
+        commentsVisible = !commentsVisible;
+        toggleElementsVisibility(commentSelector, commentsVisible);
+        updateButtonAppearance(this, commentsVisible, "Comentários");
     });
 
     // Event listener para o botão de jurisprudências
     toggleJurisprudenceBtn.addEventListener("click", function () {
-        jurisprudenceVisible = !jurisprudenceVisible; // Inverte o estado
-        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (jurisprudenceVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
-        }
+        jurisprudenceVisible = !jurisprudenceVisible;
+        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible);
+        updateButtonAppearance(this, jurisprudenceVisible, "Jurisprudências");
     });
 
     // Event listener para o botão de doutrina
     toggleDoutrinaBtn.addEventListener("click", function () {
-        doutrinaVisible = !doutrinaVisible; // Inverte o estado
-        toggleElementsVisibility(doutrinaSelector, doutrinaVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (doutrinaVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
-        }
+        doutrinaVisible = !doutrinaVisible;
+        toggleElementsVisibility(doutrinaSelector, doutrinaVisible);
+        updateButtonAppearance(this, doutrinaVisible, "Doutrina");
     });
 
     // Garantir que o estado inicial (visível) não tenha a classe de ocultar
-    // (Caso a página seja recarregada com elementos ocultos por algum motivo)
     toggleElementsVisibility(commentSelector, true);
     toggleElementsVisibility(jurisprudenceSelector, true);
     toggleElementsVisibility(doutrinaSelector, true);
+
+    // Atualiza a aparência inicial dos botões para refletir o estado visível
+    updateButtonAppearance(toggleCommentsBtn, commentsVisible, "Comentários");
+    updateButtonAppearance(toggleJurisprudenceBtn, jurisprudenceVisible, "Jurisprudências");
+    updateButtonAppearance(toggleDoutrinaBtn, doutrinaVisible, "Doutrina");
 });
 // --- Fim do Script de Toggle ---
 
