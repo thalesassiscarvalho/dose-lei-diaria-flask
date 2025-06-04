@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     // Se você usa CSRF protection, adicione o token aqui
-                    // 'X-CSRFToken': '{{ csrf_token() }}' // Exemplo se usar Flask-WTF
+                    {# Exemplo se usar Flask-WTF: 'X-CSRFToken': '{{ csrf_token() }}' #}
                     'Content-Type': 'application/json' // Embora não enviemos corpo, é boa prática
                 },
                 // body: JSON.stringify({}) // Não precisamos enviar corpo para esta ação
