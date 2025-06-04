@@ -1,96 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}{% if law %}Editar Lei{% else %}Adicionar Lei{% endif %} - Admin{% endblock %}
+{% block title %}
+    {% if law %}Editar Lei: {{ law.title }}{% else %}Adicionar Nova Lei{% endif %}
+{% endblock %}
 
 {% block head_extra %}
-{# TinyMCE script is loaded in the scripts block below #}
+<!-- Adicione aqui qualquer CSS ou JS específico para esta página, como o do editor de texto -->
+<script src="https://cdn.tiny.cloud/1/YOUR_API_KEY/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+  tinymce.init({
+    selector: '#content',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount linkchecker',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+    height: 400, // Ajuste a altura conforme necessário
+    // Configurações adicionais, se necessário
+  });
+</script>
+<style>
+    /* Estilos adicionais se necessário */
+</style>
 {% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-brand-purple mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
+<h1 class="text-2xl font-bold mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
 
-<form method="POST" action="{% if law %}{{ url_for("admin.edit_law", law_id=law.id) }}{% else %}{{ url_for("admin.add_law") }}{% endif %}" id="law-form" class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+<form method="POST" action="{% if law %}{{ url_for('admin.edit_law', law_id=law.id) }}{% else %}{{ url_for('admin.add_law') }}{% endif %}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    
     <div class="mb-4">
-        <label for="title" class="block text-brand-text text-sm font-bold mb-2">Título:</label>
-        <input type="text" id="title" name="title" value="{{ law.title if law else "" }}" required class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
+            Título:
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="title" name="title" type="text" placeholder="Título da Lei" value="{{ law.title if law else '' }}" required>
     </div>
 
     <div class="mb-4">
-        <label for="subject_id" class="block text-brand-text text-sm font-bold mb-2">Matéria:</label>
-        <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent bg-white">
-            <option value="None">-- Nenhuma --</option> {# Option for no subject #}
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="subject_id">
+            Matéria:
+        </label>
+        <select id="subject_id" name="subject_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="None">-- Nenhuma --</option>
             {% for subject in subjects %}
-                <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
+            <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
             {% endfor %}
         </select>
-        <p class="text-xs text-gray-500 mt-1">Você pode gerenciar as matérias <a href="{{ url_for("admin.manage_subjects") }}" class="text-brand-purple hover:underline">aqui</a>.</p>
+        <p class="text-xs text-gray-600 mt-1">Você pode gerenciar as matérias <a href="{{ url_for('admin.manage_subjects') }}" class="text-blue-500 hover:text-blue-700">aqui</a>.</p>
     </div>
 
     <div class="mb-4">
-        <label for="description" class="block text-brand-text text-sm font-bold mb-2">Descrição (Opcional):</label>
-        <textarea id="description" name="description" rows="3" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">{{ law.description if law else "" }}</textarea>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
+            Descrição (Opcional):
+        </label>
+        <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="3" placeholder="Breve descrição da lei">{{ law.description if law else '' }}</textarea>
     </div>
 
+    <!-- ****** NOVO CAMPO PARA URL DO ÁUDIO ****** -->
+    <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="audio_url">
+            URL do Áudio (Opcional):
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="audio_url" name="audio_url" type="url" placeholder="https://.../arquivo.mp3" value="{{ law.audio_url if law and law.audio_url else '' }}">
+        <p class="text-xs text-gray-600 mt-1">Cole aqui o link completo (URL) para o arquivo de áudio externo (MP3, OGG, etc.).</p>
+    </div>
+    <!-- ****** FIM NOVO CAMPO ****** -->
+
     <div class="mb-6">
-        <label for="content-editor" class="block text-brand-text text-sm font-bold mb-2">Conteúdo:</label>
-        {# Textarea for TinyMCE #}
-        <textarea id="content-editor" name="content" rows="20" class="shadow-sm appearance-none border border-gray-300 rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">{{ law.content | safe if law else "" }}</textarea>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="content">
+            Conteúdo:
+        </label>
+        <textarea id="content" name="content">{{ law.content | safe if law else '' }}</textarea>
     </div>
 
     <div class="flex items-center justify-between">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
             {% if law %}Salvar Alterações{% else %}Adicionar Lei{% endif %}
         </button>
-        <a href="{{ url_for("admin.dashboard") }}" class="inline-block align-baseline font-bold text-sm text-brand-purple hover:text-brand-purple-dark">
+        <a href="{{ url_for('admin.dashboard') }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
             Cancelar
         </a>
     </div>
 </form>
+
 {% endblock %}
 
-{% block scripts %}
-{# Add TinyMCE script from CDN with user's API Key #}
-<script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-
-{# Initialize TinyMCE using the configuration provided by TinyMCE website #}
-<script>
-  tinymce.init({
-    selector: "textarea#content-editor", // Target the specific textarea
-    plugins: [
-      // Core editing features
-      "anchor", "autolink", "charmap", "codesample", "emoticons", "image", "link", "lists", "media", "searchreplace", "table", "visualblocks", "wordcount",
-      // Your account includes a free trial of TinyMCE premium features
-      // Try the most popular premium features until Jun 17, 2025:
-      "checklist", "mediaembed", "casechange", "formatpainter", "pageembed", "a11ychecker", "tinymcespellchecker", "permanentpen", "powerpaste", "advtable", "advcode", "editimage", "advtemplate", "ai", "mentions", "tinycomments", "tableofcontents", "footnotes", "mergetags", "autocorrect", "typography", "inlinecss", "markdown","importword", "exportword", "exportpdf"
-    ],
-    toolbar: "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat",
-    height: 600, // Increased height for better usability
-    menubar: "file edit view insert format tools table help",
-    extended_valid_elements: "*[*]", // Allow all elements and attributes for maximum flexibility
-    content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-    tinycomments_mode: "embedded",
-    tinycomments_author: "Admin", // Changed author name
-    mergetags_list: [
-      { value: "First.Name", title: "First Name" },
-      { value: "Email", title: "Email" },
-    ],
-    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
-    // Ensure TinyMCE saves the raw HTML content to the textarea on change
-    setup: function (editor) {
-        editor.on("change", function () {
-            editor.save();
-        });
-        editor.on("init", function() {
-            // Remove the default content TinyMCE might insert if the textarea is empty
-            if (editor.getContent() === "<p>Welcome to TinyMCE!</p>") {
-                 // Check if the original textarea value was actually empty
-                 const originalValue = document.getElementById("content-editor").value;
-                 if (!originalValue || originalValue.trim() === "") {
-                    editor.setContent("");
-                 }
-            }
-        });
-    }
-  });
-</script>
-{% endblock %}
