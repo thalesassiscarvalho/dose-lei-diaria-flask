@@ -23,7 +23,7 @@ def admin_required(f):
 @admin_required
 def dashboard():
     # Get subject filter from query parameters
-    subject_filter = request.args.get('subject_filter', 'all')
+    subject_filter = request.args.get("subject_filter", "all")
     
     # Get all subjects for the filter dropdown
     all_subjects = Subject.query.order_by(Subject.name).all()
@@ -33,11 +33,11 @@ def dashboard():
     laws_without_subject = []
     
     # Apply filter based on selection
-    if subject_filter == 'all':
+    if subject_filter == "all":
         # Show all subjects with their laws
         subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
         laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
-    elif subject_filter == 'none':
+    elif subject_filter == "none":
         # Show only laws without subject
         laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
     else:
@@ -91,7 +91,7 @@ def manage_subjects():
 @admin_required
 def delete_subject(subject_id):
     subject = Subject.query.get_or_404(subject_id)
-    # Optional: Check if laws are associated and decide how to handle (e.g., prevent deletion or set laws' subject_id to null)
+    # Optional: Check if laws are associated and decide how to handle (e.g., prevent deletion or set laws" subject_id to null)
     if subject.laws:
         flash(f"Não é possível excluir a matéria ", "danger")
     else:
@@ -111,12 +111,19 @@ def add_law():
         description = request.form.get("description")
         content = request.form.get("content")
         subject_id = request.form.get("subject_id")
+        audio_url = request.form.get("audio_url") # <<< NOVO: Obter URL do áudio
 
         if not title or not content:
             flash("Título e conteúdo são obrigatórios.", "danger")
-            return render_template("admin/add_edit_law.html", law=None, subjects=subjects)
+            # Passar audio_url de volta para o template em caso de erro
+            return render_template("admin/add_edit_law.html", law=None, subjects=subjects, audio_url=audio_url)
 
-        new_law = Law(title=title, description=description, content=content)
+        new_law = Law(
+            title=title, 
+            description=description, 
+            content=content,
+            audio_url=audio_url if audio_url else None # <<< NOVO: Salvar URL do áudio (ou None)
+        )
         if subject_id and subject_id != "None": # Handle case where no subject is selected
             new_law.subject_id = int(subject_id)
         else:
@@ -127,6 +134,7 @@ def add_law():
         flash("Lei adicionada com sucesso!", "success")
         return redirect(url_for("admin.dashboard"))
 
+    # GET request
     return render_template("admin/add_edit_law.html", law=None, subjects=subjects)
 
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
@@ -140,20 +148,25 @@ def edit_law(law_id):
         law.description = request.form.get("description")
         law.content = request.form.get("content")
         subject_id = request.form.get("subject_id")
+        audio_url = request.form.get("audio_url") # <<< NOVO: Obter URL do áudio
 
         if not law.title or not law.content:
             flash("Título e conteúdo são obrigatórios.", "danger")
+            # Passar audio_url de volta para o template em caso de erro
             return render_template("admin/add_edit_law.html", law=law, subjects=subjects)
 
         if subject_id and subject_id != "None":
             law.subject_id = int(subject_id)
         else:
             law.subject_id = None
+            
+        law.audio_url = audio_url if audio_url else None # <<< NOVO: Atualizar URL do áudio (ou None)
 
         db.session.commit()
         flash("Lei atualizada com sucesso!", "success")
         return redirect(url_for("admin.dashboard"))
 
+    # GET request
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects)
 
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
@@ -299,3 +312,4 @@ def delete_announcement(announcement_id):
     db.session.commit()
     flash("Aviso excluído com sucesso!", "success")
     return redirect(url_for("admin.manage_announcements"))
+
