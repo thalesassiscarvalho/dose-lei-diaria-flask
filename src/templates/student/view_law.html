@@ -80,6 +80,7 @@
         background-color: #d1d5db; /* gray-300 */
     }
     .toggle-button.active {
+        /* Estilo quando o conteúdo está OCULTO (botão para MOSTRAR) */
         background-color: #3b82f6; /* blue-500 */
         color: white;
         border-color: #2563eb; /* blue-600 */
@@ -87,9 +88,7 @@
     .toggle-button.active:hover {
         background-color: #2563eb; /* blue-600 */
     }
-    .hidden-content {
-        display: none;
-    }
+    /* Classe para ocultar - removida, usamos display direto */
 </style>
 {% endblock %}
 
@@ -113,11 +112,11 @@
 
 <!-- Botões de Toggle -->
 <div class="flex space-x-2 mb-4">
-    <button id="toggle-comments-btn" class="toggle-button active">
-        <i class="fas fa-eye mr-1"></i> Mostrar Comentários
+    <button id="toggle-comments-btn" class="toggle-button">
+        <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
     </button>
-    <button id="toggle-jurisprudence-btn" class="toggle-button active">
-        <i class="fas fa-gavel mr-1"></i> Mostrar Jurisprudências
+    <button id="toggle-jurisprudence-btn" class="toggle-button">
+        <i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências
     </button>
 </div>
 <!-- Fim dos Botões de Toggle -->
@@ -158,7 +157,7 @@
 
 {% block scripts %}
 <script>
-// --- Script para Ocultar/Mostrar Comentários e Jurisprudências ---
+// --- Script para Ocultar/Mostrar Comentários e Jurisprudências (CORRIGIDO) ---
 document.addEventListener('DOMContentLoaded', function() {
     const lawContent = document.getElementById('law-content');
     const toggleCommentsBtn = document.getElementById('toggle-comments-btn');
@@ -168,59 +167,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
     const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
 
+    // Estado inicial: conteúdo visível
     let commentsVisible = true;
     let jurisprudenceVisible = true;
 
-    function toggleElements(selector, isVisible) {
+    function toggleElements(selector, makeVisible) {
         const elements = lawContent.querySelectorAll(selector);
         elements.forEach(el => {
-            el.style.display = isVisible ? '' : 'none'; // Usa display vazio para voltar ao padrão
+            // Define display como 'none' para ocultar, ou remove o estilo para mostrar (voltando ao padrão 'block' ou outro)
+            el.style.display = makeVisible ? '' : 'none'; 
         });
     }
 
-    // Inicialmente, garantir que todos estejam visíveis (caso o CSS padrão seja diferente)
-    toggleElements(commentSelector, commentsVisible);
-    toggleElements(jurisprudenceSelector, jurisprudenceVisible);
-
     // Event listener para o botão de comentários
     toggleCommentsBtn.addEventListener('click', function() {
-        commentsVisible = !commentsVisible;
-        toggleElements(commentSelector, commentsVisible);
-        this.classList.toggle('active', commentsVisible);
-        this.innerHTML = commentsVisible 
-            ? '<i class="fas fa-eye mr-1"></i> Mostrar Comentários' 
-            : '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
-        // Ajuste: Se estava ativo (mostrando), agora não está mais (ocultando), e vice-versa.
-        // Correção na lógica do texto e classe:
+        commentsVisible = !commentsVisible; // Inverte o estado
+        toggleElements(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
         if (commentsVisible) {
-            this.classList.add('active');
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários'; // Texto quando está visível (botão para ocultar)
+            // Se o conteúdo AGORA está visível
+            this.classList.remove('active'); // Botão fica inativo (cinza)
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários'; // Próxima ação: ocultar
         } else {
-            this.classList.remove('active');
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários'; // Texto quando está oculto (botão para mostrar)
+            // Se o conteúdo AGORA está oculto
+            this.classList.add('active'); // Botão fica ativo (azul)
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários'; // Próxima ação: mostrar
         }
-        // Correção final da lógica do texto e classe:
-        this.classList.toggle('active', !commentsVisible); // Botão fica 'inativo' (cinza) quando o conteúdo está visível
-        this.innerHTML = commentsVisible
-            ? '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários' // Conteúdo visível, botão para ocultar
-            : '<i class="fas fa-eye mr-1"></i> Mostrar Comentários'; // Conteúdo oculto, botão para mostrar
     });
 
     // Event listener para o botão de jurisprudências
     toggleJurisprudenceBtn.addEventListener('click', function() {
-        jurisprudenceVisible = !jurisprudenceVisible;
-        toggleElements(jurisprudenceSelector, jurisprudenceVisible);
-        this.classList.toggle('active', !jurisprudenceVisible); // Botão fica 'inativo' (cinza) quando o conteúdo está visível
-        this.innerHTML = jurisprudenceVisible
-            ? '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências' // Conteúdo visível, botão para ocultar
-            : '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências'; // Conteúdo oculto, botão para mostrar
+        jurisprudenceVisible = !jurisprudenceVisible; // Inverte o estado
+        toggleElements(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
+        if (jurisprudenceVisible) {
+            // Se o conteúdo AGORA está visível
+            this.classList.remove('active'); // Botão fica inativo (cinza)
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências'; // Próxima ação: ocultar
+        } else {
+            // Se o conteúdo AGORA está oculto
+            this.classList.add('active'); // Botão fica ativo (azul)
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências'; // Próxima ação: mostrar
+        }
     });
 
-    // Inicializar estado dos botões (começam 'inativos' pois o conteúdo está visível)
-    toggleCommentsBtn.classList.remove('active');
-    toggleCommentsBtn.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
-    toggleJurisprudenceBtn.classList.remove('active');
-    toggleJurisprudenceBtn.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
+    // Não precisamos inicializar os botões aqui, pois o estado inicial (visível) já corresponde ao HTML/CSS padrão.
 
 });
 // --- Fim do Script de Toggle ---
