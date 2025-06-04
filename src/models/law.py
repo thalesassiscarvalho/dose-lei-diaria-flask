@@ -15,11 +15,12 @@ class Law(db.Model):
     description = db.Column(db.String(500), nullable=True)
     content = db.Column(db.Text, nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True) # Allow nullable initially for existing laws
-    # --- NOVO CAMPO PARA URL DO ÁUDIO ---
-    audio_url = db.Column(db.String(500), nullable=True) # Guarda a URL externa do áudio
-    # --- FIM NOVO CAMPO ---
+    audio_url = db.Column(db.String(500), nullable=True) # Campo para URL do áudio
+
+    # Define relationships if not already defined via backref
+    # (progress_records relationship is defined in UserProgress model via backref)
 
     def __repr__(self):
-        # Atualizado para incluir audio_url se existir
-        return f"<Law {self.title}{\' (Audio)\' if self.audio_url else \'\'}>"
-
+        # CORRIGIDO: Removido erro de sintaxe com barras invertidas
+        audio_indicator = " (Audio)" if self.audio_url else ""
+        return f"<Law {self.title}{audio_indicator}>"
