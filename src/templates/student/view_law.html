@@ -121,6 +121,9 @@
     <button id="toggle-jurisprudence-btn" class="toggle-button">
         <i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências
     </button>
+    <button id="toggle-doutrina-btn" class="toggle-button">
+        <i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina
+    </button>
 </div>
 <!-- Fim dos Botões de Toggle -->
 
@@ -160,20 +163,23 @@
 
 {% block scripts %}
 <script>
-// --- Script para Ocultar/Mostrar Comentários e Jurisprudências (v3 - Usando Classe CSS) ---
+// --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
 document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById("law-content");
     const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
     const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
+    const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
 
     // Seletores baseados nos estilos inline identificados
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
     const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
+    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
     const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
 
     // Estado inicial: conteúdo visível
     let commentsVisible = true;
     let jurisprudenceVisible = true;
+    let doutrinaVisible = true;
 
     function toggleElementsVisibility(selector, makeVisible) {
         const elements = lawContent.querySelectorAll(selector);
@@ -216,10 +222,26 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Event listener para o botão de doutrina
+    toggleDoutrinaBtn.addEventListener("click", function () {
+        doutrinaVisible = !doutrinaVisible; // Inverte o estado
+        toggleElementsVisibility(doutrinaSelector, doutrinaVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
+        if (doutrinaVisible) {
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina';
+        } else {
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
+        }
+    });
+
     // Garantir que o estado inicial (visível) não tenha a classe de ocultar
     // (Caso a página seja recarregada com elementos ocultos por algum motivo)
     toggleElementsVisibility(commentSelector, true);
     toggleElementsVisibility(jurisprudenceSelector, true);
+    toggleElementsVisibility(doutrinaSelector, true);
 });
 // --- Fim do Script de Toggle ---
 
@@ -277,4 +299,3 @@ document.addEventListener("contextmenu", function (e) {
 });
 </script>
 {% endblock %}
-
