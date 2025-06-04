@@ -103,6 +103,21 @@
     </a>
 </div>
 
+<!-- ****** NOVO: Player de Áudio (se disponível) ****** -->
+{% if law.audio_url %}
+<div class="my-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
+    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+        <i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:
+    </h4>
+    <audio controls class="w-full">
+        <source src="{{ law.audio_url }}" type="audio/mpeg"> {# Ajuste o type se necessário (ex: audio/ogg, audio/wav) #}
+        Seu navegador não suporta o elemento de áudio.
+    </audio>
+    <p class="text-xs text-gray-500 mt-1">Áudio fornecido externamente. A qualidade e disponibilidade dependem da fonte.</p>
+</div>
+{% endif %}
+<!-- ****** FIM NOVO ****** -->
+
 {% if is_completed %}
 <div class="completed-banner" role="alert">
     <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
@@ -141,7 +156,7 @@
     <form action="{{ url_for("student.save_last_read", law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
         <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
         <input type="text" id="last_article" name="last_article" 
-               placeholder="Ex: 15" value="{{ last_read_article or '' }}"
+               placeholder="Ex: 15" value="{{ last_read_article or \'\' }}"
                class="shadow-sm appearance-none border border-gray-300 rounded-md py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-24">
         <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-1 px-3 rounded-md transition duration-300 text-sm">
             <i class="fas fa-save mr-1"></i> Salvar Posição
@@ -171,9 +186,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
 
     // Seletores baseados nos estilos inline identificados
-    const commentSelector = 'p[style*="background-color: #f0fdf4"]';
-    const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
-    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
+    const commentSelector = \'p[style*="background-color: #f0fdf4"]\";
+    const jurisprudenceSelector = \'p[style*="background-color: #fef2f2"]\";
+    const doutrinaSelector = \'p[style*="background-color: #f5f3ff"]\";
     const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
 
     // Estado inicial: conteúdo visível
@@ -200,10 +215,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Atualiza a aparência do botão
         if (commentsVisible) {
             this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
+            this.innerHTML = \'<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários\';
         } else {
             this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
+            this.innerHTML = \'<i class="fas fa-eye mr-1"></i> Mostrar Comentários\';
         }
     });
 
@@ -215,10 +230,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Atualiza a aparência do botão
         if (jurisprudenceVisible) {
             this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
+            this.innerHTML = \'<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências\';
         } else {
             this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
+            this.innerHTML = \'<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências\';
         }
     });
 
@@ -230,10 +245,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Atualiza a aparência do botão
         if (doutrinaVisible) {
             this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina';
+            this.innerHTML = \'<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina\';
         } else {
             this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
+            this.innerHTML = \'<i class="fas fa-eye mr-1"></i> Mostrar Doutrina\';
         }
     });
 
