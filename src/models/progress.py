@@ -8,14 +8,12 @@ class UserProgress(db.Model):
     law_id = db.Column(db.Integer, db.ForeignKey("law.id"), nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True) # Allow null for incomplete
     last_read_article = db.Column(db.String(50), nullable=True) # Add field for last read article
-    status = db.Column(db.String(20), nullable=False, default='nao_iniciado', server_default='nao_iniciado') # NEW: nao_iniciado, em_andamento, concluido
-    # NOVO: Campo para último acesso/atualização. Removido relacionamento 'user' daqui para evitar conflito.
-    last_accessed_at = db.Column(db.DateTime, nullable=True, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow) 
+    status = db.Column(db.String(20), nullable=False, default=\'nao_iniciado\', server_default=\'nao_iniciado\') # NEW: nao_iniciado, em_andamento, concluido
+    # NOVO: Campo para último acesso/atualização. Removido onupdate para confiar nas atualizações explícitas das rotas.
+    last_accessed_at = db.Column(db.DateTime, nullable=True, default=datetime.datetime.utcnow) 
 
     # Define relationships if not already defined via backref
     law = db.relationship("Law", backref="progress_records")
-    # A linha 'user = db.relationship(...)' foi REMOVIDA daqui para corrigir o conflito de backref.
-    # O relacionamento inverso (User -> UserProgress) deve ser definido no modelo User, se necessário.
 
     # Unique constraint to prevent duplicate progress entries for the same user and law
     __table_args__ = (db.UniqueConstraint("user_id", "law_id", name="_user_law_uc"),)
