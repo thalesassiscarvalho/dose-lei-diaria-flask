@@ -18,4 +18,3 @@ class Law(db.Model):
 
     def __repr__(self):
         return f"<Law {self.title}>"
-
