@@ -88,7 +88,10 @@
     .toggle-button.active:hover {
         background-color: #2563eb; /* blue-600 */
     }
-    /* Classe para ocultar - removida, usamos display direto */
+    /* Classe CSS para ocultar elementos */
+    .conteudo-oculto {
+        display: none !important; /* Usar !important para garantir a sobreposição */
+    }
 </style>
 {% endblock %}
 
@@ -157,64 +160,66 @@
 
 {% block scripts %}
 <script>
-// --- Script para Ocultar/Mostrar Comentários e Jurisprudências (CORRIGIDO) ---
-document.addEventListener('DOMContentLoaded', function() {
-    const lawContent = document.getElementById('law-content');
-    const toggleCommentsBtn = document.getElementById('toggle-comments-btn');
-    const toggleJurisprudenceBtn = document.getElementById('toggle-jurisprudence-btn');
+// --- Script para Ocultar/Mostrar Comentários e Jurisprudências (v3 - Usando Classe CSS) ---
+document.addEventListener("DOMContentLoaded", function () {
+    const lawContent = document.getElementById("law-content");
+    const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
+    const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
 
     // Seletores baseados nos estilos inline identificados
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
     const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
+    const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
 
     // Estado inicial: conteúdo visível
     let commentsVisible = true;
     let jurisprudenceVisible = true;
 
-    function toggleElements(selector, makeVisible) {
+    function toggleElementsVisibility(selector, makeVisible) {
         const elements = lawContent.querySelectorAll(selector);
-        elements.forEach(el => {
-            // Define display como 'none' para ocultar, ou remove o estilo para mostrar (voltando ao padrão 'block' ou outro)
-            el.style.display = makeVisible ? '' : 'none'; 
+        elements.forEach((el) => {
+            if (makeVisible) {
+                el.classList.remove(hiddenClass);
+            } else {
+                el.classList.add(hiddenClass);
+            }
         });
     }
 
     // Event listener para o botão de comentários
-    toggleCommentsBtn.addEventListener('click', function() {
+    toggleCommentsBtn.addEventListener("click", function () {
         commentsVisible = !commentsVisible; // Inverte o estado
-        toggleElements(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
+        toggleElementsVisibility(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
 
         // Atualiza a aparência do botão
         if (commentsVisible) {
-            // Se o conteúdo AGORA está visível
-            this.classList.remove('active'); // Botão fica inativo (cinza)
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários'; // Próxima ação: ocultar
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
         } else {
-            // Se o conteúdo AGORA está oculto
-            this.classList.add('active'); // Botão fica ativo (azul)
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários'; // Próxima ação: mostrar
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
         }
     });
 
     // Event listener para o botão de jurisprudências
-    toggleJurisprudenceBtn.addEventListener('click', function() {
+    toggleJurisprudenceBtn.addEventListener("click", function () {
         jurisprudenceVisible = !jurisprudenceVisible; // Inverte o estado
-        toggleElements(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
+        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
 
         // Atualiza a aparência do botão
         if (jurisprudenceVisible) {
-            // Se o conteúdo AGORA está visível
-            this.classList.remove('active'); // Botão fica inativo (cinza)
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências'; // Próxima ação: ocultar
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
         } else {
-            // Se o conteúdo AGORA está oculto
-            this.classList.add('active'); // Botão fica ativo (azul)
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências'; // Próxima ação: mostrar
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
         }
     });
 
-    // Não precisamos inicializar os botões aqui, pois o estado inicial (visível) já corresponde ao HTML/CSS padrão.
-
+    // Garantir que o estado inicial (visível) não tenha a classe de ocultar
+    // (Caso a página seja recarregada com elementos ocultos por algum motivo)
+    toggleElementsVisibility(commentSelector, true);
+    toggleElementsVisibility(jurisprudenceSelector, true);
 });
 // --- Fim do Script de Toggle ---
 
@@ -222,52 +227,52 @@ document.addEventListener('DOMContentLoaded', function() {
 // 🛡️ PROTEÇÕES DISCRETAS - APENAS CÓPIA E IMPRESSÃO (Mantidas conforme original)
 
 // ✅ Anti-impressão (Ctrl+P)
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
+document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && (e.key === "p" || e.key === "P")) {
         e.preventDefault();
         e.stopPropagation();
-        alert('Impressão não permitida neste conteúdo.');
+        alert("Impressão não permitida neste conteúdo.");
         return false;
     }
 });
 
 // ✅ Anti-cópia (Ctrl+C, Ctrl+A, Ctrl+X)
-document.addEventListener('keydown', function(e) {
+document.addEventListener("keydown", function (e) {
     // Bloquear Ctrl+C (copiar)
-    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+    if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
         e.preventDefault();
         e.stopPropagation();
-        alert('Cópia de conteúdo não permitida.');
+        alert("Cópia de conteúdo não permitida.");
         return false;
     }
-    
+
     // Bloquear Ctrl+A (selecionar tudo)
-    if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
+    if (e.ctrlKey && (e.key === "a" || e.key === "A")) {
         e.preventDefault();
         e.stopPropagation();
-        alert('Seleção total não permitida.');
+        alert("Seleção total não permitida.");
         return false;
     }
-    
+
     // Bloquear Ctrl+X (recortar)
-    if (e.ctrlKey && (e.key === 'x' || e.key === 'X')) {
+    if (e.ctrlKey && (e.key === "x" || e.key === "X")) {
         e.preventDefault();
         e.stopPropagation();
-        alert('Recorte não permitido.');
+        alert("Recorte não permitido.");
         return false;
     }
 });
 
 // ✅ Proteção contra seleção de texto
-document.addEventListener('selectstart', function(e) {
+document.addEventListener("selectstart", function (e) {
     e.preventDefault();
     return false;
 });
 
 // ✅ Menu de contexto desabilitado (botão direito)
-document.addEventListener('contextmenu', function(e) {
+document.addEventListener("contextmenu", function (e) {
     e.preventDefault();
-    alert('Menu de contexto desabilitado.');
+    alert("Menu de contexto desabilitado.");
     return false;
 });
 </script>
