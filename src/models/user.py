@@ -4,6 +4,18 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+# --- NOVO: Importar Law para a definição da tabela ---
+# Assumindo que law.py está no mesmo diretório ou o import relativo funciona
+# Se law.py estiver em src/models/law.py, o import pode precisar ser ajustado
+# dependendo de como os modelos são inicializados/importados no seu __init__.py
+# Se der erro de import, pode ser necessário remover este import e 
+# usar db.ForeignKey("law.id") diretamente com aspas.
+try:
+    from .law import Law 
+except ImportError:
+    # Fallback se o import direto não funcionar (comum em algumas estruturas Flask)
+    pass 
+# --- FIM NOVO ---
 
 db = SQLAlchemy()
 
@@ -12,6 +24,13 @@ achievements_association = db.Table("user_achievements",
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
     db.Column("achievement_id", db.Integer, db.ForeignKey("achievement.id"), primary_key=True)
 )
+
+# --- NOVO: Tabela de Associação User-Favorite Law ---
+favorites_association = db.Table("user_favorites",
+    db.Column("user_id", db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), primary_key=True), # Adicionado ondelete
+    db.Column("law_id", db.Integer, db.ForeignKey("law.id", ondelete="CASCADE"), primary_key=True)    # Adicionado ondelete
+)
+# --- FIM NOVO ---
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,6 +46,11 @@ class User(UserMixin, db.Model):
     progress = db.relationship("UserProgress", backref="user", lazy=True)
     achievements = db.relationship("Achievement", secondary=achievements_association, lazy="subquery",
                                  backref=db.backref("users", lazy=True))
+    
+    # --- NOVO: Relacionamento com Leis Favoritas ---
+    favorite_laws = db.relationship("Law", secondary=favorites_association, lazy="dynamic", # Usar lazy=\'dynamic\' pode ser útil para contagens
+                                  backref=db.backref("favorited_by_users", lazy=True))
+    # --- FIM NOVO ---
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -71,3 +95,4 @@ class Announcement(db.Model):
 
     def __repr__(self):
         return f"<Announcement {self.title}>"
+
