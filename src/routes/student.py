@@ -142,11 +142,17 @@ def dashboard():
         
     active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
 
-    # --- NOVO: Buscar a última lei acessada --- 
+    # --- LOG ADICIONADO: Buscar a última lei acessada --- 
+    logging.debug(f"[DASHBOARD DEBUG] Querying last accessed progress for user {current_user.id}")
     last_progress = UserProgress.query.filter_by(user_id=current_user.id).order_by(UserProgress.last_accessed_at.desc()).first()
+    if last_progress:
+        logging.debug(f"[DASHBOARD DEBUG] Found last progress: ID={last_progress.id}, LawID={last_progress.law_id}, LastAccessed={last_progress.last_accessed_at}")
+    else:
+        logging.debug(f"[DASHBOARD DEBUG] No progress found for user {current_user.id}")
+        
     last_accessed_law = last_progress.law if last_progress else None
-    logging.debug(f"[DASHBOARD] Last accessed law for user {current_user.id}: {last_accessed_law.title if last_accessed_law else 'None'}")
-    # --- FIM NOVO ---
+    logging.debug(f"[DASHBOARD] Final last accessed law for user {current_user.id}: {last_accessed_law.title if last_accessed_law else 'None'}")
+    # --- FIM LOG ADICIONADO ---
 
     return render_template("student/dashboard.html", 
                            laws=laws_to_display,
@@ -164,7 +170,6 @@ def dashboard():
                            selected_status=selected_status,
                            favorite_law_ids=favorite_law_ids, 
                            show_favorites=show_favorites,
-                           # --- NOVO: Passar última lei acessada para o template ---
                            last_accessed_law=last_accessed_law 
                            )
 
@@ -198,11 +203,11 @@ def view_law(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
-    # --- NOVO: Atualizar last_accessed_at ao visualizar --- 
     now = datetime.datetime.utcnow()
     if progress:
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[VIEW LAW DEBUG] Found existing progress for Law {law_id}. Current LastAccessed: {progress.last_accessed_at}. Setting to: {now}")
         progress.last_accessed_at = now # Atualiza registro existente
-        logging.debug(f"[VIEW LAW] Updating last_accessed_at for user {current_user.id}, law {law_id}")
     else:
         # Cria um novo registro de progresso se não existir, apenas por visualizar
         progress = UserProgress(
@@ -212,18 +217,18 @@ def view_law(law_id):
             last_accessed_at=now
         )
         db.session.add(progress)
-        logging.debug(f"[VIEW LAW] Creating new progress record for user {current_user.id}, law {law_id} upon viewing.")
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[VIEW LAW DEBUG] Creating new progress for Law {law_id}. Setting LastAccessed to: {now}")
 
     try:
         db.session.commit() # Salva a atualização/criação do last_accessed_at
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[VIEW LAW DEBUG] Committed progress update/creation for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
     except Exception as e:
         db.session.rollback()
         logging.error(f"[VIEW LAW] Error updating/creating progress on view for user {current_user.id}, law {law_id}: {e}")
         # Não é crucial exibir erro para o usuário aqui, apenas logar
-    # --- FIM NOVO ---
 
-    # Busca o progresso novamente após o commit (ou usa o objeto 'progress' já existente/criado)
-    # Se o commit falhou, 'progress' pode não ter ID ou estar detached, mas os atributos devem estar ok para leitura
     current_status = progress.status if progress else 'nao_iniciado'
     is_completed = current_status == 'concluido'
     last_read_article = progress.last_read_article if progress else None
@@ -242,18 +247,19 @@ def mark_complete(law_id):
 
     points_awarded_this_time = 0
     was_already_completed = False
+    now = datetime.datetime.utcnow() # Definir 'now' aqui
 
     if not progress:
         logging.debug(f"[MARK COMPLETE] No progress found for user {current_user.id}, law {law_id}. Creating new.")
-        # Cria o progresso se não existir ao marcar como completo
-        progress = UserProgress(user_id=current_user.id, law_id=law_id, last_accessed_at=datetime.datetime.utcnow()) 
+        progress = UserProgress(user_id=current_user.id, law_id=law_id, last_accessed_at=now) 
         db.session.add(progress)
     else:
         logging.debug(f"[MARK COMPLETE] Progress found for user {current_user.id}, law {law_id}. Current status: {progress.status}")
         if progress.status == 'concluido':
             was_already_completed = True
-        # Atualiza last_accessed_at mesmo se já existia (onupdate faria isso, mas explícito é seguro)
-        progress.last_accessed_at = datetime.datetime.utcnow() 
+        progress.last_accessed_at = now 
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[MARK COMPLETE DEBUG] Updating existing progress LastAccessed for Law {law_id} to: {now}")
 
     if was_already_completed:
         flash(f"Você já marcou a lei \"{law.title}\" como concluída.", "info")
@@ -265,13 +271,15 @@ def mark_complete(law_id):
         logging.debug(f"[MARK COMPLETE] Awarding {points_to_award} points to user {current_user.id}. New total: {current_user.points}")
         
         progress.status = 'concluido'
-        progress.completed_at = datetime.datetime.utcnow()
+        progress.completed_at = now # Usar 'now' aqui também
         logging.debug(f"[MARK COMPLETE] Setting status to 'concluido' and completed_at for user {current_user.id}, law {law_id}.")
 
     unlocked_achievements = check_and_award_achievements(current_user)
     
     try:
         db.session.commit()
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[MARK COMPLETE DEBUG] Committed progress update for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
         logging.info(f"[MARK COMPLETE] Successfully committed completion for user {current_user.id}, law {law_id}.")
         
         flash_message = f"Lei \"{law.title}\" marcada como concluída!"
@@ -286,13 +294,13 @@ def mark_complete(law_id):
         logging.error(f"[MARK COMPLETE] Error committing completion for user {current_user.id}, law {law_id}: {e}")
         flash(f"Erro ao marcar como concluído: {e}", "danger")
 
-    # Redirect back to the law view page after marking complete
     return redirect(url_for("student.view_law", law_id=law_id))
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
 @login_required
 def review_law(law_id):
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    now = datetime.datetime.utcnow() # Definir 'now' aqui
 
     if progress:
         law_title = progress.law.title
@@ -300,11 +308,14 @@ def review_law(law_id):
         
         progress.status = 'em_andamento' 
         progress.completed_at = None 
-        progress.last_accessed_at = datetime.datetime.utcnow() # Atualiza last_accessed_at ao revisar
-        logging.debug(f"[REVIEW LAW] Setting status to 'em_andamento' and completed_at to None for user {current_user.id}, law {law_id}.")
+        progress.last_accessed_at = now # Atualiza last_accessed_at ao revisar
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[REVIEW LAW DEBUG] Setting status to 'em_andamento' and LastAccessed for Law {law_id} to: {now}")
         
         try:
             db.session.commit()
+            # --- LOG ADICIONADO --- 
+            logging.debug(f"[REVIEW LAW DEBUG] Committed progress update for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
             logging.info(f"[REVIEW LAW] Successfully committed review status for user {current_user.id}, law {law_id}.")
             flash(f"O status de conclusão da lei \"{law_title}\" foi resetado. A lei está agora 'Em andamento'.", "info")
         except Exception as e:
@@ -315,7 +326,6 @@ def review_law(law_id):
         logging.warning(f"[REVIEW LAW] Progress record not found for user {current_user.id}, law {law_id}.")
         flash("Não foi possível encontrar o registro de progresso para esta lei.", "warning")
 
-    # Get current filters to maintain state on redirect
     search_query = request.args.get("search")
     subject_id = request.args.get("subject_id")
     status_filter = request.args.get("status_filter")
@@ -338,6 +348,7 @@ def save_last_read(law_id):
     
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     is_new_progress = not progress
+    now = datetime.datetime.utcnow() # Definir 'now' aqui
 
     if is_new_progress:
         logging.debug(f"[SAVE LAST READ] No progress found. Creating new record.")
@@ -348,22 +359,23 @@ def save_last_read(law_id):
             completed_at=None,
             status=initial_status,
             last_read_article=last_article if last_article else None,
-            last_accessed_at=datetime.datetime.utcnow() # Define last_accessed_at na criação
+            last_accessed_at=now # Define last_accessed_at na criação
         )
         db.session.add(progress)
-        logging.debug(f"[SAVE LAST READ] New progress created with status: {initial_status}, article: {progress.last_read_article}")
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[SAVE LAST READ DEBUG] New progress created with status: {initial_status}, article: {progress.last_read_article}, LastAccessed: {now}")
     else:
         logging.debug(f"[SAVE LAST READ] Progress found. Current status: {progress.status}")
         progress.last_read_article = last_article if last_article else None
-        progress.last_accessed_at = datetime.datetime.utcnow() # Atualiza last_accessed_at ao salvar
-        logging.debug(f"[SAVE LAST READ] Updated last_read_article to: {progress.last_read_article}")
+        progress.last_accessed_at = now # Atualiza last_accessed_at ao salvar
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[SAVE LAST READ DEBUG] Updating existing progress LastAccessed for Law {law_id} to: {now}")
 
         if progress.status == 'nao_iniciado':
             if last_article:
                 progress.status = 'em_andamento'
                 logging.debug(f"[SAVE LAST READ] Status changed from 'nao_iniciado' to 'em_andamento'.")
         elif progress.status == 'em_andamento':
-            # Keep 'em_andamento' even if article is cleared
             pass 
         elif progress.status == 'concluido':
              logging.debug(f"[SAVE LAST READ] Status is 'concluido', not changing status.")
@@ -373,6 +385,8 @@ def save_last_read(law_id):
 
     try:
         db.session.commit()
+        # --- LOG ADICIONADO --- 
+        logging.debug(f"[SAVE LAST READ DEBUG] Committed progress update for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
         logging.info(f"[SAVE LAST READ] Successfully committed progress for user {current_user.id}, law {law_id}. New status: {progress.status}")
         flash("Posição salva com sucesso!", "success") # Flash success message
     except Exception as e:
@@ -380,6 +394,5 @@ def save_last_read(law_id):
         logging.error(f"[SAVE LAST READ] Error committing progress for user {current_user.id}, law {law_id}: {e}")
         flash(f"Erro ao salvar posição: {e}", "danger") # Flash error message instead of returning JSON error directly for form submission
 
-    # Always redirect back to the law view page for standard form submission
     return redirect(url_for('student.view_law', law_id=law_id))
 
