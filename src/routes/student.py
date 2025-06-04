@@ -342,12 +342,12 @@ def save_last_read(law_id):
     try:
         db.session.commit()
         logging.info(f"[SAVE LAST READ] Successfully committed progress for user {current_user.id}, law {law_id}. New status: {progress.status}")
+        flash("Posição salva com sucesso!", "success") # Flash success message
     except Exception as e:
         db.session.rollback()
         logging.error(f"[SAVE LAST READ] Error committing progress for user {current_user.id}, law {law_id}: {e}")
-        # Return error in JSON for AJAX call
-        return jsonify(success=False, error=str(e)), 500
-        
-    # Return success in JSON for AJAX call
-    return jsonify(success=True, message="Posição salva."), 200
+        flash(f"Erro ao salvar posição: {e}", "danger") # Flash error message instead of returning JSON error directly for form submission
+
+    # Always redirect back to the law view page for standard form submission
+    return redirect(url_for('student.view_law', law_id=law_id))
 
