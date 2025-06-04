@@ -147,17 +147,21 @@ def dashboard():
     db.session.expire_all() # Força a busca dos dados mais recentes do DB
     # --- FIM CORREÇÃO ---
 
-    # --- LOG ADICIONADO: Buscar a última lei acessada --- 
-    logging.debug(f"[DASHBOARD DEBUG] Querying last accessed progress for user {current_user.id}")
-    last_progress = UserProgress.query.filter_by(user_id=current_user.id).order_by(UserProgress.last_accessed_at.desc()).first()
+    # --- CORREÇÃO FINAL: Buscar a última lei acessada, IGNORANDO registros com last_accessed_at NULO --- 
+    logging.debug(f"[DASHBOARD DEBUG] Querying last accessed progress for user {current_user.id} (excluding null last_accessed_at)")
+    last_progress = UserProgress.query.filter(
+        UserProgress.user_id == current_user.id,
+        UserProgress.last_accessed_at.isnot(None) # <<<<<<<<<<<<<<<<<<< CORREÇÃO APLICADA AQUI
+    ).order_by(UserProgress.last_accessed_at.desc()).first()
+    # --- FIM CORREÇÃO FINAL ---
+    
     if last_progress:
-        logging.debug(f"[DASHBOARD DEBUG] Found last progress: ID={last_progress.id}, LawID={last_progress.law_id}, LastAccessed={last_progress.last_accessed_at}")
+        logging.debug(f"[DASHBOARD DEBUG] Found last progress (not null): ID={last_progress.id}, LawID={last_progress.law_id}, LastAccessed={last_progress.last_accessed_at}")
     else:
-        logging.debug(f"[DASHBOARD DEBUG] No progress found for user {current_user.id}")
+        logging.debug(f"[DASHBOARD DEBUG] No progress with non-null last_accessed_at found for user {current_user.id}")
         
     last_accessed_law = last_progress.law if last_progress else None
     logging.debug(f"[DASHBOARD] Final last accessed law for user {current_user.id}: {last_accessed_law.title if last_accessed_law else 'None'}")
-    # --- FIM LOG ADICIONADO ---
 
     return render_template("student/dashboard.html", 
                            laws=laws_to_display,
