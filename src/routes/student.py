@@ -2,7 +2,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify # Adicionado jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import or_ # Import or_ for searching
-from src.models.user import db, Achievement, Announcement # Import Achievement and Announcement
+# Modificado: Adicionado User ao import
+from src.models.user import db, Achievement, Announcement, User 
 from src.models.law import Law, Subject # Import Subject
 from src.models.progress import UserProgress
 import datetime
@@ -63,7 +64,6 @@ def dashboard():
     selected_subject_id_str = request.args.get("subject_id", "") 
     selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
     selected_status = request.args.get("status_filter", "")
-    # --- NOVO: Obter filtro de favoritos --- 
     show_favorites = request.args.get("show_favorites") == 'on' # Checkbox envia 'on' se marcado
 
     # Fetch all subjects for the filter dropdown
@@ -94,8 +94,6 @@ def dashboard():
     completed_law_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
     in_progress_law_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
 
-    # --- NOVO: Obter IDs das leis favoritas --- 
-    # Usando o relacionamento definido no modelo User (assumindo que foi adicionado como 'favorite_laws')
     favorite_law_ids = {law.id for law in current_user.favorite_laws}
     logging.debug(f"[DASHBOARD] User {current_user.id} favorite law IDs: {favorite_law_ids}")
     
@@ -116,16 +114,13 @@ def dashboard():
             elif selected_status == 'not_read' and is_not_read:
                 laws_after_status_filter.append(law)
 
-    # --- NOVO: Aplicar filtro de favoritos --- 
+    # Apply favorite filter
     laws_to_display = []
     if show_favorites:
-        # Se o filtro de favoritos estiver ativo, filtre a lista que já passou pelo filtro de status
         laws_to_display = [law for law in laws_after_status_filter if law.id in favorite_law_ids]
         logging.debug(f"[DASHBOARD] Filtering for favorites. Laws count: {len(laws_to_display)}")
     else:
-        # Se não, use a lista que passou pelo filtro de status
         laws_to_display = laws_after_status_filter
-    # --- Fim do filtro de favoritos ---
 
     total_laws_count = Law.query.count()
     completed_count = len(completed_law_ids)
@@ -138,7 +133,7 @@ def dashboard():
     if newly_unlocked:
         try:
             db.session.commit()
-            user_achievements = current_user.achievements
+            user_achievements = current_user.achievements # Refresh achievements after commit
             flash(f"Novas conquistas desbloqueadas: {', '.join(newly_unlocked)}!", "success")
         except Exception as e:
             db.session.rollback()
@@ -146,7 +141,13 @@ def dashboard():
             flash("Erro ao atualizar conquistas.", "danger")
         
     active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
-    
+
+    # --- NOVO: Buscar a última lei acessada --- 
+    last_progress = UserProgress.query.filter_by(user_id=current_user.id).order_by(UserProgress.last_accessed_at.desc()).first()
+    last_accessed_law = last_progress.law if last_progress else None
+    logging.debug(f"[DASHBOARD] Last accessed law for user {current_user.id}: {last_accessed_law.title if last_accessed_law else 'None'}")
+    # --- FIM NOVO ---
+
     return render_template("student/dashboard.html", 
                            laws=laws_to_display,
                            subjects=subjects, 
@@ -161,9 +162,10 @@ def dashboard():
                            user_achievements=user_achievements, 
                            announcements=active_announcements,
                            selected_status=selected_status,
-                           # --- NOVO: Passar dados de favoritos para o template ---
                            favorite_law_ids=favorite_law_ids, 
-                           show_favorites=show_favorites # Passar estado do checkbox
+                           show_favorites=show_favorites,
+                           # --- NOVO: Passar última lei acessada para o template ---
+                           last_accessed_law=last_accessed_law 
                            )
 
 # --- NOVO: Rota para Adicionar/Remover Favorito ---
@@ -196,10 +198,36 @@ def view_law(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
+    # --- NOVO: Atualizar last_accessed_at ao visualizar --- 
+    now = datetime.datetime.utcnow()
+    if progress:
+        progress.last_accessed_at = now # Atualiza registro existente
+        logging.debug(f"[VIEW LAW] Updating last_accessed_at for user {current_user.id}, law {law_id}")
+    else:
+        # Cria um novo registro de progresso se não existir, apenas por visualizar
+        progress = UserProgress(
+            user_id=current_user.id,
+            law_id=law_id,
+            status='nao_iniciado', # Define como não iniciado ao visualizar pela 1ª vez
+            last_accessed_at=now
+        )
+        db.session.add(progress)
+        logging.debug(f"[VIEW LAW] Creating new progress record for user {current_user.id}, law {law_id} upon viewing.")
+
+    try:
+        db.session.commit() # Salva a atualização/criação do last_accessed_at
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[VIEW LAW] Error updating/creating progress on view for user {current_user.id}, law {law_id}: {e}")
+        # Não é crucial exibir erro para o usuário aqui, apenas logar
+    # --- FIM NOVO ---
+
+    # Busca o progresso novamente após o commit (ou usa o objeto 'progress' já existente/criado)
+    # Se o commit falhou, 'progress' pode não ter ID ou estar detached, mas os atributos devem estar ok para leitura
     current_status = progress.status if progress else 'nao_iniciado'
     is_completed = current_status == 'concluido'
+    last_read_article = progress.last_read_article if progress else None
     
-    last_read_article = progress.last_read_article if progress else None 
     return render_template("student/view_law.html", 
                            law=law, 
                            is_completed=is_completed, 
@@ -217,12 +245,15 @@ def mark_complete(law_id):
 
     if not progress:
         logging.debug(f"[MARK COMPLETE] No progress found for user {current_user.id}, law {law_id}. Creating new.")
-        progress = UserProgress(user_id=current_user.id, law_id=law_id)
+        # Cria o progresso se não existir ao marcar como completo
+        progress = UserProgress(user_id=current_user.id, law_id=law_id, last_accessed_at=datetime.datetime.utcnow()) 
         db.session.add(progress)
     else:
         logging.debug(f"[MARK COMPLETE] Progress found for user {current_user.id}, law {law_id}. Current status: {progress.status}")
         if progress.status == 'concluido':
             was_already_completed = True
+        # Atualiza last_accessed_at mesmo se já existia (onupdate faria isso, mas explícito é seguro)
+        progress.last_accessed_at = datetime.datetime.utcnow() 
 
     if was_already_completed:
         flash(f"Você já marcou a lei \"{law.title}\" como concluída.", "info")
@@ -269,6 +300,7 @@ def review_law(law_id):
         
         progress.status = 'em_andamento' 
         progress.completed_at = None 
+        progress.last_accessed_at = datetime.datetime.utcnow() # Atualiza last_accessed_at ao revisar
         logging.debug(f"[REVIEW LAW] Setting status to 'em_andamento' and completed_at to None for user {current_user.id}, law {law_id}.")
         
         try:
@@ -287,14 +319,12 @@ def review_law(law_id):
     search_query = request.args.get("search")
     subject_id = request.args.get("subject_id")
     status_filter = request.args.get("status_filter")
-    # --- NOVO: Obter filtro de favoritos para manter no redirect ---
     show_favorites_val = request.args.get("show_favorites") # Get the value ('on' or None)
 
     redirect_url = url_for("student.dashboard", 
                            search=search_query, 
                            subject_id=subject_id, 
                            status_filter=status_filter,
-                           # --- NOVO: Passar filtro de favoritos no redirect ---
                            show_favorites=show_favorites_val # Pass the value directly
                            )
     return redirect(redirect_url)
@@ -317,13 +347,15 @@ def save_last_read(law_id):
             law_id=law_id,
             completed_at=None,
             status=initial_status,
-            last_read_article=last_article if last_article else None
+            last_read_article=last_article if last_article else None,
+            last_accessed_at=datetime.datetime.utcnow() # Define last_accessed_at na criação
         )
         db.session.add(progress)
         logging.debug(f"[SAVE LAST READ] New progress created with status: {initial_status}, article: {progress.last_read_article}")
     else:
         logging.debug(f"[SAVE LAST READ] Progress found. Current status: {progress.status}")
         progress.last_read_article = last_article if last_article else None
+        progress.last_accessed_at = datetime.datetime.utcnow() # Atualiza last_accessed_at ao salvar
         logging.debug(f"[SAVE LAST READ] Updated last_read_article to: {progress.last_read_article}")
 
         if progress.status == 'nao_iniciado':
