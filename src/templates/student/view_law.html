@@ -112,7 +112,8 @@
 {% block content %}
 <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-    <a href="{{ url_for(\"student.dashboard\") }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
+    {# CORRIGIDO: Removido \ das aspas #}
+    <a href="{{ url_for('student.dashboard') }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
         <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Voltar ao Painel
     </a>
 </div>
@@ -167,7 +168,8 @@
 {% if not is_completed %}
 <!-- Save Last Read Article Form -->
 <div class="save-article-form">
-    <form action="{{ url_for(\"student.save_last_read\", law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
+    {# CORRIGIDO: Removido \ das aspas #}
+    <form action="{{ url_for('student.save_last_read', law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
         <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
         <input type="text" id="last_article" name="last_article" 
                placeholder="Ex: 15" value="{{ last_read_article or '' }}"
@@ -180,7 +182,8 @@
 
 <!-- Mark as Complete Button -->
 <div class="mt-8 text-center">
-    <form action="{{ url_for(\"student.mark_complete\", law_id=law.id) }}" method="POST">
+    {# CORRIGIDO: Removido \ das aspas #}
+    <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST">
         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
             <i class="fas fa-check mr-2"></i> Marcar como Concluído
         </button>
