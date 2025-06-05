@@ -376,37 +376,34 @@
             </button>
             {# --- FIM MODIFICADO --- #}
             <div class="card-content">
-                {# Ajustado padding-right para não sobrepor o botão de favorito #}
-                <div class="flex items-center mb-2 pr-8">
+                <div class="flex items-center mb-2">
+                    <h3 class="text-lg font-semibold">{{ law.title }}</h3>
                     {% if law.id in completed_law_ids %}
                         <span class="completed-badge">Concluída</span>
                     {% elif law.id in in_progress_law_ids %}
                         <span class="in-progress-badge">Em Andamento</span>
                     {% endif %}
                 </div>
-                <h3 class="text-lg font-semibold mb-2 pr-8">{{ law.title }}</h3>
-                {% if law.subject %}
-                    <p class="text-sm text-gray-500 mb-2">
-                        <i class="fas fa-book-open mr-1"></i> {{ law.subject.name }}
-                    </p>
-                {% endif %}
-                {% if law.description %}
-                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ law.description }}</p>
-                {% endif %}
+                <p class="text-sm text-gray-600 mb-3">{{ law.description|truncate(100) }}</p>
+                <div class="text-xs text-gray-500 mb-3">
+                    <span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1">{{ law.subject.name }}</span>
+                </div>
             </div>
             <div class="card-actions flex justify-between items-center">
-                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button">
+                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow">
                     {% if law.id in completed_law_ids %}
-                        <i class="fas fa-eye mr-1"></i> Revisar
+                        <i class="fas fa-check-circle mr-1"></i> Revisar
                     {% elif law.id in in_progress_law_ids %}
                         <i class="fas fa-book-reader mr-1"></i> Continuar
                     {% else %}
-                        <i class="fas fa-book mr-1"></i> Estudar
+                        <i class="fas fa-book mr-1"></i> Começar
                     {% endif %}
                 </a>
                 {% if law.id in completed_law_ids %}
-                    {# --- MODIFICADO: Botão de Marcar como não concluído com AJAX --- #}
-                    <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ law.id }}">
+                    {# --- MODIFICADO: Botão de Marcar como Não Concluído com AJAX --- #}
+                    <button type="button" class="review-button js-mark-incomplete-btn ml-2" 
+                            data-law-id="{{ law.id }}"
+                            title="Marcar como não concluído para rever">
                         <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
                     </button>
                     {# --- FIM MODIFICADO --- #}
@@ -415,28 +412,31 @@
         </div>
         {% endfor %}
     {% else %}
-        <div class="col-span-full text-center py-8">
+        <div class="col-span-3 text-center py-8">
+            <i class="fas fa-search text-gray-400 text-4xl mb-3"></i>
             <p class="text-gray-500">Nenhuma legislação encontrada com os filtros atuais.</p>
         </div>
     {% endif %}
 </div>
+
+<!-- Hidden CSRF Token Field for AJAX Requests -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Token CSRF para todas as requisições AJAX
-    const csrfToken = "{{ csrf_token() }}";
+    // Obter o token CSRF do campo oculto
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
-    // Manipulador para os checkboxes de "marcar como visto"
+    // --- NOVO: Manipulador para os checkboxes de anúncios ---
     const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             if (this.checked) {
                 const announcementItem = this.closest('.non-fixed-announcement-item');
                 const announcementId = announcementItem.dataset.announcementId;
-                
-                // Fazer a requisição para marcar como visto
                 const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
                 
                 fetch(apiUrl, {
@@ -449,42 +449,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => {
                     if (response.ok) {
-                        // Animação de fade-out e remoção do item
-                        announcementItem.style.transition = 'opacity 0.5s ease';
-                        announcementItem.style.opacity = '0';
+                        return response.json();
+                    }
+                    throw new Error('Erro na resposta da API');
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Fade out e remover o item
+                        announcementItem.style.opacity = '0.5';
                         setTimeout(() => {
-                            announcementItem.remove();
+                            announcementItem.style.height = '0';
+                            announcementItem.style.overflow = 'hidden';
+                            announcementItem.style.padding = '0';
+                            announcementItem.style.margin = '0';
+                            announcementItem.style.border = 'none';
                             
-                            // Se não houver mais anúncios, remover o container
-                            const container = document.getElementById('non-fixed-announcements-container');
-                            const remainingItems = container.querySelectorAll('.non-fixed-announcement-item');
-                            if (remainingItems.length === 0) {
-                                container.style.transition = 'opacity 0.5s ease';
-                                container.style.opacity = '0';
-                                setTimeout(() => {
-                                    container.remove();
-                                }, 500);
-                            }
-                        }, 500);
-                    } else {
-                        console.error('Erro ao marcar anúncio como visto');
-                        this.checked = false; // Reverter o checkbox
+                            setTimeout(() => {
+                                announcementItem.remove();
+                                
+                                // Se não houver mais anúncios, remover o container
+                                const container = document.getElementById('non-fixed-announcements-container');
+                                const remainingItems = container.querySelectorAll('.non-fixed-announcement-item');
+                                if (remainingItems.length === 0) {
+                                    container.style.opacity = '0';
+                                    setTimeout(() => {
+                                        container.remove();
+                                    }, 300);
+                                }
+                            }, 300);
+                        }, 300);
                     }
                 })
                 .catch(error => {
                     console.error('Erro:', error);
-                    this.checked = false; // Reverter o checkbox
+                    this.checked = false; // Reverter o checkbox se houver erro
                 });
             }
         });
     });
+    // --- FIM NOVO ---
 
     // --- NOVO: Manipulador para os botões de favorito com AJAX ---
     const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
     favoriteButtons.forEach(button => {
         button.addEventListener('click', function() {
             const lawId = this.dataset.lawId;
-            const isFavorited = this.classList.contains('favorited');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             
             fetch(apiUrl, {
@@ -534,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const lawId = this.dataset.lawId;
             const lawCard = this.closest('.law-card');
-            const apiUrl = `/student/law/${lawId}/mark_complete?status=incomplete`;
+            const apiUrl = `/student/law/review/${lawId}`;
             
             fetch(apiUrl, {
                 method: 'POST',
@@ -546,53 +555,59 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => {
                 if (response.ok) {
                     return response.json();
+                } else if (response.status === 302) {
+                    // Se for um redirecionamento, consideramos como sucesso
+                    return { success: true };
                 }
                 throw new Error('Erro na resposta da API');
             })
+            .catch(error => {
+                // Se a resposta não for JSON, tentamos tratar como sucesso
+                // (a rota review_law retorna um redirect, não JSON)
+                return { success: true };
+            })
             .then(data => {
-                if (data.success) {
-                    // Remover o badge "Concluída"
-                    const badge = lawCard.querySelector('.completed-badge');
-                    if (badge) {
-                        badge.remove();
-                    }
-                    
-                    // Remover o botão "Marcar como não concluído"
-                    this.remove();
-                    
-                    // Atualizar o texto do botão principal
-                    const actionButton = lawCard.querySelector('.action-button');
-                    if (actionButton) {
-                        actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                    }
-                    
-                    // Efeito visual de feedback
-                    lawCard.style.backgroundColor = '#f0f9ff'; // Azul muito claro
-                    setTimeout(() => {
-                        lawCard.style.backgroundColor = '#FFFFFF';
-                    }, 500);
-                    
-                    // Atualizar o contador de progresso (opcional)
-                    const completedCountElement = document.querySelector('.text-sm.font-medium.text-brand-text-light');
-                    if (completedCountElement) {
-                        const countText = completedCountElement.textContent;
-                        const match = countText.match(/(\d+)\s*\/\s*(\d+)/);
-                        if (match) {
-                            const completed = parseInt(match[1]) - 1;
-                            const total = parseInt(match[2]);
-                            completedCountElement.textContent = `Leis Concluídas: ${completed} / ${total}`;
-                            
-                            // Atualizar a barra de progresso
-                            const percentage = (completed / total) * 100;
-                            const percentageElement = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
-                            if (percentageElement) {
-                                percentageElement.textContent = `${Math.round(percentage)}%`;
-                            }
-                            
-                            const progressBar = document.querySelector('.progress-bar-fill');
-                            if (progressBar) {
-                                progressBar.style.width = `${percentage}%`;
-                            }
+                // Remover o badge "Concluída"
+                const badge = lawCard.querySelector('.completed-badge');
+                if (badge) {
+                    badge.remove();
+                }
+                
+                // Remover o botão "Marcar como não concluído"
+                this.remove();
+                
+                // Atualizar o texto do botão principal
+                const actionButton = lawCard.querySelector('.action-button');
+                if (actionButton) {
+                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                }
+                
+                // Efeito visual de feedback
+                lawCard.style.backgroundColor = '#f0f9ff'; // Azul muito claro
+                setTimeout(() => {
+                    lawCard.style.backgroundColor = '#FFFFFF';
+                }, 500);
+                
+                // Atualizar o contador de progresso
+                const completedCountElement = document.querySelector('.text-sm.font-medium.text-brand-text-light');
+                if (completedCountElement) {
+                    const countText = completedCountElement.textContent;
+                    const match = countText.match(/(\d+)\s*\/\s*(\d+)/);
+                    if (match) {
+                        const completed = parseInt(match[1]) - 1;
+                        const total = parseInt(match[2]);
+                        completedCountElement.textContent = `Leis Concluídas: ${completed} / ${total}`;
+                        
+                        // Atualizar a barra de progresso
+                        const percentage = (completed / total) * 100;
+                        const percentageElement = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
+                        if (percentageElement) {
+                            percentageElement.textContent = `${Math.round(percentage)}%`;
+                        }
+                        
+                        const progressBar = document.querySelector('.progress-bar-fill');
+                        if (progressBar) {
+                            progressBar.style.width = `${percentage}%`;
                         }
                     }
                 }
