@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelEditButton.classList.add('hidden');
         
         // Resetar o editor TinyMCE
-        if (typeof tinymce !== 'undefined') {
+        if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
             tinymce.get('content').setContent('');
         }
         
@@ -275,10 +275,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Adicionar evento de submit ao formulário
     if (form) {
         form.addEventListener('submit', function(e) {
+            // Prevenir o envio padrão para garantir que o TinyMCE seja atualizado
+            e.preventDefault();
+            
             // Forçar a atualização do conteúdo do editor para o textarea
-            if (typeof tinymce !== 'undefined') {
+            if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
                 tinymce.triggerSave();
             }
+            
+            // Verificar se o conteúdo foi transferido corretamente
+            console.log("Conteúdo do textarea:", document.getElementById('content').value);
+            console.log("ID do anúncio:", announcementIdInput.value);
+            
+            // Enviar o formulário manualmente
+            this.submit();
         });
     }
     
@@ -292,13 +302,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const isActive = this.getAttribute('data-active') === 'true';
             const isFixed = this.getAttribute('data-fixed') === 'true';
             
+            console.log("Editando anúncio:", id, title);
+            console.log("Conteúdo HTML:", content);
+            
             // Preencher o formulário com os dados do anúncio
             announcementIdInput.value = id;
             titleInput.value = title;
             
             // Atualizar o conteúdo no editor TinyMCE
-            if (typeof tinymce !== 'undefined') {
+            if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
                 tinymce.get('content').setContent(content);
+                // Forçar a sincronização imediata
+                tinymce.triggerSave();
+            } else {
+                console.error("Editor TinyMCE não encontrado!");
+                // Fallback para o textarea diretamente
+                document.getElementById('content').value = content;
             }
             
             // Atualizar checkboxes
@@ -323,6 +342,15 @@ document.addEventListener('DOMContentLoaded', function() {
             resetForm();
         });
     }
+    
+    // Verificar se o TinyMCE está inicializado corretamente
+    window.setTimeout(function() {
+        if (typeof tinymce !== 'undefined') {
+            console.log("TinyMCE inicializado:", tinymce.get('content') ? "Sim" : "Não");
+        } else {
+            console.error("TinyMCE não está disponível!");
+        }
+    }, 1000);
 });
 </script>
 {% endblock %}
