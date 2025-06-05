@@ -42,6 +42,7 @@
 <h1 class="text-2xl font-bold mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
 
 <form method="POST" action="{% if law %}{{ url_for('admin.edit_law', law_id=law.id) }}{% else %}{{ url_for('admin.add_law') }}{% endif %}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
     
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
@@ -99,4 +100,3 @@
 </form>
 
 {% endblock %}
-
