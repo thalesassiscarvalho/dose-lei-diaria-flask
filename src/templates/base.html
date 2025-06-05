@@ -185,21 +185,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        /* Estilo para o logo */
-        .site-logo {
-            height: 2.5rem; /* Altura proporcional ao texto do título */
-            width: auto;
-            margin-left: 0.5rem; /* Espaçamento entre texto e logo */
-            vertical-align: middle;
-        }
-        
-        /* Estilo para o container do título com logo */
-        .title-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
     <script>
         tailwind.config = {
@@ -223,9 +208,9 @@
 <body class="font-sans bg-brand-bg text-brand-text">
     <nav class="bg-brand-blue text-white p-4 shadow-md">
         <div class="container mx-auto flex flex-col items-center">
-            <div class="title-container mb-2 fade-in-down">
+            <div class="mb-2 fade-in-down text-center">
                 <a href="{{ url_for('index') }}" class="text-2xl font-bold">Estudo da Lei Seca</a>
-                <img src="/src/static/logo_livro.png" alt="Logo Estudo da Lei Seca" class="site-logo">
+                <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" style="display: inline; height: 30px; margin-left: 10px; vertical-align: middle;">
             </div>
             <div class="flex space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
