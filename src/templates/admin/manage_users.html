@@ -66,15 +66,18 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                                         {% if not user.is_approved %}
                                             <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                                                 <button type="submit" class="text-green-600 hover:text-green-900">Aprovar</button>
                                             </form>
                                         {% endif %}
                                         {% if user.is_approved %}
                                             <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
                                             </form>
                                         {% else %}
                                              <form action="{{ url_for('admin.deny_user', user_id=user.id) }}" method="POST" class="inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
                                             </form>
                                         {% endif %}
