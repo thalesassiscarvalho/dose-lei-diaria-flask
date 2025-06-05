@@ -185,6 +185,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Estilo para o container do título e logo */
+        .header-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 0;
+        }
+        
+        /* Estilo para o logo */
+        .site-logo {
+            height: 60px; /* Altura base do logo */
+            width: auto;
+            margin-left: 15px;
+            vertical-align: middle;
+            transform-origin: center;
+            transform: scale(2); /* Aumenta o tamanho visual sem afetar o layout */
+            filter: brightness(1.2); /* Torna o logo um pouco mais brilhante */
+        }
     </style>
     <script>
         tailwind.config = {
@@ -206,13 +226,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX requests -->
 </head>
 <body class="font-sans bg-brand-bg text-brand-text">
-    <nav class="bg-brand-blue text-white p-4 shadow-md">
+    <nav class="bg-brand-blue text-white shadow-md">
         <div class="container mx-auto flex flex-col items-center">
-            <div class="mb-2 fade-in-down text-center">
-                <a href="{{ url_for('index') }}" class="text-2xl font-bold">Estudo da Lei Seca</a>
-                <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" style="display: inline; height: 120px; margin-left: 5px; vertical-align: middle;">
+            <div class="header-container">
+                <span class="text-2xl font-bold">Estudo da Lei Seca</span>
+                <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo">
             </div>
-            <div class="flex space-x-6 fade-in-up">
+            <div class="flex space-x-6 fade-in-up pb-4">
                 {% if current_user.is_authenticated %}
                     <span class="text-blue-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
                     {% if current_user.role == 'admin' %}
