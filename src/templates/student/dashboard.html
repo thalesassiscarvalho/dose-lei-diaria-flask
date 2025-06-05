@@ -367,16 +367,14 @@
         {% for law in laws %}
         {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
         <div class="law-card p-5" data-law-id="{{ law.id }}">
-            {# --- ADICIONADO: Botão de Favorito --- #}
-            <form action="{{ url_for('student.toggle_favorite', law_id=law.id) }}" method="POST" class="inline-block">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
-                <button type="submit" class="favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
-                        title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                    {# Ícone muda baseado na classe 'favorited' #}
-                    <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
-                </button>
-            </form>
-            {# --- FIM ADICIONADO --- #}
+            {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
+            <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
+                    data-law-id="{{ law.id }}"
+                    title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                {# Ícone muda baseado na classe 'favorited' #}
+                <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
+            </button>
+            {# --- FIM MODIFICADO --- #}
             <div class="card-content">
                 {# Ajustado padding-right para não sobrepor o botão de favorito #}
                 <div class="flex items-center mb-2 pr-8">
@@ -407,12 +405,11 @@
                     {% endif %}
                 </a>
                 {% if law.id in completed_law_ids %}
-                    <form action="{{ url_for('student.mark_complete', law_id=law.id, status='incomplete') }}" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
-                        <button type="submit" class="review-button">
-                            <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
-                        </button>
-                    </form>
+                    {# --- MODIFICADO: Botão de Marcar como não concluído com AJAX --- #}
+                    <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ law.id }}">
+                        <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
+                    </button>
+                    {# --- FIM MODIFICADO --- #}
                 {% endif %}
             </div>
         </div>
@@ -428,6 +425,9 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Token CSRF para todas as requisições AJAX
+    const csrfToken = "{{ csrf_token() }}";
+    
     // Manipulador para os checkboxes de "marcar como visto"
     const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
     checkboxes.forEach(checkbox => {
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
+                        'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({ seen: true })
                 })
@@ -478,6 +478,132 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // --- NOVO: Manipulador para os botões de favorito com AJAX ---
+    const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.dataset.lawId;
+            const isFavorited = this.classList.contains('favorited');
+            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Erro na resposta da API');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Alternar classe e ícone
+                    if (data.favorited) {
+                        this.classList.add('favorited');
+                        this.querySelector('i').className = 'fas fa-star'; // Ícone preenchido
+                        this.title = 'Remover dos Favoritos';
+                    } else {
+                        this.classList.remove('favorited');
+                        this.querySelector('i').className = 'far fa-star'; // Ícone de contorno
+                        this.title = 'Adicionar aos Favoritos';
+                    }
+                    
+                    // Efeito visual de feedback
+                    this.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Não foi possível atualizar os favoritos. Por favor, tente novamente.');
+            });
+        });
+    });
+    // --- FIM NOVO ---
+
+    // --- NOVO: Manipulador para os botões de marcar como não concluído com AJAX ---
+    const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
+    markIncompleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.dataset.lawId;
+            const lawCard = this.closest('.law-card');
+            const apiUrl = `/student/law/${lawId}/mark_complete?status=incomplete`;
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Erro na resposta da API');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Remover o badge "Concluída"
+                    const badge = lawCard.querySelector('.completed-badge');
+                    if (badge) {
+                        badge.remove();
+                    }
+                    
+                    // Remover o botão "Marcar como não concluído"
+                    this.remove();
+                    
+                    // Atualizar o texto do botão principal
+                    const actionButton = lawCard.querySelector('.action-button');
+                    if (actionButton) {
+                        actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                    }
+                    
+                    // Efeito visual de feedback
+                    lawCard.style.backgroundColor = '#f0f9ff'; // Azul muito claro
+                    setTimeout(() => {
+                        lawCard.style.backgroundColor = '#FFFFFF';
+                    }, 500);
+                    
+                    // Atualizar o contador de progresso (opcional)
+                    const completedCountElement = document.querySelector('.text-sm.font-medium.text-brand-text-light');
+                    if (completedCountElement) {
+                        const countText = completedCountElement.textContent;
+                        const match = countText.match(/(\d+)\s*\/\s*(\d+)/);
+                        if (match) {
+                            const completed = parseInt(match[1]) - 1;
+                            const total = parseInt(match[2]);
+                            completedCountElement.textContent = `Leis Concluídas: ${completed} / ${total}`;
+                            
+                            // Atualizar a barra de progresso
+                            const percentage = (completed / total) * 100;
+                            const percentageElement = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
+                            if (percentageElement) {
+                                percentageElement.textContent = `${Math.round(percentage)}%`;
+                            }
+                            
+                            const progressBar = document.querySelector('.progress-bar-fill');
+                            if (progressBar) {
+                                progressBar.style.width = `${percentage}%`;
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Não foi possível atualizar o status da lei. Por favor, tente novamente.');
+            });
+        });
+    });
+    // --- FIM NOVO ---
 });
 </script>
 {% endblock %}
