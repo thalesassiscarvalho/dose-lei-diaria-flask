@@ -1,564 +1,261 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Include Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- Adicionar biblioteca de animações -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* Custom base styles for White/Blue Theme */
+        body {
+            background-color: #FFFFFF; /* White background */
+            color: #374151; /* Dark Gray text for readability */
+        }
+        /* Alert styles adjusted for light background */
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem;
+            animation: fadeInDown 0.5s;
+            transition: all 0.3s ease;
+        }
+        /* Using blue tones for alerts where appropriate */
+        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
+        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
+        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
+        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; } /* Blue for info */
 
-{% block title %}Meu Painel - Estudo da Lei Seca{% endblock %}
+        /* Footer style */
+        footer {
+            color: #6B7280; /* Medium gray for footer text */
+        }
 
-{% block head_extra %}
-<style>
-    /* ... (Estilos existentes) ... */
-    .fixed-announcement-box {
-        background-color: #E0E7FF; /* Indigo 100 */
-        border: 1px solid #C7D2FE; /* Indigo 200 */
-        color: #3730A3; /* Indigo 800 */
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem; /* Espaço entre avisos fixos e não fixos */
-    }
-    .fixed-announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    .fixed-announcement-box h2 i {
-        margin-right: 0.5rem;
-        color: #4F46E5; /* Indigo 600 */
-    }
-    .non-fixed-announcement-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem; /* Espaço entre checkbox e conteúdo */
-        padding: 0.75rem 0; /* Espaçamento vertical */
-    }
-    .non-fixed-announcement-item .announcement-content {
-        flex-grow: 1;
-    }
-    .non-fixed-announcement-item input[type="checkbox"] {
-        margin-top: 0.2rem; /* Alinha melhor com o texto */
-        cursor: pointer;
-        accent-color: #F59E0B; /* Amber 500 */
-    }
-/* Specific styles from the original formatting */    .law-card {
-        transition: all 0.3s ease;
-        background-color: #FFFFFF; /* White background for cards */
-        border: 1px solid #dbeafe; /* Light blue border */
-        color: #374151; /* Darker gray text */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 170px;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Lighter shadow */
-        position: relative; /* <<< ADICIONADO: Necessário para posicionar o botão de favorito */
-    }
-    .law-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); /* Blue shadow */
-        border-color: #93c5fd; /* Lighter blue border on hover */
-    }
-    .progress-bar-container {
-        height: 10px;
-        border-radius: 5px;
-        background-color: #dbeafe; /* Light blue background */
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 5px;
-        background-color: #2563eb; /* Medium Blue fill */
-        transition: width 0.5s ease;
-    }
-    .completed-badge {
-        background-color: #D1FAE5; /* Light green */
-        color: #065F46; /* Dark green text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
-        flex-shrink: 0; /* Evita que o badge encolha */
-    }
-    .in-progress-badge {
-        background-color: #DBEAFE; /* Light blue */
-        color: #1E40AF; /* Dark blue text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
-        flex-shrink: 0; /* Evita que o badge encolha */
-    }
-    .action-button {
-        background-color: #2563eb; /* brand-blue */
-        color: white;
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        text-align: center;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .action-button:hover {
-        background-color: #1d4ed8; /* brand-blue-dark */
-    }
-    .review-button {
-        background-color: #D1D5DB; /* Gray 300 */
-        color: #4B5563; /* Gray 600 */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 5px;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        /* margin-top: 10px; <<< Removido margin-top para alinhar melhor com o botão principal */
-        align-self: center; /* Alinha verticalmente com o botão principal */
-    }
-    .review-button:hover {
-        background-color: #9CA3AF; /* Gray 400 */
-    }
-    .card-content {
-        flex-grow: 1;
-    }
-    .card-actions {
-        margin-top: auto;
-        padding-top: 1rem;
-    }
-    .achievement-badge {
-        display: inline-flex;
-        align-items: center;
-        background-color: #FEF3C7; /* Light Yellow */
-        color: #92400E; /* Dark Yellow/Brown */
-        font-size: 0.8rem;
-        padding: 0.3rem 0.7rem;
-        border-radius: 15px;
-        font-weight: 500;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        border: 1px solid #FDE68A; /* Slightly darker yellow border */
-    }
-    .achievement-badge i {
-        margin-right: 0.4rem;
-        color: #D97706; /* Amber 600 */
-    }
-    /* Announcement Styles */
-    .announcement-box {
-        background-color: #FEF9C3; /* Light Yellow 100 */
-        border: 1px solid #FDE68A; /* Yellow 200 */
-        color: #92400E; /* Yellow 800 */
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 2rem;
-    }
-    .announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    .announcement-box h2 i {
-        margin-right: 0.5rem;
-        color: #F59E0B; /* Amber 500 */
-    }
+        /* Custom scrollbar for light theme (optional  ) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E5E7EB; /* Light gray track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #60a5fa; /* Light Blue thumb */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2563eb; /* Medium Blue thumb */
+        }
 
-    /* --- ADICIONADO: Estilos para o botão de Favorito --- */
-    .favorite-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.25rem;
-        color: #d1d5db; /* Cinza claro por padrão (não favorito) */
-        font-size: 1.25rem; /* Tamanho do ícone */
-        transition: color 0.2s ease, transform 0.2s ease;
-        position: absolute; /* Posicionamento no card */
-        top: 0.75rem;
-        right: 0.75rem;
-        z-index: 10; /* Garante que fique sobre outros elementos se necessário */
-    }
-    .favorite-btn:hover {
-        transform: scale(1.1);
-    }
-    .favorite-btn.favorited {
-        color: #facc15; /* Amarelo/Dourado para favorito */
-    }
-    .favorite-btn i {
-        display: block; /* Garante que o ícone se comporte como bloco */
-    }
-    /* --- FIM ADICIONADO --- */
+        /* Animações e efeitos visuais */
+        .btn-transition {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    /* --- ADICIONADO: Estilo para o checkbox de favoritos --- */
-    .favorite-filter-label {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        font-size: 0.875rem;
-        color: #374151;
-    }
-    .favorite-filter-label input[type="checkbox"] {
-        margin-right: 0.5rem;
-        cursor: pointer;
-        accent-color: #2563eb; /* Cor do checkbox quando marcado */
-    }
-    /* --- FIM ADICIONADO --- */
+        .btn-transition:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
 
-</style>
-{% endblock %}
+        .btn-transition:active {
+            transform: translateY(0);
+        }
 
-{% block content %}
-<h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
-{# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
-{% if last_accessed_law %}
-<div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
-    <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
-        <i class="fas fa-history mr-2"></i> Continuar de onde parou:
-    </h3>
-    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
-       class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
-        {{ last_accessed_law.title }}
-    </a>
-</div>
-{% endif %}
-{# --- FIM NOVO --- #}
+        .btn-transition::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
 
-<!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
-{# Display Fixed Announcements First #}
-{% if fixed_announcements %}
-<div class="fixed-announcement-box">
-    {% for announcement in fixed_announcements %}
-        <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
-            <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
-            <p class="text-sm">{{ announcement.content }}</p>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
+        .btn-transition:hover::after {
+            opacity: 1;
+        }
 
-{# Display Non-Fixed Announcements (with checkbox) #}
-{% if non_fixed_announcements %}
-<div class="announcement-box" id="non-fixed-announcements-container">
-    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
-    {% for announcement in non_fixed_announcements %}
-        <div class="non-fixed-announcement-item border-t border-yellow-300" data-announcement-id="{{ announcement.id }}">
-            <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
-            <div class="announcement-content">
-                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                <p class="text-sm">{{ announcement.content }}</p>
-            </div>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
 
-<!-- Gamification & Progress Overview -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <!-- Progress -->
-    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
-        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-        </div>
-        <div class="progress-bar-container w-full">
-            <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-        </div>
-    </div>
-    <!-- Points -->
-    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
-        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
-        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
-        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
-    </div>
-</div>
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
 
-<!-- Achievements (Mantido da formatação antiga) -->
-<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
-    {% if user_achievements %}
-        <div>
-            {% for achievement in user_achievements %}
-                <span class="achievement-badge" title="{{ achievement.description }}">
-                    <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                </span>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
-    {% endif %}
-</div>
+        .nav-link:hover::after {
+            width: 100%;
+        }
 
-<!-- Filters and Search -->
-<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
-    {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
-    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <!-- Search Input -->
-        <div>
-            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
-            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
-                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
-                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
-                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
-                       value="{{ search_query }}">
-            </div>
-        </div>
-        <!-- Subject Filter -->
-        <div>
-            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
-                <option value="">-- Todas as Matérias --</option>
-                {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <!-- Status Filter -->
-        <div>
-            <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
-                <option value="">-- Todos os Status --</option>
-                <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
-                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
-                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
-            </select>
-        </div>
-        <!-- --- ADICIONADO: Favorite Filter Checkbox --- -->
-        <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
-            <label for="show_favorites" class="favorite-filter-label">
-                <input type="checkbox" id="show_favorites" name="show_favorites" 
-                       {% if show_favorites %}checked{% endif %}>
-                Mostrar apenas favoritas
-            </label>
-        </div>
-        <!-- --- FIM ADICIONADO --- -->
-        <!-- Action Buttons -->
-        <div class="flex items-center space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
-                    style="background-color: #2563eb; border: none;"
-                    onmouseover="this.style.backgroundColor='#1d4ed8'"
-                    onmouseout="this.style.backgroundColor='#2563eb'">
-                Aplicar Filtros
-            </button>
-            {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
-            {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
-            {% endif %}
-        </div>
-    </form>
-</div>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
 
-<!-- List of Laws -->
-<h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+        }
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% if laws %}
-        {% for law in laws %}
-        {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
-        <div class="law-card p-5" data-law-id="{{ law.id }}">
-            {# --- ADICIONADO: Botão de Favorito --- #}
-            <button class="favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
-                    title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                {# Ícone muda baseado na classe 'favorited' #}
-                <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
-            </button>
-            {# --- FIM ADICIONADO --- #}
-            <div class="card-content">
-                {# Ajustado padding-right para não sobrepor o botão de favorito #}
-                <div class="flex justify-between items-start mb-2 pr-8"> 
-                    <h3 class="text-lg font-semibold text-brand-text mr-2">{{ law.title }}</h3>
-                    {# Status badges (Concluído/Em andamento) - mantidos como antes #}
-                    {% if law.id in completed_law_ids %}
-                        <span class="completed-badge">
-                            <i class="fas fa-check mr-1"></i> Concluído
-                        </span>
-                    {% elif law.id in in_progress_law_ids %}
-                        <span class="in-progress-badge">
-                            <i class="fas fa-pencil-alt mr-1"></i> Em andamento
-                        </span>
+        .form-input-focus {
+            transition: all 0.3s ease;
+        }
+
+        .form-input-focus:focus {
+            transform: scale(1.01);
+        }
+
+        /* Animações para entrada de elementos */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s;
+        }
+
+        .fade-in-down {
+            animation: fadeInDown 0.5s;
+        }
+
+        /* Efeito de pulse para chamar atenção */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse-effect {
+            animation: pulse 2s infinite;
+        }
+
+        /* Efeito de loading */
+        .loading-spinner {
+            border: 3px solid rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #2563eb;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#2563eb', // Blue 600 - Main Blue
+                        'brand-blue-dark': '#1d4ed8', // Blue 700 - Darker Blue
+                        'brand-blue-light': '#60a5fa', // Blue 400 - Lighter Blue
+                        'brand-bg': '#FFFFFF', // White background
+                        'brand-text': '#374151', // Dark Gray text
+                        'brand-text-light': '#6B7280', // Medium Gray text
+                    }
+                }
+            }
+        }
+    </script>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="font-sans bg-brand-bg text-brand-text">
+    <nav class="bg-brand-blue text-white p-4 shadow-md">
+        <div class="container mx-auto flex flex-col items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
+            <div class="flex space-x-6 fade-in-up">
+                {% if current_user.is_authenticated %}
+                    <span class="text-blue-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link hover:text-blue-200">Painel Admin</a>
+                    {% else %}
+                        <a href="{{ url_for('student.dashboard') }}" class="nav-link hover:text-blue-200">Meu Painel</a>
                     {% endif %}
-                </div>
-                {% if law.subject %}
-                <p class="text-xs font-medium mb-2" style="color: #2563eb;">{{ law.subject.name }}</p>
-                {% endif %}
-                <p class="text-sm text-brand-text-light mb-3">{{ law.description or "Acesse para ver o conteúdo." }}</p>
-                <!-- Placeholder for Artigos/Lidos like reference -->
-                <div class="text-xs text-gray-400 mt-2 mb-4">
-                    <!-- Artigos: X | Lidos: Y -->
-                </div>
-            </div>
-            <div class="card-actions flex justify-between items-center mt-auto">
-                 <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button w-full">
-                     <i class="fas fa-book-open mr-2"></i> Ler Legislação
-                 </a>
-                 {% if law.id in completed_law_ids %}
-                    {# --- ATUALIZADO: Passar show_favorites para a rota de review --- #}
-                    <form action="{{ url_for('student.review_law', law_id=law.id, search=search_query, subject_id=selected_subject_id, status_filter=selected_status, show_favorites='on' if show_favorites else None) }}" method="POST" class="inline-block ml-2">
-                        <button type="submit" class="review-button" title="Marcar como não concluído para rever">
-                            <i class="fas fa-undo-alt"></i>
-                        </button>
-                    </form>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link hover:text-blue-200">Sair</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="nav-link hover:text-blue-200">Login</a>
+                    <a href="{{ url_for('auth.signup') }}" class="nav-link hover:text-blue-200">Cadastro</a>
                 {% endif %}
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <p class="text-brand-text-light italic md:col-span-2 lg:col-span-3 text-center py-8">
-            {# --- ATUALIZADO: Condição de 'nenhuma legislação' para incluir show_favorites --- #}
-            {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                Nenhuma legislação encontrada com os filtros aplicados.
-            {% else %}
-                Nenhuma legislação disponível no momento.
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 fade-in-up" style="animation-delay: 0.2s;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category or 'info' }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
             {% endif %}
-        </p>
-    {% endif %}
-</div>
+        {% endwith %}
+        {% block content %}
+        {% endblock %}
+    </main>
 
-{% endblock %}
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: white;">
+        <div class="mb-4">
+            <p class="font-semibold mb-2" style="color: white;">Entre em contato:</p>
+            <div class="flex justify-center items-center">
+                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: white;" title="WhatsApp"
+                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='white'">
+                    <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
+                </a>
+            </div>
+        </div>
+        <p style="color: white;">&copy; 2025 Todos os direitos reservados.</p>
+    </footer>
 
-{% block scripts %}
-{# --- ADICIONADO: Script para lidar com o clique no botão de favorito --- #}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-
-    favoriteButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.preventDefault(); // Previne qualquer ação padrão do botão
-            const lawCard = this.closest('.law-card');
-            const lawId = lawCard.getAttribute('data-law-id');
-            const icon = this.querySelector('i');
-            const isFavorited = this.classList.contains('favorited');
-            const url = `/student/law/toggle_favorite/${lawId}`;
-
-            // Otimistic UI update (muda o ícone imediatamente)
-            this.classList.toggle('favorited');
-            if (this.classList.contains('favorited')) {
-                icon.classList.remove('far'); // Remove ícone vazio
-                icon.classList.add('fas');    // Adiciona ícone preenchido
-                this.setAttribute('title', 'Remover dos Favoritos');
-            } else {
-                icon.classList.remove('fas'); // Remove ícone preenchido
-                icon.classList.add('far');    // Adiciona ícone vazio
-                this.setAttribute('title', 'Adicionar aos Favoritos');
-            }
-
-            // Envia a requisição para o backend
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    // Se você usa CSRF protection, adicione o token aqui
-                    {# Exemplo se usar Flask-WTF: 'X-CSRFToken': '{{ csrf_token() }}' #}
-                    'Content-Type': 'application/json' // Embora não enviemos corpo, é boa prática
-                },
-                // body: JSON.stringify({}) // Não precisamos enviar corpo para esta ação
-            })
-            .then(response => {
-                if (!response.ok) {
-                    // Se a resposta não for OK, reverte a UI e loga o erro
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!data.success) {
-                    // Se o backend reportar erro, reverte a UI
-                    console.error('Erro ao favoritar:', data.error);
-                    // Reverte a mudança visual
-                    this.classList.toggle('favorited'); 
-                    if (this.classList.contains('favorited')) {
-                        icon.classList.remove('far'); icon.classList.add('fas');
-                        this.setAttribute('title', 'Remover dos Favoritos');
-                    } else {
-                        icon.classList.remove('fas'); icon.classList.add('far');
-                        this.setAttribute('title', 'Adicionar aos Favoritos');
-                    }
-                    alert('Ocorreu um erro ao atualizar os favoritos. Tente novamente.');
-                } else {
-                    // Sucesso! A UI já foi atualizada otimisticamente.
-                    console.log(`Law ${lawId} favorite status updated to: ${data.favorited}`);
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                // Reverte a mudança visual em caso de erro de rede/fetch
-                this.classList.toggle('favorited');
-                if (this.classList.contains('favorited')) {
-                    icon.classList.remove('far'); icon.classList.add('fas');
-                    this.setAttribute('title', 'Remover dos Favoritos');
-                } else {
-                    icon.classList.remove('fas'); icon.classList.add('far');
-                    this.setAttribute('title', 'Adicionar aos Favoritos');
-                }
-                alert('Ocorreu um erro de comunicação ao atualizar os favoritos. Verifique sua conexão e tente novamente.');
-            });
-        });
-    });
-});
-</script>
-{# --- FIM ADICIONADO --- #}
-{% endblock %}
-
-
-<script>\ndocument.addEventListener("DOMContentLoaded", function() {\n    console.log("Dashboard JS Loaded"); // Check if script runs\n\n    // Lógica para marcar aviso como visto\n    const checkboxes = document.querySelectorAll(".mark-seen-checkbox");\n    console.log(`Found ${checkboxes.length} mark-seen checkboxes`); // Check if checkboxes are found\n\n    checkboxes.forEach(checkbox => {\n        checkbox.addEventListener("change", function() {\n            console.log("Checkbox changed:", this.checked); // Check if event fires\n            if (this.checked) {\n                const announcementItem = this.closest(".non-fixed-announcement-item");\n                if (!announcementItem) {\n                    console.error("Could not find parent .non-fixed-announcement-item for checkbox:", this);\n                    return;\n                }\n                console.log("Found parent item:", announcementItem); // Check parent found\n\n                const announcementId = announcementItem.dataset.announcementId;\n                if (!announcementId) {\n                    console.error("Could not find data-announcement-id on parent:", announcementItem);\n                    // Re-enable checkbox if ID is missing\n                    this.disabled = false;\n                    this.checked = false;\n                    return;\n                }\n                console.log("Found announcement ID:", announcementId); // Check ID found\n\n                const url = `/student/api/announcements/${announcementId}/mark_seen`;\n                console.log("Calling API URL:", url); // Check URL\n\n                // Desabilitar o checkbox imediatamente\n                this.disabled = true;\n\n                // --- CSRF Token Handling (Assuming Flask-WTF) ---\n                // Try to get CSRF token from a common hidden input field or meta tag\n                let csrfToken = null;\n                // CORRECTED: Use simple quotes for querySelector\n                const csrfInput = document.querySelector("input[name=\"csrf_token\"]"); \n                if (csrfInput) {\n                    csrfToken = csrfInput.value;\n                    console.log("CSRF token found in input:", csrfToken);\n                } else {\n                    // CORRECTED: Use simple quotes for querySelector\n                    const csrfMeta = document.querySelector("meta[name=\"csrf-token\"]"); \n                    if (csrfMeta) {\n                        csrfToken = csrfMeta.getAttribute("content");\n                        console.log("CSRF token found in meta tag:", csrfToken);\n                    } else {\n                        console.warn("CSRF token input/meta tag not found. Request might fail if CSRF is enabled.");\n                    }\n                }\n\n                const headers = {\n                    "Content-Type": "application/json",\n                    "Accept": "application/json" // Good practice to accept JSON response\n                };\n                // Add CSRF token header if found\n                if (csrfToken) {\n                    headers["X-CSRFToken"] = csrfToken;\n                }\n                // --- End CSRF Handling ---\n\n                fetch(url, {\n                    method: "POST",\n                    headers: headers,\n                    // body: JSON.stringify({}) // Body can be empty or omitted for this simple POST\n                })\n                .then(response => {\n                    console.log("API Response Status:", response.status); // Log status\n                    if (!response.ok) {\n                        // Try to parse error message even if response is not ok\n                        return response.json().then(err => {\n                            console.error("API Error Response:", err);\n                            throw new Error(err.error || `Server error: ${response.statusText}`);\n                        }).catch(() => {\n                            // If parsing JSON fails, throw generic error\n                            throw new Error(`Server error: ${response.status} ${response.statusText}`);\n                        });\n                    }\n                    return response.json();\n                })\n                .then(data => {\n                    console.log("API Success Response Data:", data); // Log success data\n                    if (data.success) {\n                        console.log("Marking as seen successful, hiding item.");\n                        announcementItem.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";\n                        announcementItem.style.opacity = "0";\n                        announcementItem.style.transform = "scale(0.95)"; // Optional shrink effect\n                        setTimeout(() => {\n                            announcementItem.style.display = "none";\n                            // Check if container should be hidden (optional)\n                            const container = document.getElementById("non-fixed-announcements-container");\n                            const remainingItems = container ? container.querySelectorAll(".non-fixed-announcement-item:not([style*=\"display: none\"])") : [];\n                            if (container && remainingItems.length === 0) {\n                                console.log("No more non-fixed announcements, hiding container.");\n                                // Optionally hide or show a message\n                                // container.style.display = "none";\n                            }\n                        }, 500);\n                    } else {\n                        // API returned success: false\n                        console.error("API reported failure:", data.error);\n                        alert(`Não foi possível marcar o aviso como visto: ${data.error || \"Erro desconhecido.\"}`);\n                        this.disabled = false;\n                        this.checked = false;\n                    }\n                })\n                .catch(error => {\n                    // Network error or error thrown from .then()\n                    console.error("Error during fetch:", error);\n                    alert(`Erro ao marcar aviso como visto: ${error.message}. Verifique o console para detalhes.`);\n                    this.disabled = false;\n                    this.checked = false;\n                });\n            } else {\n                 // Optional: Handle unchecking if needed (currently does nothing)\n                 console.log("Checkbox unchecked");\n            }\n        });\n    });\n\n    // Lógica para favoritos (mantida)\n    const favoriteButtons = document.querySelectorAll(".favorite-btn");\n    favoriteButtons.forEach(button => {\n        button.addEventListener("click", function() {\n            const lawCard = this.closest(".law-card");\n            const lawId = lawCard.dataset.lawId;\n            const isFavorited = this.classList.contains("favorited");\n            const url = `/student/law/toggle_favorite/${lawId}`;
-            const icon = this.querySelector("i");
-
-            // --- CSRF Token Handling for Favorites --- 
-            let csrfTokenFav = null;
-            // CORRECTED: Use simple quotes for querySelector
-            const csrfInputFav = document.querySelector("input[name=\"csrf_token\"]"); 
-            if (csrfInputFav) {
-                csrfTokenFav = csrfInputFav.value;
-            } else {
-                // CORRECTED: Use simple quotes for querySelector
-                const csrfMetaFav = document.querySelector("meta[name=\"csrf-token\"]"); 
-                if (csrfMetaFav) {
-                    csrfTokenFav = csrfMetaFav.getAttribute("content");
-                }
-            }
-            const headersFav = {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            };
-            if (csrfTokenFav) {
-                headersFav["X-CSRFToken"] = csrfTokenFav;
-            }
-            // --- End CSRF Handling --- 
-
-            fetch(url, {
-                method: "POST",
-                headers: headersFav
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (data.favorited) {
-                        this.classList.add("favorited");
-                        icon.classList.remove("far");
-                        icon.classList.add("fas");
-                        this.title = "Remover dos Favoritos";
-                    } else {
-                        this.classList.remove("favorited");
-                        icon.classList.remove("fas");
-                        icon.classList.add("far");
-                        this.title = "Adicionar aos Favoritos";
-                        // Se a opção "Mostrar apenas favoritas" estiver ativa, esconder o card
-                        const showFavoritesCheckbox = document.getElementById("show_favorites");
-                        if (showFavoritesCheckbox && showFavoritesCheckbox.checked) {
-                            lawCard.style.display = "none";
-                        }
-                    }
-                } else {
-                    console.error("Erro ao favoritar:", data.error);
-                    alert("Ocorreu um erro ao atualizar os favoritos.");
-                }
-            })
-            .catch(error => {
-                console.error("Erro na requisição de favorito:", error);
-                alert("Erro de comunicação ao atualizar os favoritos.");
-            });\n        });\n    });\n});\n</script>
+    <!-- Include Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
