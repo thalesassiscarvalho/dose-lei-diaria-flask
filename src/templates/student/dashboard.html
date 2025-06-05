@@ -1,531 +1,624 @@
 {% extends "base.html" %}
 
-{% block title %}{{ law.title }} - Estudo da Lei Seca{% endblock %}
+{% block title %}Meu Painel - Estudo da Lei Seca{% endblock %}
 
 {% block head_extra %}
 <style>
-    /* Toggle de modo escuro */
-    .dark-mode-toggle {
-        position: fixed;
-        top: 5rem;
-        right: 1.5rem;
-        z-index: 50;
-        background-color: #ffffff;
-        color: #2563eb;
-        border: 1px solid #bfdbfe;
-        border-radius: 50%;
-        width: 2.5rem;
-        height: 2.5rem;
+    /* Styles for new announcement types */
+    .fixed-announcement-box {
+        background-color: #E0E7FF; /* Indigo 100 */
+        border: 1px solid #C7D2FE; /* Indigo 200 */
+        color: #3730A3; /* Indigo 800 */
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem; /* Space between fixed and non-fixed */
+    }
+    .fixed-announcement-box h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
-        justify-content: center;
+    }
+    .fixed-announcement-box h2 i {
+        margin-right: 0.5rem;
+        color: #4F46E5; /* Indigo 600 */
+    }
+    .non-fixed-announcement-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem; /* Space between checkbox and content */
+        padding: 0.75rem 0; /* Vertical padding */
+        border-top: 1px solid #FDE68A; /* Separator line, matches announcement-box border */
+    }
+    .non-fixed-announcement-item:first-child {
+        border-top: none; /* Remove top border for the first item */
+        padding-top: 0;
+    }
+    .non-fixed-announcement-item .announcement-content {
+        flex-grow: 1;
+    }
+    .non-fixed-announcement-item input[type="checkbox"] {
+        margin-top: 0.2rem; /* Align better with text */
         cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        accent-color: #F59E0B; /* Amber 500 */
+    }
+
+    /* Specific styles from the original formatting */
+    .law-card {
         transition: all 0.3s ease;
+        background-color: #FFFFFF; /* White background for cards */
+        border: 1px solid #dbeafe; /* Light blue border */
+        color: #374151; /* Darker gray text */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 170px;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Lighter shadow */
+        position: relative; /* <<< ADICIONADO: Necessário para posicionar o botão de favorito */
     }
-
-    .dark-mode-toggle:hover {
-        transform: scale(1.05);
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    .law-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); /* Blue shadow */
+        border-color: #93c5fd; /* Lighter blue border on hover */
     }
-
-    .dark-mode .dark-mode-toggle {
-        background-color: #1f2937;
-        color: #fbbf24;
-        border-color: #374151;
+    .progress-bar-container {
+        height: 10px;
+        border-radius: 5px;
+        background-color: #dbeafe; /* Light blue background */
+        overflow: hidden;
     }
-
-    @media (max-width: 768px) {
-        .dark-mode-toggle {
-            top: 4.5rem;
-            right: 1rem;
-            width: 2rem;
-            height: 2rem;
-        }
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        background-color: #2563eb; /* Medium Blue fill */
+        transition: width 0.5s ease;
     }
-
-    .law-content-container {
-        background-color: white;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        color: #1f2937; /* Dark gray text for readability */
-        line-height: 1.7;
-        /* Proteção contra seleção de texto para cópia - Mantida conforme original */
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        /* Adicionando borda azul clara */
-        border: 1px solid #bfdbfe; /* Tailwind blue-200 */
-        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    }
-
-    /* Modo escuro para o conteúdo da lei */
-    .dark-mode .law-content-container {
-        background-color: #1f2937; /* Gray 800 */
-        color: #e5e7eb; /* Gray 200 */
-        border-color: #374151; /* Gray 700 */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .law-content-container h1, .law-content-container h2, .law-content-container h3 {
-        margin-top: 1.5em;
-        margin-bottom: 0.5em;
+    .completed-badge {
+        background-color: #D1FAE5; /* Light green */
+        color: #065F46; /* Dark green text */
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 9999px;
         font-weight: 600;
-        transition: color 0.3s ease;
+        margin-left: auto;
+        flex-shrink: 0; /* Evita que o badge encolha */
     }
-
-    .dark-mode .law-content-container h1, 
-    .dark-mode .law-content-container h2, 
-    .dark-mode .law-content-container h3 {
-        color: #f3f4f6; /* Gray 100 */
+    .in-progress-badge {
+        background-color: #DBEAFE; /* Light blue */
+        color: #1E40AF; /* Dark blue text */
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        margin-left: auto;
+        flex-shrink: 0; /* Evita que o badge encolha */
     }
-
-    .law-content-container p {
-        margin-bottom: 1em;
-    }
-    .law-content-container ul, .law-content-container ol {
-        margin-left: 1.5em;
-        margin-bottom: 1em;
-    }
-    .law-content-container li {
-        margin-bottom: 0.5em;
-    }
-    .law-content-container strong { font-weight: bold; }
-    .law-content-container em { font-style: italic; }
-    .law-content-container u { text-decoration: underline; }
-    .law-content-container s { text-decoration: line-through; }
-    
-    /* Cores de fundo para o modo escuro */
-    .dark-mode .ql-bg-yellow { background-color: #854d0e; /* Yellow 800 */ }
-    .dark-mode .ql-bg-red { background-color: #7f1d1d; /* Red 900 */ }
-    
-    .completed-banner {
-        background-color: #d1fae5; /* Light green */
-        color: #065f46; /* Dark green */
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #a7f3d0;
-        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    }
-
-    /* Modo escuro para o banner de conclusão */
-    .dark-mode .completed-banner {
-        background-color: #065f46; /* Green 800 */
-        color: #d1fae5; /* Green 100 */
-        border-color: #047857; /* Green 700 */
-    }
-
-    .last-read-info {
-        background-color: #e0e7ff; /* Indigo 100 */
-        color: #3730a3; /* Indigo 800 */
-        padding: 0.75rem 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #c7d2fe; /* Indigo 200 */
-        font-size: 0.9rem;
-        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    }
-
-    /* Modo escuro para a informação de última leitura */
-    .dark-mode .last-read-info {
-        background-color: #312e81; /* Indigo 900 */
-        color: #e0e7ff; /* Indigo 100 */
-        border-color: #4f46e5; /* Indigo 600 */
-    }
-
-    .save-article-form {
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background-color: #f9fafb; /* Gray 50 */
-        border: 1px solid #e5e7eb; /* Gray 200 */
-        border-radius: 0.5rem;
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-
-    /* Modo escuro para o formulário de salvar artigo */
-    .dark-mode .save-article-form {
-        background-color: #111827; /* Gray 900 */
-        border-color: #374151; /* Gray 700 */
-    }
-
-    /* Estilos para os botões de toggle */
-    .toggle-button {
-        background-color: #e5e7eb; /* gray-200 */
-        color: #374151; /* gray-700 */
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s, color 0.3s ease;
-        border: 1px solid #d1d5db; /* gray-300 */
-    }
-
-    /* Modo escuro para os botões de toggle */
-    .dark-mode .toggle-button {
-        background-color: #374151; /* Gray 700 */
-        color: #e5e7eb; /* Gray 200 */
-        border-color: #4b5563; /* Gray 600 */
-    }
-
-    .toggle-button:hover {
-        background-color: #d1d5db; /* gray-300 */
-    }
-
-    .dark-mode .toggle-button:hover {
-        background-color: #4b5563; /* Gray 600 */
-    }
-
-    .toggle-button.active {
-        /* Estilo quando o conteúdo está OCULTO (botão para MOSTRAR) */
-        background-color: #3b82f6; /* blue-500 */
+    .action-button {
+        background-color: #2563eb; /* brand-blue */
         color: white;
-        border-color: #2563eb; /* blue-600 */
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
-    .toggle-button.active:hover {
-        background-color: #2563eb; /* blue-600 */
+    .action-button:hover {
+        background-color: #1d4ed8; /* brand-blue-dark */
     }
-
-    .dark-mode .toggle-button.active {
-        background-color: #2563eb; /* Blue 600 */
-        border-color: #1d4ed8; /* Blue 700 */
+    .review-button {
+        background-color: #D1D5DB; /* Gray 300 */
+        color: #4B5563; /* Gray 600 */
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 5px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        align-self: center; /* Alinha verticalmente com o botão principal */
     }
-
-    .dark-mode .toggle-button.active:hover {
-        background-color: #1d4ed8; /* Blue 700 */
+    .review-button:hover {
+        background-color: #9CA3AF; /* Gray 400 */
     }
-
-    /* Classe CSS para ocultar elementos */
-    .conteudo-oculto {
-        display: none !important; /* Usar !important para garantir a sobreposição */
+    .card-content {
+        flex-grow: 1;
     }
-    /* Estilos para o container do player de áudio */
-    .audio-player-container {
-        background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
-        border-radius: 0.5rem; /* Tailwind rounded-lg */
-        padding: 1rem; /* Tailwind p-4 */
-        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
-        transition: background-color 0.3s ease, border-color 0.3s ease;
+    .card-actions {
+        margin-top: auto;
+        padding-top: 1rem;
     }
-
-    /* Modo escuro para o player de áudio */
-    .dark-mode .audio-player-container {
-        background-color: #111827; /* Gray 900 */
-        border-color: #374151; /* Gray 700 */
+    .achievement-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #FEF3C7; /* Light Yellow */
+        color: #92400E; /* Dark Yellow/Brown */
+        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 15px;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #FDE68A; /* Slightly darker yellow border */
     }
-
-    .audio-player-container audio {
-        border-radius: 0.375rem; /* Tailwind rounded-md */
-        /* Estilos adicionais para o player podem não ser consistentes entre navegadores */
-        /* Exemplo: filter: sepia(20%) invert(90%); */
+    .achievement-badge i {
+        margin-right: 0.4rem;
+        color: #D97706; /* Amber 600 */
     }
-
-    /* Estilos para o modo escuro em elementos específicos */
-    .dark-mode .text-blue-700 {
-        color: #60a5fa !important; /* Blue 400 */
+    /* Original Announcement Styles (used for non-fixed container) */
+    .announcement-box {
+        background-color: #FEF9C3; /* Light Yellow 100 */
+        border: 1px solid #FDE68A; /* Yellow 200 */
+        color: #92400E; /* Yellow 800 */
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
     }
-
-    .dark-mode .text-purple-600 {
-        color: #a78bfa !important; /* Purple 400 */
+    .announcement-box h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
     }
-
-    .dark-mode .hover\:text-purple-800:hover {
-        color: #c4b5fd !important; /* Purple 300 */
-    }
-
-    .dark-mode .text-sm.font-medium.text-gray-700 {
-        color: #e5e7eb !important; /* Gray 200 */
-    }
-
-    .dark-mode .shadow-sm.appearance-none.border.border-gray-300 {
-        border-color: #4b5563 !important; /* Gray 600 */
-        background-color: #1f2937 !important; /* Gray 800 */
-        color: #e5e7eb !important; /* Gray 200 */
-    }
-
-    .dark-mode .focus\:ring-2.focus\:ring-purple-500 {
-        --tw-ring-color: #8b5cf6 !important; /* Purple 500 */
-    }
-
-    .dark-mode .bg-indigo-500 {
-        background-color: #6366f1 !important; /* Indigo 500 */
-    }
-
-    .dark-mode .hover\:bg-indigo-600:hover {
-        background-color: #4f46e5 !important; /* Indigo 600 */
+    .announcement-box h2 i {
+        margin-right: 0.5rem;
+        color: #F59E0B; /* Amber 500 */
     }
 
-    .dark-mode .bg-green-500 {
-        background-color: #10b981 !important; /* Green 500 */
+    /* --- ADICIONADO: Estilos para o botão de Favorito --- */
+    .favorite-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        color: #d1d5db; /* Cinza claro por padrão (não favorito) */
+        font-size: 1.25rem; /* Tamanho do ícone */
+        transition: color 0.2s ease, transform 0.2s ease;
+        position: absolute; /* Posicionamento no card */
+        top: 0.75rem;
+        right: 0.75rem;
+        z-index: 10; /* Garante que fique sobre outros elementos se necessário */
     }
+    .favorite-btn:hover {
+        transform: scale(1.1);
+    }
+    .favorite-btn.favorited {
+        color: #facc15; /* Amarelo/Dourado para favorito */
+    }
+    .favorite-btn i {
+        display: block; /* Garante que o ícone se comporte como bloco */
+    }
+    /* --- FIM ADICIONADO --- */
 
-    .dark-mode .hover\:bg-green-600:hover {
-        background-color: #059669 !important; /* Green 600 */
+    /* --- ADICIONADO: Estilo para o checkbox de favoritos --- */
+    .favorite-filter-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: #374151;
     }
+    .favorite-filter-label input[type="checkbox"] {
+        margin-right: 0.5rem;
+        cursor: pointer;
+        accent-color: #2563eb; /* Cor do checkbox quando marcado */
+    }
+    /* --- FIM ADICIONADO --- */
+
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Botão de alternar modo escuro -->
-<button id="darkModeToggle" class="dark-mode-toggle" aria-label="Alternar modo escuro">
-    <i class="fas fa-moon"></i>
-</button>
-
-<div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
-    <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-    {# CORRIGIDO: Removido \ das aspas #}
-    <a href="{{ url_for('student.dashboard') }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
-        <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Voltar ao Painel
+<h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
+{# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
+{% if last_accessed_law %}
+<div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
+    <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
+        <i class="fas fa-history mr-2"></i> Continuar de onde parou:
+    </h3>
+    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
+       class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
+        {{ last_accessed_law.title }}
     </a>
 </div>
-
-<!-- ****** Player de Áudio (se disponível) ****** -->
-{% if law.audio_url %}
-<div class="audio-player-container"> {# Removidas classes Tailwind diretas, usando a classe CSS acima #}
-    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-        <i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:
-    </h4>
-    <audio controls class="w-full">
-        <source src="{{ law.audio_url }}" type="audio/mpeg"> {# Ajuste o type se necessário (ex: audio/ogg, audio/wav) #}
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
-    {# Texto removido daqui #}
-</div>
 {% endif %}
-<!-- ****** FIM Player de Áudio ****** -->
+{# --- FIM NOVO --- #}
 
-{% if is_completed %}
-<div class="completed-banner" role="alert">
-    <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
-</div>
-{% elif last_read_article %}
-<div class="last-read-info" role="alert">
-    <i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>{{ last_read_article }}</strong>
+<!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
+{# Display Fixed Announcements First #}
+{% if fixed_announcements %}
+<div class="fixed-announcement-box">
+    {% for announcement in fixed_announcements %}
+        <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
+            <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
+            <p class="text-sm">{{ announcement.content }}</p>
+        </div>
+    {% endfor %}
 </div>
 {% endif %}
 
-<!-- Botões de Toggle -->
-<div class="flex space-x-2 mb-4">
-    <button id="toggle-comments-btn" class="toggle-button">
-        <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
-    </button>
-    <button id="toggle-jurisprudence-btn" class="toggle-button">
-        <i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências
-    </button>
-    <button id="toggle-doutrina-btn" class="toggle-button">
-        <i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina
-    </button>
+{# Display Non-Fixed Announcements (with checkbox) #}
+{% if non_fixed_announcements %}
+<div class="announcement-box" id="non-fixed-announcements-container">
+    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+    {% for announcement in non_fixed_announcements %}
+        <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+            <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
+            <div class="announcement-content">
+                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                <p class="text-sm">{{ announcement.content }}</p>
+            </div>
+        </div>
+    {% endfor %}
 </div>
-<!-- Fim dos Botões de Toggle -->
+{% endif %}
 
-<div class="law-content-container" id="law-content">
-    {% if law.description %}
-        <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
+<!-- Gamification & Progress Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Progress -->
+    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
+        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
+            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+        </div>
+        <div class="progress-bar-container w-full">
+            <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
+        </div>
+    </div>
+    <!-- Points -->
+    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
+        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
+        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
+        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
+    </div>
+</div>
+
+<!-- Achievements (Mantido da formatação antiga) -->
+<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
+    {% if user_achievements %}
+        <div>
+            {% for achievement in user_achievements %}
+                <span class="achievement-badge" title="{{ achievement.description }}">
+                    <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                </span>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
-    
-    {{ law.content | safe }}
 </div>
 
-{% if not is_completed %}
-<!-- Save Last Read Article Form -->
-<div class="save-article-form">
-    {# CORRIGIDO: Removido \ das aspas #}
-    <form action="{{ url_for('student.save_last_read', law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
-        <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
-        <input type="text" id="last_article" name="last_article" 
-               placeholder="Ex: 15" value="{{ last_read_article or '' }}"
-               class="shadow-sm appearance-none border border-gray-300 rounded-md py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-24">
-        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-1 px-3 rounded-md transition duration-300 text-sm">
-            <i class="fas fa-save mr-1"></i> Salvar Posição
-        </button>
+<!-- Filters and Search -->
+<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+    {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
+    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+        <!-- Search Input -->
+        <div>
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
+            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
+                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
+                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
+                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
+                       value="{{ search_query }}">
+            </div>
+        </div>
+        <!-- Subject Filter -->
+        <div>
+            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
+            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                    style="focus:ring: 2px solid #60a5fa;">
+                <option value="">-- Todas as Matérias --</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Status Filter -->
+        <div>
+            <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
+            <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                    style="focus:ring: 2px solid #60a5fa;">
+                <option value="">-- Todos os Status --</option>
+                <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
+                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
+                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
+            </select>
+        </div>
+        <!-- --- ADICIONADO: Favorite Filter Checkbox --- -->
+        <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
+            <label for="show_favorites" class="favorite-filter-label">
+                <input type="checkbox" id="show_favorites" name="show_favorites" 
+                       {% if show_favorites %}checked{% endif %}>
+                Mostrar apenas favoritas
+            </label>
+        </div>
+        <!-- --- FIM ADICIONADO --- -->
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-2">
+            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
+                    style="background-color: #2563eb; border: none;"
+                    onmouseover="this.style.backgroundColor='#1d4ed8'"
+                    onmouseout="this.style.backgroundColor='#2563eb'">
+                Aplicar Filtros
+            </button>
+            {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
+            {% if search_query or selected_subject_id or selected_status or show_favorites %}
+                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
+            {% endif %}
+        </div>
     </form>
 </div>
 
-<!-- Mark as Complete Button -->
-<div class="mt-8 text-center">
-    {# CORRIGIDO: Removido \ das aspas #}
-    <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
-        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
-            <i class="fas fa-check mr-2"></i> Marcar como Concluído
-        </button>
-    </form>
+<!-- List of Laws -->
+<h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% if laws %}
+        {% for law in laws %}
+        {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
+        <div class="law-card p-5" data-law-id="{{ law.id }}">
+            {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
+            <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
+                    data-law-id="{{ law.id }}"
+                    title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                {# Ícone muda baseado na classe 'favorited' #}
+                <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
+            </button>
+            {# --- FIM MODIFICADO --- #}
+            <div class="card-content">
+                <div class="flex items-center mb-2">
+                    <h3 class="text-lg font-semibold">{{ law.title }}</h3>
+                    {% if law.id in completed_law_ids %}
+                        <span class="completed-badge">Concluída</span>
+                    {% elif law.id in in_progress_law_ids %}
+                        <span class="in-progress-badge">Em Andamento</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-600 mb-3">{{ law.description|truncate(100) }}</p>
+                <div class="text-xs text-gray-500 mb-3">
+                    <span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1">{{ law.subject.name }}</span>
+                </div>
+            </div>
+            <div class="card-actions flex justify-between items-center">
+                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow">
+                    {% if law.id in completed_law_ids %}
+                        <i class="fas fa-check-circle mr-1"></i> Revisar
+                    {% elif law.id in in_progress_law_ids %}
+                        <i class="fas fa-book-reader mr-1"></i> Continuar
+                    {% else %}
+                        <i class="fas fa-book mr-1"></i> Começar
+                    {% endif %}
+                </a>
+                {% if law.id in completed_law_ids %}
+                    {# --- MODIFICADO: Botão de Marcar como Não Concluído com AJAX --- #}
+                    <button type="button" class="review-button js-mark-incomplete-btn ml-2" 
+                            data-law-id="{{ law.id }}"
+                            title="Marcar como não concluído para rever">
+                        <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
+                    </button>
+                    {# --- FIM MODIFICADO --- #}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-span-3 text-center py-8">
+            <i class="fas fa-search text-gray-400 text-4xl mb-3"></i>
+            <p class="text-gray-500">Nenhuma legislação encontrada com os filtros atuais.</p>
+        </div>
+    {% endif %}
 </div>
-{% endif %}
+
+<!-- Hidden CSRF Token Field for AJAX Requests -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-// --- NOVO: Manipulador para o modo escuro ---
 document.addEventListener('DOMContentLoaded', function() {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    const htmlElement = document.documentElement;
+    // Obter o token CSRF do campo oculto
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
-    // Verificar se o modo escuro está salvo no localStorage
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    
-    // Aplicar modo escuro se estiver salvo
-    if (isDarkMode) {
-        htmlElement.classList.add('dark-mode');
-        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    
-    // Alternar modo escuro ao clicar no botão
-    darkModeToggle.addEventListener('click', function() {
-        htmlElement.classList.toggle('dark-mode');
-        
-        // Atualizar ícone
-        if (htmlElement.classList.contains('dark-mode')) {
-            this.innerHTML = '<i class="fas fa-sun"></i>';
-            localStorage.setItem('darkMode', 'true');
-        } else {
-            this.innerHTML = '<i class="fas fa-moon"></i>';
-            localStorage.setItem('darkMode', 'false');
-        }
-    });
-});
-// --- FIM NOVO ---
-
-// --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
-document.addEventListener("DOMContentLoaded", function () {
-    const lawContent = document.getElementById("law-content");
-    const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
-    const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
-    const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
-
-    // Seletores baseados nos estilos inline identificados
-    const commentSelector = 'p[style*="background-color: #f0fdf4"]';
-    const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
-    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
-    const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
-
-    // Estado inicial: conteúdo visível
-    let commentsVisible = true;
-    let jurisprudenceVisible = true;
-    let doutrinaVisible = true;
-
-    function toggleElementsVisibility(selector, makeVisible) {
-        const elements = lawContent.querySelectorAll(selector);
-        elements.forEach((el) => {
-            if (makeVisible) {
-                el.classList.remove(hiddenClass);
-            } else {
-                el.classList.add(hiddenClass);
+    // --- NOVO: Manipulador para os checkboxes de anúncios ---
+    const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                const announcementItem = this.closest('.non-fixed-announcement-item');
+                const announcementId = announcementItem.dataset.announcementId;
+                const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
+                
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ seen: true })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Erro na resposta da API');
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Fade out e remover o item
+                        announcementItem.style.opacity = '0.5';
+                        setTimeout(() => {
+                            announcementItem.style.height = '0';
+                            announcementItem.style.overflow = 'hidden';
+                            announcementItem.style.padding = '0';
+                            announcementItem.style.margin = '0';
+                            announcementItem.style.border = 'none';
+                            
+                            setTimeout(() => {
+                                announcementItem.remove();
+                                
+                                // Se não houver mais anúncios, remover o container
+                                const container = document.getElementById('non-fixed-announcements-container');
+                                const remainingItems = container.querySelectorAll('.non-fixed-announcement-item');
+                                if (remainingItems.length === 0) {
+                                    container.style.opacity = '0';
+                                    setTimeout(() => {
+                                        container.remove();
+                                    }, 300);
+                                }
+                            }, 300);
+                        }, 300);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    this.checked = false; // Reverter o checkbox se houver erro
+                });
             }
         });
-    }
-
-    // Event listener para o botão de comentários
-    toggleCommentsBtn.addEventListener("click", function () {
-        commentsVisible = !commentsVisible; // Inverte o estado
-        toggleElementsVisibility(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (commentsVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
-        }
     });
+    // --- FIM NOVO ---
 
-    // Event listener para o botão de jurisprudências
-    toggleJurisprudenceBtn.addEventListener("click", function () {
-        jurisprudenceVisible = !jurisprudenceVisible; // Inverte o estado
-        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (jurisprudenceVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
-        }
+    // --- NOVO: Manipulador para os botões de favorito com AJAX ---
+    const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.dataset.lawId;
+            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Erro na resposta da API');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Alternar classe e ícone
+                    if (data.favorited) {
+                        this.classList.add('favorited');
+                        this.querySelector('i').className = 'fas fa-star'; // Ícone preenchido
+                        this.title = 'Remover dos Favoritos';
+                    } else {
+                        this.classList.remove('favorited');
+                        this.querySelector('i').className = 'far fa-star'; // Ícone de contorno
+                        this.title = 'Adicionar aos Favoritos';
+                    }
+                    
+                    // Efeito visual de feedback
+                    this.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Não foi possível atualizar os favoritos. Por favor, tente novamente.');
+            });
+        });
     });
+    // --- FIM NOVO ---
 
-    // Event listener para o botão de doutrina
-    toggleDoutrinaBtn.addEventListener("click", function () {
-        doutrinaVisible = !doutrinaVisible; // Inverte o estado
-        toggleElementsVisibility(doutrinaSelector, doutrinaVisible); // Aplica o novo estado aos elementos
-
-        // Atualiza a aparência do botão
-        if (doutrinaVisible) {
-            this.classList.remove("active");
-            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina';
-        } else {
-            this.classList.add("active");
-            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
-        }
+    // --- NOVO: Manipulador para os botões de marcar como não concluído com AJAX ---
+    const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
+    markIncompleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.dataset.lawId;
+            const lawCard = this.closest('.law-card');
+            const apiUrl = `/student/law/review/${lawId}`;
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 302) {
+                    // Se for um redirecionamento, consideramos como sucesso
+                    return { success: true };
+                }
+                throw new Error('Erro na resposta da API');
+            })
+            .catch(error => {
+                // Se a resposta não for JSON, tentamos tratar como sucesso
+                // (a rota review_law retorna um redirect, não JSON)
+                return { success: true };
+            })
+            .then(data => {
+                // Remover o badge "Concluída"
+                const badge = lawCard.querySelector('.completed-badge');
+                if (badge) {
+                    badge.remove();
+                }
+                
+                // Remover o botão "Marcar como não concluído"
+                this.remove();
+                
+                // Atualizar o texto do botão principal
+                const actionButton = lawCard.querySelector('.action-button');
+                if (actionButton) {
+                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                }
+                
+                // Efeito visual de feedback
+                lawCard.style.backgroundColor = '#f0f9ff'; // Azul muito claro
+                setTimeout(() => {
+                    lawCard.style.backgroundColor = '#FFFFFF';
+                }, 500);
+                
+                // Atualizar o contador de progresso
+                const completedCountElement = document.querySelector('.text-sm.font-medium.text-brand-text-light');
+                if (completedCountElement) {
+                    const countText = completedCountElement.textContent;
+                    const match = countText.match(/(\d+)\s*\/\s*(\d+)/);
+                    if (match) {
+                        const completed = parseInt(match[1]) - 1;
+                        const total = parseInt(match[2]);
+                        completedCountElement.textContent = `Leis Concluídas: ${completed} / ${total}`;
+                        
+                        // Atualizar a barra de progresso
+                        const percentage = (completed / total) * 100;
+                        const percentageElement = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
+                        if (percentageElement) {
+                            percentageElement.textContent = `${Math.round(percentage)}%`;
+                        }
+                        
+                        const progressBar = document.querySelector('.progress-bar-fill');
+                        if (progressBar) {
+                            progressBar.style.width = `${percentage}%`;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Não foi possível atualizar o status da lei. Por favor, tente novamente.');
+            });
+        });
     });
-
-    // Garantir que o estado inicial (visível) não tenha a classe de ocultar
-    // (Caso a página seja recarregada com elementos ocultos por algum motivo)
-    toggleElementsVisibility(commentSelector, true);
-    toggleElementsVisibility(jurisprudenceSelector, true);
-    toggleElementsVisibility(doutrinaSelector, true);
-});
-// --- Fim do Script de Toggle ---
-
-
-// 🛡️ PROTEÇÕES DISCRETAS - APENAS CÓPIA E IMPRESSÃO (Mantidas conforme original)
-
-// ✅ Anti-impressão (Ctrl+P)
-document.addEventListener("keydown", function (e) {
-    if (e.ctrlKey && (e.key === "p" || e.key === "P")) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("Impressão não permitida neste conteúdo.");
-        return false;
-    }
-});
-
-// ✅ Anti-cópia (Ctrl+C, Ctrl+A, Ctrl+X)
-document.addEventListener("keydown", function (e) {
-    // Bloquear Ctrl+C (copiar)
-    if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("Cópia de conteúdo não permitida.");
-        return false;
-    }
-
-    // Bloquear Ctrl+A (selecionar tudo)
-    if (e.ctrlKey && (e.key === "a" || e.key === "A")) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("Seleção total não permitida.");
-        return false;
-    }
-
-    // Bloquear Ctrl+X (recortar)
-    if (e.ctrlKey && (e.key === "x" || e.key === "X")) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("Recorte não permitido.");
-        return false;
-    }
-});
-
-// ✅ Proteção contra seleção de texto
-document.addEventListener("selectstart", function (e) {
-    e.preventDefault();
-    return false;
-});
-
-// ✅ Menu de contexto desabilitado (botão direito)
-document.addEventListener("contextmenu", function (e) {
-    e.preventDefault();
-    alert("Menu de contexto desabilitado.");
-    return false;
+    // --- FIM NOVO ---
 });
 </script>
 {% endblock %}
