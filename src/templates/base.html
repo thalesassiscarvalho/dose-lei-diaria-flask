@@ -197,13 +197,16 @@
         
         /* Estilo para o logo */
         .site-logo {
-            height: 60px; /* Altura base do logo */
+            height: 40px; /* Altura um pouco maior que o título */
             width: auto;
-            margin-left: 15px;
+            margin-left: 10px; /* Pequeno espaçamento entre o título e a logo */
             vertical-align: middle;
-            transform-origin: center;
-            transform: scale(2); /* Aumenta o tamanho visual sem afetar o layout */
-            filter: brightness(1.2); /* Torna o logo um pouco mais brilhante */
+        }
+        
+        /* Estilo para o título */
+        .site-title {
+            font-size: 1.5rem;
+            font-weight: bold;
         }
     </style>
     <script>
@@ -229,7 +232,7 @@
     <nav class="bg-brand-blue text-white shadow-md">
         <div class="container mx-auto flex flex-col items-center">
             <div class="header-container">
-                <span class="text-2xl font-bold">Estudo da Lei Seca</span>
+                <span class="site-title">Estudo da Lei Seca</span>
                 <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo">
             </div>
             <div class="flex space-x-6 fade-in-up pb-4">
