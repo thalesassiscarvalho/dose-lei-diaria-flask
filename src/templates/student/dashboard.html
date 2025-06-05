@@ -446,61 +446,64 @@ document.addEventListener('DOMContentLoaded', function() {
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            // Desabilitar o checkbox durante o processamento para evitar cliques múltiplos
+            this.disabled = true;
+            
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
             
-            if (this.checked) {
-                // Enviar solicitação para marcar como visto
-                fetch(`/student/announcements/${announcementId}/mark_seen`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Animar a remoção do item
-                        announcementItem.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease, padding 0.5s ease';
-                        announcementItem.style.opacity = '0';
-                        announcementItem.style.height = '0';
-                        announcementItem.style.marginTop = '0';
-                        announcementItem.style.marginBottom = '0';
-                        announcementItem.style.paddingTop = '0';
-                        announcementItem.style.paddingBottom = '0';
+            // Enviar solicitação para marcar como visto
+            fetch(`/student/announcements/${announcementId}/mark_seen`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Animar a remoção do item somente após confirmação do servidor
+                    announcementItem.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease, padding 0.5s ease';
+                    announcementItem.style.opacity = '0';
+                    announcementItem.style.height = '0';
+                    announcementItem.style.marginTop = '0';
+                    announcementItem.style.marginBottom = '0';
+                    announcementItem.style.paddingTop = '0';
+                    announcementItem.style.paddingBottom = '0';
+                    
+                    // Remover o item após a animação
+                    setTimeout(() => {
+                        announcementItem.remove();
                         
-                        // Remover o item após a animação
-                        setTimeout(() => {
-                            announcementItem.remove();
-                            
-                            // Verificar se ainda há anúncios não fixos
-                            const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
-                            if (remainingItems.length === 0) {
-                                // Se não houver mais anúncios, remover o container
-                                const container = document.getElementById('non-fixed-announcements-container');
-                                if (container) {
-                                    container.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease';
-                                    container.style.opacity = '0';
-                                    container.style.height = '0';
-                                    container.style.marginTop = '0';
-                                    container.style.marginBottom = '0';
-                                    
-                                    setTimeout(() => {
-                                        container.remove();
-                                    }, 500);
-                                }
+                        // Verificar se ainda há anúncios não fixos
+                        const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
+                        if (remainingItems.length === 0) {
+                            // Se não houver mais anúncios, remover o container
+                            const container = document.getElementById('non-fixed-announcements-container');
+                            if (container) {
+                                container.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease';
+                                container.style.opacity = '0';
+                                container.style.height = '0';
+                                container.style.marginTop = '0';
+                                container.style.marginBottom = '0';
+                                
+                                setTimeout(() => {
+                                    container.remove();
+                                }, 500);
                             }
-                        }, 500);
-                    } else {
-                        console.error('Erro ao marcar anúncio como visto');
-                        this.checked = false; // Reverter checkbox se houver erro
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
+                        }
+                    }, 500);
+                } else {
+                    console.error('Erro ao marcar anúncio como visto');
                     this.checked = false; // Reverter checkbox se houver erro
-                });
-            }
+                    this.disabled = false; // Reabilitar o checkbox
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                this.checked = false; // Reverter checkbox se houver erro
+                this.disabled = false; // Reabilitar o checkbox
+            });
         });
     });
 
@@ -585,6 +588,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
     favoriteButtons.forEach(button => {
         button.addEventListener('click', function() {
+            // Desabilitar o botão durante o processamento para evitar cliques múltiplos
+            this.disabled = true;
+            
             const lawId = this.getAttribute('data-law-id');
             const isFavorited = this.classList.contains('favorited');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -593,18 +599,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const action = isFavorited ? 'unfavorite' : 'favorite';
             const apiUrl = `/student/law/${lawId}/${action}`;
             
-            // Atualizar visualmente antes da resposta do servidor (otimismo)
-            this.classList.toggle('favorited');
+            // Armazenar referência ao botão para uso dentro das promises
+            const favoriteBtn = this;
             const icon = this.querySelector('i');
-            if (icon) {
-                if (isFavorited) {
-                    icon.className = 'far fa-star'; // Ícone de estrela vazia
-                    this.title = 'Adicionar aos Favoritos';
-                } else {
-                    icon.className = 'fas fa-star'; // Ícone de estrela preenchida
-                    this.title = 'Remover dos Favoritos';
-                }
-            }
             
             // Enviar solicitação para o servidor
             fetch(apiUrl, {
@@ -616,21 +613,35 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (!response.ok) {
-                    // Se houver erro, reverter a alteração visual
-                    this.classList.toggle('favorited');
-                    if (icon) {
-                        icon.className = isFavorited ? 'fas fa-star' : 'far fa-star';
-                        this.title = isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
-                    }
                     throw new Error('Erro ao atualizar favorito');
                 }
                 return response.json();
             })
             .then(data => {
+                // Atualizar visualmente APÓS a resposta do servidor
+                if (isFavorited) {
+                    // Remover dos favoritos
+                    favoriteBtn.classList.remove('favorited');
+                    if (icon) {
+                        icon.className = 'far fa-star'; // Ícone de estrela vazia
+                        favoriteBtn.title = 'Adicionar aos Favoritos';
+                    }
+                } else {
+                    // Adicionar aos favoritos
+                    favoriteBtn.classList.add('favorited');
+                    if (icon) {
+                        icon.className = 'fas fa-star'; // Ícone de estrela preenchida
+                        favoriteBtn.title = 'Remover dos Favoritos';
+                    }
+                }
                 console.log(`Lei ${action === 'favorite' ? 'adicionada aos' : 'removida dos'} favoritos com sucesso!`);
             })
             .catch(error => {
                 console.error('Erro:', error);
+            })
+            .finally(() => {
+                // Reabilitar o botão após o processamento, independente do resultado
+                favoriteBtn.disabled = false;
             });
         });
     });
