@@ -6,18 +6,35 @@
 
 {% block head_extra %}
 <!-- Adicione aqui qualquer CSS ou JS específico para esta página, como o do editor de texto -->
-<script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- Atualizado para TinyMCE v7 -->
+<script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
   tinymce.init({
-    selector: '#content',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount linkchecker',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
-    height: 400, // Ajuste a altura conforme necessário
-    // Configurações adicionais, se necessário
+    selector: '#content', // Mantido o seletor original
+    plugins: [
+      // Core editing features (baseado no exemplo v7)
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      // Premium features (baseado no exemplo v7 - podem exigir plano pago após trial)
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+    ],
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat', // Toolbar do exemplo v7
+    height: 400, // Mantida a altura original
+    tinycomments_mode: 'embedded', // Configuração do exemplo v7
+    tinycomments_author: 'Admin', // Ajuste o nome do autor se necessário
+    mergetags_list: [ // Exemplo do v7 - ajuste conforme sua necessidade
+      { value: 'First.Name', title: 'First Name' },
+      { value: 'Email', title: 'Email' },
+    ],
+    // A configuração de AI pode precisar de implementação no backend
+    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
   });
 </script>
 <style>
     /* Estilos adicionais se necessário */
+    /* Garante que o editor não fique escondido por outros elementos */
+    .tox-tinymce {
+        z-index: 10; /* Ou um valor menor se necessário, mas maior que elementos adjacentes */
+    }
 </style>
 {% endblock %}
 
@@ -67,6 +84,7 @@
         <label class="block text-gray-700 text-sm font-bold mb-2" for="content">
             Conteúdo:
         </label>
+        <!-- O seletor '#content' no script tinymce.init vai mirar neste textarea -->
         <textarea id="content" name="content">{{ law.content | safe if law else '' }}</textarea>
     </div>
 
