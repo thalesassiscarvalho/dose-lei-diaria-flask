@@ -9,6 +9,7 @@ from flask_login import LoginManager, current_user
 from sqlalchemy import text, inspect # Import text for raw SQL and inspect for introspection
 from sqlalchemy.exc import OperationalError # Import exception for handling errors
 import logging # Import logging
+from flask_wtf.csrf import CSRFProtect # Importação do CSRFProtect
 
 # --- NOVO: Importar Flask-Migrate ---
 from flask_migrate import Migrate
@@ -43,6 +44,11 @@ db.init_app(app)
 
 # --- NOVO: Inicializar Flask-Migrate ---
 migrate = Migrate(app, db)
+# --- FIM NOVO ---
+
+# --- NOVO: Inicializar CSRFProtect ---
+csrf = CSRFProtect()
+csrf.init_app(app)
 # --- FIM NOVO ---
 
 # --- Function to Ensure Achievements Exist ---
@@ -177,4 +183,3 @@ with app.app_context():
 if __name__ == '__main__':
     # Note: Use a proper WSGI server like Gunicorn in production
     app.run(debug=True) # debug=True is NOT for production
-
