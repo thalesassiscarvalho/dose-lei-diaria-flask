@@ -170,6 +170,7 @@
 <div class="save-article-form">
     {# CORRIGIDO: Removido \ das aspas #}
     <form action="{{ url_for('student.save_last_read', law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
         <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
         <input type="text" id="last_article" name="last_article" 
                placeholder="Ex: 15" value="{{ last_read_article or '' }}"
@@ -184,6 +185,7 @@
 <div class="mt-8 text-center">
     {# CORRIGIDO: Removido \ das aspas #}
     <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
             <i class="fas fa-check mr-2"></i> Marcar como Concluído
         </button>
@@ -331,4 +333,3 @@ document.addEventListener("contextmenu", function (e) {
 });
 </script>
 {% endblock %}
-
