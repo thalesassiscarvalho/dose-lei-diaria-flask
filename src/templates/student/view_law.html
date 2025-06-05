@@ -132,7 +132,8 @@
     <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
         <i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:
     </h4>
-    <audio controls class="w-full">
+    <!-- MODIFICADO: Adicionado controlslist="nodownload" para remover o botão de download -->
+    <audio controls controlslist="nodownload" class="w-full">
         <source src="{{ law.audio_url }}" type="audio/mpeg"> {# Ajuste o type se necessário (ex: audio/ogg, audio/wav) #}
         Seu navegador não suporta o elemento de áudio.
     </audio>
