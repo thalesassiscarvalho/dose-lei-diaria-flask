@@ -4,6 +4,41 @@
 
 {% block head_extra %}
 <style>
+    /* ... (Estilos existentes) ... */
+    .fixed-announcement-box {
+        background-color: #E0E7FF; /* Indigo 100 */
+        border: 1px solid #C7D2FE; /* Indigo 200 */
+        color: #3730A3; /* Indigo 800 */
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem; /* Espaço entre avisos fixos e não fixos */
+    }
+    .fixed-announcement-box h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .fixed-announcement-box h2 i {
+        margin-right: 0.5rem;
+        color: #4F46E5; /* Indigo 600 */
+    }
+    .non-fixed-announcement-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem; /* Espaço entre checkbox e conteúdo */
+        padding: 0.75rem 0; /* Espaçamento vertical */
+    }
+    .non-fixed-announcement-item .announcement-content {
+        flex-grow: 1;
+    }
+    .non-fixed-announcement-item input[type="checkbox"] {
+        margin-top: 0.2rem; /* Alinha melhor com o texto */
+        cursor: pointer;
+        accent-color: #F59E0B; /* Amber 500 */
+    }
+</style>
     /* Specific styles from the original formatting */
     .law-card {
         transition: all 0.3s ease;
@@ -193,19 +228,36 @@
 {% endif %}
 {# --- FIM NOVO --- #}
 
-<!-- Announcements Section (Mantido da formatação antiga) -->
-{% if announcements %}
-<div class="announcement-box">
-    {% for announcement in announcements %}
-        <div {% if not loop.first %}class="mt-4 pt-4 border-t border-yellow-300"{% endif %}>
-            <h2><i class="fas fa-bullhorn"></i>{{ announcement.title }}</h2>
+<!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
+{# Display Fixed Announcements First #}
+{% if fixed_announcements %}
+<div class="fixed-announcement-box">
+    {% for announcement in fixed_announcements %}
+        <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
+            <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
             <p class="text-sm">{{ announcement.content }}</p>
         </div>
     {% endfor %}
 </div>
 {% endif %}
 
-<!-- Gamification & Progress Overview (Mantido da formatação antiga) -->
+{# Display Non-Fixed Announcements (with checkbox) #}
+{% if non_fixed_announcements %}
+<div class="announcement-box" id="non-fixed-announcements-container">
+    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+    {% for announcement in non_fixed_announcements %}
+        <div class="non-fixed-announcement-item border-t border-yellow-300" data-announcement-id="{{ announcement.id }}">
+            <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
+            <div class="announcement-content">
+                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                <p class="text-sm">{{ announcement.content }}</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Gamification & Progress Overview -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <!-- Progress -->
     <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
@@ -453,3 +505,121 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {# --- FIM ADICIONADO --- #}
 {% endblock %}
+
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Lógica para marcar aviso como visto
+    const checkboxes = document.querySelectorAll(".mark-seen-checkbox");
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", function() {
+            if (this.checked) {
+                const announcementItem = this.closest(".non-fixed-announcement-item");
+                const announcementId = announcementItem.dataset.announcementId;
+                const url = `/student/api/announcements/${announcementId}/mark_seen`;
+
+                // Desabilitar o checkbox imediatamente para evitar cliques múltiplos
+                this.disabled = true;
+
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        // Adicionar headers necessários, como CSRF token se aplicável
+                        "Content-Type": "application/json",
+                        // Exemplo: "X-CSRFToken": "{{ csrf_token() }}" // Se estiver usando Flask-WTF
+                    },
+                    // body: JSON.stringify({}) // O corpo pode ser vazio para este POST
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Se a resposta não for OK, lança um erro para cair no .catch()
+                        return response.json().then(err => { throw new Error(err.error || "Erro desconhecido do servidor") });
+                    }
+                    return response.json(); // Processa a resposta JSON
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Esconder o item do aviso com uma animação suave (opcional)
+                        announcementItem.style.transition = "opacity 0.5s ease-out";
+                        announcementItem.style.opacity = "0";
+                        setTimeout(() => {
+                            announcementItem.style.display = "none";
+                            // Opcional: verificar se não há mais avisos não fixos e esconder o container
+                            const container = document.getElementById("non-fixed-announcements-container");
+                            if (container && container.querySelectorAll(".non-fixed-announcement-item[style*='display: none;']").length === container.querySelectorAll(".non-fixed-announcement-item").length) {
+                                // Se todos os itens estão escondidos, esconde o container inteiro
+                                // container.style.display = "none"; 
+                                // Ou talvez mostrar uma mensagem "Nenhum aviso novo"
+                            }
+                        }, 500); // Tempo correspondente à transição
+                    } else {
+                        // Reabilitar o checkbox se a API falhar
+                        this.disabled = false;
+                        this.checked = false; // Desmarcar visualmente
+                        console.error("Falha ao marcar aviso como visto:", data.error);
+                        alert("Não foi possível marcar o aviso como visto. Tente novamente.");
+                    }
+                })
+                .catch(error => {
+                    // Reabilitar o checkbox em caso de erro de rede ou outro
+                    this.disabled = false;
+                    this.checked = false; // Desmarcar visualmente
+                    console.error("Erro na requisição para marcar aviso como visto:", error);
+                    alert("Erro de comunicação ao marcar o aviso como visto. Verifique sua conexão e tente novamente.");
+                });
+            }
+        });
+    });
+
+    // Lógica para favoritos (já existente no seu código original, manter se necessário)
+    const favoriteButtons = document.querySelectorAll(".favorite-btn");
+    favoriteButtons.forEach(button => {
+        button.addEventListener("click", function() {
+            const lawCard = this.closest(".law-card");
+            const lawId = lawCard.dataset.lawId;
+            const isFavorited = this.classList.contains("favorited");
+            const url = `/student/law/toggle_favorite/${lawId}`;
+            const icon = this.querySelector("i");
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // "X-CSRFToken": "{{ csrf_token() }}" // Se aplicável
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.favorited) {
+                        this.classList.add("favorited");
+                        icon.classList.remove("far");
+                        icon.classList.add("fas");
+                        this.title = "Remover dos Favoritos";
+                    } else {
+                        this.classList.remove("favorited");
+                        icon.classList.remove("fas");
+                        icon.classList.add("far");
+                        this.title = "Adicionar aos Favoritos";
+                        // Se a opção "Mostrar apenas favoritas" estiver ativa, esconder o card
+                        const showFavoritesCheckbox = document.getElementById("show_favorites");
+                        if (showFavoritesCheckbox && showFavoritesCheckbox.checked) {
+                            lawCard.style.display = "none";
+                        }
+                    }
+                } else {
+                    console.error("Erro ao favoritar:", data.error);
+                    alert("Ocorreu um erro ao atualizar os favoritos.");
+                }
+            })
+            .catch(error => {
+                console.error("Erro na requisição de favorito:", error);
+                alert("Erro de comunicação ao atualizar os favoritos.");
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+
