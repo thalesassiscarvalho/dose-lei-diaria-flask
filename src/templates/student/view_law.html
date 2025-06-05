@@ -114,6 +114,21 @@
         /* Estilos adicionais para o player podem não ser consistentes entre navegadores */
         /* Exemplo: filter: sepia(20%) invert(90%); */
     }
+
+    /* RESTAURADO: Proteção contra impressão */
+    @media print {
+        body * {
+            display: none !important;
+        }
+        body:after {
+            content: "Impressão não permitida. Por favor, estude o conteúdo online.";
+            display: block !important;
+            font-size: 18pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 50px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -278,6 +293,13 @@ document.addEventListener("DOMContentLoaded", function () {
             this.classList.add("active");
             this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
         }
+    });
+
+    // RESTAURADO: Proteção adicional contra impressão via JavaScript
+    window.addEventListener('beforeprint', function(e) {
+        e.preventDefault();
+        alert('Impressão não permitida. Por favor, estude o conteúdo online.');
+        return false;
     });
 });
 </script>
