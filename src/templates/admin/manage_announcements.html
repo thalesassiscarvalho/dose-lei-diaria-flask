@@ -89,6 +89,10 @@
             <input type="checkbox" id="is_active" name="is_active" checked class="h-4 w-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple mr-2">
             <label for="is_active" class="text-sm font-medium text-gray-700">Ativo (visível para alunos)</label>
         </div>
+        <div class="mb-4 flex items-center">
+            <input type="checkbox" id="is_fixed" name="is_fixed" class="h-4 w-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple mr-2">
+            <label for="is_fixed" class="text-sm font-medium text-gray-700">Fixo (sempre visível, não pode ser ocultado pelo aluno)</label>
+        </div>
         <div>
             <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Adicionar Aviso
@@ -110,6 +114,9 @@
                         <span class="status-badge status-active">Ativo</span>
                     {% else %}
                         <span class="status-badge status-inactive">Inativo</span>
+                    {% endif %}
+                    {% if announcement.is_fixed %}
+                        <span class="status-badge" style="background-color: #FEF3C7; color: #92400E;">Fixo</span> {# Estilo Amarelo Claro #}
                     {% endif %}
                 </h3>
                 <p class="text-sm text-brand-text-light mt-1">{{ announcement.content }}</p>
