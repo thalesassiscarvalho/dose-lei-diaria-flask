@@ -4,6 +4,46 @@
 
 {% block head_extra %}
 <style>
+    /* Toggle de modo escuro */
+    .dark-mode-toggle {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        z-index: 50;
+        background-color: #ffffff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        border-radius: 50%;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .dark-mode-toggle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark-mode .dark-mode-toggle {
+        background-color: #1f2937;
+        color: #fbbf24;
+        border-color: #374151;
+    }
+
+    @media (max-width: 768px) {
+        .dark-mode-toggle {
+            top: 4.5rem;
+            right: 1rem;
+            width: 2rem;
+            height: 2rem;
+        }
+    }
+
     .law-content-container {
         background-color: white;
         border-radius: 0.5rem;
@@ -18,12 +58,30 @@
         user-select: none;
         /* Adicionando borda azul clara */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para o conteúdo da lei */
+    .dark-mode .law-content-container {
+        background-color: #1f2937; /* Gray 800 */
+        color: #e5e7eb; /* Gray 200 */
+        border-color: #374151; /* Gray 700 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    }
+
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
+        transition: color 0.3s ease;
     }
+
+    .dark-mode .law-content-container h1, 
+    .dark-mode .law-content-container h2, 
+    .dark-mode .law-content-container h3 {
+        color: #f3f4f6; /* Gray 100 */
+    }
+
     .law-content-container p {
         margin-bottom: 1em;
     }
@@ -38,8 +96,11 @@
     .law-content-container em { font-style: italic; }
     .law-content-container u { text-decoration: underline; }
     .law-content-container s { text-decoration: line-through; }
-    .ql-bg-yellow { background-color: yellow; }
-    .ql-bg-red { background-color: red; }
+    
+    /* Cores de fundo para o modo escuro */
+    .dark-mode .ql-bg-yellow { background-color: #854d0e; /* Yellow 800 */ }
+    .dark-mode .ql-bg-red { background-color: #7f1d1d; /* Red 900 */ }
+    
     .completed-banner {
         background-color: #d1fae5; /* Light green */
         color: #065f46; /* Dark green */
@@ -47,7 +108,16 @@
         border-radius: 0.375rem;
         margin-bottom: 1.5rem;
         border: 1px solid #a7f3d0;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para o banner de conclusão */
+    .dark-mode .completed-banner {
+        background-color: #065f46; /* Green 800 */
+        color: #d1fae5; /* Green 100 */
+        border-color: #047857; /* Green 700 */
+    }
+
     .last-read-info {
         background-color: #e0e7ff; /* Indigo 100 */
         color: #3730a3; /* Indigo 800 */
@@ -56,14 +126,31 @@
         margin-bottom: 1.5rem;
         border: 1px solid #c7d2fe; /* Indigo 200 */
         font-size: 0.9rem;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para a informação de última leitura */
+    .dark-mode .last-read-info {
+        background-color: #312e81; /* Indigo 900 */
+        color: #e0e7ff; /* Indigo 100 */
+        border-color: #4f46e5; /* Indigo 600 */
+    }
+
     .save-article-form {
         margin-top: 1.5rem;
         padding: 1rem;
         background-color: #f9fafb; /* Gray 50 */
         border: 1px solid #e5e7eb; /* Gray 200 */
         border-radius: 0.5rem;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para o formulário de salvar artigo */
+    .dark-mode .save-article-form {
+        background-color: #111827; /* Gray 900 */
+        border-color: #374151; /* Gray 700 */
+    }
+
     /* Estilos para os botões de toggle */
     .toggle-button {
         background-color: #e5e7eb; /* gray-200 */
@@ -73,12 +160,25 @@
         font-size: 0.875rem;
         font-weight: 500;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, color 0.3s ease;
         border: 1px solid #d1d5db; /* gray-300 */
     }
+
+    /* Modo escuro para os botões de toggle */
+    .dark-mode .toggle-button {
+        background-color: #374151; /* Gray 700 */
+        color: #e5e7eb; /* Gray 200 */
+        border-color: #4b5563; /* Gray 600 */
+    }
+
     .toggle-button:hover {
         background-color: #d1d5db; /* gray-300 */
     }
+
+    .dark-mode .toggle-button:hover {
+        background-color: #4b5563; /* Gray 600 */
+    }
+
     .toggle-button.active {
         /* Estilo quando o conteúdo está OCULTO (botão para MOSTRAR) */
         background-color: #3b82f6; /* blue-500 */
@@ -88,6 +188,16 @@
     .toggle-button.active:hover {
         background-color: #2563eb; /* blue-600 */
     }
+
+    .dark-mode .toggle-button.active {
+        background-color: #2563eb; /* Blue 600 */
+        border-color: #1d4ed8; /* Blue 700 */
+    }
+
+    .dark-mode .toggle-button.active:hover {
+        background-color: #1d4ed8; /* Blue 700 */
+    }
+
     /* Classe CSS para ocultar elementos */
     .conteudo-oculto {
         display: none !important; /* Usar !important para garantir a sobreposição */
@@ -100,16 +210,72 @@
         border: 1px solid #e5e7eb; /* Tailwind gray-200 */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
         margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para o player de áudio */
+    .dark-mode .audio-player-container {
+        background-color: #111827; /* Gray 900 */
+        border-color: #374151; /* Gray 700 */
+    }
+
     .audio-player-container audio {
         border-radius: 0.375rem; /* Tailwind rounded-md */
         /* Estilos adicionais para o player podem não ser consistentes entre navegadores */
         /* Exemplo: filter: sepia(20%) invert(90%); */
     }
+
+    /* Estilos para o modo escuro em elementos específicos */
+    .dark-mode .text-blue-700 {
+        color: #60a5fa !important; /* Blue 400 */
+    }
+
+    .dark-mode .text-purple-600 {
+        color: #a78bfa !important; /* Purple 400 */
+    }
+
+    .dark-mode .hover\:text-purple-800:hover {
+        color: #c4b5fd !important; /* Purple 300 */
+    }
+
+    .dark-mode .text-sm.font-medium.text-gray-700 {
+        color: #e5e7eb !important; /* Gray 200 */
+    }
+
+    .dark-mode .shadow-sm.appearance-none.border.border-gray-300 {
+        border-color: #4b5563 !important; /* Gray 600 */
+        background-color: #1f2937 !important; /* Gray 800 */
+        color: #e5e7eb !important; /* Gray 200 */
+    }
+
+    .dark-mode .focus\:ring-2.focus\:ring-purple-500 {
+        --tw-ring-color: #8b5cf6 !important; /* Purple 500 */
+    }
+
+    .dark-mode .bg-indigo-500 {
+        background-color: #6366f1 !important; /* Indigo 500 */
+    }
+
+    .dark-mode .hover\:bg-indigo-600:hover {
+        background-color: #4f46e5 !important; /* Indigo 600 */
+    }
+
+    .dark-mode .bg-green-500 {
+        background-color: #10b981 !important; /* Green 500 */
+    }
+
+    .dark-mode .hover\:bg-green-600:hover {
+        background-color: #059669 !important; /* Green 600 */
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Botão de alternar modo escuro -->
+<button id="darkModeToggle" class="dark-mode-toggle" aria-label="Alternar modo escuro">
+    <i class="fas fa-moon"></i>
+</button>
+
 <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
     {# CORRIGIDO: Removido \ das aspas #}
@@ -197,6 +363,36 @@
 
 {% block scripts %}
 <script>
+// --- NOVO: Manipulador para o modo escuro ---
+document.addEventListener('DOMContentLoaded', function() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const htmlElement = document.documentElement;
+    
+    // Verificar se o modo escuro está salvo no localStorage
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    // Aplicar modo escuro se estiver salvo
+    if (isDarkMode) {
+        htmlElement.classList.add('dark-mode');
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+    
+    // Alternar modo escuro ao clicar no botão
+    darkModeToggle.addEventListener('click', function() {
+        htmlElement.classList.toggle('dark-mode');
+        
+        // Atualizar ícone
+        if (htmlElement.classList.contains('dark-mode')) {
+            this.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            this.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', 'false');
+        }
+    });
+});
+// --- FIM NOVO ---
+
 // --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
 document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById("law-content");
