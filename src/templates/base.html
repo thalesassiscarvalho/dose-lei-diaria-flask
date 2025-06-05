@@ -186,28 +186,19 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Estilo para o logo e título */
-        .title-with-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
+        /* Estilo para o logo */
         .site-logo {
             height: 2.5rem; /* Altura proporcional ao texto do título */
             width: auto;
-            margin-right: 0.75rem; /* Espaçamento entre logo e texto */
+            margin-left: 0.5rem; /* Espaçamento entre texto e logo */
             vertical-align: middle;
-            transition: transform 0.3s ease;
         }
         
-        .title-with-logo:hover .site-logo {
-            transform: scale(1.05);
-        }
-        
-        .site-title {
-            display: inline-flex;
+        /* Estilo para o container do título com logo */
+        .title-container {
+            display: flex;
             align-items: center;
+            justify-content: center;
         }
     </style>
     <script>
@@ -232,11 +223,9 @@
 <body class="font-sans bg-brand-bg text-brand-text">
     <nav class="bg-brand-blue text-white p-4 shadow-md">
         <div class="container mx-auto flex flex-col items-center">
-            <div class="title-with-logo mb-2 fade-in-down">
-                <a href="{{ url_for('index') }}" class="site-title text-2xl font-bold">
-                    <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo">
-                    Estudo da Lei Seca
-                </a>
+            <div class="title-container mb-2 fade-in-down">
+                <a href="{{ url_for('index') }}" class="text-2xl font-bold">Estudo da Lei Seca</a>
+                <img src="/src/static/logo_livro.png" alt="Logo Estudo da Lei Seca" class="site-logo">
             </div>
             <div class="flex space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
