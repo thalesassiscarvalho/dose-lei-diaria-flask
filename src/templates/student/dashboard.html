@@ -4,46 +4,6 @@
 
 {% block head_extra %}
 <style>
-    /* Styles for new announcement types */
-    .fixed-announcement-box {
-        background-color: #E0E7FF; /* Indigo 100 */
-        border: 1px solid #C7D2FE; /* Indigo 200 */
-        color: #3730A3; /* Indigo 800 */
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem; /* Space between fixed and non-fixed */
-    }
-    .fixed-announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    .fixed-announcement-box h2 i {
-        margin-right: 0.5rem;
-        color: #4F46E5; /* Indigo 600 */
-    }
-    .non-fixed-announcement-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem; /* Space between checkbox and content */
-        padding: 0.75rem 0; /* Vertical padding */
-        border-top: 1px solid #FDE68A; /* Separator line, matches announcement-box border */
-    }
-    .non-fixed-announcement-item:first-child {
-        border-top: none; /* Remove top border for the first item */
-        padding-top: 0;
-    }
-    .non-fixed-announcement-item .announcement-content {
-        flex-grow: 1;
-    }
-    .non-fixed-announcement-item input[type="checkbox"] {
-        margin-top: 0.2rem; /* Align better with text */
-        cursor: pointer;
-        accent-color: #F59E0B; /* Amber 500 */
-    }
-
     /* Specific styles from the original formatting */
     .law-card {
         transition: all 0.3s ease;
@@ -152,26 +112,6 @@
         margin-right: 0.4rem;
         color: #D97706; /* Amber 600 */
     }
-    /* Original Announcement Styles (used for non-fixed container) */
-    .announcement-box {
-        background-color: #FEF9C3; /* Light Yellow 100 */
-        border: 1px solid #FDE68A; /* Yellow 200 */
-        color: #92400E; /* Yellow 800 */
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 2rem;
-    }
-    .announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    .announcement-box h2 i {
-        margin-right: 0.5rem;
-        color: #F59E0B; /* Amber 500 */
-    }
 
     /* --- ADICIONADO: Estilos para o botão de Favorito --- */
     .favorite-btn {
@@ -237,51 +177,363 @@
         margin: 0.5rem 0;
         color: #4b5563;
     }
+
+    /* INÍCIO DOS NOVOS ESTILOS PARA AVISOS */
+    /* Estilos gerais para todos os tipos de avisos */
+    .announcement-container {
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    /* Estilos para avisos fixos (importantes) */
+    .fixed-announcement-box {
+        background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+        border: 1px solid #C7D2FE;
+        border-left: 4px solid #4F46E5;
+        color: #3730A3;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fixed-announcement-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(238, 242, 255, 0.7) 0%, rgba(224, 231, 255, 0) 100%);
+        pointer-events: none;
+    }
+
+    .fixed-announcement-box h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        color: #4338CA;
+    }
+
+    .fixed-announcement-box h2 i {
+        margin-right: 0.75rem;
+        color: #4F46E5;
+        font-size: 1.25rem;
+    }
+
+    .fixed-announcement-box .announcement-content {
+        padding-left: 2.25rem; /* Alinhado com o texto do título após o ícone */
+    }
+
+    .fixed-announcement-item {
+        padding: 0.75rem 0;
+        border-top: 1px dashed rgba(199, 210, 254, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .fixed-announcement-item:first-child {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .fixed-announcement-item:last-child {
+        padding-bottom: 0;
+    }
+
+    /* Estilos para avisos não fixos (recentes) */
+    .announcement-box {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        border: 1px solid #FCD34D;
+        border-left: 4px solid #F59E0B;
+        color: #92400E;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .announcement-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(254, 243, 199, 0.7) 0%, rgba(253, 230, 138, 0) 100%);
+        pointer-events: none;
+    }
+
+    .announcement-box h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        color: #B45309;
+    }
+
+    .announcement-box h2 i {
+        margin-right: 0.75rem;
+        color: #F59E0B;
+        font-size: 1.25rem;
+    }
+
+    .non-fixed-announcement-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-top: 1px dashed rgba(252, 211, 77, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .non-fixed-announcement-item:first-child {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .non-fixed-announcement-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .non-fixed-announcement-item .announcement-content {
+        flex-grow: 1;
+    }
+
+    .non-fixed-announcement-item h3 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #92400E;
+        display: flex;
+        align-items: center;
+    }
+
+    .non-fixed-announcement-item h3::before {
+        content: '•';
+        margin-right: 0.5rem;
+        color: #F59E0B;
+        font-size: 1.25rem;
+        line-height: 1;
+    }
+
+    /* Estilização personalizada para o checkbox */
+    .mark-seen-checkbox-container {
+        position: relative;
+        min-width: 1.5rem;
+        height: 1.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .mark-seen-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 1.5rem;
+        width: 1.5rem;
+        background-color: #FEF9C3;
+        border: 2px solid #F59E0B;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .mark-seen-checkbox:hover ~ .checkmark {
+        background-color: #FDE68A;
+    }
+
+    .mark-seen-checkbox:checked ~ .checkmark {
+        background-color: #F59E0B;
+        border-color: #D97706;
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .mark-seen-checkbox:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .mark-seen-checkbox-container .checkmark:after {
+        left: 0.45rem;
+        top: 0.2rem;
+        width: 0.35rem;
+        height: 0.7rem;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    /* Tooltip para o checkbox */
+    .mark-seen-checkbox-container .tooltip {
+        visibility: hidden;
+        width: 120px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.75rem;
+    }
+
+    .mark-seen-checkbox-container:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Animações para interações */
+    @keyframes fadeOut {
+        from { opacity: 1; height: auto; margin-top: inherit; margin-bottom: inherit; padding-top: inherit; padding-bottom: inherit; }
+        to { opacity: 0; height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+    }
+
+    .fade-out {
+        animation: fadeOut 0.5s ease forwards;
+        overflow: hidden;
+    }
+
+    /* Estilo para o bloco de "Continuar de onde parou" */
+    .continue-block {
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        border: 1px solid #BFDBFE;
+        border-left: 4px solid #3B82F6;
+        color: #1E40AF;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+        transition: all 0.3s ease;
+    }
+
+    .continue-block:hover {
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .continue-block h3 {
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        color: #1E40AF;
+    }
+
+    .continue-block h3 i {
+        margin-right: 0.5rem;
+        color: #3B82F6;
+    }
+
+    .continue-block a {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1E3A8A;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: block;
+    }
+
+    .continue-block a:hover {
+        color: #3B82F6;
+        text-decoration: underline;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .fixed-announcement-box,
+        .announcement-box {
+            padding: 1rem;
+        }
+        
+        .non-fixed-announcement-item {
+            gap: 0.75rem;
+        }
+        
+        .fixed-announcement-box h2,
+        .announcement-box h2 {
+            font-size: 1.1rem;
+        }
+        
+        .fixed-announcement-box .announcement-content {
+            padding-left: 0;
+        }
+    }
+    /* FIM DOS NOVOS ESTILOS PARA AVISOS */
 </style>
 {% endblock %}
 
 {% block content %}
 <h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
-{# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
+
+<!-- Bloco de Acesso Rápido à Última Lei Visualizada (Melhorado) -->
 {% if last_accessed_law %}
-<div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
-    <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
-        <i class="fas fa-history mr-2"></i> Continuar de onde parou:
+<div class="continue-block">
+    <h3 class="text-sm font-medium">
+        <i class="fas fa-history"></i> Continuar de onde parou:
     </h3>
-    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
-       class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
+    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">
         {{ last_accessed_law.title }}
     </a>
 </div>
 {% endif %}
-{# --- FIM NOVO --- #}
 
-<!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
-{# Display Fixed Announcements First #}
+<!-- Seção de Avisos (Melhorada) -->
+<!-- Avisos Fixos Primeiro -->
 {% if fixed_announcements %}
-<div class="fixed-announcement-box">
-    {% for announcement in fixed_announcements %}
-        <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
-            <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
-            <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
-        </div>
-    {% endfor %}
+<div class="announcement-container">
+    <div class="fixed-announcement-box">
+        {% for announcement in fixed_announcements %}
+            <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
+                <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
+                <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
-{# Display Non-Fixed Announcements (with checkbox) #}
+<!-- Avisos Não Fixos (com checkbox estilizado) -->
 {% if non_fixed_announcements %}
-<div class="announcement-box" id="non-fixed-announcements-container">
-    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
-    {% for announcement in non_fixed_announcements %}
-        <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-            <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
-            <div class="announcement-content">
-                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
+<div class="announcement-container" id="non-fixed-announcements-container">
+    <div class="announcement-box">
+        <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+        {% for announcement in non_fixed_announcements %}
+            <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+                <div class="mark-seen-checkbox-container">
+                    <input type="checkbox" class="mark-seen-checkbox">
+                    <span class="checkmark"></span>
+                    <span class="tooltip">Marcar como visto</span>
+                </div>
+                <div class="announcement-content">
+                    <h3>{{ announcement.title }}</h3>
+                    <div class="rich-content">{{ announcement.content|safe }}</div>
+                </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
@@ -442,17 +694,18 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Marcar anúncios como vistos
+    // Marcar anúncios como vistos com animação melhorada
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            // Desabilitar o checkbox durante o processamento para evitar cliques múltiplos
+            // Desabilitar o checkbox durante o processamento
             this.disabled = true;
             
+            const checkboxContainer = this.closest('.mark-seen-checkbox-container');
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
             
-            // CORRIGIDO: URL correta para marcar anúncio como visto
+            // URL para marcar anúncio como visto
             const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
             
             // Enviar solicitação para marcar como visto
@@ -465,14 +718,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (response.ok) {
-                    // Animar a remoção do item somente após confirmação do servidor
-                    announcementItem.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease, padding 0.5s ease';
-                    announcementItem.style.opacity = '0';
-                    announcementItem.style.height = '0';
-                    announcementItem.style.marginTop = '0';
-                    announcementItem.style.marginBottom = '0';
-                    announcementItem.style.paddingTop = '0';
-                    announcementItem.style.paddingBottom = '0';
+                    // Adicionar classe para animação de fade out
+                    announcementItem.classList.add('fade-out');
                     
                     // Remover o item após a animação
                     setTimeout(() => {
@@ -481,14 +728,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Verificar se ainda há anúncios não fixos
                         const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
                         if (remainingItems.length === 0) {
-                            // Se não houver mais anúncios, remover o container
+                            // Se não houver mais anúncios, remover o container com animação
                             const container = document.getElementById('non-fixed-announcements-container');
                             if (container) {
-                                container.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease';
-                                container.style.opacity = '0';
-                                container.style.height = '0';
-                                container.style.marginTop = '0';
-                                container.style.marginBottom = '0';
+                                container.classList.add('fade-out');
                                 
                                 setTimeout(() => {
                                     container.remove();
@@ -596,8 +839,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const lawId = this.getAttribute('data-law-id');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const isFavorited = this.classList.contains('favorited');
             
-            // CORRIGIDO: URL correta para favoritar/desfavoritar
+            // URL para favoritar/desfavoritar
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             
             // Armazenar referência ao botão para uso dentro das promises
@@ -650,3 +894,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
