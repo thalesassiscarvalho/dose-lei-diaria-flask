@@ -278,11 +278,12 @@ def manage_announcements():
         title = request.form.get("title")
         content = request.form.get("content")
         is_active = request.form.get("is_active") == "on" # Checkbox value
+        is_fixed = request.form.get("is_fixed") == "on" # Checkbox value for fixed status
 
         if not title or not content:
             flash("Título e conteúdo do aviso são obrigatórios.", "danger")
         else:
-            new_announcement = Announcement(title=title, content=content, is_active=is_active)
+            new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed) # Include is_fixed
             db.session.add(new_announcement)
             db.session.commit()
             flash("Aviso adicionado com sucesso!", "success")
