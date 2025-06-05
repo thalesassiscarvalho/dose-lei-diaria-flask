@@ -4,19 +4,10 @@
 
 {% block head_extra %}
 <style>
-    /* --- NOVO: Estilo para fundo azul claro --- */
-    .dashboard-container {
-        background-color: #f0f7ff; /* Fundo azul claro solicitado */
-        min-height: 100vh; /* Garante que o fundo cubra toda a altura da tela */
-        width: 100%;
-        padding: 1rem;
-        transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
     /* --- NOVO: Estilos para o modo escuro --- */
-    .dark-mode .dashboard-container {
-        background-color: #121826; /* Fundo escuro para o modo noturno */
-        color: #e5e7eb; /* Texto claro para o modo noturno */
+    .dark-mode {
+        background-color: #1e293b !important; /* Slate 800 - Azul escuro mais suave */
+        color: #f1f5f9 !important; /* Slate 100 - Texto claro para o modo noturno */
     }
 
     /* Toggle de modo escuro */
@@ -45,20 +36,39 @@
     }
 
     .dark-mode .dark-mode-toggle {
-        background-color: #1f2937;
-        color: #fbbf24;
-        border-color: #374151;
+        background-color: #334155; /* Slate 700 */
+        color: #fbbf24; /* Amber 400 */
+        border-color: #475569; /* Slate 600 */
     }
 
     @media (max-width: 768px) {
-        .dashboard-container {
-            padding: 0.5rem; /* Padding menor em telas pequenas */
-        }
         .dark-mode-toggle {
             top: 4.5rem;
             right: 1rem;
             width: 2rem;
             height: 2rem;
+        }
+    }
+    /* --- FIM NOVO --- */
+
+    /* --- NOVO: Estilo para fundo azul claro --- */
+    .dashboard-container {
+        background-color: #f0f7ff; /* Fundo azul claro solicitado */
+        min-height: 100vh; /* Garante que o fundo cubra toda a altura da tela */
+        width: 100%;
+        padding: 1rem;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Modo escuro para o container do dashboard */
+    .dark-mode .dashboard-container {
+        background-color: #1e293b; /* Slate 800 - Azul escuro mais suave */
+        color: #f1f5f9; /* Slate 100 - Texto claro para o modo noturno */
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0.5rem; /* Padding menor em telas pequenas */
         }
     }
     /* --- FIM NOVO --- */
@@ -76,7 +86,7 @@
 
     /* Modo escuro para anúncios fixos */
     .dark-mode .fixed-announcement-box {
-        background-color: #312e81; /* Indigo 900 */
+        background-color: #3730a3; /* Indigo 800 */
         border-color: #4f46e5; /* Indigo 600 */
         color: #e0e7ff; /* Indigo 100 */
     }
@@ -93,7 +103,7 @@
         color: #4F46E5; /* Indigo 600 */
     }
     .dark-mode .fixed-announcement-box h2 i {
-        color: #818cf8; /* Indigo 400 */
+        color: #a5b4fc; /* Indigo 300 */
     }
 
     .non-fixed-announcement-item {
@@ -133,10 +143,10 @@
 
     /* Modo escuro para cards de lei */
     .dark-mode .law-card {
-        background-color: #1f2937; /* Gray 800 */
-        border-color: #374151; /* Gray 700 */
-        color: #e5e7eb; /* Gray 200 */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        background-color: #334155; /* Slate 700 */
+        border-color: #475569; /* Slate 600 */
+        color: #f1f5f9; /* Slate 100 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .law-card:hover {
@@ -145,7 +155,7 @@
         border-color: #93c5fd; /* Lighter blue border on hover */
     }
     .dark-mode .law-card:hover {
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2), 0 4px 6px -2px rgba(37, 99, 235, 0.15);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.15), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
         border-color: #60a5fa; /* Blue 400 */
     }
 
@@ -157,7 +167,7 @@
         transition: background-color 0.3s ease;
     }
     .dark-mode .progress-bar-container {
-        background-color: #1e3a8a; /* Blue 900 */
+        background-color: #1e40af; /* Blue 800 */
     }
 
     .progress-bar-fill {
@@ -182,7 +192,7 @@
         transition: background-color 0.3s ease, color 0.3s ease;
     }
     .dark-mode .completed-badge {
-        background-color: #065f46; /* Green 800 */
+        background-color: #059669; /* Green 600 */
         color: #d1fae5; /* Green 100 */
     }
 
@@ -198,7 +208,7 @@
         transition: background-color 0.3s ease, color 0.3s ease;
     }
     .dark-mode .in-progress-badge {
-        background-color: #1e40af; /* Blue 800 */
+        background-color: #2563eb; /* Blue 600 */
         color: #dbeafe; /* Blue 100 */
     }
 
@@ -244,7 +254,7 @@
     }
     .dark-mode .review-button {
         background-color: #4b5563; /* Gray 600 */
-        color: #e5e7eb; /* Gray 200 */
+        color: #f3f4f6; /* Gray 100 */
     }
     .dark-mode .review-button:hover {
         background-color: #6b7280; /* Gray 500 */
@@ -272,9 +282,9 @@
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
     .dark-mode .achievement-badge {
-        background-color: #92400e; /* Amber 800 */
+        background-color: #b45309; /* Amber 700 */
         color: #fef3c7; /* Amber 100 */
-        border-color: #b45309; /* Amber 700 */
+        border-color: #d97706; /* Amber 600 */
     }
 
     .achievement-badge i {
@@ -297,8 +307,8 @@
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
     .dark-mode .announcement-box {
-        background-color: #854d0e; /* Yellow 800 */
-        border-color: #a16207; /* Yellow 700 */
+        background-color: #92400e; /* Yellow 800 */
+        border-color: #d97706; /* Amber 600 */
         color: #fef9c3; /* Yellow 100 */
     }
 
@@ -353,7 +363,7 @@
         transition: color 0.3s ease;
     }
     .dark-mode .favorite-filter-label {
-        color: #e5e7eb;
+        color: #f1f5f9; /* Slate 100 */
     }
 
     .favorite-filter-label input[type="checkbox"] {
@@ -365,39 +375,39 @@
 
     /* Estilos para o modo escuro nos filtros e pesquisa */
     .dark-mode .bg-white {
-        background-color: #1f2937 !important; /* Gray 800 */
+        background-color: #334155 !important; /* Slate 700 */
     }
     
     .dark-mode .border-gray-200 {
-        border-color: #374151 !important; /* Gray 700 */
+        border-color: #475569 !important; /* Slate 600 */
     }
     
     .dark-mode .text-gray-700 {
-        color: #e5e7eb !important; /* Gray 200 */
+        color: #f1f5f9 !important; /* Slate 100 */
     }
     
     .dark-mode .border-gray-300 {
-        border-color: #4b5563 !important; /* Gray 600 */
+        border-color: #475569 !important; /* Slate 600 */
     }
     
     .dark-mode .text-brand-text {
-        color: #e5e7eb !important; /* Gray 200 */
+        color: #f1f5f9 !important; /* Slate 100 */
     }
     
     .dark-mode .placeholder-gray-400::placeholder {
-        color: #9ca3af !important; /* Gray 400 */
+        color: #94a3b8 !important; /* Slate 400 */
     }
     
     .dark-mode .text-brand-text-light {
-        color: #9ca3af !important; /* Gray 400 */
+        color: #cbd5e1 !important; /* Slate 300 */
     }
     
     .dark-mode .bg-gray-50 {
-        background-color: #111827 !important; /* Gray 900 */
+        background-color: #1e293b !important; /* Slate 800 */
     }
     
     .dark-mode .hover\:bg-gray-50:hover {
-        background-color: #1f2937 !important; /* Gray 800 */
+        background-color: #334155 !important; /* Slate 700 */
     }
     
     .dark-mode .bg-blue-100 {
@@ -409,23 +419,23 @@
     }
     
     .dark-mode .text-gray-600 {
-        color: #d1d5db !important; /* Gray 300 */
+        color: #cbd5e1 !important; /* Slate 300 */
     }
     
     .dark-mode .text-gray-500 {
-        color: #9ca3af !important; /* Gray 400 */
+        color: #94a3b8 !important; /* Slate 400 */
     }
     
     .dark-mode .text-gray-400 {
-        color: #9ca3af !important; /* Gray 400 */
+        color: #94a3b8 !important; /* Slate 400 */
     }
     
     .dark-mode .bg-indigo-50 {
-        background-color: #312e81 !important; /* Indigo 900 */
+        background-color: #3730a3 !important; /* Indigo 800 */
     }
     
     .dark-mode .border-indigo-200 {
-        border-color: #4f46e5 !important; /* Indigo 600 */
+        border-color: #6366f1 !important; /* Indigo 500 */
     }
     
     .dark-mode .text-indigo-700 {
@@ -437,7 +447,17 @@
     }
     
     .dark-mode .hover\:text-indigo-600:hover {
-        color: #818cf8 !important; /* Indigo 400 */
+        color: #a5b4fc !important; /* Indigo 300 */
+    }
+
+    /* Título do painel no modo escuro */
+    .dark-mode h1.text-3xl.font-bold.mb-8 {
+        color: #60a5fa !important; /* Blue 400 */
+    }
+
+    /* Título das legislações no modo escuro */
+    .dark-mode h2.text-2xl.font-semibold.mb-6 {
+        color: #60a5fa !important; /* Blue 400 */
     }
 </style>
 {% endblock %}
