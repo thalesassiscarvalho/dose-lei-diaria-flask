@@ -44,31 +44,6 @@
         accent-color: #F59E0B; /* Amber 500 */
     }
 
-    /* Estilos para conteúdo rico nos anúncios */
-    .rich-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 0.375rem;
-        margin: 0.5rem 0;
-    }
-    .rich-content a {
-        color: #2563eb;
-        text-decoration: underline;
-    }
-    .rich-content a:hover {
-        color: #1d4ed8;
-    }
-    .rich-content ul, .rich-content ol {
-        margin-left: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .rich-content blockquote {
-        border-left: 4px solid #e5e7eb;
-        padding-left: 1rem;
-        margin: 0.5rem 0;
-        color: #4b5563;
-    }
-
     /* Specific styles from the original formatting */
     .law-card {
         transition: all 0.3s ease;
@@ -238,6 +213,30 @@
     }
     /* --- FIM ADICIONADO --- */
 
+    /* Estilos para o conteúdo HTML rico nos anúncios */
+    .rich-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        margin: 0.5rem 0;
+    }
+    .rich-content a {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+    .rich-content a:hover {
+        color: #1d4ed8;
+    }
+    .rich-content ul, .rich-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .rich-content blockquote {
+        border-left: 4px solid #e5e7eb;
+        padding-left: 1rem;
+        margin: 0.5rem 0;
+        color: #4b5563;
+    }
 </style>
 {% endblock %}
 
@@ -264,8 +263,7 @@
     {% for announcement in fixed_announcements %}
         <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
             <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
-            <!-- Renderização segura do conteúdo HTML rico -->
-            <div class="text-sm rich-content">{{ announcement.content | safe }}</div>
+            <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
         </div>
     {% endfor %}
 </div>
@@ -280,8 +278,7 @@
             <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
             <div class="announcement-content">
                 <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                <!-- Renderização segura do conteúdo HTML rico -->
-                <div class="text-sm rich-content">{{ announcement.content | safe }}</div>
+                <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
             </div>
         </div>
     {% endfor %}
@@ -403,77 +400,63 @@
             </button>
             {# --- FIM MODIFICADO --- #}
             <div class="card-content">
-                <h3 class="text-lg font-semibold mb-2">{{ law.title }}</h3>
-                {% if law.description %}
-                    <p class="text-sm text-gray-600 mb-3">{{ law.description }}</p>
-                {% endif %}
-                
-                {% if law.subject %}
-                    <div class="text-xs text-gray-500 mb-3">
-                        <span class="font-medium">Matéria:</span> {{ law.subject.name }}
-                    </div>
-                {% endif %}
-                
-                <div class="flex items-center mt-2">
-                    {% if law.id in completed_laws %}
+                <div class="flex items-center mb-2">
+                    <h3 class="text-lg font-semibold">{{ law.title }}</h3>
+                    {% if law.id in completed_law_ids %}
                         <span class="completed-badge">Concluída</span>
-                    {% elif law.id in in_progress_laws %}
+                    {% elif law.id in in_progress_law_ids %}
                         <span class="in-progress-badge">Em Andamento</span>
                     {% endif %}
                 </div>
+                <p class="text-sm text-gray-600 mb-3">{{ law.description|truncate(100) }}</p>
+                <div class="text-xs text-gray-500 mb-3">
+                    <span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1">{{ law.subject.name }}</span>
+                </div>
             </div>
-            
             <div class="card-actions flex justify-between items-center">
-                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow text-center">
-                    {% if law.id in completed_laws %}
-                        <i class="fas fa-eye mr-2"></i> Revisar
-                    {% elif law.id in in_progress_laws %}
-                        <i class="fas fa-book-reader mr-2"></i> Continuar
+                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow">
+                    {% if law.id in completed_law_ids %}
+                        <i class="fas fa-check-circle mr-1"></i> Revisar
+                    {% elif law.id in in_progress_law_ids %}
+                        <i class="fas fa-book-reader mr-1"></i> Continuar
                     {% else %}
-                        <i class="fas fa-book-open mr-2"></i> Estudar
+                        <i class="fas fa-book mr-1"></i> Começar
                     {% endif %}
                 </a>
-                
-                {% if law.id in completed_laws %}
-                <form method="POST" action="{{ url_for('student.law_review', law_id=law.id) }}" class="ml-2">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="review-button" title="Marcar como não concluído">
-                        <i class="fas fa-undo"></i>
+                {% if law.id in completed_law_ids %}
+                    <button type="button" class="review-button ml-2 js-mark-incomplete-btn" data-law-id="{{ law.id }}">
+                        <i class="fas fa-undo-alt"></i> Marcar como não concluído
                     </button>
-                </form>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     {% else %}
-        <div class="col-span-full text-center py-8">
+        <div class="col-span-3 text-center py-8">
             <p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p>
         </div>
     {% endif %}
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Script para marcar anúncios como vistos
 document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
-    
-    checkboxes.forEach(checkbox => {
+    // Marcar anúncios como vistos
+    const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
+    markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            const announcementItem = this.closest('.non-fixed-announcement-item');
+            const announcementId = announcementItem.getAttribute('data-announcement-id');
+            
             if (this.checked) {
-                const announcementItem = this.closest('.non-fixed-announcement-item');
-                const announcementId = announcementItem.dataset.announcementId;
-                
-                // Enviar solicitação AJAX para marcar o anúncio como visto
-                fetch(`/student/announcement/${announcementId}/mark_seen`, {
+                // Enviar solicitação para marcar como visto
+                fetch(`/student/announcements/${announcementId}/mark_seen`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    credentials: 'same-origin'
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
                 })
                 .then(response => {
                     if (response.ok) {
@@ -486,13 +469,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         announcementItem.style.paddingTop = '0';
                         announcementItem.style.paddingBottom = '0';
                         
-                        // Remover o elemento após a animação
+                        // Remover o item após a animação
                         setTimeout(() => {
                             announcementItem.remove();
                             
                             // Verificar se ainda há anúncios não fixos
                             const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
                             if (remainingItems.length === 0) {
+                                // Se não houver mais anúncios, remover o container
                                 const container = document.getElementById('non-fixed-announcements-container');
                                 if (container) {
                                     container.style.transition = 'opacity 0.5s ease, height 0.5s ease, margin 0.5s ease';
@@ -508,52 +492,142 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }, 500);
                     } else {
-                        // Reverter o checkbox se houver erro
-                        this.checked = false;
                         console.error('Erro ao marcar anúncio como visto');
+                        this.checked = false; // Reverter checkbox se houver erro
                     }
                 })
                 .catch(error => {
-                    this.checked = false;
                     console.error('Erro:', error);
+                    this.checked = false; // Reverter checkbox se houver erro
                 });
             }
         });
     });
 
-    // Script para favoritar/desfavoritar leis
-    const favoriteBtns = document.querySelectorAll('.js-favorite-btn');
-    
-    favoriteBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const lawId = this.dataset.lawId;
-            const isFavorited = this.classList.contains('favorited');
-            const action = isFavorited ? 'unfavorite' : 'favorite';
+    // Marcar lei como não concluída
+    const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
+    markIncompleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.getAttribute('data-law-id');
+            const lawCard = this.closest('.law-card');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
-            // Enviar solicitação AJAX para favoritar/desfavoritar
-            fetch(`/student/law/${lawId}/${action}`, {
+            // Enviar solicitação para marcar como não concluída
+            const apiUrl = `/student/law/review/${lawId}`;
+            
+            fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                credentials: 'same-origin'
+                    'X-CSRFToken': csrfToken
+                }
             })
             .then(response => {
                 if (response.ok) {
-                    // Alternar classe e ícone
-                    this.classList.toggle('favorited');
-                    const icon = this.querySelector('i');
-                    if (isFavorited) {
-                        icon.className = 'far fa-star';
-                        this.title = 'Adicionar aos Favoritos';
-                    } else {
-                        icon.className = 'fas fa-star';
-                        this.title = 'Remover dos Favoritos';
-                    }
-                } else {
-                    console.error('Erro ao atualizar favorito');
+                    return response.json();
+                } else if (response.status === 302) {
+                    // Se for um redirecionamento, consideramos como sucesso
+                    return { success: true };
                 }
+                throw new Error('Erro na resposta da API');
+            })
+            .catch(error => {
+                // Se a resposta não for JSON, tentamos tratar como sucesso
+                return { success: true };
+            })
+            .then(data => {
+                // Atualizar a interface do usuário
+                // 1. Remover o botão "Marcar como não concluído"
+                this.remove();
+                
+                // 2. Alterar o texto do botão principal para "Continuar"
+                const actionButton = lawCard.querySelector('.action-button');
+                actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                
+                // 3. Substituir o badge "Concluída" por "Em Andamento"
+                const completedBadge = lawCard.querySelector('.completed-badge');
+                if (completedBadge) {
+                    completedBadge.className = 'in-progress-badge';
+                    completedBadge.textContent = 'Em Andamento';
+                }
+                
+                // 4. Atualizar o contador de progresso e a barra de progresso
+                const progressText = document.querySelector('.text-sm.font-medium.text-brand-text-light');
+                if (progressText) {
+                    const progressParts = progressText.textContent.split(':');
+                    if (progressParts.length > 1) {
+                        const countParts = progressParts[1].trim().split('/');
+                        if (countParts.length > 1) {
+                            const completedCount = parseInt(countParts[0]) - 1;
+                            const totalCount = parseInt(countParts[1]);
+                            progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
+                            
+                            // Atualizar a porcentagem
+                            const percentage = Math.round((completedCount / totalCount) * 100);
+                            const percentageText = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
+                            if (percentageText) {
+                                percentageText.textContent = `${percentage}%`;
+                            }
+                            
+                            // Atualizar a barra de progresso
+                            const progressBar = document.querySelector('.progress-bar-fill');
+                            if (progressBar) {
+                                progressBar.style.width = `${percentage}%`;
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    });
+
+    // Favoritar/Desfavoritar lei
+    const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const lawId = this.getAttribute('data-law-id');
+            const isFavorited = this.classList.contains('favorited');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            // Determinar a ação (favoritar ou desfavoritar)
+            const action = isFavorited ? 'unfavorite' : 'favorite';
+            const apiUrl = `/student/law/${lawId}/${action}`;
+            
+            // Atualizar visualmente antes da resposta do servidor (otimismo)
+            this.classList.toggle('favorited');
+            const icon = this.querySelector('i');
+            if (icon) {
+                if (isFavorited) {
+                    icon.className = 'far fa-star'; // Ícone de estrela vazia
+                    this.title = 'Adicionar aos Favoritos';
+                } else {
+                    icon.className = 'fas fa-star'; // Ícone de estrela preenchida
+                    this.title = 'Remover dos Favoritos';
+                }
+            }
+            
+            // Enviar solicitação para o servidor
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Se houver erro, reverter a alteração visual
+                    this.classList.toggle('favorited');
+                    if (icon) {
+                        icon.className = isFavorited ? 'fas fa-star' : 'far fa-star';
+                        this.title = isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+                    }
+                    throw new Error('Erro ao atualizar favorito');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`Lei ${action === 'favorite' ? 'adicionada aos' : 'removida dos'} favoritos com sucesso!`);
             })
             .catch(error => {
                 console.error('Erro:', error);
