@@ -10,11 +10,55 @@
         min-height: 100vh; /* Garante que o fundo cubra toda a altura da tela */
         width: 100%;
         padding: 1rem;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* --- NOVO: Estilos para o modo escuro --- */
+    .dark-mode .dashboard-container {
+        background-color: #121826; /* Fundo escuro para o modo noturno */
+        color: #e5e7eb; /* Texto claro para o modo noturno */
+    }
+
+    /* Toggle de modo escuro */
+    .dark-mode-toggle {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        z-index: 50;
+        background-color: #ffffff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        border-radius: 50%;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .dark-mode-toggle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark-mode .dark-mode-toggle {
+        background-color: #1f2937;
+        color: #fbbf24;
+        border-color: #374151;
     }
 
     @media (max-width: 768px) {
         .dashboard-container {
             padding: 0.5rem; /* Padding menor em telas pequenas */
+        }
+        .dark-mode-toggle {
+            top: 4.5rem;
+            right: 1rem;
+            width: 2rem;
+            height: 2rem;
         }
     }
     /* --- FIM NOVO --- */
@@ -27,7 +71,16 @@
         padding: 1rem;
         border-radius: 0.5rem;
         margin-bottom: 1rem; /* Space between fixed and non-fixed */
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+
+    /* Modo escuro para anúncios fixos */
+    .dark-mode .fixed-announcement-box {
+        background-color: #312e81; /* Indigo 900 */
+        border-color: #4f46e5; /* Indigo 600 */
+        color: #e0e7ff; /* Indigo 100 */
+    }
+
     .fixed-announcement-box h2 {
         font-size: 1.1rem;
         font-weight: 600;
@@ -39,6 +92,10 @@
         margin-right: 0.5rem;
         color: #4F46E5; /* Indigo 600 */
     }
+    .dark-mode .fixed-announcement-box h2 i {
+        color: #818cf8; /* Indigo 400 */
+    }
+
     .non-fixed-announcement-item {
         display: flex;
         align-items: flex-start;
@@ -73,23 +130,46 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Lighter shadow */
         position: relative; /* <<< ADICIONADO: Necessário para posicionar o botão de favorito */
     }
+
+    /* Modo escuro para cards de lei */
+    .dark-mode .law-card {
+        background-color: #1f2937; /* Gray 800 */
+        border-color: #374151; /* Gray 700 */
+        color: #e5e7eb; /* Gray 200 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    }
+
     .law-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); /* Blue shadow */
         border-color: #93c5fd; /* Lighter blue border on hover */
     }
+    .dark-mode .law-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2), 0 4px 6px -2px rgba(37, 99, 235, 0.15);
+        border-color: #60a5fa; /* Blue 400 */
+    }
+
     .progress-bar-container {
         height: 10px;
         border-radius: 5px;
         background-color: #dbeafe; /* Light blue background */
         overflow: hidden;
+        transition: background-color 0.3s ease;
     }
+    .dark-mode .progress-bar-container {
+        background-color: #1e3a8a; /* Blue 900 */
+    }
+
     .progress-bar-fill {
         height: 100%;
         border-radius: 5px;
         background-color: #2563eb; /* Medium Blue fill */
-        transition: width 0.5s ease;
+        transition: width 0.5s ease, background-color 0.3s ease;
     }
+    .dark-mode .progress-bar-fill {
+        background-color: #3b82f6; /* Blue 500 */
+    }
+
     .completed-badge {
         background-color: #D1FAE5; /* Light green */
         color: #065F46; /* Dark green text */
@@ -99,7 +179,13 @@
         font-weight: 600;
         margin-left: auto;
         flex-shrink: 0; /* Evita que o badge encolha */
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
+    .dark-mode .completed-badge {
+        background-color: #065f46; /* Green 800 */
+        color: #d1fae5; /* Green 100 */
+    }
+
     .in-progress-badge {
         background-color: #DBEAFE; /* Light blue */
         color: #1E40AF; /* Dark blue text */
@@ -109,7 +195,13 @@
         font-weight: 600;
         margin-left: auto;
         flex-shrink: 0; /* Evita que o badge encolha */
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
+    .dark-mode .in-progress-badge {
+        background-color: #1e40af; /* Blue 800 */
+        color: #dbeafe; /* Blue 100 */
+    }
+
     .action-button {
         background-color: #2563eb; /* brand-blue */
         color: white;
@@ -128,6 +220,13 @@
     .action-button:hover {
         background-color: #1d4ed8; /* brand-blue-dark */
     }
+    .dark-mode .action-button {
+        background-color: #3b82f6; /* Blue 500 */
+    }
+    .dark-mode .action-button:hover {
+        background-color: #2563eb; /* Blue 600 */
+    }
+
     .review-button {
         background-color: #D1D5DB; /* Gray 300 */
         color: #4B5563; /* Gray 600 */
@@ -137,12 +236,20 @@
         font-weight: bold;
         border: none;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease, color 0.3s ease;
         align-self: center; /* Alinha verticalmente com o botão principal */
     }
     .review-button:hover {
         background-color: #9CA3AF; /* Gray 400 */
     }
+    .dark-mode .review-button {
+        background-color: #4b5563; /* Gray 600 */
+        color: #e5e7eb; /* Gray 200 */
+    }
+    .dark-mode .review-button:hover {
+        background-color: #6b7280; /* Gray 500 */
+    }
+
     .card-content {
         flex-grow: 1;
     }
@@ -162,11 +269,23 @@
         margin-right: 0.5rem;
         margin-bottom: 0.5rem;
         border: 1px solid #FDE68A; /* Slightly darker yellow border */
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+    .dark-mode .achievement-badge {
+        background-color: #92400e; /* Amber 800 */
+        color: #fef3c7; /* Amber 100 */
+        border-color: #b45309; /* Amber 700 */
+    }
+
     .achievement-badge i {
         margin-right: 0.4rem;
         color: #D97706; /* Amber 600 */
+        transition: color 0.3s ease;
     }
+    .dark-mode .achievement-badge i {
+        color: #fbbf24; /* Amber 400 */
+    }
+
     /* Original Announcement Styles (used for non-fixed container) */
     .announcement-box {
         background-color: #FEF9C3; /* Light Yellow 100 */
@@ -175,7 +294,14 @@
         padding: 1rem;
         border-radius: 0.5rem;
         margin-bottom: 2rem;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
+    .dark-mode .announcement-box {
+        background-color: #854d0e; /* Yellow 800 */
+        border-color: #a16207; /* Yellow 700 */
+        color: #fef9c3; /* Yellow 100 */
+    }
+
     .announcement-box h2 {
         font-size: 1.1rem;
         font-weight: 600;
@@ -186,6 +312,10 @@
     .announcement-box h2 i {
         margin-right: 0.5rem;
         color: #F59E0B; /* Amber 500 */
+        transition: color 0.3s ease;
+    }
+    .dark-mode .announcement-box h2 i {
+        color: #fbbf24; /* Amber 400 */
     }
 
     /* --- ADICIONADO: Estilos para o botão de Favorito --- */
@@ -220,7 +350,12 @@
         cursor: pointer;
         font-size: 0.875rem;
         color: #374151;
+        transition: color 0.3s ease;
     }
+    .dark-mode .favorite-filter-label {
+        color: #e5e7eb;
+    }
+
     .favorite-filter-label input[type="checkbox"] {
         margin-right: 0.5rem;
         cursor: pointer;
@@ -228,10 +363,91 @@
     }
     /* --- FIM ADICIONADO --- */
 
+    /* Estilos para o modo escuro nos filtros e pesquisa */
+    .dark-mode .bg-white {
+        background-color: #1f2937 !important; /* Gray 800 */
+    }
+    
+    .dark-mode .border-gray-200 {
+        border-color: #374151 !important; /* Gray 700 */
+    }
+    
+    .dark-mode .text-gray-700 {
+        color: #e5e7eb !important; /* Gray 200 */
+    }
+    
+    .dark-mode .border-gray-300 {
+        border-color: #4b5563 !important; /* Gray 600 */
+    }
+    
+    .dark-mode .text-brand-text {
+        color: #e5e7eb !important; /* Gray 200 */
+    }
+    
+    .dark-mode .placeholder-gray-400::placeholder {
+        color: #9ca3af !important; /* Gray 400 */
+    }
+    
+    .dark-mode .text-brand-text-light {
+        color: #9ca3af !important; /* Gray 400 */
+    }
+    
+    .dark-mode .bg-gray-50 {
+        background-color: #111827 !important; /* Gray 900 */
+    }
+    
+    .dark-mode .hover\:bg-gray-50:hover {
+        background-color: #1f2937 !important; /* Gray 800 */
+    }
+    
+    .dark-mode .bg-blue-100 {
+        background-color: #1e40af !important; /* Blue 800 */
+    }
+    
+    .dark-mode .text-blue-800 {
+        color: #bfdbfe !important; /* Blue 200 */
+    }
+    
+    .dark-mode .text-gray-600 {
+        color: #d1d5db !important; /* Gray 300 */
+    }
+    
+    .dark-mode .text-gray-500 {
+        color: #9ca3af !important; /* Gray 400 */
+    }
+    
+    .dark-mode .text-gray-400 {
+        color: #9ca3af !important; /* Gray 400 */
+    }
+    
+    .dark-mode .bg-indigo-50 {
+        background-color: #312e81 !important; /* Indigo 900 */
+    }
+    
+    .dark-mode .border-indigo-200 {
+        border-color: #4f46e5 !important; /* Indigo 600 */
+    }
+    
+    .dark-mode .text-indigo-700 {
+        color: #a5b4fc !important; /* Indigo 300 */
+    }
+    
+    .dark-mode .text-indigo-800 {
+        color: #c7d2fe !important; /* Indigo 200 */
+    }
+    
+    .dark-mode .hover\:text-indigo-600:hover {
+        color: #818cf8 !important; /* Indigo 400 */
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Botão de alternar modo escuro -->
+<button id="darkModeToggle" class="dark-mode-toggle" aria-label="Alternar modo escuro">
+    <i class="fas fa-moon"></i>
+</button>
+
 <!-- NOVO: Wrapper com fundo azul claro -->
 <div class="dashboard-container">
     <h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
@@ -448,6 +664,34 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Obter o token CSRF do campo oculto
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    // --- NOVO: Manipulador para o modo escuro ---
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const htmlElement = document.documentElement;
+    
+    // Verificar se o modo escuro está salvo no localStorage
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    // Aplicar modo escuro se estiver salvo
+    if (isDarkMode) {
+        htmlElement.classList.add('dark-mode');
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+    
+    // Alternar modo escuro ao clicar no botão
+    darkModeToggle.addEventListener('click', function() {
+        htmlElement.classList.toggle('dark-mode');
+        
+        // Atualizar ícone
+        if (htmlElement.classList.contains('dark-mode')) {
+            this.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            this.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', 'false');
+        }
+    });
+    // --- FIM NOVO ---
     
     // --- NOVO: Manipulador para os checkboxes de anúncios ---
     const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
