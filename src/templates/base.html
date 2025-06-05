@@ -185,6 +185,30 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Estilo para o logo e título */
+        .title-with-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .site-logo {
+            height: 2.5rem; /* Altura proporcional ao texto do título */
+            width: auto;
+            margin-right: 0.75rem; /* Espaçamento entre logo e texto */
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+        
+        .title-with-logo:hover .site-logo {
+            transform: scale(1.05);
+        }
+        
+        .site-title {
+            display: inline-flex;
+            align-items: center;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -208,7 +232,12 @@
 <body class="font-sans bg-brand-bg text-brand-text">
     <nav class="bg-brand-blue text-white p-4 shadow-md">
         <div class="container mx-auto flex flex-col items-center">
-            <a href="{{ url_for('index') }}" class="text-2xl font-bold mb-2 fade-in-down">Estudo da Lei Seca</a>
+            <div class="title-with-logo mb-2 fade-in-down">
+                <a href="{{ url_for('index') }}" class="site-title text-2xl font-bold">
+                    <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo">
+                    Estudo da Lei Seca
+                </a>
+            </div>
             <div class="flex space-x-6 fade-in-up">
                 {% if current_user.is_authenticated %}
                     <span class="text-blue-100">Olá, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username.split('@')[0] }}!</span>
@@ -242,17 +271,17 @@
         {% endblock %}
     </main>
 
-    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s; color: white;">
+    <footer class="text-center py-8 mt-12 text-sm border-t border-gray-200 fade-in-up" style="animation-delay: 0.4s;">
         <div class="mb-4">
-            <p class="font-semibold mb-2" style="color: white;">Entre em contato:</p>
+            <p class="font-semibold mb-2" style="color: #000000;">Entre em contato:</p>
             <div class="flex justify-center items-center">
-                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: white;" title="WhatsApp"
-                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='white'">
+                <a href="https://wa.me/5521999157700" target="_blank" class="transition-all duration-300 ease-in-out" style="color: #000000;" title="WhatsApp"
+                   onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#000000'">
                     <i class="fab fa-whatsapp fa-lg mr-1"></i> (21 ) 99915-7700
                 </a>
             </div>
         </div>
-        <p style="color: white;">&copy; 2025 Todos os direitos reservados.</p>
+        <p style="color: #000000;">&copy; 2025 Todos os direitos reservados.</p>
     </footer>
 
     <!-- Include Quill JS -->
@@ -260,3 +289,4 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
+
