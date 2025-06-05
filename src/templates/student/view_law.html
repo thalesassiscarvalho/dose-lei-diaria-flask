@@ -114,21 +114,6 @@
         /* Estilos adicionais para o player podem não ser consistentes entre navegadores */
         /* Exemplo: filter: sepia(20%) invert(90%); */
     }
-
-    /* RESTAURADO: Proteção contra impressão */
-    @media print {
-        body * {
-            display: none !important;
-        }
-        body:after {
-            content: "Impressão não permitida.";
-            display: block !important;
-            font-size: 18pt;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 50px;
-        }
-    }
 </style>
 {% endblock %}
 
@@ -295,10 +280,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // RESTAURADO: Proteção adicional contra impressão via JavaScript
+    // Proteção contra impressão - apenas alerta JavaScript simples
     window.addEventListener('beforeprint', function(e) {
+        // Cancelar o evento de impressão
         e.preventDefault();
-        alert('Impressão não permitida. Por favor, estude o conteúdo online.');
+        e.stopImmediatePropagation();
+        
+        // Exibir alerta simples
+        alert('Impressão não permitida');
+        
+        // Retornar false para tentar impedir a impressão
         return false;
     });
 });
