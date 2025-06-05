@@ -202,7 +202,8 @@
             }
         }
     </script>
-    {% block head_extra %}{% endblock %}\n    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX requests -->
+    {% block head_extra %}{% endblock %}
+    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX requests -->
 </head>
 <body class="font-sans bg-brand-bg text-brand-text">
     <nav class="bg-brand-blue text-white p-4 shadow-md">
