@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
-from src.models.user import db, User, Announcement # Import User and Announcement models
+from src.models.user import db, User, Announcement, UserSeenAnnouncement # Import UserSeenAnnouncement model
 from src.models.law import Law, Subject # Import Subject model
 from src.models.progress import UserProgress # Import UserProgress model
 
@@ -309,8 +309,17 @@ def toggle_announcement(announcement_id):
 @admin_required
 def delete_announcement(announcement_id):
     announcement = Announcement.query.get_or_404(announcement_id)
-    db.session.delete(announcement)
-    db.session.commit()
-    flash("Aviso excluído com sucesso!", "success")
+    try:
+        # Primeiro, excluir todos os registros UserSeenAnnouncement relacionados a este anúncio
+        UserSeenAnnouncement.query.filter_by(announcement_id=announcement_id).delete()
+        
+        # Agora, excluir o anúncio
+        db.session.delete(announcement)
+        db.session.commit()
+        flash("Aviso excluído com sucesso!", "success")
+    except Exception as e:
+        db.session.rollback()  # Rollback em caso de erro
+        flash(f"Erro ao excluir o aviso: {e}", "danger")
+        print(f"Error deleting announcement {announcement_id}: {e}")  # Log do erro
+    
     return redirect(url_for("admin.manage_announcements"))
-
