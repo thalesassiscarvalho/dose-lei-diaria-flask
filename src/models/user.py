@@ -91,8 +91,24 @@ class Announcement(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_fixed = db.Column(db.Boolean, default=False, nullable=False) # Campo para aviso fixo
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"<Announcement {self.title}>"
+
+
+
+
+# Tabela para rastrear avisos vistos por usuários
+class UserSeenAnnouncement(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
+    announcement_id = db.Column(db.Integer, db.ForeignKey('announcement.id', ondelete='CASCADE'), primary_key=True)
+    seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('seen_announcements', lazy='dynamic'))
+    announcement = db.relationship('Announcement', backref=db.backref('seen_by_users', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<UserSeenAnnouncement user={self.user_id} announcement={self.announcement_id}>'
 
