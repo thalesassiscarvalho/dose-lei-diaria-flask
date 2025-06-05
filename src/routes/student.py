@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import or_ # Import or_ for searching
 # Modificado: Adicionado User ao import
-from src.models.user import db, Achievement, Announcement, User 
+from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement # Added UserSeenAnnouncement 
 from src.models.law import Law, Subject # Import Subject
 from src.models.progress import UserProgress
 import datetime
@@ -140,7 +140,16 @@ def dashboard():
             logging.error(f"[DASHBOARD] Error committing achievements for user {current_user.id}: {e}")
             flash("Erro ao atualizar conquistas.", "danger")
         
-    active_announcements = Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).all()
+    # Fetch announcements: Fixed and Non-Fixed (unseen by user)
+    fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
+    
+    seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
+    
+    non_fixed_unseen_announcements = Announcement.query.filter(
+        Announcement.is_active == True,
+        Announcement.is_fixed == False,
+        Announcement.id.notin_(seen_announcement_ids)
+    ).order_by(Announcement.created_at.desc()).all()
 
     # --- CORREÇÃO: Forçar expiração da sessão antes de buscar a última lei --- 
     logging.debug(f"[DASHBOARD DEBUG] Expiring session cache before querying last accessed progress for user {current_user.id}")
@@ -175,7 +184,8 @@ def dashboard():
                            search_query=search_query,
                            user_points=user_points, 
                            user_achievements=user_achievements, 
-                           announcements=active_announcements,
+                           fixed_announcements=fixed_announcements, # Pass fixed announcements
+                           non_fixed_announcements=non_fixed_unseen_announcements, # Pass non-fixed unseen announcements
                            selected_status=selected_status,
                            favorite_law_ids=favorite_law_ids, 
                            show_favorites=show_favorites,
@@ -404,4 +414,39 @@ def save_last_read(law_id):
         flash(f"Erro ao salvar posição: {e}", "danger") # Flash error message instead of returning JSON error directly for form submission
 
     return redirect(url_for('student.view_law', law_id=law_id))
+
+
+
+
+# --- API Endpoint for Marking Announcements as Seen ---
+@student_bp.route("/api/announcements/<int:announcement_id>/mark_seen", methods=["POST"])
+@login_required
+def mark_announcement_seen(announcement_id):
+    announcement = Announcement.query.get_or_404(announcement_id)
+
+    # Ensure the announcement is not fixed
+    if announcement.is_fixed:
+        return jsonify(success=False, error="Avisos fixos não podem ser marcados como vistos."), 400
+
+    # Check if already marked as seen
+    existing_seen = UserSeenAnnouncement.query.filter_by(
+        user_id=current_user.id, 
+        announcement_id=announcement_id
+    ).first()
+
+    if existing_seen:
+        # Already marked, maybe just return success or a specific code
+        return jsonify(success=True, message="Aviso já estava marcado como visto.")
+
+    # Mark as seen
+    try:
+        seen_record = UserSeenAnnouncement(user_id=current_user.id, announcement_id=announcement_id)
+        db.session.add(seen_record)
+        db.session.commit()
+        logging.info(f"[ANNOUNCEMENT SEEN] User {current_user.id} marked announcement {announcement_id} as seen.")
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[ANNOUNCEMENT SEEN] Error marking announcement {announcement_id} as seen for user {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro ao marcar aviso como visto."), 500
 
