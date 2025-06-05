@@ -368,235 +368,174 @@
         {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
         <div class="law-card p-5" data-law-id="{{ law.id }}">
             {# --- ADICIONADO: Botão de Favorito --- #}
-            <button class="favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
-                    title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                {# Ícone muda baseado na classe 'favorited' #}
-                <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
-            </button>
+            <form class="favorite-form" action="{{ url_for('student.toggle_favorite', law_id=law.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
+                <button type="submit" class="favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
+                        title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                    {# Ícone muda baseado na classe 'favorited' #}
+                    <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
+                </button>
+            </form>
             {# --- FIM ADICIONADO --- #}
             <div class="card-content">
                 {# Ajustado padding-right para não sobrepor o botão de favorito #}
-                <div class="flex justify-between items-start mb-2 pr-8"> 
-                    <h3 class="text-lg font-semibold text-brand-text mr-2">{{ law.title }}</h3>
-                    {# Status badges (Concluído/Em andamento) - mantidos como antes #}
+                <div class="flex items-center mb-2 pr-8">
                     {% if law.id in completed_law_ids %}
-                        <span class="completed-badge">
-                            <i class="fas fa-check mr-1"></i> Concluído
-                        </span>
+                        <span class="completed-badge">Concluída</span>
                     {% elif law.id in in_progress_law_ids %}
-                        <span class="in-progress-badge">
-                            <i class="fas fa-pencil-alt mr-1"></i> Em andamento
-                        </span>
+                        <span class="in-progress-badge">Em Andamento</span>
                     {% endif %}
                 </div>
+                <h3 class="text-lg font-semibold mb-2 pr-8">{{ law.title }}</h3>
                 {% if law.subject %}
-                <p class="text-xs font-medium mb-2" style="color: #2563eb;">{{ law.subject.name }}</p>
+                    <p class="text-sm text-gray-500 mb-2">
+                        <i class="fas fa-book-open mr-1"></i> {{ law.subject.name }}
+                    </p>
                 {% endif %}
-                <p class="text-sm text-brand-text-light mb-3">{{ law.description or "Acesse para ver o conteúdo." }}</p>
-                <!-- Placeholder for Artigos/Lidos like reference -->
-                <div class="text-xs text-gray-400 mt-2 mb-4">
-                    <!-- Artigos: X | Lidos: Y -->
-                </div>
+                {% if law.description %}
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ law.description }}</p>
+                {% endif %}
             </div>
-            <div class="card-actions flex justify-between items-center mt-auto">
-                 <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button w-full">
-                     <i class="fas fa-book-open mr-2"></i> Ler Legislação
-                 </a>
-                 {% if law.id in completed_law_ids %}
-                    {# --- ATUALIZADO: Passar show_favorites para a rota de review --- #}
-                    <form action="{{ url_for('student.review_law', law_id=law.id, search=search_query, subject_id=selected_subject_id, status_filter=selected_status, show_favorites='on' if show_favorites else None) }}" method="POST" class="inline-block ml-2">
-                        <button type="submit" class="review-button" title="Marcar como não concluído para rever">
-                            <i class="fas fa-undo-alt"></i>
+            <div class="card-actions flex justify-between items-center">
+                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button">
+                    {% if law.id in completed_law_ids %}
+                        <i class="fas fa-eye mr-1"></i> Revisar
+                    {% elif law.id in in_progress_law_ids %}
+                        <i class="fas fa-book-reader mr-1"></i> Continuar
+                    {% else %}
+                        <i class="fas fa-book mr-1"></i> Estudar
+                    {% endif %}
+                </a>
+                {% if law.id in completed_law_ids %}
+                    <form action="{{ url_for('student.mark_incomplete', law_id=law.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
+                        <button type="submit" class="review-button">
+                            <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
                         </button>
                     </form>
-                 {% endif %}
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     {% else %}
-        <p class="col-span-full text-center text-brand-text-light italic">Nenhuma legislação encontrada com os filtros aplicados.</p>
+        <div class="col-span-full text-center py-8">
+            <p class="text-gray-500">Nenhuma legislação encontrada com os filtros atuais.</p>
+        </div>
     {% endif %}
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Dashboard JS Loaded");
-
-    // Handle Mark Seen Checkbox
+    // Manipulador para os checkboxes de "marcar como visto"
     const checkboxes = document.querySelectorAll('.mark-seen-checkbox');
-    console.log(`Found ${checkboxes.length} mark-seen checkboxes`);
-
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            console.log("Checkbox changed", this);
             if (this.checked) {
-                const listItem = this.closest('.non-fixed-announcement-item');
-                console.log("Found parent item:", listItem);
-                if (listItem) {
-                    const announcementId = listItem.dataset.announcementId;
-                    console.log("Found announcement ID:", announcementId);
-                    if (announcementId) {
-                        const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
-                        console.log("Calling API URL:", apiUrl);
-
-                        // Get CSRF token (adjust selector if needed)
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : null;
-                        console.log("CSRF Token:", csrfToken);
-
-                        if (!csrfToken) {
-                            console.error("CSRF token not found. Cannot proceed.");
-                            // Optionally display an error message to the user
-                            this.checked = false; // Uncheck the box
-                            return;
-                        }
-
-                        fetch(apiUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken // Include CSRF token
-                            },
-                            body: JSON.stringify({}) // Empty body is fine for this POST
-                        })
-                        .then(response => {
-                            console.log("API Response Status:", response.status);
-                            if (response.ok) {
-                                return response.json();
-                            } else {
-                                // Log detailed error if possible
-                                response.text().then(text => console.error("API Error Response Text:", text));
-                                throw new Error(`API request failed with status ${response.status}`);
-                            }
-                        })
-                        .then(data => {
-                            console.log("API Success Response:", data);
-                            if (data.success) {
-                                // Hide the announcement item smoothly
-                                listItem.style.transition = 'opacity 0.5s ease';
-                                listItem.style.opacity = '0';
+                const announcementItem = this.closest('.non-fixed-announcement-item');
+                const announcementId = announcementItem.dataset.announcementId;
+                
+                // Obter o token CSRF do formulário
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                
+                // Fazer a requisição para marcar como visto
+                const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
+                
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ seen: true })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Animação de fade-out e remoção do item
+                        announcementItem.style.transition = 'opacity 0.5s ease';
+                        announcementItem.style.opacity = '0';
+                        setTimeout(() => {
+                            announcementItem.remove();
+                            
+                            // Se não houver mais anúncios, remover o container
+                            const container = document.getElementById('non-fixed-announcements-container');
+                            const remainingItems = container.querySelectorAll('.non-fixed-announcement-item');
+                            if (remainingItems.length === 0) {
+                                container.style.transition = 'opacity 0.5s ease';
+                                container.style.opacity = '0';
                                 setTimeout(() => {
-                                    listItem.style.display = 'none';
-                                    // Optional: Check if container is empty and hide it too
-                                    const container = document.getElementById('non-fixed-announcements-container');
-                                    if (container && container.querySelectorAll('.non-fixed-announcement-item[style*="display: none;"]').length === container.querySelectorAll('.non-fixed-announcement-item').length) {
-                                        // All items hidden, hide the container
-                                        // container.style.display = 'none'; // Or add a class to hide it
-                                    }
-                                }, 500); // Match transition duration
-                            } else {
-                                console.error("API call was not successful:", data.message);
-                                this.checked = false; // Revert checkbox on failure
-                                // Optionally show an error message to the user
+                                    container.remove();
+                                }, 500);
                             }
-                        })
-                        .catch(error => {
-                            console.error('Error marking announcement as seen:', error);
-                            this.checked = false; // Revert checkbox on error
-                            // Optionally show an error message to the user
-                        });
+                        }, 500);
                     } else {
-                        console.error("Could not find announcement ID in data attribute.");
-                        this.checked = false;
+                        console.error('Erro ao marcar anúncio como visto');
+                        this.checked = false; // Reverter o checkbox
                     }
-                } else {
-                    console.error("Could not find parent list item.");
-                    this.checked = false;
-                }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    this.checked = false; // Reverter o checkbox
+                });
             }
         });
     });
 
-    // --- ADICIONADO: Handle Favorite Button Click --- 
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    console.log(`Found ${favoriteButtons.length} favorite buttons`);
-
-    favoriteButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default button action
-            console.log("Favorite button clicked", this);
-
-            const lawCard = this.closest('.law-card');
-            console.log("Found parent card:", lawCard);
-            if (!lawCard) {
-                console.error("Could not find parent law card.");
-                return;
-            }
-
-            const lawId = lawCard.dataset.lawId;
-            console.log("Found law ID:", lawId);
-            if (!lawId) {
-                console.error("Could not find law ID in data attribute.");
-                return;
-            }
-
-            const isFavorited = this.classList.contains('favorited');
-            const apiUrl = `/api/laws/${lawId}/toggle_favorite`;
-            console.log(`Calling API URL: ${apiUrl}, Current state: ${isFavorited ? 'Favorited' : 'Not Favorited'}`);
-
-            const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : null;
-            console.log("CSRF Token:", csrfToken);
-
-            if (!csrfToken) {
-                console.error("CSRF token not found. Cannot proceed.");
-                return;
-            }
-
-            fetch(apiUrl, {
+    // Manipulador para os botões de favorito (usando delegação de eventos)
+    document.addEventListener('submit', function(event) {
+        // Verificar se o evento veio de um formulário de favorito
+        if (event.target.classList.contains('favorite-form')) {
+            event.preventDefault(); // Impedir o envio tradicional do formulário
+            
+            const form = event.target;
+            const lawId = form.closest('.law-card').dataset.lawId;
+            const favoriteBtn = form.querySelector('.favorite-btn');
+            const isFavorited = favoriteBtn.classList.contains('favorited');
+            const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+            
+            // Fazer a requisição para alternar favorito
+            fetch(form.action, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({}) 
+                body: JSON.stringify({ favorite: !isFavorited })
             })
             .then(response => {
-                console.log("Favorite API Response Status:", response.status);
                 if (response.ok) {
-                    return response.json();
-                } else {
-                    response.text().then(text => console.error("Favorite API Error Response Text:", text));
-                    throw new Error(`Favorite API request failed with status ${response.status}`);
-                }
-            })
-            .then(data => {
-                console.log("Favorite API Success Response:", data);
-                if (data.success) {
-                    // Toggle the visual state
-                    const icon = this.querySelector('i');
-                    if (data.favorited) {
-                        this.classList.add('favorited');
-                        this.title = 'Remover dos Favoritos';
-                        if (icon) icon.classList.replace('far', 'fas');
-                        console.log(`Law ${lawId} marked as favorite`);
+                    // Alternar a classe e o ícone
+                    favoriteBtn.classList.toggle('favorited');
+                    const icon = favoriteBtn.querySelector('i');
+                    if (favoriteBtn.classList.contains('favorited')) {
+                        icon.className = 'fas fa-star'; // Ícone preenchido
+                        favoriteBtn.title = 'Remover dos Favoritos';
                     } else {
-                        this.classList.remove('favorited');
-                        this.title = 'Adicionar aos Favoritos';
-                        if (icon) icon.classList.replace('fas', 'far');
-                        console.log(`Law ${lawId} removed from favorites`);
-                        // If "Show only favorites" is checked, hide the card
-                        const showFavoritesCheckbox = document.getElementById('show_favorites');
-                        if (showFavoritesCheckbox && showFavoritesCheckbox.checked) {
-                            lawCard.style.display = 'none'; 
-                            console.log(`Hiding card ${lawId} because "Show only favorites" is checked.`);
-                        }
+                        icon.className = 'far fa-star'; // Ícone de contorno
+                        favoriteBtn.title = 'Adicionar aos Favoritos';
+                    }
+                    
+                    // Se estiver filtrando por favoritos, pode ser necessário ocultar o card
+                    const showingOnlyFavorites = document.getElementById('show_favorites').checked;
+                    if (showingOnlyFavorites && !favoriteBtn.classList.contains('favorited')) {
+                        const lawCard = favoriteBtn.closest('.law-card');
+                        lawCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        lawCard.style.opacity = '0';
+                        lawCard.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            lawCard.style.display = 'none';
+                        }, 500);
                     }
                 } else {
-                    console.error("Favorite API call was not successful:", data.message);
-                    // Optionally show an error message
+                    console.error('Erro ao alternar favorito');
                 }
             })
             .catch(error => {
-                console.error('Error toggling favorite status:', error);
-                // Optionally show an error message
+                console.error('Erro:', error);
             });
-        });
+        }
     });
-    // --- FIM ADICIONADO ---
-
 });
 </script>
 {% endblock %}
-
