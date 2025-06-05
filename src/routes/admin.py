@@ -274,19 +274,32 @@ def reset_user_password(user_id):
 @login_required
 @admin_required
 def manage_announcements():
-    if request.method == "POST": # Handle adding new announcement
+    if request.method == "POST": # Handle adding or updating announcement
         title = request.form.get("title")
         content = request.form.get("content")
         is_active = request.form.get("is_active") == "on" # Checkbox value
         is_fixed = request.form.get("is_fixed") == "on" # Checkbox value for fixed status
+        announcement_id = request.form.get("announcement_id") # ID para edição
 
         if not title or not content:
             flash("Título e conteúdo do aviso são obrigatórios.", "danger")
         else:
-            new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed) # Include is_fixed
-            db.session.add(new_announcement)
-            db.session.commit()
-            flash("Aviso adicionado com sucesso!", "success")
+            # Verificar se é uma edição ou criação de novo anúncio
+            if announcement_id:
+                # Edição de anúncio existente
+                announcement = Announcement.query.get_or_404(int(announcement_id))
+                announcement.title = title
+                announcement.content = content
+                announcement.is_active = is_active
+                announcement.is_fixed = is_fixed
+                db.session.commit()
+                flash("Aviso atualizado com sucesso!", "success")
+            else:
+                # Criação de novo anúncio
+                new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed)
+                db.session.add(new_announcement)
+                db.session.commit()
+                flash("Aviso adicionado com sucesso!", "success")
         return redirect(url_for("admin.manage_announcements"))
 
     # GET request: List announcements
