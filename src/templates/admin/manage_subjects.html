@@ -14,6 +14,7 @@
 <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200 mb-8">
     <h2 class="text-xl font-semibold text-brand-text mb-4">Adicionar Nova Matéria</h2>
     <form method="POST" action="{{ url_for("admin.manage_subjects") }}" class="flex items-center">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
         <input type="text" name="name" placeholder="Nome da Matéria" required 
                class="flex-grow shadow-sm appearance-none border border-gray-300 rounded-l-md py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
         {# Alterei a cor do botão Adicionar para verde #}
@@ -49,6 +50,7 @@
                                 {# Add edit functionality if needed later #}
                                 {# <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a> #}
                                 <form action="{{ url_for("admin.delete_subject", subject_id=subject.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir esta matéria? Leis associadas podem impedir a exclusão.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                                     <button type="submit" class="text-red-600 hover:text-red-800 focus:outline-none">
                                         Excluir
                                     </button>
@@ -70,4 +72,3 @@
 </div>
 
 {% endblock %}
-
