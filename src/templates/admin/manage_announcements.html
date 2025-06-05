@@ -30,6 +30,12 @@
     },
     promotion: false, // Remove a promoção do TinyMCE
     branding: false, // Remove a marca TinyMCE
+    setup: function(editor) {
+      // Adiciona um evento para garantir que o conteúdo seja atualizado antes do submit
+      editor.on('change', function() {
+        tinymce.triggerSave();
+      });
+    }
   });
 </script>
 <style>
@@ -132,7 +138,7 @@
 <!-- Add New Announcement Form -->
 <div class="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
     <h2 class="text-xl font-semibold text-brand-text mb-4">Adicionar Novo Aviso</h2>
-    <form method="POST" action="{{ url_for("admin.manage_announcements") }}">
+    <form method="POST" action="{{ url_for('admin.manage_announcements') }}" id="announcement-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-4">
             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Título</label>
@@ -155,7 +161,7 @@
             <label for="is_fixed" class="text-sm font-medium text-gray-700">Fixo (sempre visível, não pode ser ocultado pelo aluno)</label>
         </div>
         <div>
-            <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="submit" id="submit-button" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Adicionar Aviso
             </button>
         </div>
@@ -186,7 +192,7 @@
             </div>
             <div class="announcement-actions">
                 <!-- Toggle Status Button -->
-                <form method="POST" action="{{ url_for("admin.toggle_announcement", announcement_id=announcement.id) }}" class="inline-block">
+                <form method="POST" action="{{ url_for('admin.toggle_announcement', announcement_id=announcement.id) }}" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
                             class="action-button-sm font-medium 
@@ -196,7 +202,7 @@
                     </button>
                 </form>
                 <!-- Delete Button -->
-                <form method="POST" action="{{ url_for("admin.delete_announcement", announcement_id=announcement.id) }}" 
+                <form method="POST" action="{{ url_for('admin.delete_announcement', announcement_id=announcement.id) }}" 
                       onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="action-button-sm font-medium delete-button" title="Excluir">
@@ -211,4 +217,21 @@
     <p class="text-brand-text-light italic">Nenhum aviso cadastrado ainda.</p>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Garantir que o formulário sincronize o conteúdo do TinyMCE antes do envio
+    const form = document.getElementById('announcement-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Forçar a atualização do conteúdo do editor para o textarea
+            if (typeof tinymce !== 'undefined') {
+                tinymce.triggerSave();
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
