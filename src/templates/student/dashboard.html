@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const announcementId = listItem.dataset.announcementId;
                     console.log("Found announcement ID:", announcementId);
                     if (announcementId) {
-                        const apiUrl = `/api/announcements/${announcementId}/mark_seen`;
+                        const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
                         console.log("Calling API URL:", apiUrl);
 
                         // Get CSRF token (adjust selector if needed)
