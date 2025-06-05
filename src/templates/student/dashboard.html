@@ -407,7 +407,7 @@
                     {% endif %}
                 </a>
                 {% if law.id in completed_law_ids %}
-                    <form action="{{ url_for('student.mark_incomplete', law_id=law.id) }}" method="POST">
+                    <form action="{{ url_for('student.mark_complete', law_id=law.id, status='incomplete') }}" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                         <button type="submit" class="review-button">
                             <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
