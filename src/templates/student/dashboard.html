@@ -507,9 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% endblock %}
 
 
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
+<script>document.addEventListener("DOMContentLoaded", function() {
     // Lógica para marcar aviso como visto
     const checkboxes = document.querySelectorAll(".mark-seen-checkbox");
     checkboxes.forEach(checkbox => {
@@ -621,5 +619,3 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
-{% endblock %}
-
