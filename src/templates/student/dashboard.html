@@ -368,7 +368,7 @@
         {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
         <div class="law-card p-5" data-law-id="{{ law.id }}">
             {# --- ADICIONADO: Botão de Favorito --- #}
-            <form class="favorite-form" action="{{ url_for('student.toggle_favorite', law_id=law.id) }}" method="POST">
+            <form action="{{ url_for('student.toggle_favorite', law_id=law.id) }}" method="POST" class="inline-block">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
                 <button type="submit" class="favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
                         title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
@@ -436,9 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const announcementItem = this.closest('.non-fixed-announcement-item');
                 const announcementId = announcementItem.dataset.announcementId;
                 
-                // Obter o token CSRF do formulário
-                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-                
                 // Fazer a requisição para marcar como visto
                 const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
                 
@@ -446,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
+                        'X-CSRFToken': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ seen: true })
                 })
@@ -480,61 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
-    });
-
-    // Manipulador para os botões de favorito (usando delegação de eventos)
-    document.addEventListener('submit', function(event) {
-        // Verificar se o evento veio de um formulário de favorito
-        if (event.target.classList.contains('favorite-form')) {
-            event.preventDefault(); // Impedir o envio tradicional do formulário
-            
-            const form = event.target;
-            const lawId = form.closest('.law-card').dataset.lawId;
-            const favoriteBtn = form.querySelector('.favorite-btn');
-            const isFavorited = favoriteBtn.classList.contains('favorited');
-            const csrfToken = form.querySelector('input[name="csrf_token"]').value;
-            
-            // Fazer a requisição para alternar favorito
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ favorite: !isFavorited })
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Alternar a classe e o ícone
-                    favoriteBtn.classList.toggle('favorited');
-                    const icon = favoriteBtn.querySelector('i');
-                    if (favoriteBtn.classList.contains('favorited')) {
-                        icon.className = 'fas fa-star'; // Ícone preenchido
-                        favoriteBtn.title = 'Remover dos Favoritos';
-                    } else {
-                        icon.className = 'far fa-star'; // Ícone de contorno
-                        favoriteBtn.title = 'Adicionar aos Favoritos';
-                    }
-                    
-                    // Se estiver filtrando por favoritos, pode ser necessário ocultar o card
-                    const showingOnlyFavorites = document.getElementById('show_favorites').checked;
-                    if (showingOnlyFavorites && !favoriteBtn.classList.contains('favorited')) {
-                        const lawCard = favoriteBtn.closest('.law-card');
-                        lawCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                        lawCard.style.opacity = '0';
-                        lawCard.style.transform = 'scale(0.9)';
-                        setTimeout(() => {
-                            lawCard.style.display = 'none';
-                        }, 500);
-                    }
-                } else {
-                    console.error('Erro ao alternar favorito');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-            });
-        }
     });
 });
 </script>
