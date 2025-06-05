@@ -452,8 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
             
+            // CORRIGIDO: URL correta para marcar anúncio como visto
+            const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
+            
             // Enviar solicitação para marcar como visto
-            fetch(`/student/announcements/${announcementId}/mark_seen`, {
+            fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -592,12 +595,10 @@ document.addEventListener('DOMContentLoaded', function() {
             this.disabled = true;
             
             const lawId = this.getAttribute('data-law-id');
-            const isFavorited = this.classList.contains('favorited');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
-            // Determinar a ação (favoritar ou desfavoritar)
-            const action = isFavorited ? 'unfavorite' : 'favorite';
-            const apiUrl = `/student/law/${lawId}/${action}`;
+            // CORRIGIDO: URL correta para favoritar/desfavoritar
+            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             
             // Armazenar referência ao botão para uso dentro das promises
             const favoriteBtn = this;
@@ -619,13 +620,14 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 // Atualizar visualmente APÓS a resposta do servidor
-                if (isFavorited) {
+                if (data.favorited === false) {
                     // Remover dos favoritos
                     favoriteBtn.classList.remove('favorited');
                     if (icon) {
                         icon.className = 'far fa-star'; // Ícone de estrela vazia
                         favoriteBtn.title = 'Adicionar aos Favoritos';
                     }
+                    console.log('Lei removida dos favoritos com sucesso!');
                 } else {
                     // Adicionar aos favoritos
                     favoriteBtn.classList.add('favorited');
@@ -633,8 +635,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.className = 'fas fa-star'; // Ícone de estrela preenchida
                         favoriteBtn.title = 'Remover dos Favoritos';
                     }
+                    console.log('Lei adicionada aos favoritos com sucesso!');
                 }
-                console.log(`Lei ${action === 'favorite' ? 'adicionada aos' : 'removida dos'} favoritos com sucesso!`);
             })
             .catch(error => {
                 console.error('Erro:', error);
