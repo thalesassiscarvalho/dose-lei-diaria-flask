@@ -4,6 +4,21 @@
 
 {% block head_extra %}
 <style>
+    /* --- NOVO: Estilo para fundo azul claro --- */
+    .dashboard-container {
+        background-color: #f0f7ff; /* Fundo azul claro solicitado */
+        min-height: 100vh; /* Garante que o fundo cubra toda a altura da tela */
+        width: 100%;
+        padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0.5rem; /* Padding menor em telas pequenas */
+        }
+    }
+    /* --- FIM NOVO --- */
+
     /* Styles for new announcement types */
     .fixed-announcement-box {
         background-color: #E0E7FF; /* Indigo 100 */
@@ -217,207 +232,211 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
-{# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
-{% if last_accessed_law %}
-<div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
-    <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
-        <i class="fas fa-history mr-2"></i> Continuar de onde parou:
-    </h3>
-    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
-       class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
-        {{ last_accessed_law.title }}
-    </a>
-</div>
-{% endif %}
-{# --- FIM NOVO --- #}
+<!-- NOVO: Wrapper com fundo azul claro -->
+<div class="dashboard-container">
+    <h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
+    {# --- NOVO: Bloco de Acesso Rápido à Última Lei Visualizada --- #}
+    {% if last_accessed_law %}
+    <div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
+        <h3 class="text-sm font-medium text-indigo-700 mb-1 flex items-center">
+            <i class="fas fa-history mr-2"></i> Continuar de onde parou:
+        </h3>
+        <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}" 
+           class="text-lg font-semibold text-indigo-800 hover:text-indigo-600 hover:underline transition duration-150 ease-in-out">
+            {{ last_accessed_law.title }}
+        </a>
+    </div>
+    {% endif %}
+    {# --- FIM NOVO --- #}
 
-<!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
-{# Display Fixed Announcements First #}
-{% if fixed_announcements %}
-<div class="fixed-announcement-box">
-    {% for announcement in fixed_announcements %}
-        <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
-            <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
-            <p class="text-sm">{{ announcement.content }}</p>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-{# Display Non-Fixed Announcements (with checkbox) #}
-{% if non_fixed_announcements %}
-<div class="announcement-box" id="non-fixed-announcements-container">
-    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
-    {% for announcement in non_fixed_announcements %}
-        <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-            <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
-            <div class="announcement-content">
-                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+    <!-- Announcements Section (Updated for Fixed and Non-Fixed) -->
+    {# Display Fixed Announcements First #}
+    {% if fixed_announcements %}
+    <div class="fixed-announcement-box">
+        {% for announcement in fixed_announcements %}
+            <div {% if not loop.first %}class="mt-3 pt-3 border-t border-indigo-300"{% endif %}>
+                <h2><i class="fas fa-thumbtack mr-2"></i>{{ announcement.title }}</h2>
                 <p class="text-sm">{{ announcement.content }}</p>
             </div>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-<!-- Gamification & Progress Overview -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <!-- Progress -->
-    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
-        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-        </div>
-        <div class="progress-bar-container w-full">
-            <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-        </div>
+        {% endfor %}
     </div>
-    <!-- Points -->
-    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
-        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
-        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
-        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
-    </div>
-</div>
-
-<!-- Achievements (Mantido da formatação antiga) -->
-<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
-    {% if user_achievements %}
-        <div>
-            {% for achievement in user_achievements %}
-                <span class="achievement-badge" title="{{ achievement.description }}">
-                    <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                </span>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
-</div>
 
-<!-- Filters and Search -->
-<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
-    {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
-    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <!-- Search Input -->
-        <div>
-            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
-            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
-                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
-                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
-                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
-                       value="{{ search_query }}">
+    {# Display Non-Fixed Announcements (with checkbox) #}
+    {% if non_fixed_announcements %}
+    <div class="announcement-box" id="non-fixed-announcements-container">
+        <h2 class="text-lg font-semibold mb-3"><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+        {% for announcement in non_fixed_announcements %}
+            <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+                <input type="checkbox" class="mark-seen-checkbox" title="Marcar como visto e ocultar">
+                <div class="announcement-content">
+                    <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                    <p class="text-sm">{{ announcement.content }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Gamification & Progress Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Progress -->
+        <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
+            <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
+                <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            </div>
+            <div class="progress-bar-container w-full">
+                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
             </div>
         </div>
-        <!-- Subject Filter -->
-        <div>
-            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
-                <option value="">-- Todas as Matérias --</option>
-                {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+        <!-- Points -->
+        <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
+            <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
+            <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
+            <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
+        </div>
+    </div>
+
+    <!-- Achievements (Mantido da formatação antiga) -->
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
+        {% if user_achievements %}
+            <div>
+                {% for achievement in user_achievements %}
+                    <span class="achievement-badge" title="{{ achievement.description }}">
+                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                    </span>
                 {% endfor %}
-            </select>
-        </div>
-        <!-- Status Filter -->
-        <div>
-            <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
-                <option value="">-- Todos os Status --</option>
-                <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
-                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
-                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
-            </select>
-        </div>
-        <!-- --- ADICIONADO: Favorite Filter Checkbox --- -->
-        <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
-            <label for="show_favorites" class="favorite-filter-label">
-                <input type="checkbox" id="show_favorites" name="show_favorites" 
-                       {% if show_favorites %}checked{% endif %}>
-                Mostrar apenas favoritas
-            </label>
-        </div>
-        <!-- --- FIM ADICIONADO --- -->
-        <!-- Action Buttons -->
-        <div class="flex items-center space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
-                    style="background-color: #2563eb; border: none;"
-                    onmouseover="this.style.backgroundColor='#1d4ed8'"
-                    onmouseout="this.style.backgroundColor='#2563eb'">
-                Aplicar Filtros
-            </button>
-            {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
-            {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
-            {% endif %}
-        </div>
-    </form>
-</div>
+            </div>
+        {% else %}
+            <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+        {% endif %}
+    </div>
 
-<!-- List of Laws -->
-<h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
-
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% if laws %}
-        {% for law in laws %}
-        {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
-        <div class="law-card p-5" data-law-id="{{ law.id }}">
-            {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
-            <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
-                    data-law-id="{{ law.id }}"
-                    title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                {# Ícone muda baseado na classe 'favorited' #}
-                <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
-            </button>
-            {# --- FIM MODIFICADO --- #}
-            <div class="card-content">
-                <div class="flex items-center mb-2">
-                    <h3 class="text-lg font-semibold">{{ law.title }}</h3>
-                    {% if law.id in completed_law_ids %}
-                        <span class="completed-badge">Concluída</span>
-                    {% elif law.id in in_progress_law_ids %}
-                        <span class="in-progress-badge">Em Andamento</span>
-                    {% endif %}
-                </div>
-                <p class="text-sm text-gray-600 mb-3">{{ law.description|truncate(100) }}</p>
-                <div class="text-xs text-gray-500 mb-3">
-                    <span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1">{{ law.subject.name }}</span>
+    <!-- Filters and Search -->
+    <div class="mb-8 bg-white p-4 rounded-lg border border-gray-200">
+        {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
+        <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <!-- Search Input -->
+            <div>
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
+                <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
+                    <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
+                    <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
+                           class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
+                           value="{{ search_query }}">
                 </div>
             </div>
-            <div class="card-actions flex justify-between items-center">
-                <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow">
-                    {% if law.id in completed_law_ids %}
-                        <i class="fas fa-check-circle mr-1"></i> Revisar
-                    {% elif law.id in in_progress_law_ids %}
-                        <i class="fas fa-book-reader mr-1"></i> Continuar
-                    {% else %}
-                        <i class="fas fa-book mr-1"></i> Começar
-                    {% endif %}
-                </a>
-                {% if law.id in completed_law_ids %}
-                    {# --- MODIFICADO: Botão de Marcar como Não Concluído com AJAX --- #}
-                    <button type="button" class="review-button js-mark-incomplete-btn ml-2" 
-                            data-law-id="{{ law.id }}"
-                            title="Marcar como não concluído para rever">
-                        <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
-                    </button>
-                    {# --- FIM MODIFICADO --- #}
+            <!-- Subject Filter -->
+            <div>
+                <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
+                <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                        style="focus:ring: 2px solid #60a5fa;">
+                    <option value="">-- Todas as Matérias --</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Status Filter -->
+            <div>
+                <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
+                <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                        style="focus:ring: 2px solid #60a5fa;">
+                    <option value="">-- Todos os Status --</option>
+                    <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
+                    <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
+                    <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
+                </select>
+            </div>
+            <!-- --- ADICIONADO: Favorite Filter Checkbox --- -->
+            <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
+                <label for="show_favorites" class="favorite-filter-label">
+                    <input type="checkbox" id="show_favorites" name="show_favorites" 
+                           {% if show_favorites %}checked{% endif %}>
+                    Mostrar apenas favoritas
+                </label>
+            </div>
+            <!-- --- FIM ADICIONADO --- -->
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
+                        style="background-color: #2563eb; border: none;"
+                        onmouseover="this.style.backgroundColor='#1d4ed8'"
+                        onmouseout="this.style.backgroundColor='#2563eb'">
+                    Aplicar Filtros
+                </button>
+                {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
+                {% if search_query or selected_subject_id or selected_status or show_favorites %}
+                    <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
                 {% endif %}
             </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="col-span-3 text-center py-8">
-            <i class="fas fa-search text-gray-400 text-4xl mb-3"></i>
-            <p class="text-gray-500">Nenhuma legislação encontrada com os filtros atuais.</p>
-        </div>
-    {% endif %}
+        </form>
+    </div>
+
+    <!-- List of Laws -->
+    <h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if laws %}
+            {% for law in laws %}
+            {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
+            <div class="law-card p-5" data-law-id="{{ law.id }}">
+                {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
+                <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
+                        data-law-id="{{ law.id }}"
+                        title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                    {# Ícone muda baseado na classe 'favorited' #}
+                    <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
+                </button>
+                {# --- FIM MODIFICADO --- #}
+                <div class="card-content">
+                    <div class="flex items-center mb-2">
+                        <h3 class="text-lg font-semibold">{{ law.title }}</h3>
+                        {% if law.id in completed_law_ids %}
+                            <span class="completed-badge">Concluída</span>
+                        {% elif law.id in in_progress_law_ids %}
+                            <span class="in-progress-badge">Em Andamento</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">{{ law.description|truncate(100) }}</p>
+                    <div class="text-xs text-gray-500 mb-3">
+                        <span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1">{{ law.subject.name }}</span>
+                    </div>
+                </div>
+                <div class="card-actions flex justify-between items-center">
+                    <a href="{{ url_for('student.view_law', law_id=law.id) }}" class="action-button flex-grow">
+                        {% if law.id in completed_law_ids %}
+                            <i class="fas fa-check-circle mr-1"></i> Revisar
+                        {% elif law.id in in_progress_law_ids %}
+                            <i class="fas fa-book-reader mr-1"></i> Continuar
+                        {% else %}
+                            <i class="fas fa-book mr-1"></i> Começar
+                        {% endif %}
+                    </a>
+                    {% if law.id in completed_law_ids %}
+                        {# --- MODIFICADO: Botão de Marcar como Não Concluído com AJAX --- #}
+                        <button type="button" class="review-button js-mark-incomplete-btn ml-2" 
+                                data-law-id="{{ law.id }}"
+                                title="Marcar como não concluído para rever">
+                            <i class="fas fa-undo-alt mr-1"></i> Marcar como não concluído
+                        </button>
+                        {# --- FIM MODIFICADO --- #}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-3 text-center py-8">
+                <i class="fas fa-search text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-500">Nenhuma legislação encontrada com os filtros atuais.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
+<!-- FIM: Wrapper com fundo azul claro -->
 
 <!-- Hidden CSRF Token Field for AJAX Requests -->
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
