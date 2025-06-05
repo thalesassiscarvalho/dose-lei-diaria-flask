@@ -100,6 +100,13 @@
     .delete-button:hover {
         background-color: #DC2626; /* Red 600 */
     }
+    .edit-button {
+        background-color: #3B82F6; /* Blue 500 */
+        color: white;
+    }
+    .edit-button:hover {
+        background-color: #2563EB; /* Blue 600 */
+    }
     /* Estilos para o conteúdo HTML rico nos anúncios */
     .rich-content img {
         max-width: 100%;
@@ -135,11 +142,12 @@
 {% block content %}
 <h1 class="text-3xl font-bold text-brand-purple mb-6">Gerenciar Avisos</h1>
 
-<!-- Add New Announcement Form -->
+<!-- Add/Edit Announcement Form -->
 <div class="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Adicionar Novo Aviso</h2>
+    <h2 class="text-xl font-semibold text-brand-text mb-4" id="form-title">Adicionar Novo Aviso</h2>
     <form method="POST" action="{{ url_for('admin.manage_announcements') }}" id="announcement-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" id="announcement_id" name="announcement_id" value="">
         <div class="mb-4">
             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Título</label>
             <input type="text" id="title" name="title" required 
@@ -160,9 +168,12 @@
             <input type="checkbox" id="is_fixed" name="is_fixed" class="h-4 w-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple mr-2">
             <label for="is_fixed" class="text-sm font-medium text-gray-700">Fixo (sempre visível, não pode ser ocultado pelo aluno)</label>
         </div>
-        <div>
+        <div class="flex gap-3">
             <button type="submit" id="submit-button" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Adicionar Aviso
+                Salvar Aviso
+            </button>
+            <button type="button" id="cancel-edit-button" class="hidden bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                Cancelar Edição
             </button>
         </div>
     </form>
@@ -173,7 +184,7 @@
 {% if announcements %}
     <div>
         {% for announcement in announcements %}
-        <div class="announcement-item">
+        <div class="announcement-item" data-id="{{ announcement.id }}">
             <div class="announcement-content">
                 <h3 class="text-lg font-semibold text-brand-text">
                     {{ announcement.title }}
@@ -191,6 +202,17 @@
                 <p class="text-xs text-gray-400 mt-2">Criado em: {{ announcement.created_at.strftime("%d/%m/%Y %H:%M") }}</p>
             </div>
             <div class="announcement-actions">
+                <!-- Edit Button -->
+                <button type="button" 
+                        class="action-button-sm font-medium edit-button edit-announcement-btn" 
+                        title="Editar"
+                        data-id="{{ announcement.id }}"
+                        data-title="{{ announcement.title }}"
+                        data-content="{{ announcement.content|e }}"
+                        data-active="{{ announcement.is_active|lower }}"
+                        data-fixed="{{ announcement.is_fixed|lower }}">
+                    <i class="fas fa-edit"></i>
+                </button>
                 <!-- Toggle Status Button -->
                 <form method="POST" action="{{ url_for('admin.toggle_announcement', announcement_id=announcement.id) }}" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -224,12 +246,81 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Garantir que o formulário sincronize o conteúdo do TinyMCE antes do envio
     const form = document.getElementById('announcement-form');
+    const formTitle = document.getElementById('form-title');
+    const submitButton = document.getElementById('submit-button');
+    const cancelEditButton = document.getElementById('cancel-edit-button');
+    const announcementIdInput = document.getElementById('announcement_id');
+    const titleInput = document.getElementById('title');
+    const isActiveCheckbox = document.getElementById('is_active');
+    const isFixedCheckbox = document.getElementById('is_fixed');
+    
+    // Função para resetar o formulário para o modo de adição
+    function resetForm() {
+        form.reset();
+        announcementIdInput.value = '';
+        formTitle.textContent = 'Adicionar Novo Aviso';
+        submitButton.textContent = 'Salvar Aviso';
+        cancelEditButton.classList.add('hidden');
+        
+        // Resetar o editor TinyMCE
+        if (typeof tinymce !== 'undefined') {
+            tinymce.get('content').setContent('');
+        }
+        
+        // Resetar checkboxes para valores padrão
+        isActiveCheckbox.checked = true;
+        isFixedCheckbox.checked = false;
+    }
+    
+    // Adicionar evento de submit ao formulário
     if (form) {
         form.addEventListener('submit', function(e) {
             // Forçar a atualização do conteúdo do editor para o textarea
             if (typeof tinymce !== 'undefined') {
                 tinymce.triggerSave();
             }
+        });
+    }
+    
+    // Adicionar evento de clique aos botões de edição
+    const editButtons = document.querySelectorAll('.edit-announcement-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            const content = this.getAttribute('data-content');
+            const isActive = this.getAttribute('data-active') === 'true';
+            const isFixed = this.getAttribute('data-fixed') === 'true';
+            
+            // Preencher o formulário com os dados do anúncio
+            announcementIdInput.value = id;
+            titleInput.value = title;
+            
+            // Atualizar o conteúdo no editor TinyMCE
+            if (typeof tinymce !== 'undefined') {
+                tinymce.get('content').setContent(content);
+            }
+            
+            // Atualizar checkboxes
+            isActiveCheckbox.checked = isActive;
+            isFixedCheckbox.checked = isFixed;
+            
+            // Atualizar título do formulário e texto do botão
+            formTitle.textContent = 'Editar Aviso';
+            submitButton.textContent = 'Atualizar Aviso';
+            
+            // Mostrar botão de cancelar
+            cancelEditButton.classList.remove('hidden');
+            
+            // Rolar para o formulário
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    
+    // Adicionar evento de clique ao botão de cancelar edição
+    if (cancelEditButton) {
+        cancelEditButton.addEventListener('click', function() {
+            resetForm();
         });
     }
 });
