@@ -444,6 +444,13 @@
 </div>
 <!-- FIM DOS BOTÕES DE ONDAS NEURAIS -->
 
+<!-- Elementos de áudio ocultos para as ondas neurais -->
+<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
+
 <!-- ****** Player de Áudio (se disponível) ****** -->
 {% if law.audio_url %}
 <div class="audio-player-container">
@@ -544,7 +551,7 @@
             <label for="last_read_article" class="text-sm font-medium text-gray-700 mb-1">Marcar onde parei:</label>
             <input type="text" id="last_read_article" name="last_read_article" placeholder="Ex: Art. 5º, inciso I" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
-        <div class="action-buttons flex items-center">
+        <div class="action-buttons flex justify-center items-center">
             <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
                 <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
             </button>
