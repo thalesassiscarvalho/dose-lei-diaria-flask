@@ -631,23 +631,30 @@ document.addEventListener("DOMContentLoaded", function () {
         // Remover classe 'playing' de todos os botões
         neuralWaveButtons.forEach(button => {
             button.classList.remove('playing');
-            const icon = button.querySelector('i');
-            if (icon) { icon.className = getIconClassForWave(button.dataset.wave); }
+            const icon = button.querySelector(\'i\');
+            if (icon) {
+                icon.className = getIconClassForWave(button.dataset.wave);
+            }
         });
         
-        activeButton = n
-            // Função para obter a CLASSE do ícone correto para cada tipo de onda
-            function getIconClassForWave(waveType) { // Renamed function
-                const icons = {
-                    'alpha': 'fas fa-brain',
-                    'beta': 'fas fa-bolt',
-                    'theta': 'fas fa-moon',
-                    'classical': 'fas fa-music',
-                    'white-noise': 'fas fa-volume-up'
-                };
-                return icons[waveType] || 'fas fa-brain'; // Return class string
-            }
-ralWaveButtons.forEach(button => {
+        activeButton = null;
+        activeAudio = null;
+    }
+
+    // Função para obter a CLASSE do ícone correto para cada tipo de onda
+    function getIconClassForWave(waveType) { // Renomeada para clareza
+        const icons = {
+            'alpha': 'fas fa-brain',
+            'beta': 'fas fa-bolt',
+            'theta': 'fas fa-moon',
+            'classical': 'fas fa-music',
+            'white-noise': 'fas fa-volume-up'
+        };
+        return icons[waveType] || 'fas fa-brain'; // Retorna apenas as classes
+    }
+
+    // Adicionar event listeners para cada botão
+    neuralWaveButtons.forEach(button => {
         const waveType = button.dataset.wave;
         const audio = audioElements[waveType];
         
@@ -667,8 +674,9 @@ ralWaveButtons.forEach(button => {
                 audio.play()
                     .then(() => {
                         // Áudio iniciado com sucesso
-                        this.classList.add('playing');                        const icon = this.querySelector(\'i\');
-                        if (icon) { icon.className = \'fas fa-pause\'; }                        activeButton = this;
+                        this.classList.add('playing');
+                        const icon = this.querySelector(\'i\');
+                        if (icon) { icon.className = \'fas fa-pause\'; }                       activeButton = this;
                         activeAudio = audio;
                     })
                     .catch(error => {
