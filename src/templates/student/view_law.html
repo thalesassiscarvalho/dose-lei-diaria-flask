@@ -369,6 +369,37 @@
     {{ law.content | safe }}
 </div>
 
+<!-- Seção de Minhas Anotações -->
+<div class="mt-8">
+    <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
+        <div class="notes-header p-4 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
+            <h3 class="text-lg font-medium text-blue-700">
+                <i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações
+            </h3>
+            <i class="fas fa-chevron-down text-blue-500 transition-transform" id="notes-chevron"></i>
+        </div>
+        
+        <div class="notes-content p-4 border-t border-blue-100 hidden" id="notes-content-area">
+            <textarea 
+                id="user-notes" 
+                class="w-full h-40 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Escreva suas anotações sobre esta lei aqui..."></textarea>
+            
+            <div class="mt-3 flex justify-end">
+                <button 
+                    id="save-notes-btn" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                    <i class="fas fa-save mr-2"></i> Salvar Anotações
+                </button>
+            </div>
+            
+            <div class="mt-2 text-sm text-gray-500">
+                <p>Suas anotações são privadas e visíveis apenas para você.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% if not is_completed %}
 <!-- Save Last Read Article Form -->
 <div class="save-article-form">
@@ -715,6 +746,107 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     // FIM DO SCRIPT PARA OS BOTÕES DE ONDAS NEURAIS
+
+    // --- Script para gerenciar as anotações ---
+    const toggleNotesBtn = document.getElementById("toggle-notes-btn");
+    const notesContentArea = document.getElementById("notes-content-area");
+    const notesChevron = document.getElementById("notes-chevron");
+    const userNotesTextarea = document.getElementById("user-notes");
+    const saveNotesBtn = document.getElementById("save-notes-btn");
+    
+    // Variável para armazenar o estado de carregamento das anotações
+    let notesLoaded = false;
+    
+    // Função para alternar a visibilidade da área de anotações
+    toggleNotesBtn.addEventListener("click", function() {
+        const isHidden = notesContentArea.classList.contains("hidden");
+        
+        if (isHidden) {
+            notesContentArea.classList.remove("hidden");
+            notesChevron.classList.add("transform", "rotate-180");
+            
+            // Carregar as anotações do usuário se ainda não foram carregadas
+            if (!notesLoaded) {
+                loadUserNotes();
+            }
+        } else {
+            notesContentArea.classList.add("hidden");
+            notesChevron.classList.remove("transform", "rotate-180");
+        }
+    });
+    
+    // Função para carregar as anotações do usuário
+    function loadUserNotes() {
+        const lawId = window.location.pathname.split('/').pop();
+        
+        fetch(`/student/law/${lawId}/notes`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    userNotesTextarea.value = data.content;
+                    notesLoaded = true;
+                } else {
+                    console.error("Erro ao carregar anotações:", data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao carregar anotações:", error);
+            });
+    }
+    
+    // Função para salvar as anotações do usuário
+    saveNotesBtn.addEventListener("click", function() {
+        const lawId = window.location.pathname.split('/').pop();
+        const content = userNotesTextarea.value;
+        
+        // Desabilitar o botão durante o salvamento
+        saveNotesBtn.disabled = true;
+        saveNotesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        
+        fetch(`/student/law/${lawId}/notes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensagem de sucesso temporária
+                const originalText = '<i class="fas fa-save mr-2"></i> Salvar Anotações';
+                saveNotesBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                saveNotesBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                saveNotesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                setTimeout(() => {
+                    saveNotesBtn.innerHTML = originalText;
+                    saveNotesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    saveNotesBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    saveNotesBtn.disabled = false;
+                }, 2000);
+            } else {
+                console.error("Erro ao salvar anotações:", data.error);
+                saveNotesBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro ao salvar';
+                saveNotesBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                saveNotesBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                setTimeout(() => {
+                    saveNotesBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar Anotações';
+                    saveNotesBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    saveNotesBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    saveNotesBtn.disabled = false;
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao salvar anotações:", error);
+            saveNotesBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro ao salvar';
+            saveNotesBtn.disabled = false;
+        });
+    });
 });
 </script>
 {% endblock %}
+
