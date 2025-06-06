@@ -123,25 +123,25 @@
     /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
     .neural-waves-container {
         display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 1.5rem;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-top: 15px;
+        margin-bottom: 20px;
         flex-wrap: wrap;
     }
 
     .neural-wave-button {
-        width: 60px;
-        height: 60px;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
         border: none;
         position: relative;
-        overflow: hidden;
     }
 
     .neural-wave-button::before {
@@ -154,6 +154,7 @@
         background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
         opacity: 0;
         transition: opacity 0.3s ease;
+        border-radius: 50%;
     }
 
     .neural-wave-button:hover::before {
@@ -161,7 +162,7 @@
     }
 
     .neural-wave-button i {
-        font-size: 24px;
+        font-size: 20px;
         color: white;
         transition: transform 0.3s ease;
     }
@@ -206,36 +207,36 @@
         color: white;
         padding: 8px 12px;
         border-radius: 5px;
-        font-size: 14px;
-        white-space: nowrap;
-        bottom: 70px;
+        font-size: 12px;
+        white-space: normal;
+        top: 50px;
         left: 50%;
         transform: translateX(-50%);
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
         pointer-events: none;
-        width: max-content;
-        max-width: 250px;
-        text-align: center;
+        width: 220px;
+        max-width: 220px;
+        text-align: left;
         z-index: 100;
+        line-height: 1.4;
     }
 
     .neural-wave-button .tooltip::after {
         content: '';
         position: absolute;
-        top: 100%;
+        bottom: 100%;
         left: 50%;
         margin-left: -5px;
         border-width: 5px;
         border-style: solid;
-        border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+        border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
     }
 
     .neural-wave-button:hover .tooltip {
         opacity: 1;
         visibility: visible;
-        bottom: 75px;
     }
 
     /* Animações */
@@ -263,16 +264,22 @@
     /* Responsividade para dispositivos móveis */
     @media (max-width: 768px) {
         .neural-waves-container {
-            gap: 10px;
+            gap: 8px;
         }
         
         .neural-wave-button {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
         }
         
         .neural-wave-button i {
-            font-size: 20px;
+            font-size: 18px;
+        }
+        
+        .neural-wave-button .tooltip {
+            width: 200px;
+            max-width: 200px;
+            font-size: 11px;
         }
     }
     /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
@@ -291,27 +298,27 @@
 <div class="neural-waves-container">
     <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa">
         <i class="fas fa-brain"></i>
-        <span class="tooltip">Onda Alfa (8-12Hz)<br>Estado mental: Relaxamento alerta, foco sem tensão<br>Ideal para leitura concentrada e memorização</span>
+        <span class="tooltip">Onda Alfa (8-12Hz) - Azul/Indigo<br>Ideal para relaxamento alerta e foco sem tensão</span>
     </button>
     
     <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta">
         <i class="fas fa-bolt"></i>
-        <span class="tooltip">Onda Beta (12-30Hz)<br>Estado mental: Alerta, concentração intensa<br>Ideal para análise jurídica e raciocínio lógico</span>
+        <span class="tooltip">Onda Beta (12-30Hz) - Azul Claro<br>Perfeita para análise jurídica e raciocínio lógico</span>
     </button>
     
     <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta">
         <i class="fas fa-moon"></i>
-        <span class="tooltip">Onda Teta (4-8Hz)<br>Estado mental: Meditativo, criatividade aumentada<br>Ideal para compreensão de conceitos jurídicos complexos</span>
+        <span class="tooltip">Onda Teta (4-8Hz) - Verde<br>Auxilia na compreensão de conceitos jurídicos complexos</span>
     </button>
     
     <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica">
         <i class="fas fa-music"></i>
-        <span class="tooltip">Música Clássica<br>Estado mental: Concentração elevada, processamento cognitivo aprimorado<br>Ideal para estudo prolongado de leis</span>
+        <span class="tooltip">Música Clássica - Roxo<br>Promove concentração elevada e processamento cognitivo aprimorado</span>
     </button>
     
     <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco">
         <i class="fas fa-volume-up"></i>
-        <span class="tooltip">Ruído Branco<br>Estado mental: Bloqueio de distrações, foco sustentado<br>Ideal para ambientes barulhentos ou com distrações</span>
+        <span class="tooltip">Ruído Branco - Cinza<br>Bloqueia distrações externas e mantém o foco sustentado</span>
     </button>
 </div>
 <!-- FIM DOS BOTÕES DE ONDAS NEURAIS -->
