@@ -119,13 +119,159 @@
     .print-hidden {
         display: none !important;
     }
+
+    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+    .neural-waves-container {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 100;
+    }
+
+    .neural-wave-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .neural-wave-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .neural-wave-button:hover::before {
+        opacity: 1;
+    }
+
+    .neural-wave-button i {
+        font-size: 24px;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+
+    .neural-wave-button:hover i {
+        transform: scale(1.2);
+    }
+
+    .neural-wave-button.playing {
+        animation: pulse 2s infinite;
+    }
+
+    .neural-wave-button.playing i {
+        animation: spin 10s linear infinite;
+    }
+
+    /* Cores específicas para cada tipo de onda neural */
+    .wave-alpha {
+        background: linear-gradient(135deg, #4f46e5, #818cf8); /* Indigo */
+    }
+
+    .wave-beta {
+        background: linear-gradient(135deg, #0ea5e9, #38bdf8); /* Sky */
+    }
+
+    .wave-theta {
+        background: linear-gradient(135deg, #10b981, #34d399); /* Emerald */
+    }
+
+    .wave-delta {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa); /* Violet */
+    }
+
+    .wave-gamma {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24); /* Amber */
+    }
+
+    /* Tooltip para os botões */
+    .neural-wave-button .tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: nowrap;
+        right: 70px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+
+    .neural-wave-button:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Animações */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+        }
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Responsividade para dispositivos móveis */
+    @media (max-width: 768px) {
+        .neural-waves-container {
+            right: 10px;
+        }
+        
+        .neural-wave-button {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .neural-wave-button i {
+            font-size: 20px;
+        }
+        
+        .neural-wave-button .tooltip {
+            right: 60px;
+            font-size: 10px;
+        }
+    }
+    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-    {# CORRIGIDO: Removido \ das aspas #}
     <a href="{{ url_for('student.dashboard') }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
         <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Voltar ao Painel
     </a>
@@ -133,16 +279,14 @@
 
 <!-- ****** Player de Áudio (se disponível) ****** -->
 {% if law.audio_url %}
-<div class="audio-player-container"> {# Removidas classes Tailwind diretas, usando a classe CSS acima #}
+<div class="audio-player-container">
     <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
         <i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:
     </h4>
-    <!-- MODIFICADO: Adicionado controlslist="nodownload" para remover o botão de download -->
     <audio controls controlslist="nodownload" class="w-full">
-        <source src="{{ law.audio_url }}" type="audio/mpeg"> {# Ajuste o type se necessário (ex: audio/ogg, audio/wav) #}
+        <source src="{{ law.audio_url }}" type="audio/mpeg">
         Seu navegador não suporta o elemento de áudio.
     </audio>
-    {# Texto removido daqui #}
 </div>
 {% endif %}
 <!-- ****** FIM Player de Áudio ****** -->
@@ -171,6 +315,35 @@
 </div>
 <!-- Fim dos Botões de Toggle -->
 
+<!-- INÍCIO DOS BOTÕES DE ONDAS NEURAIS -->
+<div class="neural-waves-container">
+    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa">
+        <i class="fas fa-brain"></i>
+        <span class="tooltip">Onda Alfa (8-12Hz): Relaxamento e foco</span>
+    </button>
+    
+    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta">
+        <i class="fas fa-bolt"></i>
+        <span class="tooltip">Onda Beta (12-30Hz): Concentração e alerta</span>
+    </button>
+    
+    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta">
+        <i class="fas fa-moon"></i>
+        <span class="tooltip">Onda Teta (4-8Hz): Meditação e criatividade</span>
+    </button>
+    
+    <button class="neural-wave-button wave-delta" data-wave="delta" aria-label="Onda Delta">
+        <i class="fas fa-water"></i>
+        <span class="tooltip">Onda Delta (0.5-4Hz): Sono profundo e recuperação</span>
+    </button>
+    
+    <button class="neural-wave-button wave-gamma" data-wave="gamma" aria-label="Onda Gama">
+        <i class="fas fa-fire"></i>
+        <span class="tooltip">Onda Gama (30-100Hz): Processamento cognitivo avançado</span>
+    </button>
+</div>
+<!-- FIM DOS BOTÕES DE ONDAS NEURAIS -->
+
 <div class="law-content-container" id="law-content">
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
@@ -182,9 +355,8 @@
 {% if not is_completed %}
 <!-- Save Last Read Article Form -->
 <div class="save-article-form">
-    {# CORRIGIDO: Removido \ das aspas #}
     <form action="{{ url_for('student.save_last_read', law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
         <input type="text" id="last_article" name="last_article" 
                placeholder="Ex: 15" value="{{ last_read_article or '' }}"
@@ -197,9 +369,8 @@
 
 <!-- Mark as Complete Button -->
 <div class="mt-8 text-center">
-    {# CORRIGIDO: Removido \ das aspas #}
     <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
             <i class="fas fa-check mr-2"></i> Marcar como Concluído
         </button>
@@ -212,6 +383,22 @@
     Impressão não permitida
 </div>
 
+<!-- Elementos de áudio para as ondas neurais (ocultos) -->
+<audio id="audio-alpha" loop preload="none">
+    <source src="{{ url_for('static', filename='audio/alpha_wave.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="audio-beta" loop preload="none">
+    <source src="{{ url_for('static', filename='audio/beta_wave.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="audio-theta" loop preload="none">
+    <source src="{{ url_for('static', filename='audio/theta_wave.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="audio-delta" loop preload="none">
+    <source src="{{ url_for('static', filename='audio/delta_wave.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="audio-gamma" loop preload="none">
+    <source src="{{ url_for('static', filename='audio/gamma_wave.mp3') }}" type="audio/mpeg">
+</audio>
 {% endblock %}
 
 {% block scripts %}
@@ -400,6 +587,118 @@ document.addEventListener("DOMContentLoaded", function () {
             return false;
         }
     });
+
+    // INÍCIO DO SCRIPT PARA OS BOTÕES DE ONDAS NEURAIS
+    const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
+    const audioElements = {
+        'alpha': document.getElementById('audio-alpha'),
+        'beta': document.getElementById('audio-beta'),
+        'theta': document.getElementById('audio-theta'),
+        'delta': document.getElementById('audio-delta'),
+        'gamma': document.getElementById('audio-gamma')
+    };
+    
+    // Variável para armazenar o botão atualmente ativo
+    let activeButton = null;
+    let activeAudio = null;
+
+    // Função para pausar todos os áudios
+    function pauseAllAudio() {
+        Object.values(audioElements).forEach(audio => {
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        });
+        
+        // Remover classe 'playing' de todos os botões
+        neuralWaveButtons.forEach(button => {
+            button.classList.remove('playing');
+            button.innerHTML = getIconForWave(button.dataset.wave);
+        });
+        
+        activeButton = null;
+        activeAudio = null;
+    }
+
+    // Função para obter o ícone correto para cada tipo de onda
+    function getIconForWave(waveType) {
+        const icons = {
+            'alpha': '<i class="fas fa-brain"></i>',
+            'beta': '<i class="fas fa-bolt"></i>',
+            'theta': '<i class="fas fa-moon"></i>',
+            'delta': '<i class="fas fa-water"></i>',
+            'gamma': '<i class="fas fa-fire"></i>'
+        };
+        
+        return icons[waveType] || '<i class="fas fa-brain"></i>';
+    }
+
+    // Adicionar event listeners para cada botão
+    neuralWaveButtons.forEach(button => {
+        const waveType = button.dataset.wave;
+        const audio = audioElements[waveType];
+        
+        button.addEventListener('click', function() {
+            // Se este botão já está ativo, pausar o áudio
+            if (activeButton === this) {
+                pauseAllAudio();
+                return;
+            }
+            
+            // Pausar qualquer áudio que esteja tocando
+            pauseAllAudio();
+            
+            // Iniciar o novo áudio
+            if (audio) {
+                audio.volume = 0.5; // Volume a 50%
+                audio.play()
+                    .then(() => {
+                        // Áudio iniciado com sucesso
+                        this.classList.add('playing');
+                        this.innerHTML = '<i class="fas fa-pause"></i>';
+                        activeButton = this;
+                        activeAudio = audio;
+                    })
+                    .catch(error => {
+                        console.error('Erro ao reproduzir áudio:', error);
+                        // Mostrar mensagem de erro ao usuário
+                        alert('Não foi possível reproduzir o áudio. Verifique se os arquivos de áudio estão disponíveis.');
+                    });
+            } else {
+                console.error('Elemento de áudio não encontrado para o tipo de onda:', waveType);
+            }
+        });
+    });
+
+    // Adicionar controle de volume global
+    document.addEventListener('keydown', function(e) {
+        // Aumentar volume com seta para cima
+        if (e.key === 'ArrowUp' && activeAudio) {
+            e.preventDefault();
+            activeAudio.volume = Math.min(1, activeAudio.volume + 0.1);
+        }
+        
+        // Diminuir volume com seta para baixo
+        if (e.key === 'ArrowDown' && activeAudio) {
+            e.preventDefault();
+            activeAudio.volume = Math.max(0, activeAudio.volume - 0.1);
+        }
+        
+        // Pausar/retomar com barra de espaço
+        if (e.key === ' ' && activeButton) {
+            e.preventDefault();
+            if (activeAudio.paused) {
+                activeAudio.play();
+                activeButton.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                activeAudio.pause();
+                activeButton.innerHTML = getIconForWave(activeButton.dataset.wave);
+            }
+        }
+    });
+    // FIM DO SCRIPT PARA OS BOTÕES DE ONDAS NEURAIS
 });
 </script>
 {% endblock %}
+
