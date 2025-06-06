@@ -402,7 +402,7 @@
 
 <!-- Elementos de áudio para as ondas neurais (ocultos) -->
 <audio id="audio-alpha" loop preload="none">
-    <source src="{{ url_for('static', filename='audio/alpha_wave.mp3') }}" type="audio/mpeg">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" type="audio/mpeg">
 </audio>
 <audio id="audio-beta" loop preload="none">
     <source src="{{ url_for('static', filename='audio/beta_wave.mp3') }}" type="audio/mpeg">
@@ -718,4 +718,3 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endblock %}
-
