@@ -392,6 +392,27 @@
         background-color: #2563eb; /* Tailwind blue-600 */
     }
 
+    /* Estilo para o botão "Salvar Onde Parei" */
+    .save-bookmark-btn {
+        background-color: #10b981; /* Tailwind emerald-500 */
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .save-bookmark-btn:hover {
+        background-color: #059669; /* Tailwind emerald-600 */
+    }
+
     @media (max-width: 640px) {
         .action-buttons {
             flex-direction: column;
@@ -543,14 +564,26 @@
 </div>
 
 {% if not is_completed %}
-<!-- Save Last Read Article Form -->
+<!-- Seção "Marcar onde parei" -->
 <div class="save-article-form mt-8">
-    <form method="POST" action="{{ url_for('student.save_last_read', law_id=law.id) }}" class="flex flex-col space-y-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="flex flex-col space-y-4">
         <div class="flex flex-col">
             <label for="last_read_article" class="text-sm font-medium text-gray-700 mb-1">Marcar onde parei:</label>
-            <input type="text" id="last_read_article" name="last_read_article" placeholder="Ex: Art. 5º, inciso I" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <div class="flex items-center">
+                <input type="text" id="last_read_article" name="last_read_article" placeholder="Ex: Art. 5º, inciso I" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-grow">
+                <button type="button" id="save-bookmark-btn" class="save-bookmark-btn ml-2">
+                    <i class="fas fa-bookmark mr-2"></i> Salvar
+                </button>
+            </div>
         </div>
+    </div>
+</div>
+
+<!-- Seção "Marcar como Concluído" -->
+<div class="mt-8">
+    <form method="POST" action="{{ url_for('student.save_last_read', law_id=law.id) }}" class="flex flex-col space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="last_read_article" value="" id="hidden_last_read_article">
         <div class="action-buttons flex justify-center items-center">
             <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
                 <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
@@ -587,6 +620,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const notesChevron = document.getElementById("notes-chevron");
     const backToTopBtn = document.getElementById("back-to-top-btn");
     const pageTop = document.getElementById("page-top");
+    const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
+    const lastReadArticleInput = document.getElementById("last_read_article");
+    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
 
     // Seletores baseados nos estilos inline identificados
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
@@ -617,6 +653,87 @@ document.addEventListener("DOMContentLoaded", function () {
         // Rolar suavemente até o topo da página
         pageTop.scrollIntoView({ behavior: 'smooth' });
     });
+
+    // Função para salvar o ponto onde parou via AJAX
+    if (saveBookmarkBtn) {
+        saveBookmarkBtn.addEventListener("click", function() {
+            const lastReadArticle = lastReadArticleInput.value.trim();
+            
+            if (!lastReadArticle) {
+                alert("Por favor, informe onde você parou.");
+                return;
+            }
+            
+            // Atualizar o campo oculto no formulário de "Marcar como Concluído"
+            if (hiddenLastReadArticleInput) {
+                hiddenLastReadArticleInput.value = lastReadArticle;
+            }
+            
+            // Obter o ID da lei da URL
+            const pathParts = window.location.pathname.split('/');
+            const lawId = pathParts[pathParts.length - 1];
+            
+            // Obter o token CSRF
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            
+            // Salvar via AJAX
+            const originalText = saveBookmarkBtn.innerHTML;
+            saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+            saveBookmarkBtn.disabled = true;
+            
+            fetch(`/student/save_last_read/${lawId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                    
+                    // Mostrar mensagem de sucesso
+                    if (!document.querySelector('.last-read-info')) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'last-read-info';
+                        messageDiv.setAttribute('role', 'alert');
+                        messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
+                        
+                        // Inserir após os botões de toggle
+                        const toggleButtons = document.querySelector('.flex.flex-wrap.items-center.justify-between.mb-4');
+                        toggleButtons.parentNode.insertBefore(messageDiv, toggleButtons.nextSibling);
+                    } else {
+                        // Atualizar mensagem existente
+                        const messageDiv = document.querySelector('.last-read-info');
+                        messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
+                    }
+                    
+                    setTimeout(() => {
+                        saveBookmarkBtn.innerHTML = originalText;
+                        saveBookmarkBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    saveBookmarkBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+                    setTimeout(() => {
+                        saveBookmarkBtn.innerHTML = originalText;
+                        saveBookmarkBtn.disabled = false;
+                    }, 2000);
+                    alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao salvar:", error);
+                saveBookmarkBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+                setTimeout(() => {
+                    saveBookmarkBtn.innerHTML = originalText;
+                    saveBookmarkBtn.disabled = false;
+                }, 2000);
+                alert("Erro ao salvar. Por favor, tente novamente.");
+            });
+        });
+    }
 
     function toggleElementsVisibility(selector, makeVisible) {
         const elements = lawContent.querySelectorAll(selector);
@@ -698,214 +815,143 @@ document.addEventListener("DOMContentLoaded", function () {
         blockMessage.style.left = '0';
         blockMessage.style.width = '100%';
         blockMessage.style.height = '100%';
-        blockMessage.style.backgroundColor = 'white';
-        blockMessage.style.zIndex = '9999';
+        blockMessage.style.backgroundColor = '#f8f9fa';
         blockMessage.style.display = 'flex';
+        blockMessage.style.flexDirection = 'column';
         blockMessage.style.alignItems = 'center';
         blockMessage.style.justifyContent = 'center';
-        blockMessage.style.fontSize = '24px';
+        blockMessage.style.padding = '2rem';
+        blockMessage.style.textAlign = 'center';
+        blockMessage.style.color = '#dc2626';
+        blockMessage.style.fontSize = '1.5rem';
         blockMessage.style.fontWeight = 'bold';
-        blockMessage.textContent = 'Impressão não permitida';
+        blockMessage.style.zIndex = '9999';
+        
+        blockMessage.innerHTML = `
+            <div style="font-size: 4rem; margin-bottom: 1rem;">
+                <i class="fas fa-ban"></i>
+            </div>
+            <div>
+                Impressão não permitida!<br>
+                <span style="font-size: 1rem; color: #4b5563; margin-top: 0.5rem; display: block;">
+                    O conteúdo desta página é protegido contra impressão.
+                </span>
+            </div>
+        `;
         
         document.body.appendChild(blockMessage);
         
-        // Tentar cancelar o evento de impressão
-        try {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-        } catch (error) {
-            console.log('Não foi possível cancelar o evento de impressão');
-        }
+        // Cancelar o evento de impressão
+        e.preventDefault();
         
-        return false;
-    });
-    
-    // Restaurar o conteúdo original após a tentativa de impressão
-    window.addEventListener('afterprint', function() {
-        // Restaurar o conteúdo original
-        if (originalBodyHTML) {
+        // Restaurar o conteúdo original após um curto período
+        setTimeout(function() {
             document.body.innerHTML = originalBodyHTML;
             document.body.style.overflow = originalBodyOverflow;
-            
-            // Recarregar scripts e eventos
-            const scripts = document.body.getElementsByTagName('script');
-            for (let i = 0; i < scripts.length; i++) {
-                const script = scripts[i];
-                const scriptCopy = document.createElement('script');
-                scriptCopy.textContent = script.textContent;
-                script.parentNode.replaceChild(scriptCopy, script);
-            }
-            
-            // Como os eventos foram perdidos, recarregar a página
-            setTimeout(function() {
-                window.location.reload();
-            }, 100);
+        }, 500);
+    });
+    
+    // Expandir/contrair a seção de anotações
+    toggleNotesBtn.addEventListener("click", function() {
+        notesContentArea.classList.toggle("hidden");
+        
+        // Rotacionar o ícone de chevron
+        if (notesContentArea.classList.contains("hidden")) {
+            notesChevron.style.transform = "rotate(0deg)";
+        } else {
+            notesChevron.style.transform = "rotate(180deg)";
         }
     });
     
-    // Método adicional para navegadores que não suportam os eventos acima
-    if (window.matchMedia) {
-        const mediaQueryList = window.matchMedia('print');
-        mediaQueryList.addEventListener('change', function(mql) {
-            if (mql.matches) {
-                // Entrando no modo de impressão
-                alert('Impressão não permitida');
-                
-                // Salvar o estado original
-                originalBodyHTML = document.body.innerHTML;
-                originalBodyOverflow = document.body.style.overflow;
-                
-                // Ocultar todo o conteúdo
-                document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:24px;font-weight:bold;">Impressão não permitida</div>';
-                document.body.style.overflow = 'hidden';
-            } else {
-                // Saindo do modo de impressão
-                if (originalBodyHTML) {
-                    document.body.innerHTML = originalBodyHTML;
-                    document.body.style.overflow = originalBodyOverflow;
-                    
-                    // Recarregar a página para restaurar eventos
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 100);
-                }
-            }
-        });
-    }
-    
-    // Desabilitar atalhos de teclado para impressão
-    document.addEventListener('keydown', function(e) {
-        // Ctrl+P ou Command+P
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.keyCode === 80)) {
-            alert('Impressão não permitida');
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-    });
-
-    // INÍCIO DO SCRIPT PARA OS BOTÕES DE ONDAS NEURAIS
+    // --- Script para os botões de ondas neurais ---
     const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
-    const audioElements = {
-        'alpha': document.getElementById('audio-alpha'),
-        'beta': document.getElementById('audio-beta'),
-        'theta': document.getElementById('audio-theta'),
-        'classical': document.getElementById('audio-classical'),
-        'white-noise': document.getElementById('audio-white-noise')
-    };
+    let currentlyPlaying = null;
     
-    // Variável para armazenar o botão atualmente ativo
-    let activeButton = null;
-    let activeAudio = null;
-
-    // Função para pausar todos os áudios
-    function pauseAllAudio() {
-        Object.values(audioElements).forEach(audio => {
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0;
-            }
-        });
-        
-        // Remover classe 'playing' de todos os botões
-        neuralWaveButtons.forEach(button => {
-            button.classList.remove('playing');
-            button.innerHTML = getIconForWave(button.dataset.wave);
-        });
-        
-        activeButton = null;
-        activeAudio = null;
-    }
-
-    // Função para obter o ícone correto para cada tipo de onda
-    function getIconForWave(waveType) {
-        const icons = {
-            'alpha': '<i class="fas fa-brain"></i>',
-            'beta': '<i class="fas fa-bolt"></i>',
-            'theta': '<i class="fas fa-moon"></i>',
-            'classical': '<i class="fas fa-music"></i>',
-            'white-noise': '<i class="fas fa-volume-up"></i>'
-        };
-        
-        return icons[waveType] || '<i class="fas fa-brain"></i>';
-    }
-
-    // Adicionar event listeners para cada botão
     neuralWaveButtons.forEach(button => {
-        const waveType = button.dataset.wave;
-        const audio = audioElements[waveType];
-        
         button.addEventListener('click', function() {
-            // Se este botão já está ativo, pausar o áudio
-            if (activeButton === this) {
-                pauseAllAudio();
+            const waveType = this.getAttribute('data-wave');
+            const audioElement = document.getElementById(`audio-${waveType}`);
+            
+            // Se já estiver tocando, parar
+            if (this.classList.contains('playing')) {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                this.classList.remove('playing');
+                currentlyPlaying = null;
                 return;
             }
             
-            // Pausar qualquer áudio que esteja tocando
-            pauseAllAudio();
+            // Parar qualquer áudio que esteja tocando
+            if (currentlyPlaying) {
+                const playingButton = document.querySelector(`.neural-wave-button[data-wave="${currentlyPlaying}"]`);
+                const playingAudio = document.getElementById(`audio-${currentlyPlaying}`);
+                
+                playingButton.classList.remove('playing');
+                playingAudio.pause();
+                playingAudio.currentTime = 0;
+            }
             
             // Iniciar o novo áudio
-            if (audio) {
-                audio.volume = 0.5; // Volume a 50%
-                audio.play()
-                    .then(() => {
-                        // Áudio iniciado com sucesso
-                        this.classList.add('playing');
-                        this.innerHTML = '<i class="fas fa-pause"></i>';
-                        activeButton = this;
-                        activeAudio = audio;
-                    })
-                    .catch(error => {
-                        console.error('Erro ao reproduzir áudio:', error);
-                        // Mostrar mensagem de erro ao usuário
-                        alert('Não foi possível reproduzir o áudio. Verifique se os arquivos de áudio estão disponíveis.');
-                    });
-            } else {
-                console.error('Elemento de áudio não encontrado para o tipo de onda:', waveType);
-            }
+            audioElement.play().catch(error => {
+                console.error(`Erro ao reproduzir áudio ${waveType}:`, error);
+            });
+            
+            this.classList.add('playing');
+            currentlyPlaying = waveType;
         });
     });
-
-    // Adicionar controle de volume global
-    document.addEventListener('keydown', function(e) {
-        // Aumentar volume com seta para cima
-        if (e.key === 'ArrowUp' && activeAudio) {
-            e.preventDefault();
-            activeAudio.volume = Math.min(1, activeAudio.volume + 0.1);
-        }
-        
-        // Diminuir volume com seta para baixo
-        if (e.key === 'ArrowDown' && activeAudio) {
-            e.preventDefault();
-            activeAudio.volume = Math.max(0, activeAudio.volume - 0.1);
-        }
-        
-        // Pausar/retomar com barra de espaço
-        if (e.key === ' ' && activeButton) {
-            e.preventDefault();
-            if (activeAudio.paused) {
-                activeAudio.play();
-                activeButton.innerHTML = '<i class="fas fa-pause"></i>';
+    
+    // --- Script para formatação de texto nas anotações ---
+    const boldBtn = document.getElementById('bold-btn');
+    const italicBtn = document.getElementById('italic-btn');
+    const highlightBtn = document.getElementById('highlight-btn');
+    const notesEditor = document.getElementById('notes-editor');
+    const saveNotesBtn = document.getElementById('save-notes-btn');
+    
+    // Função para aplicar formatação ao texto selecionado
+    function formatText(command, value = null) {
+        document.execCommand(command, false, value);
+        notesEditor.focus();
+    }
+    
+    // Botão de negrito
+    boldBtn.addEventListener('click', function() {
+        formatText('bold');
+        this.classList.toggle('active');
+    });
+    
+    // Botão de itálico
+    italicBtn.addEventListener('click', function() {
+        formatText('italic');
+        this.classList.toggle('active');
+    });
+    
+    // Botão de marca-texto (highlight)
+    highlightBtn.addEventListener('click', function() {
+        // Verificar se há texto selecionado
+        const selection = window.getSelection();
+        if (selection.toString().length > 0) {
+            // Verificar se o texto já está destacado
+            const range = selection.getRangeAt(0);
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            
+            // Verificar se a seleção já está dentro de um highlight
+            const parentSpan = selection.anchorNode.parentElement;
+            if (parentSpan && parentSpan.classList && parentSpan.classList.contains('highlight')) {
+                // Remover o highlight
+                const textContent = parentSpan.textContent;
+                const textNode = document.createTextNode(textContent);
+                parentSpan.parentNode.replaceChild(textNode, parentSpan);
             } else {
-                activeAudio.pause();
-                activeButton.innerHTML = getIconForWave(activeButton.dataset.wave);
+                // Aplicar o highlight
+                range.surroundContents(span);
             }
         }
+        
+        this.classList.toggle('active');
+        notesEditor.focus();
     });
-    // FIM DO SCRIPT PARA OS BOTÕES DE ONDAS NEURAIS
-
-    // --- Script para gerenciar as anotações ---
-    const notesEditor = document.getElementById("notes-editor");
-    const saveNotesBtn = document.getElementById("save-notes-btn");
-    
-    // Botões de formatação
-    const boldBtn = document.getElementById("bold-btn");
-    const italicBtn = document.getElementById("italic-btn");
-    const highlightBtn = document.getElementById("highlight-btn");
-    
-    // Variável para armazenar o estado de carregamento das anotações
-    let notesLoaded = false;
     
     // Variável para armazenar o token CSRF
     let csrfToken = '';
@@ -928,85 +974,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return '';
     }
     
-    // Função para alternar a visibilidade da área de anotações
-    toggleNotesBtn.addEventListener("click", function() {
-        const isHidden = notesContentArea.classList.contains("hidden");
-        
-        if (isHidden) {
-            notesContentArea.classList.remove("hidden");
-            notesChevron.classList.add("transform", "rotate-180");
-            
-            // Carregar as anotações do usuário se ainda não foram carregadas
-            if (!notesLoaded) {
-                loadUserNotes();
-            }
-        } else {
-            notesContentArea.classList.add("hidden");
-            notesChevron.classList.remove("transform", "rotate-180");
-        }
-    });
-    
-    // Função para aplicar formatação ao texto selecionado
-    function formatText(command, value = null) {
-        document.execCommand(command, false, value);
-        notesEditor.focus();
-    }
-    
-    // Event listeners para os botões de formatação
-    boldBtn.addEventListener("click", function() {
-        formatText('bold');
-        this.classList.toggle('active');
-    });
-    
-    italicBtn.addEventListener("click", function() {
-        formatText('italic');
-        this.classList.toggle('active');
-    });
-    
-    highlightBtn.addEventListener("click", function() {
-        // Para marca-texto, precisamos verificar se já existe a classe highlight
-        const selection = window.getSelection();
-        
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const selectedText = range.toString();
-            
-            if (selectedText.length > 0) {
-                // Verificar se o texto já está destacado
-                const parentElement = selection.anchorNode.parentElement;
-                
-                if (parentElement.classList && parentElement.classList.contains('highlight')) {
-                    // Se já estiver destacado, remover o destaque
-                    const textNode = document.createTextNode(selectedText);
-                    range.deleteContents();
-                    range.insertNode(textNode);
-                } else {
-                    // Se não estiver destacado, adicionar o destaque
-                    const span = document.createElement('span');
-                    span.className = 'highlight';
-                    span.textContent = selectedText;
-                    range.deleteContents();
-                    range.insertNode(span);
-                }
-            }
-        }
-        
-        this.classList.toggle('active');
-        notesEditor.focus();
-    });
-    
-    // Função para carregar as anotações do usuário
-    function loadUserNotes() {
-        const lawId = window.location.pathname.split('/').pop();
+    // Carregar as anotações existentes
+    function loadNotes() {
+        // Obter o ID da lei da URL
+        const pathParts = window.location.pathname.split('/');
+        const lawId = pathParts[pathParts.length - 1];
         
         fetch(`/student/law/${lawId}/notes`)
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.success && data.content) {
                     notesEditor.innerHTML = data.content;
-                    notesLoaded = true;
-                } else {
-                    console.error("Erro ao carregar anotações:", data.error);
                 }
             })
             .catch(error => {
@@ -1014,18 +992,24 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
     
-    // Função para salvar as anotações do usuário
-    saveNotesBtn.addEventListener("click", function() {
-        const lawId = window.location.pathname.split('/').pop();
-        const content = notesEditor.innerHTML;
+    // Salvar as anotações
+    saveNotesBtn.addEventListener('click', function() {
+        // Obter o ID da lei da URL
+        const pathParts = window.location.pathname.split('/');
+        const lawId = pathParts[pathParts.length - 1];
         
-        // Desabilitar o botão durante o salvamento
-        saveNotesBtn.disabled = true;
-        saveNotesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        // Obter o conteúdo formatado
+        const content = notesEditor.innerHTML;
         
         // Obter o token CSRF usando a nova função
         const token = getCsrfToken();
         
+        // Desabilitar o botão e mostrar feedback
+        const originalText = saveNotesBtn.innerHTML;
+        saveNotesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        saveNotesBtn.disabled = true;
+        
+        // Enviar para o servidor
         fetch(`/student/law/${lawId}/notes`, {
             method: 'POST',
             headers: {
@@ -1037,8 +1021,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Mostrar mensagem de sucesso temporária
-                const originalText = '<i class="fas fa-save mr-2"></i> Salvar Anotações';
                 saveNotesBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                 saveNotesBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                 saveNotesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
@@ -1070,18 +1052,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
     
-    // Adicionar placeholder ao editor quando estiver vazio
-    notesEditor.addEventListener('focus', function() {
-        if (this.innerHTML.trim() === '') {
-            this.innerHTML = '';
-        }
-    });
-    
-    notesEditor.addEventListener('blur', function() {
-        if (this.innerHTML.trim() === '') {
-            this.innerHTML = '';
-        }
-    });
+    // Carregar as anotações quando a página carregar
+    loadNotes();
 });
 </script>
 {% endblock %}
