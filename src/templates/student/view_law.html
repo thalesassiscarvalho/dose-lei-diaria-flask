@@ -413,6 +413,37 @@
         background-color: #059669; /* Tailwind emerald-600 */
     }
 
+    /* Estilo para a seção "Marcar onde parei" */
+    .bookmark-section {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #f0f9ff; /* Tailwind blue-50 */
+        border: 1px solid #bae6fd; /* Tailwind blue-200 */
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .bookmark-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .bookmark-input {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+    }
+
+    .bookmark-input:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+    }
+
     @media (max-width: 640px) {
         .action-buttons {
             flex-direction: column;
@@ -423,6 +454,16 @@
         .back-to-top-btn {
             margin-left: 0;
             margin-top: 1rem;
+        }
+        
+        .bookmark-input-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .save-bookmark-btn {
+            margin-top: 0.5rem;
+            width: 100%;
         }
     }
 </style>
@@ -523,78 +564,66 @@
     {{ law.content | safe }}
 </div>
 
+<!-- Seção de Marcar onde parei -->
+<div class="bookmark-section">
+    <h3 class="text-lg font-medium text-gray-800 mb-2">Marcar onde parei:</h3>
+    <div class="bookmark-input-group">
+        <input type="text" id="last_read_article" class="bookmark-input" placeholder="Ex: Art. 5º, inciso I" value="{{ last_read_article or '' }}">
+        <button id="save-bookmark-btn" class="save-bookmark-btn">
+            <i class="fas fa-bookmark mr-2"></i> Salvar
+        </button>
+    </div>
+</div>
+
 <!-- Seção de Minhas Anotações -->
 <div class="mt-8" id="notes-section">
     <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
-        <div class="notes-header p-4 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
-            <h3 class="text-lg font-medium text-blue-700">
+        <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
+            <h3 class="text-lg font-medium text-blue-800">
                 <i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações
             </h3>
-            <i class="fas fa-chevron-down text-blue-500 transition-transform" id="notes-chevron"></i>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
         </div>
         
-        <div class="notes-content p-4 border-t border-blue-100 hidden" id="notes-content-area">
-            <!-- Barra de ferramentas de formatação -->
+        <div class="p-4 hidden" id="notes-content-area">
             <div class="notes-toolbar">
-                <button type="button" class="format-btn" id="bold-btn" title="Negrito">
+                <button id="bold-btn" class="format-btn" title="Negrito">
                     <i class="fas fa-bold"></i>
                 </button>
-                <button type="button" class="format-btn" id="italic-btn" title="Itálico">
+                <button id="italic-btn" class="format-btn" title="Itálico">
                     <i class="fas fa-italic"></i>
                 </button>
-                <button type="button" class="format-btn" id="highlight-btn" title="Marca-texto">
+                <button id="highlight-btn" class="format-btn" title="Marca-texto">
                     <i class="fas fa-highlighter"></i>
                 </button>
             </div>
             
-            <!-- Editor de anotações -->
-            <div class="notes-editor" id="notes-editor" contenteditable="true"></div>
+            <div id="notes-editor" class="notes-editor" contenteditable="true"></div>
             
-            <!-- Botão de salvar -->
-            <button type="button" id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+            <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
                 <i class="fas fa-save mr-2"></i> Salvar Anotações
             </button>
-            
-            <!-- Campo oculto para armazenar o token CSRF -->
-            {% if csrf_token() %}
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {% endif %}
         </div>
     </div>
 </div>
 
 {% if not is_completed %}
-<!-- Seção "Marcar onde parei" -->
-<div class="save-article-form mt-8">
-    <div class="flex flex-col space-y-4">
-        <div class="flex flex-col">
-            <label for="last_read_article" class="text-sm font-medium text-gray-700 mb-1">Marcar onde parei:</label>
-            <div class="flex items-center">
-                <input type="text" id="last_read_article" name="last_read_article" placeholder="Ex: Art. 5º, inciso I" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-grow">
-                <button type="button" id="save-bookmark-btn" class="save-bookmark-btn ml-2">
-                    <i class="fas fa-bookmark mr-2"></i> Salvar
-                </button>
-            </div>
-        </div>
+<!-- Formulário para Marcar como Concluído -->
+<form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
+    
+    <div class="action-buttons flex justify-center items-center">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
+            <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
+        </button>
+        <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+            <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+        </button>
     </div>
-</div>
-
-<!-- Seção "Marcar como Concluído" -->
-<div class="mt-8">
-    <form method="POST" action="{{ url_for('student.save_last_read', law_id=law.id) }}" class="flex flex-col space-y-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="last_read_article" value="" id="hidden_last_read_article">
-        <div class="action-buttons flex justify-center items-center">
-            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
-                <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
-            </button>
-            <button type="button" id="back-to-top-btn" class="back-to-top-btn">
-                <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
-            </button>
-        </div>
-    </form>
-</div>
+</form>
 {% else %}
+<!-- Apenas o botão de Voltar ao Topo quando já está concluído -->
 <div class="mt-8 flex justify-center">
     <button type="button" id="back-to-top-btn" class="back-to-top-btn">
         <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
