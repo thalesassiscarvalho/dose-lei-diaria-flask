@@ -519,139 +519,286 @@
                 </button>
             </div>
             
-            <!-- Editor de anotações -->
-            <div class="notes-editor" id="notes-editor" contenteditable="true"></div>
+            <!-- Editor de conteúdo -->
+            <div 
+                id="notes-editor" 
+                class="notes-editor" 
+                contenteditable="true"
+                placeholder="Escreva suas anotações sobre esta lei aqui..."></div>
             
-            <!-- Botão de salvar -->
-            <button type="button" id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
-                <i class="fas fa-save mr-2"></i> Salvar Anotações
-            </button>
+            <div class="mt-3 flex justify-end">
+                <button 
+                    id="save-notes-btn" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                    <i class="fas fa-save mr-2"></i> Salvar Anotações
+                </button>
+            </div>
             
-            <!-- Campo oculto para armazenar o token CSRF -->
-            {% if csrf_token() %}
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {% endif %}
+            <div class="mt-2 text-sm text-gray-500">
+                <p>Suas anotações são privadas e visíveis apenas para você.</p>
+            </div>
         </div>
     </div>
 </div>
 
 {% if not is_completed %}
 <!-- Save Last Read Article Form -->
-<div class="save-article-form mt-8">
-    <form method="POST" action="{{ url_for('student.save_last_read', law_id=law.id) }}" class="flex flex-col space-y-4">
+<div class="save-article-form">
+    <form action="{{ url_for('student.save_last_read', law_id=law.id) }}" method="POST" class="flex items-center space-x-3">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="flex flex-col">
-            <label for="last_read_article" class="text-sm font-medium text-gray-700 mb-1">Marcar onde parei:</label>
-            <input type="text" id="last_read_article" name="last_read_article" placeholder="Ex: Art. 5º, inciso I" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-        </div>
-        <div class="action-buttons flex items-center">
-            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
-                <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
-            </button>
-            <button type="button" id="back-to-top-btn" class="back-to-top-btn">
-                <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
-            </button>
-        </div>
+        <label for="last_article" class="text-sm font-medium text-gray-700">Parou no artigo nº:</label>
+        <input type="text" id="last_article" name="last_article" 
+               placeholder="Ex: 15" value="{{ last_read_article or '' }}"
+               class="shadow-sm appearance-none border border-gray-300 rounded-md py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-24">
+        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-1 px-3 rounded-md transition duration-300 text-sm">
+            <i class="fas fa-save mr-1"></i> Salvar Posição
+        </button>
     </form>
 </div>
+
+<!-- Mark as Complete Button and Back to Top Button -->
+<div class="mt-8 text-center action-buttons sm:flex sm:justify-center sm:items-center">
+    <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST" class="inline-block">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
+            <i class="fas fa-check mr-2"></i> Marcar como Concluído
+        </button>
+    </form>
+    <button id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
+</div>
 {% else %}
-<div class="mt-8 flex justify-center">
-    <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+<!-- Only Back to Top Button when already completed -->
+<div class="mt-8 text-center">
+    <button id="back-to-top-btn" class="back-to-top-btn">
         <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
     </button>
 </div>
 {% endif %}
+
+<!-- Elemento para mensagem de impressão bloqueada -->
+<div id="print-blocked-message" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; text-align: center; padding-top: 100px; font-size: 24px; font-weight: bold;">
+    Impressão não permitida
+</div>
+
+<!-- Elementos de áudio para as ondas neurais (ocultos) -->
+<audio id="audio-alpha" loop preload="none">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" type="audio/mpeg">
+</audio>
+<audio id="audio-beta" loop preload="none">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" type="audio/mpeg">
+</audio>
+<audio id="audio-theta" loop preload="none">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" type="audio/mpeg">
+</audio>
+<audio id="audio-classical" loop preload="none">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" type="audio/mpeg">
+</audio>
+<audio id="audio-white-noise" loop preload="none">
+    <source src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" type="audio/mpeg">
+</audio>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Elementos de toggle
-    const toggleCommentsBtn = document.getElementById('toggle-comments-btn');
-    const toggleJurisprudenceBtn = document.getElementById('toggle-jurisprudence-btn');
-    const toggleDoutrinaBtn = document.getElementById('toggle-doutrina-btn');
-    
-    // Elementos de comentários
-    const comentarios = document.querySelectorAll('.comentario');
-    const jurisprudencias = document.querySelectorAll('.jurisprudencia');
-    const doutrinas = document.querySelectorAll('.doutrina');
-    
-    // Função para alternar a visibilidade dos elementos
-    function toggleElements(elements, button) {
-        let isHidden = false;
+// --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
+document.addEventListener("DOMContentLoaded", function () {
+    const lawContent = document.getElementById("law-content");
+    const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
+    const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
+    const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
+    const printBlockedMessage = document.getElementById("print-blocked-message");
+    const goToNotesBtn = document.getElementById("go-to-notes-btn");
+    const notesSection = document.getElementById("notes-section");
+    const toggleNotesBtn = document.getElementById("toggle-notes-btn");
+    const notesContentArea = document.getElementById("notes-content-area");
+    const notesChevron = document.getElementById("notes-chevron");
+    const backToTopBtn = document.getElementById("back-to-top-btn");
+    const pageTop = document.getElementById("page-top");
+
+    // Seletores baseados nos estilos inline identificados
+    const commentSelector = 'p[style*="background-color: #f0fdf4"]';
+    const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
+    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
+    const hiddenClass = "conteudo-oculto"; // Nome da classe CSS para ocultar
+
+    // Estado inicial: conteúdo visível
+    let commentsVisible = true;
+    let jurisprudenceVisible = true;
+    let doutrinaVisible = true;
+
+    // Função para rolar suavemente até a seção de anotações
+    goToNotesBtn.addEventListener("click", function() {
+        // Rolar suavemente até a seção de anotações
+        notesSection.scrollIntoView({ behavior: 'smooth' });
         
-        elements.forEach(el => {
-            if (!el.classList.contains('conteudo-oculto')) {
-                el.classList.add('conteudo-oculto');
-                isHidden = true;
-            } else {
-                el.classList.remove('conteudo-oculto');
-            }
-        });
-        
-        if (isHidden) {
-            button.classList.add('active');
-            button.innerHTML = `<i class="fas fa-eye mr-1"></i> ${button.innerHTML.split('</i> ')[1].replace('Ocultar', 'Mostrar')}`;
-        } else {
-            button.classList.remove('active');
-            button.innerHTML = `<i class="fas fa-eye-slash mr-1"></i> ${button.innerHTML.split('</i> ')[1].replace('Mostrar', 'Ocultar')}`;
+        // Expandir a seção de anotações se estiver fechada
+        if (notesContentArea.classList.contains("hidden")) {
+            setTimeout(() => {
+                toggleNotesBtn.click();
+            }, 500); // Aguardar meio segundo após a rolagem para expandir
         }
-    }
-    
-    // Event listeners para os botões de toggle
-    if (toggleCommentsBtn) {
-        toggleCommentsBtn.addEventListener('click', function() {
-            toggleElements(comentarios, this);
-        });
-    }
-    
-    if (toggleJurisprudenceBtn) {
-        toggleJurisprudenceBtn.addEventListener('click', function() {
-            toggleElements(jurisprudencias, this);
-        });
-    }
-    
-    if (toggleDoutrinaBtn) {
-        toggleDoutrinaBtn.addEventListener('click', function() {
-            toggleElements(doutrinas, this);
-        });
-    }
-    
-    // Botão "Ir para minhas anotações"
-    const goToNotesBtn = document.getElementById('go-to-notes-btn');
-    const notesSection = document.getElementById('notes-section');
-    const toggleNotesBtn = document.getElementById('toggle-notes-btn');
-    const notesContentArea = document.getElementById('notes-content-area');
-    const notesChevron = document.getElementById('notes-chevron');
-    
-    if (goToNotesBtn && notesSection) {
-        goToNotesBtn.addEventListener('click', function() {
-            // Rolar até a seção de anotações
-            notesSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // Expandir a seção de anotações se estiver fechada
-            if (notesContentArea.classList.contains('hidden')) {
-                setTimeout(() => {
-                    notesContentArea.classList.remove('hidden');
-                    notesChevron.classList.add('transform', 'rotate-180');
-                    
-                    // Carregar as anotações do usuário se ainda não foram carregadas
-                    if (!notesLoaded) {
-                        loadUserNotes();
-                    }
-                }, 500); // Pequeno atraso para garantir que a rolagem termine primeiro
+    });
+
+    // Função para rolar suavemente até o topo da página
+    backToTopBtn.addEventListener("click", function() {
+        // Rolar suavemente até o topo da página
+        pageTop.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function toggleElementsVisibility(selector, makeVisible) {
+        const elements = lawContent.querySelectorAll(selector);
+        elements.forEach((el) => {
+            if (makeVisible) {
+                el.classList.remove(hiddenClass);
+            } else {
+                el.classList.add(hiddenClass);
             }
         });
     }
+
+    // Event listener para o botão de comentários
+    toggleCommentsBtn.addEventListener("click", function () {
+        commentsVisible = !commentsVisible; // Inverte o estado
+        toggleElementsVisibility(commentSelector, commentsVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
+        if (commentsVisible) {
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários';
+        } else {
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
+        }
+    });
+
+    // Event listener para o botão de jurisprudências
+    toggleJurisprudenceBtn.addEventListener("click", function () {
+        jurisprudenceVisible = !jurisprudenceVisible; // Inverte o estado
+        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
+        if (jurisprudenceVisible) {
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências';
+        } else {
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
+        }
+    });
+
+    // Event listener para o botão de doutrina
+    toggleDoutrinaBtn.addEventListener("click", function () {
+        doutrinaVisible = !doutrinaVisible; // Inverte o estado
+        toggleElementsVisibility(doutrinaSelector, doutrinaVisible); // Aplica o novo estado aos elementos
+
+        // Atualiza a aparência do botão
+        if (doutrinaVisible) {
+            this.classList.remove("active");
+            this.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina';
+        } else {
+            this.classList.add("active");
+            this.innerHTML = '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
+        }
+    });
+
+    // Variáveis para armazenar o conteúdo original
+    let originalBodyHTML = '';
+    let originalBodyOverflow = '';
     
-    // Botão "Voltar ao Topo"
-    const backToTopBtn = document.getElementById('back-to-top-btn');
-    const pageTop = document.getElementById('page-top');
+    // Proteção robusta contra impressão
+    window.addEventListener('beforeprint', function(e) {
+        // Mostrar alerta
+        alert('Impressão não permitida');
+        
+        // Salvar o estado original da página
+        originalBodyHTML = document.body.innerHTML;
+        originalBodyOverflow = document.body.style.overflow;
+        
+        // Ocultar todo o conteúdo da página
+        document.body.innerHTML = '';
+        document.body.style.overflow = 'hidden';
+        
+        // Adicionar mensagem de bloqueio
+        const blockMessage = document.createElement('div');
+        blockMessage.style.position = 'fixed';
+        blockMessage.style.top = '0';
+        blockMessage.style.left = '0';
+        blockMessage.style.width = '100%';
+        blockMessage.style.height = '100%';
+        blockMessage.style.backgroundColor = 'white';
+        blockMessage.style.zIndex = '9999';
+        blockMessage.style.display = 'flex';
+        blockMessage.style.alignItems = 'center';
+        blockMessage.style.justifyContent = 'center';
+        blockMessage.style.fontSize = '24px';
+        blockMessage.style.fontWeight = 'bold';
+        blockMessage.textContent = 'Impressão não permitida';
+        
+        document.body.appendChild(blockMessage);
+        
+        // Tentar cancelar o evento de impressão
+        try {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        } catch (error) {
+            console.log('Não foi possível cancelar o evento de impressão');
+        }
+        
+        return false;
+    });
     
-    if (backToTopBtn && pageTop) {
-        backToTopBtn.addEventListener('click', function() {
-            pageTop.scrollIntoView({ behavior: 'smooth' });
+    // Restaurar o conteúdo original após a tentativa de impressão
+    window.addEventListener('afterprint', function() {
+        // Restaurar o conteúdo original
+        if (originalBodyHTML) {
+            document.body.innerHTML = originalBodyHTML;
+            document.body.style.overflow = originalBodyOverflow;
+            
+            // Recarregar scripts e eventos
+            const scripts = document.body.getElementsByTagName('script');
+            for (let i = 0; i < scripts.length; i++) {
+                const script = scripts[i];
+                const scriptCopy = document.createElement('script');
+                scriptCopy.textContent = script.textContent;
+                script.parentNode.replaceChild(scriptCopy, script);
+            }
+            
+            // Como os eventos foram perdidos, recarregar a página
+            setTimeout(function() {
+                window.location.reload();
+            }, 100);
+        }
+    });
+    
+    // Método adicional para navegadores que não suportam os eventos acima
+    if (window.matchMedia) {
+        const mediaQueryList = window.matchMedia('print');
+        mediaQueryList.addEventListener('change', function(mql) {
+            if (mql.matches) {
+                // Entrando no modo de impressão
+                alert('Impressão não permitida');
+                
+                // Salvar o estado original
+                originalBodyHTML = document.body.innerHTML;
+                originalBodyOverflow = document.body.style.overflow;
+                
+                // Ocultar todo o conteúdo
+                document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:24px;font-weight:bold;">Impressão não permitida</div>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Saindo do modo de impressão
+                if (originalBodyHTML) {
+                    document.body.innerHTML = originalBodyHTML;
+                    document.body.style.overflow = originalBodyOverflow;
+                    
+                    // Recarregar a página para restaurar eventos
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 100);
+                }
+            }
         });
     }
     
@@ -789,27 +936,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para armazenar o estado de carregamento das anotações
     let notesLoaded = false;
     
-    // Variável para armazenar o token CSRF
-    let csrfToken = '';
-    
-    // Função para obter o token CSRF
-    function getCsrfToken() {
-        // Verificar se já temos o token armazenado
-        if (csrfToken) {
-            return csrfToken;
-        }
-        
-        // Tentar obter o token do elemento input
-        const csrfInput = document.querySelector('input[name="csrf_token"]');
-        if (csrfInput && csrfInput.value) {
-            csrfToken = csrfInput.value;
-            return csrfToken;
-        }
-        
-        // Se não encontrar, retornar vazio (a API deve lidar com isso)
-        return '';
-    }
-    
     // Função para alternar a visibilidade da área de anotações
     toggleNotesBtn.addEventListener("click", function() {
         const isHidden = notesContentArea.classList.contains("hidden");
@@ -905,14 +1031,11 @@ document.addEventListener('DOMContentLoaded', function() {
         saveNotesBtn.disabled = true;
         saveNotesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         
-        // Obter o token CSRF usando a nova função
-        const token = getCsrfToken();
-        
         fetch(`/student/law/${lawId}/notes`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': token
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
             },
             body: JSON.stringify({ content: content })
         })
