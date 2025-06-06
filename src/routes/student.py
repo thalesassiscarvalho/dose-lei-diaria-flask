@@ -6,6 +6,7 @@ from sqlalchemy import or_ # Import or_ for searching
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement # Added UserSeenAnnouncement 
 from src.models.law import Law, Subject # Import Subject
 from src.models.progress import UserProgress
+from src.models.notes import UserNotes # Importar o novo modelo de anotações
 import datetime
 import logging # Import logging
 
@@ -415,9 +416,6 @@ def save_last_read(law_id):
 
     return redirect(url_for('student.view_law', law_id=law_id))
 
-
-
-
 # --- API Endpoint for Marking Announcements as Seen ---
 @student_bp.route("/api/announcements/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
@@ -449,4 +447,47 @@ def mark_announcement_seen(announcement_id):
         db.session.rollback()
         logging.error(f"[ANNOUNCEMENT SEEN] Error marking announcement {announcement_id} as seen for user {current_user.id}: {e}")
         return jsonify(success=False, error="Erro ao marcar aviso como visto."), 500
+
+# --- NOVAS ROTAS PARA ANOTAÇÕES ---
+
+# Rota para obter as anotações do usuário para uma lei específica
+@student_bp.route("/law/<int:law_id>/notes", methods=["GET"])
+@login_required
+def get_user_notes(law_id):
+    """Retorna as anotações do usuário atual para uma lei específica."""
+    notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    
+    if notes:
+        return jsonify(success=True, content=notes.content)
+    else:
+        return jsonify(success=True, content="")
+
+# Rota para salvar ou atualizar as anotações do usuário para uma lei específica
+@student_bp.route("/law/<int:law_id>/notes", methods=["POST"])
+@login_required
+def save_user_notes(law_id):
+    """Salva ou atualiza as anotações do usuário atual para uma lei específica."""
+    content = request.json.get("content", "")
+    
+    notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    
+    if notes:
+        notes.content = content
+        notes.updated_at = datetime.datetime.utcnow()
+    else:
+        notes = UserNotes(
+            user_id=current_user.id,
+            law_id=law_id,
+            content=content
+        )
+        db.session.add(notes)
+    
+    try:
+        db.session.commit()
+        logging.info(f"[SAVE NOTES] Successfully saved notes for user {current_user.id}, law {law_id}")
+        return jsonify(success=True, message="Anotações salvas com sucesso!")
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[SAVE NOTES] Error saving notes for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error="Erro ao salvar anotações."), 500
 
