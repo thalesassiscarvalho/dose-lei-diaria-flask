@@ -631,26 +631,24 @@ document.addEventListener("DOMContentLoaded", function () {
         // Remover classe 'playing' de todos os botões
         neuralWaveButtons.forEach(button => {
             button.classList.remove('playing');
-            const icon = button.querySelector(\'i\');
-            if (icon) {
-                icon.className = getIconClassForWave(button.dataset.wave);
-            }
+            button.innerHTML = getIconForWave(button.dataset.wave);
         });
         
         activeButton = null;
         activeAudio = null;
     }
 
-    // Função para obter a CLASSE do ícone correto para cada tipo de onda
-    function getIconClassForWave(waveType) { // Renomeada para clareza
+    // Função para obter o ícone correto para cada tipo de onda
+    function getIconForWave(waveType) {
         const icons = {
-            'alpha': 'fas fa-brain',
-            'beta': 'fas fa-bolt',
-            'theta': 'fas fa-moon',
-            'classical': 'fas fa-music',
-            'white-noise': 'fas fa-volume-up'
+            'alpha': '<i class="fas fa-brain"></i>',
+            'beta': '<i class="fas fa-bolt"></i>',
+            'theta': '<i class="fas fa-moon"></i>',
+            'classical': '<i class="fas fa-music"></i>',
+            'white-noise': '<i class="fas fa-volume-up"></i>'
         };
-        return icons[waveType] || 'fas fa-brain'; // Retorna apenas as classes
+        
+        return icons[waveType] || '<i class="fas fa-brain"></i>';
     }
 
     // Adicionar event listeners para cada botão
@@ -675,8 +673,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(() => {
                         // Áudio iniciado com sucesso
                         this.classList.add('playing');
-                        const icon = this.querySelector(\'i\');
-                        if (icon) { icon.className = \'fas fa-pause\'; }                       activeButton = this;
+                        this.innerHTML = '<i class="fas fa-pause"></i>';
+                        activeButton = this;
                         activeAudio = audio;
                     })
                     .catch(error => {
@@ -709,9 +707,10 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
             if (activeAudio.paused) {
                 activeAudio.play();
-                const icon = activeButton.querySelector(\'i\'); if (icon) { icon.className = \'fas fa-pause\'; }           } else {
+                activeButton.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
                 activeAudio.pause();
-                const icon = activeButton.querySelector(\'i\'); if (icon) { icon.className = getIconClassForWave(activeButton.dataset.wave); }
+                activeButton.innerHTML = getIconForWave(activeButton.dataset.wave);
             }
         }
     });
