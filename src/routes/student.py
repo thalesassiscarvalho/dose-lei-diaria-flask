@@ -316,141 +316,82 @@ def mark_complete(law_id):
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
-@student_bp.route("/law/review/<int:law_id>", methods=["POST"])
-@login_required
-def review_law(law_id):
-    progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    now = datetime.datetime.utcnow() # Definir 'now' aqui
-
-    if progress:
-        law_title = progress.law.title
-        logging.debug(f"[REVIEW LAW] User {current_user.id} reviewing law {law_id}. Current status: {progress.status}")
-        
-        progress.status = 'em_andamento' 
-        progress.completed_at = None 
-        progress.last_accessed_at = now # Atualiza last_accessed_at ao revisar
-        # --- LOG ADICIONADO --- 
-        logging.debug(f"[REVIEW LAW DEBUG] Setting status to 'em_andamento' and LastAccessed for Law {law_id} to: {now}")
-        
-        try:
-            db.session.commit()
-            # --- LOG ADICIONADO --- 
-            logging.debug(f"[REVIEW LAW DEBUG] Committed progress update for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
-            logging.info(f"[REVIEW LAW] Successfully committed review status for user {current_user.id}, law {law_id}.")
-            flash(f"O status de conclusão da lei \"{law_title}\" foi resetado. A lei está agora 'Em andamento'.", "info")
-        except Exception as e:
-            db.session.rollback()
-            logging.error(f"[REVIEW LAW] Error committing review status for user {current_user.id}, law {law_id}: {e}")
-            flash(f"Erro ao resetar status: {e}", "danger")
-    else:
-        logging.warning(f"[REVIEW LAW] Progress record not found for user {current_user.id}, law {law_id}.")
-        flash("Não foi possível encontrar o registro de progresso para esta lei.", "warning")
-
-    search_query = request.args.get("search")
-    subject_id = request.args.get("subject_id")
-    status_filter = request.args.get("status_filter")
-    show_favorites_val = request.args.get("show_favorites") # Get the value ('on' or None)
-
-    redirect_url = url_for("student.dashboard", 
-                           search=search_query, 
-                           subject_id=subject_id, 
-                           status_filter=status_filter,
-                           show_favorites=show_favorites_val # Pass the value directly
-                           )
-    return redirect(redirect_url)
-
-@student_bp.route("/law/save_last_read/<int:law_id>", methods=["POST"])
+# --- NOVA ROTA: Salvar onde parou via AJAX ---
+@student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
 def save_last_read(law_id):
-    """Saves the last read article number for a given law and user."""
-    last_article = request.form.get("last_article")
-    logging.debug(f"[SAVE LAST READ] User {current_user.id}, Law {law_id}, Article: '{last_article}'")
+    """Salva o ponto onde o usuário parou de ler via AJAX."""
+    law = Law.query.get_or_404(law_id)
+    last_read_article = request.form.get("last_read_article", "").strip()
+    
+    if not last_read_article:
+        return jsonify(success=False, error="Campo obrigatório não preenchido"), 400
     
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    is_new_progress = not progress
-    now = datetime.datetime.utcnow() # Definir 'now' aqui
-
-    if is_new_progress:
-        logging.debug(f"[SAVE LAST READ] No progress found. Creating new record.")
-        initial_status = 'em_andamento' if last_article else 'nao_iniciado'
+    now = datetime.datetime.utcnow()
+    
+    if not progress:
         progress = UserProgress(
             user_id=current_user.id,
             law_id=law_id,
-            completed_at=None,
-            status=initial_status,
-            last_read_article=last_article if last_article else None,
-            last_accessed_at=now # Define last_accessed_at na criação
+            status='em_andamento',  # Marcar como em andamento ao salvar onde parou
+            last_accessed_at=now,
+            last_read_article=last_read_article
         )
         db.session.add(progress)
-        # --- LOG ADICIONADO --- 
-        logging.debug(f"[SAVE LAST READ DEBUG] New progress created with status: {initial_status}, article: {progress.last_read_article}, LastAccessed: {now}")
+        logging.debug(f"[SAVE LAST READ] Creating new progress for user {current_user.id}, law {law_id}, article: {last_read_article}")
     else:
-        logging.debug(f"[SAVE LAST READ] Progress found. Current status: {progress.status}")
-        progress.last_read_article = last_article if last_article else None
-        progress.last_accessed_at = now # Atualiza last_accessed_at ao salvar
-        # --- LOG ADICIONADO --- 
-        logging.debug(f"[SAVE LAST READ DEBUG] Updating existing progress LastAccessed for Law {law_id} to: {now}")
-
-        if progress.status == 'nao_iniciado':
-            if last_article:
-                progress.status = 'em_andamento'
-                logging.debug(f"[SAVE LAST READ] Status changed from 'nao_iniciado' to 'em_andamento'.")
-        elif progress.status == 'em_andamento':
-            pass 
-        elif progress.status == 'concluido':
-             logging.debug(f"[SAVE LAST READ] Status is 'concluido', not changing status.")
-
-    if progress.status != 'concluido':
-        progress.completed_at = None 
-
+        progress.last_read_article = last_read_article
+        progress.last_accessed_at = now
+        
+        # Se não estiver concluído, marcar como em andamento
+        if progress.status != 'concluido':
+            progress.status = 'em_andamento'
+            
+        logging.debug(f"[SAVE LAST READ] Updating progress for user {current_user.id}, law {law_id}, article: {last_read_article}")
+    
     try:
         db.session.commit()
-        # --- LOG ADICIONADO --- 
-        logging.debug(f"[SAVE LAST READ DEBUG] Committed progress update for Law {law_id}. Progress ID: {progress.id}, New LastAccessed: {progress.last_accessed_at}")
-        logging.info(f"[SAVE LAST READ] Successfully committed progress for user {current_user.id}, law {law_id}. New status: {progress.status}")
-        flash("Posição salva com sucesso!", "success") # Flash success message
+        logging.info(f"[SAVE LAST READ] Successfully saved last read article for user {current_user.id}, law {law_id}: {last_read_article}")
+        return jsonify(success=True, message="Ponto de leitura salvo com sucesso!")
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[SAVE LAST READ] Error committing progress for user {current_user.id}, law {law_id}: {e}")
-        flash(f"Erro ao salvar posição: {e}", "danger") # Flash error message instead of returning JSON error directly for form submission
+        logging.error(f"[SAVE LAST READ] Error saving last read article for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error=str(e)), 500
+# --- FIM NOVA ROTA ---
 
-    return redirect(url_for('student.view_law', law_id=law_id))
-
-# --- API Endpoint for Marking Announcements as Seen ---
-@student_bp.route("/api/announcements/<int:announcement_id>/mark_seen", methods=["POST"])
+@student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
+    """Mark an announcement as seen by the current user."""
     announcement = Announcement.query.get_or_404(announcement_id)
-
-    # Ensure the announcement is not fixed
-    if announcement.is_fixed:
-        return jsonify(success=False, error="Avisos fixos não podem ser marcados como vistos."), 400
-
+    
     # Check if already marked as seen
-    existing_seen = UserSeenAnnouncement.query.filter_by(
+    existing = UserSeenAnnouncement.query.filter_by(
         user_id=current_user.id, 
         announcement_id=announcement_id
     ).first()
-
-    if existing_seen:
-        # Already marked, maybe just return success or a specific code
-        return jsonify(success=True, message="Aviso já estava marcado como visto.")
-
-    # Mark as seen
-    try:
-        seen_record = UserSeenAnnouncement(user_id=current_user.id, announcement_id=announcement_id)
+    
+    if not existing:
+        seen_record = UserSeenAnnouncement(
+            user_id=current_user.id,
+            announcement_id=announcement_id
+        )
         db.session.add(seen_record)
-        db.session.commit()
-        logging.info(f"[ANNOUNCEMENT SEEN] User {current_user.id} marked announcement {announcement_id} as seen.")
+        
+        try:
+            db.session.commit()
+            logging.info(f"[ANNOUNCEMENT] User {current_user.id} marked announcement {announcement_id} as seen.")
+            return jsonify(success=True)
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"[ANNOUNCEMENT] Error marking announcement {announcement_id} as seen for user {current_user.id}: {e}")
+            return jsonify(success=False, error=str(e)), 500
+    else:
+        # Already marked as seen, just return success
         return jsonify(success=True)
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"[ANNOUNCEMENT SEEN] Error marking announcement {announcement_id} as seen for user {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro ao marcar aviso como visto."), 500
 
-# --- NOVAS ROTAS PARA ANOTAÇÕES ---
-
-# Rota para obter as anotações do usuário para uma lei específica
+# --- Rotas para as anotações do usuário ---
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET"])
 @login_required
 def get_user_notes(law_id):
@@ -462,7 +403,6 @@ def get_user_notes(law_id):
     else:
         return jsonify(success=True, content="")
 
-# Rota para salvar ou atualizar as anotações do usuário para uma lei específica
 @student_bp.route("/law/<int:law_id>/notes", methods=["POST"])
 @login_required
 def save_user_notes(law_id):
