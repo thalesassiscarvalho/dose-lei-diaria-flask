@@ -283,6 +283,72 @@
         }
     }
     /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+
+    /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES */
+    .notes-toolbar {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .format-btn {
+        background-color: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 0.25rem;
+        padding: 6px 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .format-btn:hover {
+        background-color: #e5e7eb;
+    }
+
+    .format-btn.active {
+        background-color: #dbeafe;
+        border-color: #93c5fd;
+    }
+
+    .format-btn i {
+        font-size: 14px;
+    }
+
+    .notes-editor {
+        min-height: 200px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 12px;
+        background-color: white;
+        overflow-y: auto;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .notes-editor:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+    }
+
+    /* Estilos para o conteúdo formatado */
+    .notes-editor strong {
+        font-weight: bold;
+    }
+
+    .notes-editor em {
+        font-style: italic;
+    }
+
+    .notes-editor .highlight {
+        background-color: #fef08a; /* Amarelo claro */
+        padding: 0 2px;
+    }
+    /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES */
 </style>
 {% endblock %}
 
@@ -380,10 +446,25 @@
         </div>
         
         <div class="notes-content p-4 border-t border-blue-100 hidden" id="notes-content-area">
-            <textarea 
-                id="user-notes" 
-                class="w-full h-40 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Escreva suas anotações sobre esta lei aqui..."></textarea>
+            <!-- Barra de ferramentas de formatação -->
+            <div class="notes-toolbar">
+                <button type="button" class="format-btn" id="bold-btn" title="Negrito">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button type="button" class="format-btn" id="italic-btn" title="Itálico">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button type="button" class="format-btn" id="highlight-btn" title="Marca-texto">
+                    <i class="fas fa-highlighter"></i>
+                </button>
+            </div>
+            
+            <!-- Editor de conteúdo -->
+            <div 
+                id="notes-editor" 
+                class="notes-editor" 
+                contenteditable="true"
+                placeholder="Escreva suas anotações sobre esta lei aqui..."></div>
             
             <div class="mt-3 flex justify-end">
                 <button 
@@ -751,8 +832,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleNotesBtn = document.getElementById("toggle-notes-btn");
     const notesContentArea = document.getElementById("notes-content-area");
     const notesChevron = document.getElementById("notes-chevron");
-    const userNotesTextarea = document.getElementById("user-notes");
+    const notesEditor = document.getElementById("notes-editor");
     const saveNotesBtn = document.getElementById("save-notes-btn");
+    
+    // Botões de formatação
+    const boldBtn = document.getElementById("bold-btn");
+    const italicBtn = document.getElementById("italic-btn");
+    const highlightBtn = document.getElementById("highlight-btn");
     
     // Variável para armazenar o estado de carregamento das anotações
     let notesLoaded = false;
@@ -775,6 +861,55 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
+    // Função para aplicar formatação ao texto selecionado
+    function formatText(command, value = null) {
+        document.execCommand(command, false, value);
+        notesEditor.focus();
+    }
+    
+    // Event listeners para os botões de formatação
+    boldBtn.addEventListener("click", function() {
+        formatText('bold');
+        this.classList.toggle('active');
+    });
+    
+    italicBtn.addEventListener("click", function() {
+        formatText('italic');
+        this.classList.toggle('active');
+    });
+    
+    highlightBtn.addEventListener("click", function() {
+        // Para marca-texto, precisamos verificar se já existe a classe highlight
+        const selection = window.getSelection();
+        
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString();
+            
+            if (selectedText.length > 0) {
+                // Verificar se o texto já está destacado
+                const parentElement = selection.anchorNode.parentElement;
+                
+                if (parentElement.classList && parentElement.classList.contains('highlight')) {
+                    // Se já estiver destacado, remover o destaque
+                    const textNode = document.createTextNode(selectedText);
+                    range.deleteContents();
+                    range.insertNode(textNode);
+                } else {
+                    // Se não estiver destacado, adicionar o destaque
+                    const span = document.createElement('span');
+                    span.className = 'highlight';
+                    span.textContent = selectedText;
+                    range.deleteContents();
+                    range.insertNode(span);
+                }
+            }
+        }
+        
+        this.classList.toggle('active');
+        notesEditor.focus();
+    });
+    
     // Função para carregar as anotações do usuário
     function loadUserNotes() {
         const lawId = window.location.pathname.split('/').pop();
@@ -783,7 +918,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    userNotesTextarea.value = data.content;
+                    notesEditor.innerHTML = data.content;
                     notesLoaded = true;
                 } else {
                     console.error("Erro ao carregar anotações:", data.error);
@@ -797,7 +932,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Função para salvar as anotações do usuário
     saveNotesBtn.addEventListener("click", function() {
         const lawId = window.location.pathname.split('/').pop();
-        const content = userNotesTextarea.value;
+        const content = notesEditor.innerHTML;
         
         // Desabilitar o botão durante o salvamento
         saveNotesBtn.disabled = true;
@@ -845,6 +980,19 @@ document.addEventListener("DOMContentLoaded", function () {
             saveNotesBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro ao salvar';
             saveNotesBtn.disabled = false;
         });
+    });
+    
+    // Adicionar placeholder ao editor quando estiver vazio
+    notesEditor.addEventListener('focus', function() {
+        if (this.innerHTML.trim() === '') {
+            this.innerHTML = '';
+        }
+    });
+    
+    notesEditor.addEventListener('blur', function() {
+        if (this.innerHTML.trim() === '') {
+            this.innerHTML = '';
+        }
     });
 });
 </script>
