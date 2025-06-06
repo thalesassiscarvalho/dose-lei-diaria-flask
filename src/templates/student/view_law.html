@@ -369,11 +369,46 @@
     .go-to-notes-btn:hover {
         background-color: #7c3aed; /* Tailwind purple-600 */
     }
+
+    /* Estilo para o botão "Voltar ao Topo" */
+    .back-to-top-btn {
+        background-color: #3b82f6; /* Tailwind blue-500 */
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .back-to-top-btn:hover {
+        background-color: #2563eb; /* Tailwind blue-600 */
+    }
+
+    @media (max-width: 640px) {
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .back-to-top-btn {
+            margin-left: 0;
+            margin-top: 1rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+<div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
     <a href="{{ url_for('student.dashboard') }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
         <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Voltar ao Painel
@@ -521,14 +556,24 @@
     </form>
 </div>
 
-<!-- Mark as Complete Button -->
-<div class="mt-8 text-center">
-    <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST">
+<!-- Mark as Complete Button and Back to Top Button -->
+<div class="mt-8 text-center action-buttons sm:flex sm:justify-center sm:items-center">
+    <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="POST" class="inline-block">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg shadow-md">
             <i class="fas fa-check mr-2"></i> Marcar como Concluído
         </button>
     </form>
+    <button id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
+</div>
+{% else %}
+<!-- Only Back to Top Button when already completed -->
+<div class="mt-8 text-center">
+    <button id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
 </div>
 {% endif %}
 
@@ -569,6 +614,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleNotesBtn = document.getElementById("toggle-notes-btn");
     const notesContentArea = document.getElementById("notes-content-area");
     const notesChevron = document.getElementById("notes-chevron");
+    const backToTopBtn = document.getElementById("back-to-top-btn");
+    const pageTop = document.getElementById("page-top");
 
     // Seletores baseados nos estilos inline identificados
     const commentSelector = 'p[style*="background-color: #f0fdf4"]';
@@ -592,6 +639,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 toggleNotesBtn.click();
             }, 500); // Aguardar meio segundo após a rolagem para expandir
         }
+    });
+
+    // Função para rolar suavemente até o topo da página
+    backToTopBtn.addEventListener("click", function() {
+        // Rolar suavemente até o topo da página
+        pageTop.scrollIntoView({ behavior: 'smooth' });
     });
 
     function toggleElementsVisibility(selector, makeVisible) {
