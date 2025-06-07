@@ -4,524 +4,91 @@
 
 {% block head_extra %}
 <style>
-    /* Specific styles from the original formatting */
-    .law-card {
-        transition: all 0.3s ease;
-        background-color: #FFFFFF; /* White background for cards */
-        border: 1px solid #dbeafe; /* Light blue border */
-        color: #374151; /* Darker gray text */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 170px;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Lighter shadow */
-        position: relative; /* <<< ADICIONADO: Necessário para posicionar o botão de favorito */
-    }
-    .law-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); /* Blue shadow */
-        border-color: #93c5fd; /* Lighter blue border on hover */
-    }
-    .progress-bar-container {
-        height: 10px;
-        border-radius: 5px;
-        background-color: #dbeafe; /* Light blue background */
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 5px;
-        background-color: #2563eb; /* Medium Blue fill */
-        transition: width 0.5s ease;
-    }
-    .completed-badge {
-        background-color: #D1FAE5; /* Light green */
-        color: #065F46; /* Dark green text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
-        flex-shrink: 0; /* Evita que o badge encolha */
-    }
-    .in-progress-badge {
-        background-color: #DBEAFE; /* Light blue */
-        color: #1E40AF; /* Dark blue text */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        margin-left: auto;
-        flex-shrink: 0; /* Evita que o badge encolha */
-    }
-    .action-button {
-        background-color: #2563eb; /* brand-blue */
-        color: white;
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        text-align: center;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .action-button:hover {
-        background-color: #1d4ed8; /* brand-blue-dark */
-    }
-    .review-button {
-        background-color: #D1D5DB; /* Gray 300 */
-        color: #4B5563; /* Gray 600 */
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 5px;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        align-self: center; /* Alinha verticalmente com o botão principal */
-    }
-    .review-button:hover {
-        background-color: #9CA3AF; /* Gray 400 */
-    }
-    .card-content {
-        flex-grow: 1;
-    }
-    .card-actions {
-        margin-top: auto;
-        padding-top: 1rem;
-    }
-    .achievement-badge {
-        display: inline-flex;
-        align-items: center;
-        background-color: #FEF3C7; /* Light Yellow */
-        color: #92400E; /* Dark Yellow/Brown */
-        font-size: 0.8rem;
-        padding: 0.3rem 0.7rem;
-        border-radius: 15px;
-        font-weight: 500;
-        border: 1px solid #FDE68A; /* Slightly darker yellow border */
-    }
-    .achievement-badge i {
-        margin-right: 0.4rem;
-        color: #D97706; /* Amber 600 */
-    }
-
-    /* --- ADICIONADO: Estilos para o botão de Favorito --- */
-    .favorite-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.25rem;
-        color: #d1d5db; /* Cinza claro por padrão (não favorito) */
-        font-size: 1.25rem; /* Tamanho do ícone */
-        transition: color 0.2s ease, transform 0.2s ease;
-        position: absolute; /* Posicionamento no card */
-        top: 0.75rem;
-        right: 0.75rem;
-        z-index: 10; /* Garante que fique sobre outros elementos se necessário */
-    }
-    .favorite-btn:hover {
-        transform: scale(1.1);
-    }
-    .favorite-btn.favorited {
-        color: #facc15; /* Amarelo/Dourado para favorito */
-    }
-    .favorite-btn i {
-        display: block; /* Garante que o ícone se comporte como bloco */
-    }
-    /* --- FIM ADICIONADO --- */
-
-    /* --- ADICIONADO: Estilo para o checkbox de favoritos --- */
-    .favorite-filter-label {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        font-size: 0.875rem;
-        color: #374151;
-    }
-    .favorite-filter-label input[type="checkbox"] {
-        margin-right: 0.5rem;
-        cursor: pointer;
-        accent-color: #2563eb; /* Cor do checkbox quando marcado */
-    }
-    /* --- FIM ADICIONADO --- */
-
-    /* Estilos para o conteúdo HTML rico nos anúncios */
-    .rich-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 0.375rem;
-        margin: 0.5rem 0;
-    }
-    .rich-content a {
-        color: #2563eb;
-        text-decoration: underline;
-    }
-    .rich-content a:hover {
-        color: #1d4ed8;
-    }
-    .rich-content ul, .rich-content ol {
-        margin-left: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .rich-content blockquote {
-        border-left: 4px solid #e5e7eb;
-        padding-left: 1rem;
-        margin: 0.5rem 0;
-        color: #4b5563;
-    }
-
-    /* INÍCIO DOS NOVOS ESTILOS PARA AVISOS */
-    /* Estilos gerais para todos os tipos de avisos */
-    .announcement-container {
-        margin-bottom: 2rem;
-        transition: all 0.3s ease;
-    }
-
-    /* Estilos para avisos fixos (importantes) - VERDE */
-    .fixed-announcement-box {
-        background-color: #ECFDF5; /* Verde muito claro */
-        border: 1px solid #A7F3D0; /* Verde claro */
-        border-left: 4px solid #10B981; /* Verde médio */
-        color: #064E3B; /* Verde escuro - mantendo a cor original do texto */
-        padding: 1.25rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .fixed-announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        color: #065F46; /* Verde escuro para o título */
-    }
-
-    .fixed-announcement-box h2 i {
-        margin-right: 0.75rem;
-        color: #10B981; /* Verde médio para o ícone */
-        font-size: 1.25rem;
-    }
-
-    .fixed-announcement-item {
-        padding: 0.75rem 0;
-        border-top: 1px dashed rgba(167, 243, 208, 0.7); /* Verde claro transparente */
-        transition: all 0.3s ease;
-    }
-
-    .fixed-announcement-item:first-child {
-        border-top: none;
-        padding-top: 0;
-    }
-
-    .fixed-announcement-item:last-child {
-        padding-bottom: 0;
-    }
-
-    /* Estilos para avisos não fixos (recentes) */
-    .announcement-box {
-        background-color: #FEF9C3; /* Amarelo claro original */
-        border: 1px solid #FDE68A; /* Amarelo original */
-        border-left: 4px solid #F59E0B; /* Âmbar original */
-        color: #92400E; /* Cor do texto original */
-        padding: 1.25rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .announcement-box h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        color: #92400E; /* Cor original */
-    }
-
-    .announcement-box h2 i {
-        margin-right: 0.75rem;
-        color: #F59E0B; /* Cor original */
-        font-size: 1.25rem;
-    }
-
-    .non-fixed-announcement-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem; /* Espaçamento original */
-        padding: 0.75rem 0;
-        border-top: 1px dashed rgba(252, 211, 77, 0.7); /* Amarelo claro transparente */
-        transition: all 0.3s ease;
-    }
-
-    .non-fixed-announcement-item:first-child {
-        border-top: none;
-        padding-top: 0;
-    }
-
-    .non-fixed-announcement-item:last-child {
-        padding-bottom: 0;
-    }
-
-    .non-fixed-announcement-item .announcement-content {
-        flex-grow: 1;
-    }
-
-    /* Estilização personalizada para o checkbox */
-    .mark-seen-checkbox-container {
-        position: relative;
-        min-width: 1.5rem;
-        height: 1.5rem;
-        margin-top: 0.2rem; /* Alinhamento original */
-    }
-
-    .mark-seen-checkbox {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-        height: 0;
-        width: 0;
-    }
-
-    .checkmark {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 1.5rem;
-        width: 1.5rem;
-        background-color: #FEF9C3; /* Fundo amarelo claro original */
-        border: 2px solid #F59E0B; /* Borda âmbar original */
-        border-radius: 4px;
-        transition: all 0.2s ease;
-    }
-
-    .mark-seen-checkbox:hover ~ .checkmark {
-        background-color: #FDE68A; /* Amarelo original */
-    }
-
-    .mark-seen-checkbox:checked ~ .checkmark {
-        background-color: #F59E0B; /* Âmbar original */
-        border-color: #D97706; /* Âmbar escuro original */
-    }
-
-    .checkmark:after {
-        content: "";
-        position: absolute;
-        display: none;
-    }
-
-    .mark-seen-checkbox:checked ~ .checkmark:after {
-        display: block;
-    }
-
-    .mark-seen-checkbox-container .checkmark:after {
-        left: 0.45rem;
-        top: 0.2rem;
-        width: 0.35rem;
-        height: 0.7rem;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-
-    /* Tooltip para o checkbox */
-    .mark-seen-checkbox-container .tooltip {
-        visibility: hidden;
-        width: 120px;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%;
-        left: 50%;
-        margin-left: -60px;
-        opacity: 0;
-        transition: opacity 0.3s;
-        font-size: 0.75rem;
-    }
-
-    .mark-seen-checkbox-container:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    /* Animações para interações */
-    @keyframes fadeOut {
-        from { opacity: 1; height: auto; margin-top: inherit; margin-bottom: inherit; padding-top: inherit; padding-bottom: inherit; }
-        to { opacity: 0; height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
-    }
-
-    .fade-out {
-        animation: fadeOut 0.5s ease forwards;
-        overflow: hidden;
-    }
-
-    /* Estilo para o bloco de "Continuar de onde parou" */
-    .continue-block {
-        background-color: #EFF6FF; /* Azul claro original */
-        border: 1px solid #BFDBFE; /* Azul claro original */
-        border-left: 4px solid #3B82F6; /* Azul médio original */
-        color: #1E40AF; /* Azul escuro original */
-        padding: 1.25rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
-        transition: all 0.3s ease;
-    }
-
-    .continue-block:hover {
-        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
-        transform: translateY(-2px);
-    }
-
-    .continue-block h3 {
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        color: #1E40AF; /* Azul escuro original */
-    }
-
-    .continue-block h3 i {
-        margin-right: 0.5rem;
-        color: #3B82F6; /* Azul médio original */
-    }
-
-    .continue-block a {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #1E3A8A; /* Azul escuro original */
-        text-decoration: none;
-        transition: all 0.2s ease;
-        display: block;
-    }
-
-    .continue-block a:hover {
-        color: #3B82F6; /* Azul médio original */
-        text-decoration: underline;
-    }
-
-    /* Responsividade */
-    @media (max-width: 768px) {
-        .fixed-announcement-box,
-        .announcement-box {
-            padding: 1rem;
-        }
-        
-        .non-fixed-announcement-item {
-            gap: 0.75rem;
-        }
-        
-        .fixed-announcement-box h2,
-        .announcement-box h2 {
-            font-size: 1.1rem;
-        }
-    }
-    /* FIM DOS NOVOS ESTILOS PARA AVISOS */
-
+    /* Estilos Base e de Componentes do seu arquivo original */
+    .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
+    .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
+    .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 5px; background-color: #2563eb; transition: width 0.5s ease; }
+    .completed-badge { background-color: #D1FAE5; color: #065F46; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+    .in-progress-badge { background-color: #DBEAFE; color: #1E40AF; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+    .action-button { background-color: #2563eb; color: white; font-size: 0.875rem; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.2s ease; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+    .action-button:hover { background-color: #1d4ed8; }
+    .review-button { background-color: #D1D5DB; color: #4B5563; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s ease; align-self: center; }
+    .review-button:hover { background-color: #9CA3AF; }
+    .card-content { flex-grow: 1; }
+    .card-actions { margin-top: auto; padding-top: 1rem; }
+    .achievement-badge { display: inline-flex; align-items: center; background-color: #FEF3C7; color: #92400E; font-size: 0.8rem; padding: 0.3rem 0.7rem; border-radius: 15px; font-weight: 500; border: 1px solid #FDE68A; }
+    .achievement-badge i { margin-right: 0.4rem; color: #D97706; }
+    .favorite-btn { background: none; border: none; cursor: pointer; padding: 0.25rem; color: #d1d5db; font-size: 1.25rem; transition: color 0.2s ease, transform 0.2s ease; position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; }
+    .favorite-btn:hover { transform: scale(1.1); }
+    .favorite-btn.favorited { color: #facc15; }
+    .favorite-btn i { display: block; }
+    .rich-content img { max-width: 100%; height: auto; border-radius: 0.375rem; margin: 0.5rem 0; }
+    .rich-content a { color: #2563eb; text-decoration: underline; }
+    .rich-content a:hover { color: #1d4ed8; }
+    .rich-content ul, .rich-content ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
+    .rich-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin: 0.5rem 0; color: #4b5563; }
+    .announcement-container { margin-bottom: 2rem; transition: all 0.3s ease; }
+    .fixed-announcement-box { background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #10B981; color: #064E3B; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06); position: relative; overflow: hidden; }
+    .fixed-announcement-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; color: #065F46; }
+    .fixed-announcement-box h2 i { margin-right: 0.75rem; color: #10B981; font-size: 1.25rem; }
+    .fixed-announcement-item { padding: 0.75rem 0; border-top: 1px dashed rgba(167, 243, 208, 0.7); transition: all 0.3s ease; }
+    .fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
+    .fixed-announcement-item:last-child { padding-bottom: 0; }
+    .announcement-box { background-color: #FEF9C3; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; color: #92400E; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06); position: relative; overflow: hidden; transition: all 0.3s ease; }
+    .announcement-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; color: #92400E; }
+    .announcement-box h2 i { margin-right: 0.75rem; color: #F59E0B; font-size: 1.25rem; }
+    .non-fixed-announcement-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-top: 1px dashed rgba(252, 211, 77, 0.7); transition: all 0.3s ease; }
+    .non-fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
+    .non-fixed-announcement-item:last-child { padding-bottom: 0; }
+    .non-fixed-announcement-item .announcement-content { flex-grow: 1; }
+    .mark-seen-checkbox-container { position: relative; min-width: 1.5rem; height: 1.5rem; margin-top: 0.2rem; }
+    .mark-seen-checkbox { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+    .checkmark { position: absolute; top: 0; left: 0; height: 1.5rem; width: 1.5rem; background-color: #FEF9C3; border: 2px solid #F59E0B; border-radius: 4px; transition: all 0.2s ease; }
+    .mark-seen-checkbox:hover ~ .checkmark { background-color: #FDE68A; }
+    .mark-seen-checkbox:checked ~ .checkmark { background-color: #F59E0B; border-color: #D97706; }
+    .checkmark:after { content: ""; position: absolute; display: none; }
+    .mark-seen-checkbox:checked ~ .checkmark:after { display: block; }
+    .mark-seen-checkbox-container .checkmark:after { left: 0.45rem; top: 0.2rem; width: 0.35rem; height: 0.7rem; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .mark-seen-checkbox-container .tooltip { visibility: hidden; width: 120px; background-color: rgba(0, 0, 0, 0.8); color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; }
+    .mark-seen-checkbox-container:hover .tooltip { visibility: visible; opacity: 1; }
+    @keyframes fadeOut { from { opacity: 1; height: auto; margin-top: inherit; margin-bottom: inherit; padding-top: inherit; padding-bottom: inherit; } to { opacity: 0; height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; } }
+    .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
+    .continue-block { background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #3B82F6; color: #1E40AF; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06); transition: all 0.3s ease; }
+    .continue-block:hover { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05); transform: translateY(-2px); }
+    .continue-block h3 { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; display: flex; align-items: center; color: #1E40AF; }
+    .continue-block h3 i { margin-right: 0.5rem; color: #3B82F6; }
+    .continue-block a { font-size: 1.125rem; font-weight: 600; color: #1E3A8A; text-decoration: none; transition: all 0.2s ease; display: block; }
+    .continue-block a:hover { color: #3B82F6; text-decoration: underline; }
+    
     /* --- INÍCIO: NOVOS ESTILOS PARA PAINÉIS DE ESTATÍSTICAS --- */
-    .stat-card {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb; /* Borda cinza clara */
-        border-radius: 0.75rem; /* Bordas mais arredondadas */
-        padding: 1.5rem; /* 24px */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease-in-out;
-        display: flex;
-        flex-direction: column;
-        height: 100%; /* Garante que cards na mesma linha tenham a mesma altura */
-    }
+    .stat-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.05); transition: all 0.3s ease-in-out; display: flex; flex-direction: column; height: 100%; }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.06); border-color: #60a5fa; }
+    .stat-card-title { display: flex; align-items: center; font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
+    .stat-card-title i { margin-right: 0.75rem; font-size: 1.25rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .progress-card .stat-card-title i { color: #3b82f6; background-color: #eff6ff; }
+    .points-card { text-align: center; justify-content: center; background: linear-gradient(145deg, #fffbeb, #fefce8); border-color: #fde68a; }
+    .points-card .stat-card-title { justify-content: center; }
+    .points-card .stat-card-title i { color: #f59e0b; background-color: #ffffff; }
+    .points-display { font-size: 2.75rem; font-weight: 800; color: #d97706; line-height: 1; margin-top: 0.5rem; }
+    .achievements-card .stat-card-title i { color: #8b5cf6; background-color: #f5f3ff; }
+    .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+    .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
-        border-color: #60a5fa; /* Borda azul ao passar o mouse */
+    /* --- INÍCIO: ESTILOS PROFISSIONAIS PARA FILTROS --- */
+    .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
+    .filter-label { display: flex; align-items: center; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
+    .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; }
+    .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    .custom-input::placeholder { color: #94a3b8; }
+    .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    select.custom-input { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+    
+    @media (max-width: 768px) {
+        .fixed-announcement-box, .announcement-box { padding: 1rem; }
+        .non-fixed-announcement-item { gap: 0.75rem; }
+        .fixed-announcement-box h2, .announcement-box h2 { font-size: 1.1rem; }
     }
-
-    .stat-card-title {
-        display: flex;
-        align-items: center;
-        font-size: 1.125rem; /* 18px */
-        font-weight: 600;
-        color: #1f2937; /* Cinza escuro */
-        margin-bottom: 1rem;
-    }
-
-    .stat-card-title i {
-        margin-right: 0.75rem;
-        font-size: 1.25rem; /* 20px */
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-    }
-
-    /* Específico para "Meu Progresso" */
-    .progress-card .stat-card-title i {
-        color: #3b82f6; /* Azul */
-        background-color: #eff6ff; /* Azul bem claro */
-    }
-
-    /* Específico para "Meus Pontos" */
-    .points-card {
-        text-align: center;
-        justify-content: center;
-        background: linear-gradient(145deg, #fffbeb, #fefce8);
-        border-color: #fde68a;
-    }
-    .points-card .stat-card-title {
-        justify-content: center; /* Centralizar o título */
-    }
-    .points-card .stat-card-title i {
-        color: #f59e0b; /* Ambar */
-        background-color: #ffffff;
-    }
-    .points-display {
-        font-size: 2.75rem; /* 44px */
-        font-weight: 800;
-        color: #d97706; /* Ambar mais escuro */
-        line-height: 1;
-    }
-    .points-text {
-        font-size: 0.875rem;
-        color: #b45309;
-        margin-top: 0.25rem;
-    }
-
-    /* Específico para "Minhas Conquistas" */
-    .achievements-card .stat-card-title i {
-        color: #8b5cf6; /* Roxo */
-        background-color: #f5f3ff; /* Roxo bem claro */
-    }
-    .achievements-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem; /* Espaço entre os badges */
-        margin-top: 0.5rem;
-    }
-    .achievements-card .achievement-badge { /* Ajuste leve no badge dentro do novo card */
-        border: 1px solid transparent;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-    /* --- FIM: NOVOS ESTILOS --- */
 </style>
 {% endblock %}
 
@@ -530,12 +97,8 @@
 
 {% if last_accessed_law %}
 <div class="continue-block">
-    <h3 class="text-sm font-medium">
-        <i class="fas fa-history"></i> Continuar de onde parou:
-    </h3>
-    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">
-        {{ last_accessed_law.title }}
-    </a>
+    <h3><i class="fas fa-history"></i> Continuar de onde parou:</h3>
+    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">{{ last_accessed_law.title }}</a>
 </div>
 {% endif %}
 
@@ -551,7 +114,6 @@
     </div>
 </div>
 {% endif %}
-
 {% if non_fixed_announcements %}
 <div class="announcement-container" id="non-fixed-announcements-container">
     <div class="announcement-box">
@@ -574,27 +136,26 @@
 {% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
-        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
+    <div class="md:col-span-2 stat-card progress-card">
+        <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            <span class="text-sm font-medium text-gray-600">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
+            <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
         </div>
         <div class="progress-bar-container w-full">
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
-    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
-        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
-        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
-        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
+    <div class="stat-card points-card">
+        <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
+        <div class="points-display">{{ user_points }}</div>
     </div>
 </div>
 
-<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
+<div class="stat-card achievements-card mb-8">
+    <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
     {% if user_achievements %}
-        <div>
+        <div class="achievements-list">
             {% for achievement in user_achievements %}
                 <span class="achievement-badge" title="{{ achievement.description }}">
                     <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
@@ -602,26 +163,22 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+        <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
 </div>
 
-<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
-    {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
-    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
+<div class="filter-container mb-8">
+    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
         <div>
-            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
-            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
-                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
-                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
-                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
-                       value="{{ search_query }}">
-            </div>
+            <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação</label>
+            <input type="text" id="search" name="search" placeholder="Título ou descrição..."
+                   class="custom-input"
+                   value="{{ search_query }}">
         </div>
         <div>
-            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
+            <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>Filtrar por Matéria</label>
+            <select id="subject_id" name="subject_id" class="custom-input">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
                     <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
@@ -629,52 +186,45 @@
             </select>
         </div>
         <div>
-            <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
-                    style="focus:ring: 2px solid #60a5fa;">
+            <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>Filtrar por Status</label>
+            <select id="status_filter" name="status_filter" class="custom-input">
                 <option value="">-- Todos os Status --</option>
                 <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
                 <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
                 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
             </select>
         </div>
-        <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
+        <div class="flex items-end pb-2">
             <label for="show_favorites" class="favorite-filter-label">
-                <input type="checkbox" id="show_favorites" name="show_favorites" 
+                <input type="checkbox" id="show_favorites" name="show_favorites"
                        {% if show_favorites %}checked{% endif %}>
                 Mostrar apenas favoritas
             </label>
         </div>
-        <div class="flex items-center space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
+        <div class="flex items-stretch space-x-2">
+            <button type="submit" class="w-full md:w-auto text-white px-4 rounded-md focus:outline-none transition duration-300 flex items-center justify-center"
                     style="background-color: #2563eb; border: none;"
                     onmouseover="this.style.backgroundColor='#1d4ed8'"
                     onmouseout="this.style.backgroundColor='#2563eb'">
                 Aplicar Filtros
             </button>
-            {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
             {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
+                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar</a>
             {% endif %}
         </div>
     </form>
 </div>
 
 <h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
-
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% if laws %}
         {% for law in laws %}
-        {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
         <div class="law-card p-5" data-law-id="{{ law.id }}">
-            {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
             <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
                     data-law-id="{{ law.id }}"
                     title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                {# Ícone muda baseado na classe 'favorited' #}
                 <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
             </button>
-            {# --- FIM MODIFICADO --- #}
             <div class="card-content">
                 <div class="flex items-center mb-2">
                     <h3 class="text-lg font-semibold">{{ law.title }}</h3>
@@ -719,7 +269,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
-    // BLOCO DE SCRIPT CORRIGIDO
+    // BLOCO DE SCRIPT CORRIGIDO PARA "AVISOS RECENTES"
     // =====================================================================
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
@@ -729,7 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
             
-            // CORREÇÃO: A URL correta que existe em student.py
+            // ===================================================================================
+            // AQUI ESTÁ A CORREÇÃO PRINCIPAL: A URL foi ajustada para a rota correta em student.py
+            // ===================================================================================
             const apiUrl = `/student/announcement/${announcementId}/mark_seen`;
             
             fetch(apiUrl, {
@@ -747,11 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if(data.success) {
+                    // Adicionar classe para animação de fade out
                     announcementItem.classList.add('fade-out');
                     
+                    // Remover o item após a animação
                     setTimeout(() => {
                         announcementItem.remove();
                         
+                        // Verificar se ainda há anúncios não fixos
                         const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
                         if (remainingItems.length === 0) {
                             const container = document.getElementById('non-fixed-announcements-container');
@@ -763,23 +318,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 500);
                 } else {
                     console.error('Falha ao marcar aviso como visto:', data.error);
+                    // Reverter e reabilitar em caso de falha lógica no back-end
                     this.checked = false;
                     this.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Erro na requisição para marcar aviso como visto:', error);
-                alert("Ocorreu um erro de comunicação. Verifique a URL da API.");
+                alert("Ocorreu um erro de comunicação ao marcar o aviso como visto. Verifique o console do navegador (F12) para mais detalhes.");
+                // Reverter e reabilitar em caso de falha de rede
                 this.checked = false;
                 this.disabled = false;
             });
         });
     });
-    // =====================================================================
-    // FIM DO BLOCO DE SCRIPT CORRIGIDO
-    // =====================================================================
 
-    // Marcar lei como não concluída
+    // Bloco de script para "Marcar como não concluído"
     const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
     markIncompleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -787,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const lawCard = this.closest('.law-card');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
-            // Enviar solicitação para marcar como não concluída
             const apiUrl = `/student/law/review/${lawId}`;
             
             fetch(apiUrl, {
@@ -798,52 +351,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else if (response.status === 302) {
-                    return { success: true };
+                if (!response.ok) {
+                    throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
                 }
-                throw new Error('Erro na resposta da API');
-            })
-            .catch(error => {
-                return { success: true };
+                return response.json();
             })
             .then(data => {
-                // Atualizar a interface do usuário
-                this.remove();
-                
-                const actionButton = lawCard.querySelector('.action-button');
-                actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                
-                const completedBadge = lawCard.querySelector('.completed-badge');
-                if (completedBadge) {
-                    completedBadge.className = 'in-progress-badge';
-                    completedBadge.textContent = 'Em Andamento';
-                }
-                
-                const progressText = document.querySelector('.text-sm.font-medium.text-brand-text-light');
-                if (progressText) {
-                    const progressParts = progressText.textContent.split(':');
-                    if (progressParts.length > 1) {
-                        const countParts = progressParts[1].trim().split('/');
-                        if (countParts.length > 1) {
-                            const completedCount = parseInt(countParts[0]) - 1;
-                            const totalCount = parseInt(countParts[1]);
-                            progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
-                            
-                            const percentage = Math.round((completedCount / totalCount) * 100);
-                            const percentageText = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
-                            if (percentageText) {
-                                percentageText.textContent = `${percentage}%`;
-                            }
-                            
-                            const progressBar = document.querySelector('.progress-bar-fill');
-                            if (progressBar) {
-                                progressBar.style.width = `${percentage}%`;
+                if (data.success) {
+                    this.remove();
+                    const actionButton = lawCard.querySelector('.action-button');
+                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                    const completedBadge = lawCard.querySelector('.completed-badge');
+                    if (completedBadge) {
+                        completedBadge.className = 'in-progress-badge';
+                        completedBadge.textContent = 'Em Andamento';
+                    }
+                    const progressText = document.querySelector('.text-sm.font-medium.text-gray-600');
+                    if (progressText) {
+                        const match = progressText.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+                        if (match) {
+                            const completedCount = parseInt(match[1]) - 1;
+                            const totalCount = parseInt(match[2]);
+                            if (completedCount >= 0) {
+                                progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
+                                const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+                                const percentageText = document.querySelector('.text-sm.font-bold[style*="color: #2563eb"]');
+                                if (percentageText) { percentageText.textContent = `${percentage}%`; }
+                                const progressBar = document.querySelector('.progress-bar-fill');
+                                if (progressBar) { progressBar.style.width = `${percentage}%`; }
                             }
                         }
                     }
+                } else {
+                    console.error("Falha ao marcar como não concluído:", data.error);
+                    alert("Ocorreu um erro ao atualizar o status da lei.");
                 }
+            })
+            .catch(error => {
+                console.error('Erro na requisição para marcar como não concluído:', error);
+                alert("Ocorreu um erro de comunicação com o servidor.");
             });
         });
     });
@@ -856,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const lawId = this.getAttribute('data-law-id');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const isFavorited = this.classList.contains('favorited');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             const favoriteBtn = this;
             const icon = this.querySelector('i');
@@ -869,32 +414,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao atualizar favorito');
-                }
+                if (!response.ok) { throw new Error('Erro ao atualizar favorito'); }
                 return response.json();
             })
             .then(data => {
                 if (data.favorited === false) {
                     favoriteBtn.classList.remove('favorited');
-                    if (icon) {
-                        icon.className = 'far fa-star';
-                        favoriteBtn.title = 'Adicionar aos Favoritos';
-                    }
+                    if (icon) { icon.className = 'far fa-star'; favoriteBtn.title = 'Adicionar aos Favoritos'; }
                 } else {
                     favoriteBtn.classList.add('favorited');
-                    if (icon) {
-                        icon.className = 'fas fa-star';
-                        favoriteBtn.title = 'Remover dos Favoritos';
-                    }
+                    if (icon) { icon.className = 'fas fa-star'; favoriteBtn.title = 'Remover dos Favoritos'; }
                 }
             })
-            .catch(error => {
-                console.error('Erro:', error);
-            })
-            .finally(() => {
-                favoriteBtn.disabled = false;
-            });
+            .catch(error => { console.error('Erro:', error); })
+            .finally(() => { favoriteBtn.disabled = false; });
         });
     });
 });
