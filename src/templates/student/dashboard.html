@@ -416,7 +416,25 @@
         color: #3B82F6; /* Azul médio original */
         text-decoration: underline;
     }
-    
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .fixed-announcement-box,
+        .announcement-box {
+            padding: 1rem;
+        }
+        
+        .non-fixed-announcement-item {
+            gap: 0.75rem;
+        }
+        
+        .fixed-announcement-box h2,
+        .announcement-box h2 {
+            font-size: 1.1rem;
+        }
+    }
+    /* FIM DOS NOVOS ESTILOS PARA AVISOS */
+
     /* --- INÍCIO: NOVOS ESTILOS PARA PAINÉIS DE ESTATÍSTICAS --- */
     .stat-card {
         background-color: #ffffff;
@@ -481,7 +499,11 @@
         font-weight: 800;
         color: #d97706; /* Ambar mais escuro */
         line-height: 1;
-        margin-top: 0.5rem; /* ADICIONADO para alinhar melhor após remoção do texto */
+    }
+    .points-text {
+        font-size: 0.875rem;
+        color: #b45309;
+        margin-top: 0.25rem;
     }
 
     /* Específico para "Minhas Conquistas" */
@@ -500,81 +522,6 @@
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
     /* --- FIM: NOVOS ESTILOS --- */
-
-    /* --- INÍCIO: ESTILOS PROFISSIONAIS PARA FILTROS --- */
-    .filter-container {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0; /* Slate-200 */
-        border-radius: 0.75rem; /* 12px */
-        padding: 1.5rem; /* 24px */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    .filter-label {
-        display: flex;
-        align-items: center;
-        font-size: 0.875rem; /* 14px */
-        font-weight: 500;
-        color: #334155; /* Slate-700 */
-        margin-bottom: 0.5rem; /* 8px */
-    }
-
-    .filter-label i {
-        color: #64748b; /* Slate-500 */
-        margin-right: 0.5rem;
-        width: 16px;
-        text-align: center;
-    }
-
-    .custom-input {
-        width: 100%;
-        background-color: #f8fafc; /* Slate-50 */
-        border: 1px solid #cbd5e1; /* Slate-300 */
-        border-radius: 0.5rem; /* 8px */
-        padding: 0.75rem 1rem; /* 12px 16px */
-        font-size: 0.875rem;
-        color: #1e2937; /* Slate-800 */
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-    }
-    .custom-input::placeholder {
-        color: #94a3b8; /* Slate-400 */
-    }
-    .custom-input:focus {
-        outline: none;
-        border-color: #2563eb; /* Blue-600 */
-        background-color: #ffffff;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-
-    /* Custom arrow for select */
-    select.custom-input {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 0.5rem center;
-        background-repeat: no-repeat;
-        background-size: 1.5em 1.5em;
-        padding-right: 2.5rem;
-    }
-    /* --- FIM: ESTILOS PARA FILTROS --- */
-
-    /* Responsividade */
-    @media (max-width: 768px) {
-        .fixed-announcement-box,
-        .announcement-box {
-            padding: 1rem;
-        }
-        
-        .non-fixed-announcement-item {
-            gap: 0.75rem;
-        }
-        
-        .fixed-announcement-box h2,
-        .announcement-box h2 {
-            font-size: 1.1rem;
-        }
-    }
 </style>
 {% endblock %}
 
@@ -604,6 +551,7 @@
     </div>
 </div>
 {% endif %}
+
 {% if non_fixed_announcements %}
 <div class="announcement-container" id="non-fixed-announcements-container">
     <div class="announcement-box">
@@ -639,6 +587,7 @@
     <div class="stat-card points-card">
         <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
         <div class="points-display">{{ user_points }}</div>
+        <p class="points-text">Pontos de Estudo</p>
     </div>
 </div>
 
@@ -658,17 +607,22 @@
 </div>
 
 
-<div class="filter-container mb-8">
-    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+<div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+    {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
+    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
         <div>
-            <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação</label>
-            <input type="text" id="search" name="search" placeholder="Título ou descrição..."
-                   class="custom-input"
-                   value="{{ search_query }}">
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Legislação</label>
+            <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm">
+                <span class="pl-3 pr-2 text-gray-400"><i class="fas fa-search"></i></span>
+                <input type="text" id="search" name="search" placeholder="Título ou descrição..." 
+                       class="flex-grow p-2 bg-transparent text-brand-text placeholder-gray-400 focus:outline-none focus:ring-0 border-0"
+                       value="{{ search_query }}">
+            </div>
         </div>
         <div>
-            <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="custom-input">
+            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Matéria</label>
+            <select id="subject_id" name="subject_id" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                    style="focus:ring: 2px solid #60a5fa;">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
                     <option value="{{ subject.id }}" {% if selected_subject_id == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
@@ -676,47 +630,52 @@
             </select>
         </div>
         <div>
-            <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="custom-input">
+            <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status</label>
+            <select id="status_filter" name="status_filter" class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent bg-white"
+                    style="focus:ring: 2px solid #60a5fa;">
                 <option value="">-- Todos os Status --</option>
                 <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
                 <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
                 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
             </select>
         </div>
-        <div class="flex items-end pb-2">
+        <div class="flex items-end pb-1"> {# Ajuste de alinhamento #}
             <label for="show_favorites" class="favorite-filter-label">
                 <input type="checkbox" id="show_favorites" name="show_favorites" 
                        {% if show_favorites %}checked{% endif %}>
                 Mostrar apenas favoritas
             </label>
         </div>
-        <div class="flex items-stretch space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white px-4 rounded-md focus:outline-none transition duration-300 flex items-center justify-center"
+        <div class="flex items-center space-x-2">
+            <button type="submit" class="w-full md:w-auto text-white p-2 px-4 rounded-md focus:outline-none transition duration-300"
                     style="background-color: #2563eb; border: none;"
                     onmouseover="this.style.backgroundColor='#1d4ed8'"
                     onmouseout="this.style.backgroundColor='#2563eb'">
                 Aplicar Filtros
             </button>
+            {# --- ATUALIZADO: Condição do botão Limpar para incluir show_favorites --- #}
             {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar</a>
+                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto text-center p-2 px-4 border border-gray-300 rounded-md text-sm text-brand-text-light bg-white hover:bg-gray-50">Limpar</a>
             {% endif %}
         </div>
     </form>
 </div>
-
 
 <h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% if laws %}
         {% for law in laws %}
+        {# --- ATUALIZADO: Adicionado data-law-id ao card --- #}
         <div class="law-card p-5" data-law-id="{{ law.id }}">
+            {# --- MODIFICADO: Botão de Favorito com AJAX --- #}
             <button type="button" class="favorite-btn js-favorite-btn {% if law.id in favorite_law_ids %}favorited{% endif %}" 
                     data-law-id="{{ law.id }}"
                     title="{% if law.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                {# Ícone muda baseado na classe 'favorited' #}
                 <i class="{% if law.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i> 
             </button>
+            {# --- FIM MODIFICADO --- #}
             <div class="card-content">
                 <div class="flex items-center mb-2">
                     <h3 class="text-lg font-semibold">{{ law.title }}</h3>
@@ -764,12 +723,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            // Desabilitar o checkbox durante o processamento
             this.disabled = true;
             
+            const checkboxContainer = this.closest('.mark-seen-checkbox-container');
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
+            
+            // URL para marcar anúncio como visto
             const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
             
+            // Enviar solicitação para marcar como visto
             fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -779,112 +743,187 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (response.ok) {
+                    // Adicionar classe para animação de fade out
                     announcementItem.classList.add('fade-out');
+                    
+                    // Remover o item após a animação
                     setTimeout(() => {
                         announcementItem.remove();
+                        
+                        // Verificar se ainda há anúncios não fixos
                         const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
                         if (remainingItems.length === 0) {
+                            // Se não houver mais anúncios, remover o container com animação
                             const container = document.getElementById('non-fixed-announcements-container');
                             if (container) {
                                 container.classList.add('fade-out');
-                                setTimeout(() => container.remove(), 500);
+                                
+                                setTimeout(() => {
+                                    container.remove();
+                                }, 500);
                             }
                         }
                     }, 500);
                 } else {
                     console.error('Erro ao marcar anúncio como visto');
-                    this.checked = false;
-                    this.disabled = false;
+                    this.checked = false; // Reverter checkbox se houver erro
+                    this.disabled = false; // Reabilitar o checkbox
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
-                this.checked = false;
-                this.disabled = false;
+                this.checked = false; // Reverter checkbox se houver erro
+                this.disabled = false; // Reabilitar o checkbox
             });
         });
     });
 
-    // Marcar lei como não concluída
+    // =====================================================================
+    // BLOCO DE SCRIPT CORRIGIDO
+    // =====================================================================
     const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
     markIncompleteButtons.forEach(button => {
         button.addEventListener('click', function() {
             const lawId = this.getAttribute('data-law-id');
             const lawCard = this.closest('.law-card');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            // A URL para a qual o JavaScript envia a requisição
             const apiUrl = `/student/law/review/${lawId}`;
             
             fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
             })
             .then(response => {
-                if (response.ok || response.status === 302) return { success: true };
-                throw new Error('Erro na resposta da API');
+                // Primeiro, verifica se a resposta do servidor foi bem-sucedida (status 2xx)
+                if (!response.ok) {
+                    // Se não foi, lança um erro para ser pego pelo .catch()
+                    throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
+                }
+                // Se a resposta foi OK, converte para JSON
+                return response.json();
             })
-            .catch(() => ({ success: true })) // Tratar redirecionamentos como sucesso
-            .then(() => {
-                this.remove();
-                const actionButton = lawCard.querySelector('.action-button');
-                actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                
-                const completedBadge = lawCard.querySelector('.completed-badge');
-                if (completedBadge) {
-                    completedBadge.className = 'in-progress-badge';
-                    completedBadge.textContent = 'Em Andamento';
-                }
-                
-                const progressText = document.querySelector('.text-sm.font-medium.text-gray-600');
-                if (progressText) {
-                    const parts = progressText.textContent.match(/(\d+)\s*\/\s*(\d+)/);
-                    if (parts) {
-                        const completedCount = parseInt(parts[1]) - 1;
-                        const totalCount = parseInt(parts[2]);
-                        progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
-                        
-                        const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-                        const percentageText = document.querySelector('.text-sm.font-bold[style*="color: #2563eb"]');
-                        if (percentageText) percentageText.textContent = `${percentage}%`;
-                        
-                        const progressBar = document.querySelector('.progress-bar-fill');
-                        if (progressBar) progressBar.style.width = `${percentage}%`;
+            .then(data => {
+                // Agora, verifica o conteúdo da resposta JSON
+                if (data.success) {
+                    // Se o back-end confirmou o sucesso, atualiza a interface
+                    console.log(`Lei ${lawId} marcada como 'em andamento'.`);
+
+                    // 1. Remover o botão "Marcar como não concluído"
+                    this.remove();
+                    
+                    // 2. Alterar o texto do botão principal para "Continuar"
+                    const actionButton = lawCard.querySelector('.action-button');
+                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                    
+                    // 3. Substituir o badge "Concluída" por "Em Andamento"
+                    const completedBadge = lawCard.querySelector('.completed-badge');
+                    if (completedBadge) {
+                        completedBadge.className = 'in-progress-badge';
+                        completedBadge.textContent = 'Em Andamento';
                     }
+                    
+                    // 4. Atualizar o contador de progresso e a barra de progresso
+                    const progressText = document.querySelector('.text-sm.font-medium.text-gray-600');
+                    if (progressText) {
+                        const match = progressText.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+                        if (match) {
+                            const completedCount = parseInt(match[1]) - 1;
+                            const totalCount = parseInt(match[2]);
+                            
+                            if (completedCount >= 0) {
+                                progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
+                                
+                                const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+                                
+                                const percentageText = document.querySelector('.text-sm.font-bold[style*="color: #2563eb"]');
+                                if (percentageText) {
+                                    percentageText.textContent = `${percentage}%`;
+                                }
+                                
+                                const progressBar = document.querySelector('.progress-bar-fill');
+                                if (progressBar) {
+                                    progressBar.style.width = `${percentage}%`;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Se o back-end retornou success: false, exibe o erro no console
+                    console.error("Falha ao marcar como não concluído:", data.error);
+                    alert("Ocorreu um erro ao atualizar o status da lei.");
                 }
+            })
+            .catch(error => {
+                // Este bloco agora captura erros de rede ou a falha da resposta do servidor
+                console.error('Erro na requisição para marcar como não concluído:', error);
+                alert("Ocorreu um erro de comunicação com o servidor. A rota pode não existir no back-end.");
             });
         });
     });
+    // =====================================================================
+    // FIM DO BLOCO DE SCRIPT CORRIGIDO
+    // =====================================================================
 
     // Favoritar/Desfavoritar lei
     const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
     favoriteButtons.forEach(button => {
         button.addEventListener('click', function() {
+            // Desabilitar o botão durante o processamento para evitar cliques múltiplos
             this.disabled = true;
+            
             const lawId = this.getAttribute('data-law-id');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const icon = this.querySelector('i');
+            
+            // URL para favoritar/desfavoritar
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             
+            const favoriteBtn = this;
+            const icon = this.querySelector('i');
+            
+            // Enviar solicitação para o servidor
             fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
             })
             .then(response => {
-                if (!response.ok) throw new Error('Erro ao atualizar favorito');
+                if (!response.ok) {
+                    throw new Error('Erro ao atualizar favorito');
+                }
                 return response.json();
             })
             .then(data => {
-                if (data.favorited) {
-                    this.classList.add('favorited');
-                    if (icon) icon.className = 'fas fa-star';
-                    this.title = 'Remover dos Favoritos';
+                // Atualizar visualmente APÓS a resposta do servidor
+                if (data.favorited === false) {
+                    // Remover dos favoritos
+                    favoriteBtn.classList.remove('favorited');
+                    if (icon) {
+                        icon.className = 'far fa-star'; // Ícone de estrela vazia
+                        favoriteBtn.title = 'Adicionar aos Favoritos';
+                    }
                 } else {
-                    this.classList.remove('favorited');
-                    if (icon) icon.className = 'far fa-star';
-                    this.title = 'Adicionar aos Favoritos';
+                    // Adicionar aos favoritos
+                    favoriteBtn.classList.add('favorited');
+                    if (icon) {
+                        icon.className = 'fas fa-star'; // Ícone de estrela preenchida
+                        favoriteBtn.title = 'Remover dos Favoritos';
+                    }
                 }
             })
-            .catch(error => console.error('Erro:', error))
-            .finally(() => { this.disabled = false; });
+            .catch(error => {
+                console.error('Erro:', error);
+            })
+            .finally(() => {
+                // Reabilitar o botão após o processamento, independente do resultado
+                favoriteBtn.disabled = false;
+            });
         });
     });
 });
