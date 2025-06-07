@@ -551,7 +551,7 @@
 </div>
 {% endif %}
 
-<div class="flex flex-wrap items-center justify-between mb-4">
+<div class="sticky top-1 z-20 bg-gray-50 py-3 flex flex-wrap items-center justify-between mb-4">
     <div class="flex space-x-2">
         <button id="toggle-comments-btn" class="toggle-button">
             <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
@@ -747,7 +747,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrfToken
                 },
-                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+                body: `last_read_article=<span class="math-inline">\{encodeURIComponent\(lastReadArticle\)\}&csrf\_token\=</span>{encodeURIComponent(csrfToken)}`
             })
             .then(response => response.json())
             .then(data => {
