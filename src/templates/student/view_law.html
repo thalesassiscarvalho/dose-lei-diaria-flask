@@ -4,6 +4,25 @@
 
 {% block head_extra %}
 <style>
+    /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
+    .progress-bar-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px; /* Altura da barra */
+        background-color: transparent; /* Fundo transparente */
+        z-index: 9999; /* Garante que fique no topo */
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: #2563eb; /* Cor da barra (azul) */
+        width: 0%; /* Começa com 0 */
+        transition: width 0.1s linear; /* Transição suave */
+    }
+    /* --- FIM: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
+
     .law-content-container {
         background-color: white;
         border-radius: 0.5rem;
@@ -469,6 +488,9 @@
 {% endblock %}
 
 {% block content %}
+<div class="progress-bar-container">
+    <div class="progress-bar" id="reading-progress-bar"></div>
+</div>
 <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
     <a href="{{ url_for('student.dashboard') }}" class="text-sm md:text-base text-purple-600 hover:text-purple-800 whitespace-nowrap self-end sm:self-center">
@@ -622,6 +644,30 @@
 <script>
 // --- Script para Ocultar/Mostrar Comentários, Jurisprudências e Doutrina (v4 - Adicionado suporte para Doutrina) ---
 document.addEventListener("DOMContentLoaded", function () {
+    // --- INÍCIO: JAVASCRIPT DA BARRA DE PROGRESSO DE LEITURA ---
+    const progressBar = document.getElementById('reading-progress-bar');
+
+    function updateProgressBar() {
+        // Altura total da página que pode ser rolada
+        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        // Posição atual da rolagem
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        
+        // Evita divisão por zero se o conteúdo for menor que a tela
+        if (scrollableHeight > 0) {
+            const progressPercentage = (scrollTop / scrollableHeight) * 100;
+            progressBar.style.width = progressPercentage + '%';
+        } else {
+            progressBar.style.width = '0%';
+        }
+    }
+
+    // Adiciona o listener ao evento de scroll
+    window.addEventListener('scroll', updateProgressBar);
+    // Chama a função uma vez no início para o caso da página carregar já rolada
+    updateProgressBar();
+    // --- FIM: JAVASCRIPT DA BARRA DE PROGRESSO DE LEITURA ---
+
     const lawContent = document.getElementById("law-content");
     const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
     const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
