@@ -316,6 +316,44 @@ def mark_complete(law_id):
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
+# =====================================================================
+# ROTA ADICIONADA PARA CORRIGIR O PROBLEMA
+# =====================================================================
+@student_bp.route("/law/review/<int:law_id>", methods=["POST"])
+@login_required
+def review_law(law_id):
+    """
+    Handles the "Marcar como não concluído" action.
+    Sets a law's progress status back to 'em_andamento'.
+    """
+    # Find the progress record for the current user and the specific law.
+    progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+    if not progress:
+        # This case is unlikely if the button is visible, but it's a good safeguard.
+        return jsonify(success=False, error="Progresso não encontrado."), 404
+
+    # Change the status back to 'in_progress'.
+    # We do not deduct points here. The user can re-complete the law later.
+    progress.status = 'em_andamento'
+    
+    # It's good practice to also clear the completion date.
+    progress.completed_at = None
+
+    try:
+        # Commit the change to the database. This is the crucial step that was missing.
+        db.session.commit()
+        logging.info(f"[REVIEW LAW] User {current_user.id} set law {law_id} back to 'em_andamento'.")
+        return jsonify(success=True, new_status='em_andamento')
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[REVIEW LAW] Error setting law {law_id} to 'em_andamento' for user {current_user.id}: {e}")
+        return jsonify(success=False, error=str(e)), 500
+# =====================================================================
+# FIM DA ROTA ADICIONADA
+# =====================================================================
+
+
 # --- NOVA ROTA: Salvar onde parou via AJAX ---
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
@@ -430,4 +468,3 @@ def save_user_notes(law_id):
         db.session.rollback()
         logging.error(f"[SAVE NOTES] Error saving notes for user {current_user.id}, law {law_id}: {e}")
         return jsonify(success=False, error="Erro ao salvar anotações."), 500
-
