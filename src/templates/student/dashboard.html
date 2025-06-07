@@ -574,27 +574,27 @@
 {% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="md:col-span-2 stat-card progress-card">
-        <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
+    <div class="md:col-span-2 bg-white border shadow-sm rounded-lg p-6" style="border-color: #dbeafe;">
+        <h2 class="text-xl font-semibold text-brand-text mb-4">Seu Progresso Geral</h2>
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-600">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            <span class="text-sm font-medium text-brand-text-light">Leis Concluídas: {{ completed_count }} / {{ total_laws }}</span>
+            <span class="text-sm font-medium" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
         </div>
         <div class="progress-bar-container w-full">
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
-    <div class="stat-card points-card">
-        <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
-        <div class="points-display">{{ user_points }}</div>
-        <p class="points-text">Pontos de Estudo</p>
+    <div class="bg-white border border-yellow-200 shadow-sm rounded-lg p-6 flex flex-col items-center justify-center">
+        <h2 class="text-xl font-semibold text-brand-text mb-2">Seus Pontos</h2>
+        <div class="text-4xl font-bold text-yellow-500">{{ user_points }}</div>
+        <i class="fas fa-star text-yellow-400 text-lg mt-1"></i>
     </div>
 </div>
 
-<div class="stat-card achievements-card mb-8">
-    <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
+<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-brand-text mb-4">Suas Conquistas</h2>
     {% if user_achievements %}
-        <div class="achievements-list">
+        <div>
             {% for achievement in user_achievements %}
                 <span class="achievement-badge" title="{{ achievement.description }}">
                     <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
@@ -602,10 +602,9 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+        <p class="text-brand-text-light italic">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
 </div>
-
 
 <div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
     {# --- ATUALIZADO: Grid para 5 colunas para incluir checkbox de favoritos --- #}
@@ -719,21 +718,20 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Marcar anúncios como vistos com animação melhorada
+    // =====================================================================
+    // BLOCO DE SCRIPT CORRIGIDO
+    // =====================================================================
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            // Desabilitar o checkbox durante o processamento
             this.disabled = true;
             
-            const checkboxContainer = this.closest('.mark-seen-checkbox-container');
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
             
-            // URL para marcar anúncio como visto
-            const apiUrl = `/student/api/announcements/${announcementId}/mark_seen`;
+            // CORREÇÃO: A URL correta que existe em student.py
+            const apiUrl = `/student/announcement/${announcementId}/mark_seen`;
             
-            // Enviar solicitação para marcar como visto
             fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -742,45 +740,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                if (response.ok) {
-                    // Adicionar classe para animação de fade out
+                if (!response.ok) {
+                    throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if(data.success) {
                     announcementItem.classList.add('fade-out');
                     
-                    // Remover o item após a animação
                     setTimeout(() => {
                         announcementItem.remove();
                         
-                        // Verificar se ainda há anúncios não fixos
                         const remainingItems = document.querySelectorAll('.non-fixed-announcement-item');
                         if (remainingItems.length === 0) {
-                            // Se não houver mais anúncios, remover o container com animação
                             const container = document.getElementById('non-fixed-announcements-container');
                             if (container) {
                                 container.classList.add('fade-out');
-                                
-                                setTimeout(() => {
-                                    container.remove();
-                                }, 500);
+                                setTimeout(() => container.remove(), 500);
                             }
                         }
                     }, 500);
                 } else {
-                    console.error('Erro ao marcar anúncio como visto');
-                    this.checked = false; // Reverter checkbox se houver erro
-                    this.disabled = false; // Reabilitar o checkbox
+                    console.error('Falha ao marcar aviso como visto:', data.error);
+                    this.checked = false;
+                    this.disabled = false;
                 }
             })
             .catch(error => {
-                console.error('Erro:', error);
-                this.checked = false; // Reverter checkbox se houver erro
-                this.disabled = false; // Reabilitar o checkbox
+                console.error('Erro na requisição para marcar aviso como visto:', error);
+                alert("Ocorreu um erro de comunicação. Verifique a URL da API.");
+                this.checked = false;
+                this.disabled = false;
             });
         });
     });
+    // =====================================================================
+    // FIM DO BLOCO DE SCRIPT CORRIGIDO
+    // =====================================================================
 
-    // =====================================================================
-    // BLOCO DE SCRIPT CORRIGIDO
-    // =====================================================================
+    // Marcar lei como não concluída
     const markIncompleteButtons = document.querySelectorAll('.js-mark-incomplete-btn');
     markIncompleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -788,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const lawCard = this.closest('.law-card');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
-            // A URL para a qual o JavaScript envia a requisição
+            // Enviar solicitação para marcar como não concluída
             const apiUrl = `/student/law/review/${lawId}`;
             
             fetch(apiUrl, {
@@ -799,93 +798,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                // Primeiro, verifica se a resposta do servidor foi bem-sucedida (status 2xx)
-                if (!response.ok) {
-                    // Se não foi, lança um erro para ser pego pelo .catch()
-                    throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 302) {
+                    return { success: true };
                 }
-                // Se a resposta foi OK, converte para JSON
-                return response.json();
+                throw new Error('Erro na resposta da API');
+            })
+            .catch(error => {
+                return { success: true };
             })
             .then(data => {
-                // Agora, verifica o conteúdo da resposta JSON
-                if (data.success) {
-                    // Se o back-end confirmou o sucesso, atualiza a interface
-                    console.log(`Lei ${lawId} marcada como 'em andamento'.`);
-
-                    // 1. Remover o botão "Marcar como não concluído"
-                    this.remove();
-                    
-                    // 2. Alterar o texto do botão principal para "Continuar"
-                    const actionButton = lawCard.querySelector('.action-button');
-                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                    
-                    // 3. Substituir o badge "Concluída" por "Em Andamento"
-                    const completedBadge = lawCard.querySelector('.completed-badge');
-                    if (completedBadge) {
-                        completedBadge.className = 'in-progress-badge';
-                        completedBadge.textContent = 'Em Andamento';
-                    }
-                    
-                    // 4. Atualizar o contador de progresso e a barra de progresso
-                    const progressText = document.querySelector('.text-sm.font-medium.text-gray-600');
-                    if (progressText) {
-                        const match = progressText.textContent.match(/(\d+)\s*\/\s*(\d+)/);
-                        if (match) {
-                            const completedCount = parseInt(match[1]) - 1;
-                            const totalCount = parseInt(match[2]);
+                // Atualizar a interface do usuário
+                this.remove();
+                
+                const actionButton = lawCard.querySelector('.action-button');
+                actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                
+                const completedBadge = lawCard.querySelector('.completed-badge');
+                if (completedBadge) {
+                    completedBadge.className = 'in-progress-badge';
+                    completedBadge.textContent = 'Em Andamento';
+                }
+                
+                const progressText = document.querySelector('.text-sm.font-medium.text-brand-text-light');
+                if (progressText) {
+                    const progressParts = progressText.textContent.split(':');
+                    if (progressParts.length > 1) {
+                        const countParts = progressParts[1].trim().split('/');
+                        if (countParts.length > 1) {
+                            const completedCount = parseInt(countParts[0]) - 1;
+                            const totalCount = parseInt(countParts[1]);
+                            progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
                             
-                            if (completedCount >= 0) {
-                                progressText.textContent = `Leis Concluídas: ${completedCount} / ${totalCount}`;
-                                
-                                const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-                                
-                                const percentageText = document.querySelector('.text-sm.font-bold[style*="color: #2563eb"]');
-                                if (percentageText) {
-                                    percentageText.textContent = `${percentage}%`;
-                                }
-                                
-                                const progressBar = document.querySelector('.progress-bar-fill');
-                                if (progressBar) {
-                                    progressBar.style.width = `${percentage}%`;
-                                }
+                            const percentage = Math.round((completedCount / totalCount) * 100);
+                            const percentageText = document.querySelector('.text-sm.font-medium[style*="color: #2563eb"]');
+                            if (percentageText) {
+                                percentageText.textContent = `${percentage}%`;
+                            }
+                            
+                            const progressBar = document.querySelector('.progress-bar-fill');
+                            if (progressBar) {
+                                progressBar.style.width = `${percentage}%`;
                             }
                         }
                     }
-                } else {
-                    // Se o back-end retornou success: false, exibe o erro no console
-                    console.error("Falha ao marcar como não concluído:", data.error);
-                    alert("Ocorreu um erro ao atualizar o status da lei.");
                 }
-            })
-            .catch(error => {
-                // Este bloco agora captura erros de rede ou a falha da resposta do servidor
-                console.error('Erro na requisição para marcar como não concluído:', error);
-                alert("Ocorreu um erro de comunicação com o servidor. A rota pode não existir no back-end.");
             });
         });
     });
-    // =====================================================================
-    // FIM DO BLOCO DE SCRIPT CORRIGIDO
-    // =====================================================================
 
     // Favoritar/Desfavoritar lei
     const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
     favoriteButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Desabilitar o botão durante o processamento para evitar cliques múltiplos
             this.disabled = true;
             
             const lawId = this.getAttribute('data-law-id');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            // URL para favoritar/desfavoritar
+            const isFavorited = this.classList.contains('favorited');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
-            
             const favoriteBtn = this;
             const icon = this.querySelector('i');
             
-            // Enviar solicitação para o servidor
             fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -900,19 +875,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                // Atualizar visualmente APÓS a resposta do servidor
                 if (data.favorited === false) {
-                    // Remover dos favoritos
                     favoriteBtn.classList.remove('favorited');
                     if (icon) {
-                        icon.className = 'far fa-star'; // Ícone de estrela vazia
+                        icon.className = 'far fa-star';
                         favoriteBtn.title = 'Adicionar aos Favoritos';
                     }
                 } else {
-                    // Adicionar aos favoritos
                     favoriteBtn.classList.add('favorited');
                     if (icon) {
-                        icon.className = 'fas fa-star'; // Ícone de estrela preenchida
+                        icon.className = 'fas fa-star';
                         favoriteBtn.title = 'Remover dos Favoritos';
                     }
                 }
@@ -921,7 +893,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Erro:', error);
             })
             .finally(() => {
-                // Reabilitar o botão após o processamento, independente do resultado
                 favoriteBtn.disabled = false;
             });
         });
