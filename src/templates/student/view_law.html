@@ -4,100 +4,368 @@
 
 {% block head_extra %}
 <style>
-    /* --- Estilos Anteriores (Intactos) --- */
+    /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        height: 4px;
-        background-color: transparent;
-        z-index: 9999;
+        height: 4px; /* Altura da barra */
+        background-color: transparent; /* Fundo transparente */
+        z-index: 9999; /* Garante que fique no topo */
     }
+
     .progress-bar {
         height: 100%;
-        background-color: #2563eb;
-        width: 0%;
-        transition: width 0.1s linear;
+        background-color: #2563eb; /* Cor da barra (azul) */
+        width: 0%; /* Começa com 0 */
+        transition: width 0.1s linear; /* Transição suave */
     }
+    /* --- FIM: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
+
+    /* --- INÍCIO: ESTILO PARA DESTAQUE DO ARTIGO ENCONTRADO --- */
     .highlight-article {
         animation: highlight-fade 2s ease-out;
     }
+
     @keyframes highlight-fade {
-        0% { background-color: #fef9c3; }
+        0% { background-color: #fef9c3; } /* Amarelo claro */
         70% { background-color: #fef9c3; }
         100% { background-color: transparent; }
     }
+    /* --- FIM: ESTILO PARA DESTAQUE --- */
+
     .law-content-container {
         background-color: white;
         border-radius: 0.5rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        color: #1f2937;
+        color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
+        /* Proteção contra seleção de texto para cópia - Mantida conforme original */
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        border: 1px solid #bfdbfe;
+        /* Adicionando borda azul clara */
+        border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
+
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    .law-content-container p { margin-bottom: 1em; }
-    .law-content-container ul, .law-content-container ol { margin-left: 1.5em; margin-bottom: 1em; }
-    .law-content-container li { margin-bottom: 0.5em; }
+
+    .law-content-container p {
+        margin-bottom: 1em;
+    }
+    .law-content-container ul, .law-content-container ol {
+        margin-left: 1.5em;
+        margin-bottom: 1em;
+    }
+    .law-content-container li {
+        margin-bottom: 0.5em;
+    }
     .law-content-container strong { font-weight: bold; }
     .law-content-container em { font-style: italic; }
     .law-content-container u { text-decoration: underline; }
     .law-content-container s { text-decoration: line-through; }
-    .completed-banner { background-color: #d1fae5; color: #065f46; padding: 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem; border: 1px solid #a7f3d0; }
-    .last-read-info { background-color: #e0e7ff; color: #3730a3; padding: 0.75rem 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem; border: 1px solid #c7d2fe; font-size: 0.9rem; }
-    .toggle-button { background-color: #e5e7eb; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #d1d5db; }
-    .toggle-button:hover { background-color: #d1d5db; }
-    .toggle-button.active { background-color: #3b82f6; color: white; border-color: #2563eb; }
-    .toggle-button.active:hover { background-color: #2563eb; }
-    .conteudo-oculto { display: none !important; }
-    /* ... (outros estilos originais inalterados) ... */
+    
+    .completed-banner {
+        background-color: #d1fae5; /* Light green */
+        color: #065f46; /* Dark green */
+        padding: 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #a7f3d0;
+    }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO: NOVOS ESTILOS PARA O SISTEMA DE COMENTÁRIOS >>> */
-    /* ===================================================================== */
+    .last-read-info {
+        background-color: #e0e7ff; /* Indigo 100 */
+        color: #3730a3; /* Indigo 800 */
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #c7d2fe; /* Indigo 200 */
+        font-size: 0.9rem;
+    }
+
+    .save-article-form {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #f9fafb; /* Gray 50 */
+        border: 1px solid #e5e7eb; /* Gray 200 */
+        border-radius: 0.5rem;
+    }
+
+    /* Estilos para os botões de toggle */
+    .toggle-button {
+        background-color: #e5e7eb; /* gray-200 */
+        color: #374151; /* gray-700 */
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border: 1px solid #d1d5db; /* gray-300 */
+    }
+
+    .toggle-button:hover {
+        background-color: #d1d5db; /* gray-300 */
+    }
+
+    .toggle-button.active {
+        /* Estilo quando o conteúdo está OCULTO (botão para MOSTRAR) */
+        background-color: #3b82f6; /* blue-500 */
+        color: white;
+        border-color: #2563eb; /* blue-600 */
+    }
+    .toggle-button.active:hover {
+        background-color: #2563eb; /* blue-600 */
+    }
+
+    /* Classe CSS para ocultar elementos */
+    .conteudo-oculto {
+        display: none !important; /* Usar !important para garantir a sobreposição */
+    }
+    /* Estilos para o container do player de áudio */
+    .audio-player-container {
+        background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
+        border-radius: 0.5rem; /* Tailwind rounded-lg */
+        padding: 1rem; /* Tailwind p-4 */
+        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
+        margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
+    }
+
+    .audio-player-container audio {
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+    }
+    
+    /* Classe para ocultar conteúdo durante impressão */
+    .print-hidden {
+        display: none !important;
+    }
+
+    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+    .neural-waves-container {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .neural-wave-button {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+    }
+
+    .neural-wave-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 50%;
+    }
+
+    .neural-wave-button:hover::before {
+        opacity: 1;
+    }
+
+    .neural-wave-button i {
+        font-size: 20px;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+
+    .neural-wave-button:hover i {
+        transform: scale(1.2);
+    }
+
+    .neural-wave-button.playing {
+        animation: pulse 2s infinite;
+    }
+
+    .neural-wave-button.playing i {
+        animation: spin 10s linear infinite;
+    }
+
+    /* Cores específicas para cada tipo de onda neural */
+    .wave-alpha {
+        background: linear-gradient(135deg, #4f46e5, #818cf8);
+    }
+    .wave-beta {
+        background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    }
+    .wave-theta {
+        background: linear-gradient(135deg, #10b981, #34d399);
+    }
+    .wave-classical {
+        background: linear-gradient(135deg, #7e22ce, #a855f7);
+    }
+    .wave-white-noise {
+        background: linear-gradient(135deg, #64748b, #94a3b8);
+    }
+
+    .neural-wave-button .tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: normal;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        width: 220px;
+        max-width: 220px;
+        text-align: left;
+        z-index: 100;
+        line-height: 1.4;
+    }
+
+    .neural-wave-button .tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+    }
+
+    .neural-wave-button:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .neural-waves-container { gap: 8px; }
+        .neural-wave-button { width: 40px; height: 40px; }
+        .neural-wave-button i { font-size: 18px; }
+        .neural-wave-button .tooltip { width: 200px; max-width: 200px; font-size: 11px; }
+    }
+    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+
+    /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES */
+    .notes-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+    .format-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .format-btn:hover { background-color: #e5e7eb; }
+    .format-btn.active { background-color: #dbeafe; border-color: #93c5fd; }
+    .format-btn i { font-size: 14px; }
+    .notes-editor {
+        min-height: 200px; /* Altura padrão para desktop */
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 12px;
+        background-color: white;
+        overflow-y: auto;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+    .notes-editor:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
+    .notes-editor strong { font-weight: bold; }
+    .notes-editor em { font-style: italic; }
+    .notes-editor .highlight { background-color: #fef08a; padding: 0 2px; }
+    /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES */
+
+    .go-to-notes-btn { background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #7c3aed; display: flex; align-items: center; }
+    .go-to-notes-btn:hover { background-color: #7c3aed; }
+    .back-to-top-btn { background-color: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; margin-left: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+    .back-to-top-btn:hover { background-color: #2563eb; }
+    .save-bookmark-btn { background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .save-bookmark-btn:hover { background-color: #059669; }
+    .bookmark-section { margin-top: 1.5rem; padding: 1rem; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .bookmark-input-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+    .bookmark-input { flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+    .bookmark-input:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
+
+    @media (max-width: 640px) {
+        .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
+        .back-to-top-btn { margin-left: 0; margin-top: 1rem; }
+    }
+    @media (min-width: 641px) {
+        .bookmark-section { max-width: 33.33%; }
+    }
+
+    /* Adicionado para ajustar a altura das anotações no mobile */
+    @media (max-width: 768px) {
+        .notes-editor {
+            min-height: 150px; /* Nova altura para telas menores - ajuste este valor se necessário */
+        }
+    }
+
+    /* --- INÍCIO: ESTILOS PARA COMENTÁRIOS POR PARÁGRAFO --- */
     .paragraph-wrapper {
         position: relative;
-        padding-right: 30px;
+        padding-right: 30px; /* Espaço para o ícone de comentário */
     }
+
     .comment-icon {
         position: absolute;
         top: 5px;
         right: 0;
         cursor: pointer;
-        color: #a5b4fc;
+        color: #a5b4fc; /* Roxo claro */
         font-size: 1.1rem;
         transition: all 0.2s ease;
         opacity: 0.5;
     }
+
     .paragraph-wrapper:hover .comment-icon {
         opacity: 1;
         transform: scale(1.2);
     }
+
     .comment-icon.has-comment {
-        color: #6366f1;
+        color: #6366f1; /* Roxo mais forte */
         opacity: 1;
     }
+
     .comment-display {
-        background-color: #eef2ff;
-        border-left: 3px solid #6366f1;
+        background-color: #eef2ff; /* Roxo bem clarinho */
+        border-left: 3px solid #6366f1; /* Roxo */
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         font-size: 0.9em;
         position: relative;
-        transition: all 0.3s ease-out;
     }
+
     .comment-delete-btn {
         position: absolute;
         top: 5px;
@@ -110,20 +378,33 @@
     }
     .comment-delete-btn:hover { color: #ef4444; }
 
-    /* Regras para ocultar o CONTEÚDO dos comentários */
-    #law-content.user-comment-content-hidden .comment-display p {
-        display: none;
-    }
-    #law-content.user-comment-content-hidden .comment-display::after {
-        content: 'Comentário oculto...';
-        font-style: italic;
-        color: #6b7280;
-    }
-
     /* Modal de Comentário */
-    .comment-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .comment-modal-content { background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .comment-modal-textarea { width: 100%; min-height: 120px; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; margin-bottom: 15px; }
+    .comment-modal-backdrop {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; /* Começa oculto */
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .comment-modal-content {
+        background-color: white;
+        padding: 25px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .comment-modal-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    /* --- FIM: ESTILOS PARA COMENTÁRIOS POR PARÁGRAFO --- */
 </style>
 {% endblock %}
 
@@ -133,6 +414,7 @@
 </div>
 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
+
     <div class="flex justify-end w-full sm:w-auto">
         <a href="{{ url_for('student.dashboard') }}" class="flex items-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 text-sm">
             <i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel
@@ -162,7 +444,6 @@
     </audio>
 </div>
 {% endif %}
-
 {% if is_completed %}
 <div class="completed-banner" role="alert">
     <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
@@ -174,7 +455,13 @@
 {% endif %}
 
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-center md:justify-between gap-y-2 mb-4">
+    
     <div class="flex flex-wrap gap-2 items-center justify-center md:justify-start">
+        <button id="toggle-comments-btn" class="toggle-button text-xs md:text-sm">
+            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
+            <span class="md:hidden">Coment.</span>
+            <span class="hidden md:inline">Comentários</span>
+        </button>
         <button id="toggle-jurisprudence-btn" class="toggle-button text-xs md:text-sm">
             <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
             <span class="md:hidden">Juris.</span>
@@ -195,22 +482,18 @@
                 <i class="fas fa-search"></i> Ir
             </button>
         </div>
+
         <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
             <i class="fas fa-pencil-alt mr-2"></i>
             <span class="hidden md:inline">Minhas anotações</span>
             <span class="md:hidden">Anotações</span>
         </button>
     </div>
+
 </div>
 
+
 <div class="law-content-container" id="law-content">
-    
-    <div class="text-right mb-4 border-b pb-4">
-        <button id="toggle-comment-content-btn" class="bg-indigo-100 text-indigo-700 text-xs font-medium py-1 px-3 rounded-full hover:bg-indigo-200 transition-colors">
-            <i class="fas fa-eye-slash mr-2"></i><span>Ocultar Meus Comentários</span>
-        </button>
-    </div>
-    
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
     {% endif %}
@@ -227,14 +510,46 @@
         </button>
     </div>
 </div>
+
 <div class="mt-8" id="notes-section">
+    <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
+        <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
+            <h3 class="text-lg font-medium text-blue-800"><i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações</h3>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
+        </div>
+        <div class="p-4 hidden" id="notes-content-area">
+            <div class="notes-toolbar">
+                <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
+                <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
+                <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
+            </div>
+            <div id="notes-editor" class="notes-editor" contenteditable="true"></div>
+            <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+                <i class="fas fa-save mr-2"></i> Salvar Anotações
+            </button>
+        </div>
     </div>
+</div>
+
 {% if not is_completed %}
 <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
-    </form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
+    <div class="action-buttons flex justify-center items-center">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
+            <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
+        </button>
+        <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+            <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+        </button>
+    </div>
+</form>
 {% else %}
 <div class="mt-8 flex justify-center">
-    </div>
+    <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
+</div>
 {% endif %}
 
 <div id="comment-modal-backdrop" class="comment-modal-backdrop">
@@ -253,19 +568,127 @@
 {{ super() }}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // --- Lógica JavaScript Original (Inalterada) ---
-    // (Progresso, Busca de Artigo, Ondas Neurais, Anotações, Bookmark, etc.)
     const progressBar = document.getElementById('reading-progress-bar');
-    function updateProgressBar() { /* ...código original... */ }
+    function updateProgressBar() {
+        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollableHeight > 0) {
+            const progressPercentage = (scrollTop / scrollableHeight) * 100;
+            progressBar.style.width = progressPercentage + '%';
+        } else {
+            progressBar.style.width = '0%';
+        }
+    }
     window.addEventListener('scroll', updateProgressBar);
     updateProgressBar();
-    // ... (todo o resto do seu script original vem aqui, intacto)
 
+    const lawContent = document.getElementById("law-content");
+    const goToNotesBtn = document.getElementById("go-to-notes-btn");
+    const notesSection = document.getElementById("notes-section");
+    const backToTopBtn = document.getElementById("back-to-top-btn");
+    const pageTop = document.getElementById("page-top");
+    const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
+    const lastReadArticleInput = document.getElementById("last_read_article");
+    
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+    const stickyActionBar = document.getElementById('sticky-action-bar');
 
-    // --- Lógica para os Botões de Toggle (Jurisprudência, Doutrina) ---
+    function indexArticles() {
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
+                }
+            }
+        });
+    }
+
+    function findAndGoToArticle() {
+        const articleNumber = articleSearchInput.value.trim();
+        if (/^\d+$/.test(articleNumber)) {
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                alert(`Artigo ${articleNumber} não encontrado.`);
+            }
+        } else {
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
+            }
+        }
+    }
+
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return;
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let firstMatch = null;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                const parentElement = node.parentElement;
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+                const span = document.createElement('span');
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
+                span.textContent = foundText;
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                parentElement.replaceChild(fragment, node);
+                if (!firstMatch) {
+                    firstMatch = parentElement;
+                }
+            }
+        }
+        if (firstMatch) {
+            scrollToElement(firstMatch, false);
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
+    }
+
+    function scrollToElement(element, useAnimationClass = true) {
+        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+        const extraPadding = 16;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+        if (useAnimationClass) {
+            element.classList.add('highlight-article');
+            setTimeout(() => {
+                element.classList.remove('highlight-article');
+            }, 2000);
+        }
+    }
+
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    articleSearchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            findAndGoToArticle();
+        }
+    });
+    indexArticles();
+
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
-        const lawContent = document.getElementById("law-content");
         if (!button) return;
         let isVisible = true;
         button.addEventListener("click", function () {
@@ -278,50 +701,177 @@ document.addEventListener("DOMContentLoaded", function () {
             icon.className = isVisible ? 'fas fa-eye-slash mr-1 md:mr-2' : 'fas fa-eye mr-1 md:mr-2';
         });
     }
-    // A chamada para o antigo botão de comentários foi removida daqui.
+
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
     setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
     setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
 
+    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
+    goToNotesBtn.addEventListener("click", function() {
+        notesSection.scrollIntoView({ behavior: 'smooth' });
+        const notesContentArea = document.getElementById("notes-content-area");
+        if (notesContentArea.classList.contains("hidden")) {
+            setTimeout(() => { document.getElementById("toggle-notes-btn").click(); }, 500);
+        }
+    });
 
-    // =====================================================================
-    // <<< INÍCIO: LÓGICA COMPLETA PARA O NOVO SISTEMA DE COMENTÁRIOS >>>
-    // =====================================================================
-    const lawId = '{{ law.id }}';
-    const lawContentContainer = document.getElementById('law-content');
-    
-    // Lógica para o novo botão de VISIBILIDADE do CONTEÚDO dos comentários
-    const toggleCommentContentBtn = document.getElementById('toggle-comment-content-btn');
-    if (toggleCommentContentBtn) {
-        function updateCommentContentButtonState(areVisible) {
-            const icon = toggleCommentContentBtn.querySelector('i');
-            const text = toggleCommentContentBtn.querySelector('span');
-            icon.className = areVisible ? 'fas fa-eye-slash mr-2' : 'fas fa-eye mr-2';
-            text.textContent = areVisible ? 'Ocultar Meus Comentários' : 'Mostrar Meus Comentários';
-        }
-        
-        // Verifica a preferência do usuário no armazenamento do navegador
-        let contentIsVisible = localStorage.getItem('commentContentVisible') !== 'false';
-        updateCommentContentButtonState(contentIsVisible);
-        if(!contentIsVisible) {
-            lawContentContainer.classList.add('user-comment-content-hidden');
-        }
-        
-        // Adiciona o evento de clique para alternar a visibilidade
-        toggleCommentContentBtn.addEventListener('click', () => {
-            lawContentContainer.classList.toggle('user-comment-content-hidden');
-            contentIsVisible = !lawContentContainer.classList.contains('user-comment-content-hidden');
-            updateCommentContentButtonState(contentIsVisible);
-            localStorage.setItem('commentContentVisible', contentIsVisible); // Salva a preferência
+    backToTopBtn.addEventListener("click", function() {
+        pageTop.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    if (saveBookmarkBtn) {
+        saveBookmarkBtn.addEventListener("click", function() {
+            const lastReadArticle = lastReadArticleInput.value.trim();
+            if (!lastReadArticle) {
+                alert("Por favor, informe onde você parou.");
+                return;
+            }
+            if (hiddenLastReadArticleInput) {
+                hiddenLastReadArticleInput.value = lastReadArticle;
+            }
+            const lawId = window.location.pathname.split('/').pop();
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            const originalText = saveBookmarkBtn.innerHTML;
+            saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+            saveBookmarkBtn.disabled = true;
+            fetch(`/student/save_last_read/${lawId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(response => response.json()).then(data => {
+                if (data.success) {
+                    saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                    let messageDiv = document.querySelector('.last-read-info');
+                    if (!messageDiv) {
+                        messageDiv = document.createElement('div');
+                        messageDiv.className = 'last-read-info';
+                        messageDiv.setAttribute('role', 'alert');
+                        const toggleButtonsContainer = document.getElementById('sticky-action-bar');
+                        toggleButtonsContainer.parentNode.insertBefore(messageDiv, toggleButtonsContainer);
+                    }
+                    messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
+                    setTimeout(() => {
+                        saveBookmarkBtn.innerHTML = originalText;
+                        saveBookmarkBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
+                    saveBookmarkBtn.innerHTML = originalText;
+                    saveBookmarkBtn.disabled = false;
+                }
+            }).catch(error => {
+                console.error("Erro ao salvar:", error);
+                alert("Erro de comunicação ao salvar.");
+                saveBookmarkBtn.innerHTML = originalText;
+                saveBookmarkBtn.disabled = false;
+            });
         });
     }
 
-    // Lógica para ADICIONAR, EXCLUIR e CARREGAR os comentários
+    const toggleNotesBtn = document.getElementById("toggle-notes-btn");
+    const notesContentArea = document.getElementById("notes-content-area");
+    const notesChevron = document.getElementById("notes-chevron");
+    toggleNotesBtn.addEventListener("click", function() {
+        notesContentArea.classList.toggle("hidden");
+        notesChevron.style.transform = notesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+    });
+
+    const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
+    let currentlyPlaying = null;
+    neuralWaveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const waveType = this.getAttribute('data-wave');
+            const audioElement = document.getElementById(`audio-${waveType}`);
+            if (this.classList.contains('playing')) {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                this.classList.remove('playing');
+                currentlyPlaying = null;
+                return;
+            }
+            if (currentlyPlaying) {
+                const playingButton = document.querySelector(`.neural-wave-button[data-wave="${currentlyPlaying}"]`);
+                const playingAudio = document.getElementById(`audio-${currentlyPlaying}`);
+                playingButton.classList.remove('playing');
+                playingAudio.pause();
+                playingAudio.currentTime = 0;
+            }
+            audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
+            this.classList.add('playing');
+            currentlyPlaying = waveType;
+        });
+    });
+
+    const notesEditor = document.getElementById('notes-editor');
+    const saveNotesBtn = document.getElementById('save-notes-btn');
+    document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
+    document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
+    document.getElementById('highlight-btn').addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const parent = range.commonAncestorContainer.parentElement;
+            if (parent.classList.contains('highlight')) {
+                const text = document.createTextNode(parent.textContent);
+                parent.parentNode.replaceChild(text, parent);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            }
+        }
+        notesEditor.focus();
+    });
+
+    function loadNotes() {
+        const lawId = window.location.pathname.split('/').pop();
+        fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
+            if (d.success && d.content) notesEditor.innerHTML = d.content;
+        }).catch(e => console.error("Erro ao carregar anotações:", e));
+    }
+
+    saveNotesBtn.addEventListener('click', function() {
+        const lawId = window.location.pathname.split('/').pop();
+        const content = notesEditor.innerHTML;
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        this.disabled = true;
+        fetch(`/student/law/${lawId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ content: content })
+        }).then(r => r.json()).then(d => {
+            this.innerHTML = d.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+            this.classList.toggle('bg-green-500', d.success);
+            this.classList.toggle('bg-red-500', !d.success);
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+                this.classList.remove('bg-green-500', 'bg-red-500');
+            }, 2000);
+        }).catch(e => {
+            console.error("Erro ao salvar anotações:", e);
+            this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+            this.disabled = false;
+        });
+    });
+    
+    loadNotes();
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS >>>
+    // =================================================================
+    const lawId = '{{ law.id }}';
+    const lawContentContainer = document.getElementById('law-content');
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTextarea = document.getElementById('comment-modal-textarea');
     const modalSaveBtn = document.getElementById('comment-modal-save');
     const modalCancelBtn = document.getElementById('comment-modal-cancel');
     let currentAnchorId = null;
 
+    // Função para abrir o modal
     function openCommentModal(anchorId) {
         currentAnchorId = anchorId;
         modalTextarea.value = '';
@@ -329,30 +879,42 @@ document.addEventListener("DOMContentLoaded", function () {
         modalTextarea.focus();
     }
 
+    // Função para fechar o modal
     function closeCommentModal() {
         modalBackdrop.style.display = 'none';
         currentAnchorId = null;
     }
 
+    // Função para exibir um comentário na tela
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
-        if (!anchorElement || !anchorElement.parentNode) return;
+        if (!anchorElement) return;
 
+        // Cria o elemento do comentário
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
-        commentDiv.innerHTML = `<p>${comment.content.replace(/\n/g, '<br>')}</p><button class="comment-delete-btn" title="Excluir comentário">&times;</button>`;
+        commentDiv.innerHTML = `
+            <p>${comment.content.replace(/\n/g, '<br>')}</p>
+            <button class="comment-delete-btn" title="Excluir comentário">&times;</button>
+        `;
+
+        // Insere o comentário logo após o parágrafo
         anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
 
+        // Adiciona evento de exclusão
         commentDiv.querySelector('.comment-delete-btn').addEventListener('click', () => deleteComment(comment.id, commentDiv));
         
+        // Marca o ícone como tendo um comentário
         const icon = anchorElement.parentNode.querySelector('.comment-icon');
         if(icon) icon.classList.add('has-comment');
     }
     
+    // Função para salvar um novo comentário
     async function saveComment() {
         const content = modalTextarea.value.trim();
         if (!content || !currentAnchorId) return;
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         try {
@@ -374,8 +936,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
+    // Função para excluir um comentário
     async function deleteComment(commentId, commentElement) {
         if (!confirm('Tem certeza que deseja excluir este comentário?')) return;
+        
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         try {
@@ -385,13 +949,13 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const data = await response.json();
             if (data.success) {
+                // Remove o ícone "has-comment" se for o último comentário do parágrafo
                 const anchorId = commentElement.previousElementSibling.id;
-                const wrapper = document.getElementById(anchorId).parentNode;
-                commentElement.remove();
-                
-                const remainingComments = wrapper.querySelectorAll('.comment-display').length;
+                commentElement.remove(); // Remove o balão do comentário da tela
+
+                const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
                 if (remainingComments === 0) {
-                    const icon = wrapper.querySelector('.comment-icon');
+                    const icon = document.getElementById(anchorId).parentNode.querySelector('.comment-icon');
                     if (icon) icon.classList.remove('has-comment');
                 }
             } else {
@@ -403,9 +967,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+
+    // Função principal de inicialização
     async function initCommentSystem() {
+        // 1. Identificar, envolver e adicionar ícones a cada parágrafo
         const paragraphs = lawContentContainer.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
+            // Ignorar parágrafos que já estão em um wrapper ou que são de "Doutrina", etc.
             if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
             
             const anchorId = `law-p-${index}`;
@@ -423,6 +991,7 @@ document.addEventListener("DOMContentLoaded", function () {
             wrapper.appendChild(icon);
         });
 
+        // 2. Carregar comentários existentes
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
@@ -433,6 +1002,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erro ao carregar comentários:", error);
         }
         
+        // 3. Adicionar eventos ao modal
         modalSaveBtn.addEventListener('click', saveComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
@@ -440,8 +1010,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Inicia o sistema de comentários ao carregar a página
+    // Inicia o sistema de comentários
     initCommentSystem();
+    // =================================================================
+    // <<< FIM: LÓGICA PARA O SISTEMA DE COMENTÁRIOS >>>
+    // =================================================================
 });
 </script>
 {% endblock %}
