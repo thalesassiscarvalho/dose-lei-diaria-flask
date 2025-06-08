@@ -355,17 +355,19 @@
         opacity: 1;
     }
 
+    /* === INÍCIO DA ALTERAÇÃO SOLICITADA === */
     .comment-display {
-        /* CORES ALTERADAS DE ROXO PARA LARANJA */
         background-color: #fff7ed; /* Laranja bem clarinho (Tailwind orange-50) */
         border-left: 3px solid #f97316; /* Laranja (Tailwind orange-500) */
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
-        font-size: 0.9em;
         position: relative;
+        /* font-size: 0.9em; */ /* <-- Removido para igualar ao tamanho do texto base */
+        font-style: italic;     /* <-- Adicionado para que o texto do comentário fique em itálico */
     }
+    /* === FIM DA ALTERAÇÃO SOLICITADA === */
 
     .comment-delete-btn {
         position: absolute;
