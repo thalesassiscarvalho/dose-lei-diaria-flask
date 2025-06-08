@@ -360,19 +360,19 @@
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-2 mb-4">
     <div class="flex flex-wrap gap-2 items-center justify-center md:justify-start">
         <button id="toggle-comments-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1"></i>
-            <span class="hidden md:inline toggle-text-desktop">Ocultar Comentários</span>
-            <span class="md:hidden">Comentários</span>
+            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
+            <span class="md:hidden">Coment.</span>
+            <span class="hidden md:inline">Comentários</span>
         </button>
         <button id="toggle-jurisprudence-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1"></i>
-            <span class="hidden md:inline toggle-text-desktop">Ocultar Jurisprudências</span>
-            <span class="md:hidden">Jurisprudências</span>
+            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
+            <span class="md:hidden">Juris.</span>
+            <span class="hidden md:inline">Jurisprudência</span>
         </button>
         <button id="toggle-doutrina-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1"></i>
-            <span class="hidden md:inline toggle-text-desktop">Ocultar Doutrina</span>
-            <span class="md:hidden">Doutrina</span>
+            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
+            <span class="md:hidden">Dout.</span>
+            <span class="hidden md:inline">Doutrina</span>
         </button>
     </div>
 
@@ -392,8 +392,6 @@
         </button>
     </div>
 </div>
-
-
 <div class="law-content-container" id="law-content">
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
@@ -501,7 +499,6 @@ document.addEventListener("DOMContentLoaded", function () {
     function findAndGoToArticle() {
         const articleNumber = articleSearchInput.value.trim();
         if (/^\d+$/.test(articleNumber)) {
-             // Se for um número, busca pelo ID
             const targetElement = document.getElementById(`art-${articleNumber}`);
             if (targetElement) {
                 scrollToElement(targetElement);
@@ -509,7 +506,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert(`Artigo ${articleNumber} não encontrado.`);
             }
         } else {
-            // Se não for apenas número, busca pelo texto
             const searchText = articleSearchInput.value.trim();
             if (searchText) {
                 findAndGoToText(searchText);
@@ -519,13 +515,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function findAndGoToText(text) {
         if (!text || text.length < 3) return;
-
-        // Limpa destaques anteriores
-        const highlighted = lawContent.querySelectorAll('span.highlight-article');
-        highlighted.forEach(el => {
-            el.outerHTML = el.innerHTML;
-        });
-
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
         const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
         let node;
         let firstMatch = null;
@@ -533,33 +524,26 @@ document.addEventListener("DOMContentLoaded", function () {
             const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
             if (index > -1) {
                 const parentElement = node.parentElement;
-                
                 const originalText = node.nodeValue;
                 const beforeText = originalText.substring(0, index);
                 const foundText = originalText.substring(index, index + text.length);
                 const afterText = originalText.substring(index + text.length);
-
                 const span = document.createElement('span');
                 span.className = 'highlight-article-search';
                 span.style.backgroundColor = '#fef08a';
                 span.textContent = foundText;
-                
                 const fragment = document.createDocumentFragment();
                 fragment.appendChild(document.createTextNode(beforeText));
                 fragment.appendChild(span);
                 fragment.appendChild(document.createTextNode(afterText));
-                
                 parentElement.replaceChild(fragment, node);
-                
                 if (!firstMatch) {
                     firstMatch = parentElement;
                 }
-                 // Não para, continua para destacar todas as ocorrências
             }
         }
-
         if (firstMatch) {
-            scrollToElement(firstMatch, false); // Não aplica o highlight de animação, pois já temos o de background
+            scrollToElement(firstMatch, false);
         } else {
             alert(`Texto "${text}" não encontrado.`);
         }
@@ -591,34 +575,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     indexArticles();
 
-    function setupToggleButton(buttonId, contentSelector, textBase) {
+    function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
-
         let isVisible = true;
         button.addEventListener("click", function () {
             isVisible = !isVisible;
             lawContent.querySelectorAll(contentSelector).forEach(el => {
                 el.classList.toggle("conteudo-oculto", !isVisible);
             });
-
             const icon = this.querySelector('i');
-            const textSpan = this.querySelector('.toggle-text-desktop');
-            if (isVisible) {
-                this.classList.remove("active");
-                icon.className = 'fas fa-eye-slash mr-1';
-                if (textSpan) textSpan.textContent = ` Ocultar ${textBase}`;
-            } else {
-                this.classList.add("active");
-                icon.className = 'fas fa-eye mr-1';
-                if (textSpan) textSpan.textContent = ` Mostrar ${textBase}`;
-            }
+            this.classList.toggle("active", !isVisible);
+            icon.className = isVisible ? 'fas fa-eye-slash mr-1 md:mr-2' : 'fas fa-eye mr-1 md:mr-2';
         });
     }
 
-    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]', 'Comentários');
-    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]', 'Jurisprudências');
-    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]', 'Doutrina');
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
+    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
+    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
 
     const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
     goToNotesBtn.addEventListener("click", function() {
