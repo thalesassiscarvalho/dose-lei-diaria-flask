@@ -290,7 +290,7 @@ def mark_complete(law_id):
         if points_awarded_this_time > 0:
              flash_message += f" Você ganhou {points_awarded_this_time} pontos."
         if unlocked_achievements:
-            flash_message += f" Conquistas desbloqueadas: {\', \'.join(unlocked_achievements)}!"
+            flash_message += f" Conquistas desbloqueadas: {', '.join(unlocked_achievements)}!"
         if not was_already_completed:
             flash(flash_message, "success")
     except Exception as e:
