@@ -218,7 +218,7 @@ def view_law(law_id):
         progress = UserProgress(
             user_id=current_user.id,
             law_id=law_id,
-            status=\'nao_iniciado\',
+            status='nao_iniciado',
             last_accessed_at=now
         )
         db.session.add(progress)
