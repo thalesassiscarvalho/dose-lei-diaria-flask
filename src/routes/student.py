@@ -111,9 +111,9 @@ def dashboard():
 
             if selected_status == 'completed' and is_completed:
                 laws_after_status_filter.append(law)
-            elif selected_status == \'in_progress\' and is_in_progress:
+            elif selected_status == 'in_progress' and is_in_progress:
                 laws_after_status_filter.append(law)
-            elif selected_status == \'not_read\' and is_not_read:
+            elif selected_status == 'not_read' and is_not_read:
                 laws_after_status_filter.append(law)
 
     # Apply favorite filter
