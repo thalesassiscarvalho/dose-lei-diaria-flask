@@ -136,7 +136,7 @@ def dashboard():
         try:
             db.session.commit()
             user_achievements = current_user.achievements # Refresh achievements after commit
-            flash(f"Novas conquistas desbloqueadas: {\', \'.join(newly_unlocked)}!", "success")
+            flash(f"Novas conquistas desbloqueadas: {', '.join(newly_unlocked)}!", "success")
         except Exception as e:
             db.session.rollback()
             logging.error(f"[DASHBOARD] Error committing achievements for user {current_user.id}: {e}")
