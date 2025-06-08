@@ -375,20 +375,26 @@
 </div>
 {% endif %}
 
-<div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-wrap items-center justify-between gap-y-2 mb-4">
-    <div class="flex flex-wrap gap-2 items-center">
+<div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-2 mb-4">
+    <div class="flex flex-wrap gap-2 items-center justify-center md:justify-start">
         <button id="toggle-comments-btn" class="toggle-button">
-            <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
+            <i class="fas fa-eye-slash mr-1"></i>
+            <span class="hidden md:inline toggle-text-desktop">Ocultar Comentários</span>
+            <span class="md:hidden">Comentários</span>
         </button>
         <button id="toggle-jurisprudence-btn" class="toggle-button">
-            <i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências
+            <i class="fas fa-eye-slash mr-1"></i>
+            <span class="hidden md:inline toggle-text-desktop">Ocultar Jurisprudências</span>
+            <span class="md:hidden">Jurisprudências</span>
         </button>
         <button id="toggle-doutrina-btn" class="toggle-button">
-            <i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina
+            <i class="fas fa-eye-slash mr-1"></i>
+            <span class="hidden md:inline toggle-text-desktop">Ocultar Doutrina</span>
+            <span class="md:hidden">Doutrina</span>
         </button>
     </div>
 
-    <div class="flex items-center flex-wrap justify-end gap-x-4 gap-y-2 lg:mt-0">
+    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2">
         <div class="flex items-center space-x-1">
             <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
             <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
@@ -398,12 +404,12 @@
         </div>
 
         <button id="go-to-notes-btn" class="go-to-notes-btn">
-            <i class="fas fa-pencil-alt mr-2"></i> Ir para minhas anotações
+            <i class="fas fa-pencil-alt mr-2"></i>
+            <span class="hidden md:inline">Ir para minhas anotações</span>
+            <span class="md:hidden">Anotações</span>
         </button>
     </div>
 </div>
-
-
 <div class="law-content-container" id="law-content">
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
@@ -516,23 +522,73 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function findAndGoToArticle() {
         const articleNumber = articleSearchInput.value.trim();
-        if (!articleNumber) return;
+        if (!articleNumber) {
+            // Se a busca for por texto, chame a nova função
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
+            }
+            return;
+        }
+
         const targetElement = document.getElementById(`art-${articleNumber}`);
         if (targetElement) {
-            const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
-            const extraPadding = 16;
-            const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
-            const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
-            targetElement.classList.add('highlight-article');
-            setTimeout(() => {
-                targetElement.classList.remove('highlight-article');
-            }, 2000);
+            scrollToElement(targetElement);
         } else {
-            alert(`Artigo ${articleNumber} não encontrado.`);
+            // Se não encontrar por ID, tenta buscar pelo texto como fallback
+            findAndGoToText(`Art. ${articleNumber}`);
+        }
+    }
+
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return; // Evita buscas muito genéricas
+
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                // Encontramos o texto. Agora vamos pegar o elemento pai para rolar até ele.
+                const parentElement = node.parentElement;
+                
+                // Envolve o texto encontrado em um span para destacar
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+
+                const span = document.createElement('span');
+                span.className = 'highlight-article'; // Reutiliza a classe de destaque
+                span.textContent = foundText;
+
+                // Limpa o nó de texto original e adiciona as novas partes
+                node.nodeValue = beforeText;
+                parentElement.insertBefore(span, node.nextSibling);
+                parentElement.insertBefore(document.createTextNode(afterText), span.nextSibling);
+
+                scrollToElement(parentElement);
+                return; // Para na primeira ocorrência
+            }
+        }
+        alert(`Texto "${text}" não encontrado.`);
+    }
+
+    function scrollToElement(element) {
+        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+        const extraPadding = 16;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+
+        // Se o elemento não for destacado pela busca de texto, destaca aqui
+        if (!element.querySelector('.highlight-article')) {
+            element.classList.add('highlight-article');
+            setTimeout(() => {
+                element.classList.remove('highlight-article');
+            }, 2000);
         }
     }
 
@@ -543,18 +599,46 @@ document.addEventListener("DOMContentLoaded", function () {
             findAndGoToArticle();
         }
     });
+    
+    // --- O JS de indexação por ID não é mais necessário, mas podemos manter como fallback ---
     indexArticles();
 
+    // --- INÍCIO: LÓGICA ATUALIZADA PARA OS BOTÕES DE TOGGLE ---
+    function setupToggleButton(buttonId, contentSelector, textBase) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+
+        let isVisible = true;
+
+        button.addEventListener("click", function () {
+            isVisible = !isVisible;
+            toggleElementsVisibility(contentSelector, isVisible);
+
+            const icon = this.querySelector('i');
+            const textSpan = this.querySelector('.toggle-text-desktop');
+
+            if (isVisible) {
+                this.classList.remove("active");
+                icon.className = 'fas fa-eye-slash mr-1';
+                if (textSpan) textSpan.textContent = ` Ocultar ${textBase}`;
+            } else {
+                this.classList.add("active");
+                icon.className = 'fas fa-eye mr-1';
+                if (textSpan) textSpan.textContent = ` Mostrar ${textBase}`;
+            }
+        });
+    }
+
+    setupToggleButton('toggle-comments-btn', commentSelector, 'Comentários');
+    setupToggleButton('toggle-jurisprudence-btn', jurisprudenceSelector, 'Jurisprudências');
+    setupToggleButton('toggle-doutrina-btn', doutrinaSelector, 'Doutrina');
+    // --- FIM: LÓGICA ATUALIZADA PARA OS BOTÕES DE TOGGLE ---
+
+
     // O restante do seu script original...
-    // (todo o código de toggle de comentários, notas, áudio, etc. continua aqui, sem modificação)
+    // (todo o código de notas, áudio, etc. continua aqui, sem modificação)
     const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
-    const commentSelector = 'p[style*="background-color: #f0fdf4"]';
-    const jurisprudenceSelector = 'p[style*="background-color: #fef2f2"]';
-    const doutrinaSelector = 'p[style*="background-color: #f5f3ff"]';
     const hiddenClass = "conteudo-oculto";
-    let commentsVisible = true;
-    let jurisprudenceVisible = true;
-    let doutrinaVisible = true;
 
     goToNotesBtn.addEventListener("click", function() {
         notesSection.scrollIntoView({ behavior: 'smooth' });
@@ -623,25 +707,6 @@ document.addEventListener("DOMContentLoaded", function () {
             el.classList.toggle(hiddenClass, !makeVisible);
         });
     }
-
-    toggleCommentsBtn.addEventListener("click", function () {
-        commentsVisible = !commentsVisible;
-        toggleElementsVisibility(commentSelector, commentsVisible);
-        this.innerHTML = commentsVisible ? '<i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários' : '<i class="fas fa-eye mr-1"></i> Mostrar Comentários';
-        this.classList.toggle("active", !commentsVisible);
-    });
-    toggleJurisprudenceBtn.addEventListener("click", function () {
-        jurisprudenceVisible = !jurisprudenceVisible;
-        toggleElementsVisibility(jurisprudenceSelector, jurisprudenceVisible);
-        this.innerHTML = jurisprudenceVisible ? '<i class="fas fa-eye-slash mr-1"></i> Ocultar Jurisprudências' : '<i class="fas fa-eye mr-1"></i> Mostrar Jurisprudências';
-        this.classList.toggle("active", !jurisprudenceVisible);
-    });
-    toggleDoutrinaBtn.addEventListener("click", function () {
-        doutrinaVisible = !doutrinaVisible;
-        toggleElementsVisibility(doutrinaSelector, doutrinaVisible);
-        this.innerHTML = doutrinaVisible ? '<i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina' : '<i class="fas fa-eye mr-1"></i> Mostrar Doutrina';
-        this.classList.toggle("active", !doutrinaVisible);
-    });
 
     const toggleNotesBtn = document.getElementById("toggle-notes-btn");
     const notesContentArea = document.getElementById("notes-content-area");
