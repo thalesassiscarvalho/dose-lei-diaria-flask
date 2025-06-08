@@ -23,6 +23,18 @@
     }
     /* --- FIM: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
 
+    /* --- INÍCIO: ESTILO PARA DESTAQUE DO ARTIGO ENCONTRADO --- */
+    .highlight-article {
+        animation: highlight-fade 2s ease-out;
+    }
+
+    @keyframes highlight-fade {
+        0% { background-color: #fef9c3; } /* Amarelo claro */
+        70% { background-color: #fef9c3; }
+        100% { background-color: transparent; }
+    }
+    /* --- FIM: ESTILO PARA DESTAQUE --- */
+
     .law-content-container {
         background-color: white;
         border-radius: 0.5rem;
@@ -551,8 +563,8 @@
 </div>
 {% endif %}
 
-<div class="sticky top-1 z-20 bg-blue-50 border-b border-blue-200 shadow-sm py-3 flex flex-wrap items-center justify-between mb-4">
-    <div class="flex space-x-2">
+<div class="sticky top-1 z-20 bg-gray-50 py-3 flex flex-wrap items-center justify-between mb-4 px-4 rounded-md shadow">
+    <div class="flex space-x-2 items-center">
         <button id="toggle-comments-btn" class="toggle-button">
             <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
         </button>
@@ -563,6 +575,15 @@
             <i class="fas fa-eye-slash mr-1"></i> Ocultar Doutrina
         </button>
     </div>
+
+    <div class="flex items-center space-x-1 mt-2 sm:mt-0">
+        <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
+        <input type="text" id="article-search-input" class="w-20 border-gray-300 rounded-md shadow-sm text-sm py-1">
+        <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
+            <i class="fas fa-search"></i> Ir
+        </button>
+    </div>
+
     <button id="go-to-notes-btn" class="go-to-notes-btn mt-2 sm:mt-0">
         <i class="fas fa-pencil-alt mr-2"></i> Ir para minhas anotações
     </button>
@@ -695,6 +716,63 @@ document.addEventListener("DOMContentLoaded", function () {
     let jurisprudenceVisible = true;
     let doutrinaVisible = true;
 
+    // --- INÍCIO: JAVASCRIPT PARA BUSCA DE ARTIGO ---
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+
+    // 1. Indexar Artigos: Roda uma vez para preparar a página.
+    function indexArticles() {
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i; // Regex para "Art. X" ou "Artigo X"
+
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                // Adiciona um ID único ao elemento, se ele ainda não tiver um
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
+                }
+            }
+        });
+    }
+
+    // 2. Função para ir até o artigo
+    function findAndGoToArticle() {
+        const articleNumber = articleSearchInput.value.trim();
+        if (!articleNumber) return; // Não faz nada se o campo estiver vazio
+
+        const targetElement = document.getElementById(`art-${articleNumber}`);
+
+        if (targetElement) {
+            // Rola a tela até o elemento
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Aplica um destaque temporário
+            targetElement.classList.add('highlight-article');
+            setTimeout(() => {
+                targetElement.classList.remove('highlight-article');
+            }, 2000); // Remove o destaque após 2 segundos
+        } else {
+            alert(`Artigo ${articleNumber} não encontrado.`);
+        }
+    }
+
+    // 3. Adiciona os eventos
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    // Permite buscar pressionando Enter no campo de texto
+    articleSearchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Previne o envio de algum formulário
+            findAndGoToArticle();
+        }
+    });
+
+    // Roda a indexação quando a página carrega
+    indexArticles();
+    // --- FIM: JAVASCRIPT PARA BUSCA DE ARTIGO ---
+
+
     // Função para rolar suavemente até a seção de anotações
     goToNotesBtn.addEventListener("click", function() {
         // Rolar suavemente até a seção de anotações
@@ -747,7 +825,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrfToken
                 },
-                body: `last_read_article=<span class="math-inline">\{encodeURIComponent\(lastReadArticle\)\}&csrf\_token\=</span>{encodeURIComponent(csrfToken)}`
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
             })
             .then(response => response.json())
             .then(data => {
