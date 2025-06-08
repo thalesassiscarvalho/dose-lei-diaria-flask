@@ -327,106 +327,6 @@
             min-height: 150px; /* Nova altura para telas menores - ajuste este valor se necessário */
         }
     }
-
-    /* Estilos para os balões de comentário */
-    .comment-bubble {
-        background-color: #e0e7ff; /* blue-100 */
-        border: 1px solid #93c5fd; /* blue-300 */
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        margin-top: 0.5rem;
-        position: relative;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-
-    .comment-bubble::before {
-        content: '';
-        position: absolute;
-        top: -10px; /* Ajuste para posicionar a seta */
-        left: 15px;
-        border-width: 10px 10px 10px 0;
-        border-style: solid;
-        border-color: transparent #93c5fd transparent transparent; /* Cor da seta */
-    }
-
-    .comment-bubble-content {
-        margin-bottom: 0.5rem;
-    }
-
-    .comment-bubble-meta {
-        font-size: 0.75rem;
-        color: #6b7280; /* gray-500 */
-        text-align: right;
-    }
-
-    .paragraph-with-comment {
-        position: relative;
-        /* Adicionar um pequeno padding ou margem para o ícone de comentário */
-        padding-right: 20px; 
-    }
-
-    .comment-icon {
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #3b82f6; /* blue-500 */
-        cursor: pointer;
-        font-size: 0.9rem;
-        display: none; /* Escondido por padrão, será mostrado via JS */
-    }
-
-    /* Estilos para o modal de adicionar comentário */
-    .comment-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        display: none;
-    }
-
-    .comment-modal-content {
-        background-color: white;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        width: 90%;
-        max-width: 500px;
-    }
-
-    .comment-modal-content textarea {
-        width: 100%;
-        min-height: 100px;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .comment-modal-content button {
-        background-color: #3b82f6;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        border: none;
-        cursor: pointer;
-    }
-
-    .comment-modal-content button:hover {
-        background-color: #2563eb;
-    }
-
-    .comment-modal-close {
-        float: right;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
 </style>
 {% endblock %}
 
@@ -494,216 +394,382 @@
             <span class="md:hidden">Dout.</span>
             <span class="hidden md:inline">Doutrina</span>
         </button>
-        <button id="toggle-notes-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Anot.</span>
-            <span class="hidden md:inline">Anotações</span>
-        </button>
-        <button id="toggle-questions-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Quest.</span>
-            <span class="hidden md:inline">Questões</span>
-        </button>
-        <button id="toggle-summary-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Res.</span>
-            <span class="hidden md:inline">Resumo</span>
-        </button>
-        <button id="toggle-mind-map-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Mapa</span>
-            <span class="hidden md:inline">Mapa Mental</span>
-        </button>
-        <button id="toggle-flowchart-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Fluxo</span>
-            <span class="hidden md:inline">Fluxograma</span>
-        </button>
-        <button id="toggle-flashcards-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Flash</span>
-            <span class="hidden md:inline">Flashcards</span>
-        </button>
-        <button id="toggle-mnemonic-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Mnem.</span>
-            <span class="hidden md:inline">Mnemônicos</span>
-        </button>
-        <button id="toggle-articles-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Art.</span>
-            <span class="hidden md:inline">Artigos</span>
-        </button>
-        <button id="toggle-videos-btn" class="toggle-button text-xs md:text-sm">
-            <i class="fas fa-eye-slash mr-1 md:mr-2"></i>
-            <span class="md:hidden">Vídeos</span>
-            <span class="hidden md:inline">Vídeos</span>
+    </div>
+
+    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2">
+        <div class="flex items-center space-x-1">
+            <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
+            <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
+            <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
+                <i class="fas fa-search"></i> Ir
+            </button>
+        </div>
+
+        <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
+            <i class="fas fa-pencil-alt mr-2"></i>
+            <span class="hidden md:inline">Minhas anotações</span>
+            <span class="md:hidden">Anotações</span>
         </button>
     </div>
 
-    <div class="flex items-center gap-2">
-        <button id="save-progress-btn" class="save-bookmark-btn">
-            <i class="fas fa-save mr-2"></i>Salvar Progresso
-        </button>
-        <button id="back-to-top-btn" class="back-to-top-btn print-hidden">
-            <i class="fas fa-arrow-up mr-2"></i>Topo
-        </button>
-    </div>
 </div>
 
-<div class="law-content-container mt-4" id="law-content-container">
+
+<div class="law-content-container" id="law-content">
+    {% if law.description %}
+        <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
+    {% endif %}
+    
     {{ law.content | safe }}
 </div>
 
-<!-- Modal para adicionar comentário -->
-<div id="comment-modal" class="comment-modal">
-    <div class="comment-modal-content">
-        <span class="comment-modal-close">&times;</span>
-        <h2 class="text-xl font-bold mb-4">Adicionar Comentário</h2>
-        <p class="mb-2">Comentando o parágrafo: <strong id="modal-paragraph-id"></strong></p>
-        <textarea id="comment-text" placeholder="Digite seu comentário aqui..."></textarea>
-        <button id="submit-comment-btn">Salvar Comentário</button>
+<div class="bookmark-section">
+    <h3 class="text-lg font-medium text-gray-800 mb-2">Marcar onde parei:</h3>
+    <div class="bookmark-input-group">
+        <input type="text" id="last_read_article" class="bookmark-input" placeholder="Ex: Art. 5º, inciso I" value="{{ last_read_article or '' }}">
+        <button id="save-bookmark-btn" class="save-bookmark-btn">
+            <i class="fas fa-bookmark mr-2"></i> Salvar
+        </button>
     </div>
 </div>
 
+<div class="mt-8" id="notes-section">
+    <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
+        <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
+            <h3 class="text-lg font-medium text-blue-800"><i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações</h3>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
+        </div>
+        <div class="p-4 hidden" id="notes-content-area">
+            <div class="notes-toolbar">
+                <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
+                <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
+                <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
+            </div>
+            <div id="notes-editor" class="notes-editor" contenteditable="true"></div>
+            <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+                <i class="fas fa-save mr-2"></i> Salvar Anotações
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if not is_completed %}
+<form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
+    <div class="action-buttons flex justify-center items-center">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
+            <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
+        </button>
+        <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+            <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+        </button>
+    </div>
+</form>
+{% else %}
+<div class="mt-8 flex justify-center">
+    <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
-    const lawId = {{ law.id }};
-    const lawContentContainer = document.getElementById('law-content-container');
-    const commentModal = document.getElementById('comment-modal');
-    const commentModalClose = document.querySelector('.comment-modal-close');
-    const submitCommentBtn = document.getElementById('submit-comment-btn');
-    const commentText = document.getElementById('comment-text');
-    const modalParagraphId = document.getElementById('modal-paragraph-id');
-    let currentParagraphId = null;
+document.addEventListener("DOMContentLoaded", function () {
+    const progressBar = document.getElementById('reading-progress-bar');
+    function updateProgressBar() {
+        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollableHeight > 0) {
+            const progressPercentage = (scrollTop / scrollableHeight) * 100;
+            progressBar.style.width = progressPercentage + '%';
+        } else {
+            progressBar.style.width = '0%';
+        }
+    }
+    window.addEventListener('scroll', updateProgressBar);
+    updateProgressBar();
 
-    // Função para carregar e exibir comentários existentes
-    async function loadComments() {
-        try {
-            const response = await fetch(`/student/law/${lawId}/comments`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const comments = await response.json();
-            
-            // Limpar comentários existentes antes de adicionar novos
-            document.querySelectorAll('.comment-bubble').forEach(bubble => bubble.remove());
-            document.querySelectorAll('.comment-icon').forEach(icon => icon.remove());
+    const lawContent = document.getElementById("law-content");
+    const goToNotesBtn = document.getElementById("go-to-notes-btn");
+    const notesSection = document.getElementById("notes-section");
+    const backToTopBtn = document.getElementById("back-to-top-btn");
+    const pageTop = document.getElementById("page-top");
+    const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
+    const lastReadArticleInput = document.getElementById("last_read_article");
+    
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+    const stickyActionBar = document.getElementById('sticky-action-bar');
 
-            comments.forEach(comment => {
-                const paragraph = document.getElementById(comment.anchor_paragraph_id);
-                if (paragraph) {
-                    // Adicionar ícone de comentário
-                    let commentIcon = paragraph.querySelector('.comment-icon');
-                    if (!commentIcon) {
-                        commentIcon = document.createElement('i');
-                        commentIcon.classList.add('fas', 'fa-comment-dots', 'comment-icon');
-                        paragraph.classList.add('paragraph-with-comment');
-                        paragraph.appendChild(commentIcon);
-                    }
-                    commentIcon.style.display = 'inline-block'; // Mostrar o ícone
-
-                    // Criar e anexar o balão de comentário
-                    const commentBubble = document.createElement('div');
-                    commentBubble.classList.add('comment-bubble');
-                    commentBubble.innerHTML = `
-                        <div class="comment-bubble-content">${comment.content}</div>
-                        <div class="comment-bubble-meta">${comment.username} - ${comment.created_at}</div>
-                    `;
-                    commentBubble.style.display = 'none'; // Esconder por padrão
-                    paragraph.appendChild(commentBubble);
-
-                    // Event listener para mostrar/esconder o balão
-                    commentIcon.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Evitar que o clique no ícone propague para o parágrafo
-                        commentBubble.style.display = commentBubble.style.display === 'none' ? 'block' : 'none';
-                    });
-
-                    // Esconder o balão quando clicar fora dele
-                    document.addEventListener('click', (e) => {
-                        if (!commentBubble.contains(e.target) && !commentIcon.contains(e.target)) {
-                            commentBubble.style.display = 'none';
-                        }
-                    });
+    function indexArticles() {
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
                 }
-            });
-        } catch (error) {
-            console.error('Erro ao carregar comentários:', error);
+            }
+        });
+    }
+
+    function findAndGoToArticle() {
+        const articleNumber = articleSearchInput.value.trim();
+        if (/^\d+$/.test(articleNumber)) {
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                alert(`Artigo ${articleNumber} não encontrado.`);
+            }
+        } else {
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
+            }
         }
     }
 
-    // Adicionar IDs únicos a cada parágrafo e elementos de lista
-    function assignIdsToContent() {
-        let paragraphCount = 0;
-        lawContentContainer.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6').forEach(element => {
-            if (!element.id) { // Apenas se o elemento ainda não tiver um ID
-                const tagName = element.tagName.toLowerCase();
-                element.id = `law-${lawId}-${tagName}-${paragraphCount++}`;
-            }
-            // Adicionar event listener para abrir o modal de comentário
-            element.addEventListener('click', (e) => {
-                // Evitar abrir o modal se o clique foi no ícone de comentário
-                if (e.target.classList.contains('comment-icon')) {
-                    return;
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return;
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let firstMatch = null;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                const parentElement = node.parentElement;
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+                const span = document.createElement('span');
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
+                span.textContent = foundText;
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                parentElement.replaceChild(fragment, node);
+                if (!firstMatch) {
+                    firstMatch = parentElement;
                 }
-                currentParagraphId = element.id;
-                modalParagraphId.textContent = currentParagraphId;
-                commentText.value = ''; // Limpar o textarea
-                commentModal.style.display = 'flex';
+            }
+        }
+        if (firstMatch) {
+            scrollToElement(firstMatch, false);
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
+    }
+
+    function scrollToElement(element, useAnimationClass = true) {
+        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+        const extraPadding = 16;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+        if (useAnimationClass) {
+            element.classList.add('highlight-article');
+            setTimeout(() => {
+                element.classList.remove('highlight-article');
+            }, 2000);
+        }
+    }
+
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    articleSearchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            findAndGoToArticle();
+        }
+    });
+    indexArticles();
+
+    function setupToggleButton(buttonId, contentSelector) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        let isVisible = true;
+        button.addEventListener("click", function () {
+            isVisible = !isVisible;
+            lawContent.querySelectorAll(contentSelector).forEach(el => {
+                el.classList.toggle("conteudo-oculto", !isVisible);
+            });
+            const icon = this.querySelector('i');
+            this.classList.toggle("active", !isVisible);
+            icon.className = isVisible ? 'fas fa-eye-slash mr-1 md:mr-2' : 'fas fa-eye mr-1 md:mr-2';
+        });
+    }
+
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
+    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
+    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
+
+    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
+    goToNotesBtn.addEventListener("click", function() {
+        notesSection.scrollIntoView({ behavior: 'smooth' });
+        const notesContentArea = document.getElementById("notes-content-area");
+        if (notesContentArea.classList.contains("hidden")) {
+            setTimeout(() => { document.getElementById("toggle-notes-btn").click(); }, 500);
+        }
+    });
+
+    backToTopBtn.addEventListener("click", function() {
+        pageTop.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    if (saveBookmarkBtn) {
+        saveBookmarkBtn.addEventListener("click", function() {
+            const lastReadArticle = lastReadArticleInput.value.trim();
+            if (!lastReadArticle) {
+                alert("Por favor, informe onde você parou.");
+                return;
+            }
+            if (hiddenLastReadArticleInput) {
+                hiddenLastReadArticleInput.value = lastReadArticle;
+            }
+            const lawId = window.location.pathname.split('/').pop();
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            const originalText = saveBookmarkBtn.innerHTML;
+            saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+            saveBookmarkBtn.disabled = true;
+            fetch(`/student/save_last_read/${lawId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(response => response.json()).then(data => {
+                if (data.success) {
+                    saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                    let messageDiv = document.querySelector('.last-read-info');
+                    if (!messageDiv) {
+                        messageDiv = document.createElement('div');
+                        messageDiv.className = 'last-read-info';
+                        messageDiv.setAttribute('role', 'alert');
+                        const toggleButtonsContainer = document.getElementById('sticky-action-bar');
+                        toggleButtonsContainer.parentNode.insertBefore(messageDiv, toggleButtonsContainer);
+                    }
+                    messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
+                    setTimeout(() => {
+                        saveBookmarkBtn.innerHTML = originalText;
+                        saveBookmarkBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
+                    saveBookmarkBtn.innerHTML = originalText;
+                    saveBookmarkBtn.disabled = false;
+                }
+            }).catch(error => {
+                console.error("Erro ao salvar:", error);
+                alert("Erro de comunicação ao salvar.");
+                saveBookmarkBtn.innerHTML = originalText;
+                saveBookmarkBtn.disabled = false;
             });
         });
     }
 
-    // Event listeners para o modal
-    commentModalClose.addEventListener('click', () => {
-        commentModal.style.display = 'none';
+    const toggleNotesBtn = document.getElementById("toggle-notes-btn");
+    const notesContentArea = document.getElementById("notes-content-area");
+    const notesChevron = document.getElementById("notes-chevron");
+    toggleNotesBtn.addEventListener("click", function() {
+        notesContentArea.classList.toggle("hidden");
+        notesChevron.style.transform = notesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
     });
 
-    window.addEventListener('click', (event) => {
-        if (event.target == commentModal) {
-            commentModal.style.display = 'none';
-        }
-    });
-
-    submitCommentBtn.addEventListener('click', async () => {
-        const content = commentText.value.trim();
-        if (content && currentParagraphId) {
-            try {
-                const response = await fetch(`/student/law/${lawId}/add_comment`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        comment_content: content,
-                        anchor_paragraph_id: currentParagraphId
-                    })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    alert(result.message);
-                    commentModal.style.display = 'none';
-                    loadComments(); // Recarregar comentários para exibir o novo
-                } else {
-                    alert('Erro ao adicionar comentário: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Erro ao enviar comentário:', error);
-                alert('Erro ao enviar comentário.');
+    const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
+    let currentlyPlaying = null;
+    neuralWaveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const waveType = this.getAttribute('data-wave');
+            const audioElement = document.getElementById(`audio-${waveType}`);
+            if (this.classList.contains('playing')) {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                this.classList.remove('playing');
+                currentlyPlaying = null;
+                return;
             }
-        } else {
-            alert('Por favor, digite um comentário.');
+            if (currentlyPlaying) {
+                const playingButton = document.querySelector(`.neural-wave-button[data-wave="${currentlyPlaying}"]`);
+                const playingAudio = document.getElementById(`audio-${currentlyPlaying}`);
+                playingButton.classList.remove('playing');
+                playingAudio.pause();
+                playingAudio.currentTime = 0;
+            }
+            audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
+            this.classList.add('playing');
+            currentlyPlaying = waveType;
+        });
+    });
+
+    const notesEditor = document.getElementById('notes-editor');
+    const saveNotesBtn = document.getElementById('save-notes-btn');
+    document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
+    document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
+    document.getElementById('highlight-btn').addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const parent = range.commonAncestorContainer.parentElement;
+            if (parent.classList.contains('highlight')) {
+                const text = document.createTextNode(parent.textContent);
+                parent.parentNode.replaceChild(text, parent);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            }
         }
+        notesEditor.focus();
     });
 
-    // Chamar as funções ao carregar a página
-    document.addEventListener('DOMContentLoaded', () => {
-        assignIdsToContent();
-        loadComments();
-    });
+    function loadNotes() {
+        const lawId = window.location.pathname.split('/').pop();
+        fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
+            if (d.success && d.content) notesEditor.innerHTML = d.content;
+        }).catch(e => console.error("Erro ao carregar anotações:", e));
+    }
 
+    saveNotesBtn.addEventListener('click', function() {
+        const lawId = window.location.pathname.split('/').pop();
+        const content = notesEditor.innerHTML;
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        this.disabled = true;
+        fetch(`/student/law/${lawId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ content: content })
+        }).then(r => r.json()).then(d => {
+            this.innerHTML = d.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+            this.classList.toggle('bg-green-500', d.success);
+            this.classList.toggle('bg-red-500', !d.success);
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+                this.classList.remove('bg-green-500', 'bg-red-500');
+            }, 2000);
+        }).catch(e => {
+            console.error("Erro ao salvar anotações:", e);
+            this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
+            this.disabled = false;
+        });
+    });
+    
+    loadNotes();
+});
 </script>
 {% endblock %}
-
