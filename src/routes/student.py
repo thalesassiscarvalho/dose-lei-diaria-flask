@@ -38,7 +38,7 @@ def check_and_award_achievements(user):
     # UPDATED: Count based on status == \'concluido\'
     completed_laws_count = UserProgress.query.filter(
         UserProgress.user_id == user.id,
-        UserProgress.status == 'concluido\' 
+        UserProgress.status == 'concluido'
     ).count()
     logging.debug(f"[ACHIEVEMENT CHECK] User {user.id} completed laws count (status \'concluido\'): {completed_laws_count}")
 
