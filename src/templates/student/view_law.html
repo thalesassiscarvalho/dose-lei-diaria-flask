@@ -775,7 +775,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!confirm('Tem certeza que deseja excluir este comentário?')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         try {
-            const response = await fetch(`/comments/${commentId}`, {
+            const response = await fetch(`/student/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': csrfToken }
             });
