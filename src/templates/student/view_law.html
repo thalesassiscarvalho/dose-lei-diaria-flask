@@ -146,15 +146,8 @@
     }
     .toggle-btn-my-notes:hover { background-color: #fed7aa; /* orange-200 */ }
 
-    /* Estilo para quando o conteúdo está OCULTO (botão para MOSTRAR) */
-    .toggle-button.active {
-        background-color: #4f46e5; /* Cor mais forte (indigo-600) para indicar estado "ativo" */
-        color: white;
-        border-color: #4338ca; /* indigo-700 */
-    }
-    .toggle-button.active:hover {
-        background-color: #4338ca; /* indigo-700 */
-    }
+    /* O estado .active agora não tem mais regras de cor, apenas será usado pelo JS para rastrear o estado. */
+    
     /* --- FIM: NOVOS ESTILOS PARA BOTÕES DE FILTRO --- */
 
 
@@ -757,9 +750,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
+        
+        // Estado inicial: conteúdo visível
         let isVisible = true;
+        
         button.addEventListener("click", function () {
             isVisible = !isVisible;
+            
             const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
                 ? document.querySelectorAll(contentSelector)
                 : lawContent.querySelectorAll(contentSelector);
@@ -770,11 +767,14 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const icon = this.querySelector('i');
             this.classList.toggle("active", !isVisible);
-            icon.className = isVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
             
-            // Re-adiciona a margem do ícone se o texto estiver visível (telas md+)
-            if (window.innerWidth >= 768) {
-                icon.classList.add('md:mr-2');
+            // Apenas muda o ícone, sem alterar as classes de cor do botão.
+            if (isVisible) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
         });
     }
