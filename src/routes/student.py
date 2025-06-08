@@ -93,7 +93,7 @@ def dashboard():
     # Fetch progress records
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.law_id: p.status for p in user_progress_records}
-    completed_law_ids = {law_id for law_id, status in progress_map.items() if status == \'concluido\'}
+    completed_law_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
     in_progress_law_ids = {law_id for law_id, status in progress_map.items() if status == \'em_andamento\'}
 
     favorite_law_ids = {law.id for law in current_user.favorite_laws}
