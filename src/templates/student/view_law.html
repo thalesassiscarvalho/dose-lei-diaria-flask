@@ -105,7 +105,6 @@
         color: #374151; /* gray-700 */
         padding: 0.5rem 1rem;
         border-radius: 0.375rem;
-        font-size: 0.875rem;
         font-weight: 500;
         cursor: pointer;
         transition: background-color 0.2s;
@@ -327,26 +326,11 @@
 </div>
 
 <div class="neural-waves-container">
-    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa">
-        <i class="fas fa-brain"></i>
-        <span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span>
-    </button>
-    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta">
-        <i class="fas fa-bolt"></i>
-        <span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span>
-    </button>
-    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta">
-        <i class="fas fa-moon"></i>
-        <span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span>
-    </button>
-    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica">
-        <i class="fas fa-music"></i>
-        <span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span>
-    </button>
-    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco">
-        <i class="fas fa-volume-up"></i>
-        <span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span>
-    </button>
+    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
+    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
+    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
+    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
+    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
 </div>
 <audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
 <audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
@@ -356,9 +340,7 @@
 
 {% if law.audio_url %}
 <div class="audio-player-container">
-    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-        <i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:
-    </h4>
+    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
     <audio controls controlslist="nodownload" class="w-full">
         <source src="{{ law.audio_url }}" type="audio/mpeg">
         Seu navegador não suporta o elemento de áudio.
@@ -377,17 +359,17 @@
 
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-2 mb-4">
     <div class="flex flex-wrap gap-2 items-center justify-center md:justify-start">
-        <button id="toggle-comments-btn" class="toggle-button">
+        <button id="toggle-comments-btn" class="toggle-button text-xs md:text-sm">
             <i class="fas fa-eye-slash mr-1"></i>
             <span class="hidden md:inline toggle-text-desktop">Ocultar Comentários</span>
             <span class="md:hidden">Comentários</span>
         </button>
-        <button id="toggle-jurisprudence-btn" class="toggle-button">
+        <button id="toggle-jurisprudence-btn" class="toggle-button text-xs md:text-sm">
             <i class="fas fa-eye-slash mr-1"></i>
             <span class="hidden md:inline toggle-text-desktop">Ocultar Jurisprudências</span>
             <span class="md:hidden">Jurisprudências</span>
         </button>
-        <button id="toggle-doutrina-btn" class="toggle-button">
+        <button id="toggle-doutrina-btn" class="toggle-button text-xs md:text-sm">
             <i class="fas fa-eye-slash mr-1"></i>
             <span class="hidden md:inline toggle-text-desktop">Ocultar Doutrina</span>
             <span class="md:hidden">Doutrina</span>
@@ -405,11 +387,13 @@
 
         <button id="go-to-notes-btn" class="go-to-notes-btn">
             <i class="fas fa-pencil-alt mr-2"></i>
-            <span class="hidden md:inline">Minhas anotações</span>
+            <span class="hidden md:inline">Ir para minhas anotações</span>
             <span class="md:hidden">Anotações</span>
         </button>
     </div>
 </div>
+
+
 <div class="law-content-container" id="law-content">
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
@@ -431,12 +415,9 @@
 <div class="mt-8" id="notes-section">
     <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
         <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
-            <h3 class="text-lg font-medium text-blue-800">
-                <i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações
-            </h3>
+            <h3 class="text-lg font-medium text-blue-800"><i class="fas fa-pencil-alt mr-2"></i> Minhas Anotações</h3>
             <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
         </div>
-        
         <div class="p-4 hidden" id="notes-content-area">
             <div class="notes-toolbar">
                 <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
@@ -492,9 +473,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateProgressBar();
 
     const lawContent = document.getElementById("law-content");
-    const toggleCommentsBtn = document.getElementById("toggle-comments-btn");
-    const toggleJurisprudenceBtn = document.getElementById("toggle-jurisprudence-btn");
-    const toggleDoutrinaBtn = document.getElementById("toggle-doutrina-btn");
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
     const backToTopBtn = document.getElementById("back-to-top-btn");
@@ -522,58 +500,72 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function findAndGoToArticle() {
         const articleNumber = articleSearchInput.value.trim();
-        if (!articleNumber) {
-            // Se a busca for por texto, chame a nova função
+        if (/^\d+$/.test(articleNumber)) {
+             // Se for um número, busca pelo ID
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                alert(`Artigo ${articleNumber} não encontrado.`);
+            }
+        } else {
+            // Se não for apenas número, busca pelo texto
             const searchText = articleSearchInput.value.trim();
             if (searchText) {
                 findAndGoToText(searchText);
             }
-            return;
-        }
-
-        const targetElement = document.getElementById(`art-${articleNumber}`);
-        if (targetElement) {
-            scrollToElement(targetElement);
-        } else {
-            // Se não encontrar por ID, tenta buscar pelo texto como fallback
-            findAndGoToText(`Art. ${articleNumber}`);
         }
     }
 
     function findAndGoToText(text) {
-        if (!text || text.length < 3) return; // Evita buscas muito genéricas
+        if (!text || text.length < 3) return;
+
+        // Limpa destaques anteriores
+        const highlighted = lawContent.querySelectorAll('span.highlight-article');
+        highlighted.forEach(el => {
+            el.outerHTML = el.innerHTML;
+        });
 
         const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
         let node;
+        let firstMatch = null;
         while (node = walker.nextNode()) {
             const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
             if (index > -1) {
-                // Encontramos o texto. Agora vamos pegar o elemento pai para rolar até ele.
                 const parentElement = node.parentElement;
                 
-                // Envolve o texto encontrado em um span para destacar
                 const originalText = node.nodeValue;
                 const beforeText = originalText.substring(0, index);
                 const foundText = originalText.substring(index, index + text.length);
                 const afterText = originalText.substring(index + text.length);
 
                 const span = document.createElement('span');
-                span.className = 'highlight-article'; // Reutiliza a classe de destaque
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
                 span.textContent = foundText;
-
-                // Limpa o nó de texto original e adiciona as novas partes
-                node.nodeValue = beforeText;
-                parentElement.insertBefore(span, node.nextSibling);
-                parentElement.insertBefore(document.createTextNode(afterText), span.nextSibling);
-
-                scrollToElement(parentElement);
-                return; // Para na primeira ocorrência
+                
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                
+                parentElement.replaceChild(fragment, node);
+                
+                if (!firstMatch) {
+                    firstMatch = parentElement;
+                }
+                 // Não para, continua para destacar todas as ocorrências
             }
         }
-        alert(`Texto "${text}" não encontrado.`);
+
+        if (firstMatch) {
+            scrollToElement(firstMatch, false); // Não aplica o highlight de animação, pois já temos o de background
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
     }
 
-    function scrollToElement(element) {
+    function scrollToElement(element, useAnimationClass = true) {
         const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
         const extraPadding = 16;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
@@ -582,9 +574,7 @@ document.addEventListener("DOMContentLoaded", function () {
             top: offsetPosition,
             behavior: 'smooth'
         });
-
-        // Se o elemento não for destacado pela busca de texto, destaca aqui
-        if (!element.querySelector('.highlight-article')) {
+        if (useAnimationClass) {
             element.classList.add('highlight-article');
             setTimeout(() => {
                 element.classList.remove('highlight-article');
@@ -599,24 +589,21 @@ document.addEventListener("DOMContentLoaded", function () {
             findAndGoToArticle();
         }
     });
-    
-    // --- O JS de indexação por ID não é mais necessário, mas podemos manter como fallback ---
     indexArticles();
 
-    // --- INÍCIO: LÓGICA ATUALIZADA PARA OS BOTÕES DE TOGGLE ---
     function setupToggleButton(buttonId, contentSelector, textBase) {
         const button = document.getElementById(buttonId);
         if (!button) return;
 
         let isVisible = true;
-
         button.addEventListener("click", function () {
             isVisible = !isVisible;
-            toggleElementsVisibility(contentSelector, isVisible);
+            lawContent.querySelectorAll(contentSelector).forEach(el => {
+                el.classList.toggle("conteudo-oculto", !isVisible);
+            });
 
             const icon = this.querySelector('i');
             const textSpan = this.querySelector('.toggle-text-desktop');
-
             if (isVisible) {
                 this.classList.remove("active");
                 icon.className = 'fas fa-eye-slash mr-1';
@@ -629,17 +616,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    setupToggleButton('toggle-comments-btn', commentSelector, 'Comentários');
-    setupToggleButton('toggle-jurisprudence-btn', jurisprudenceSelector, 'Jurisprudências');
-    setupToggleButton('toggle-doutrina-btn', doutrinaSelector, 'Doutrina');
-    // --- FIM: LÓGICA ATUALIZADA PARA OS BOTÕES DE TOGGLE ---
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]', 'Comentários');
+    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]', 'Jurisprudências');
+    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]', 'Doutrina');
 
-
-    // O restante do seu script original...
-    // (todo o código de notas, áudio, etc. continua aqui, sem modificação)
     const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
-    const hiddenClass = "conteudo-oculto";
-
     goToNotesBtn.addEventListener("click", function() {
         notesSection.scrollIntoView({ behavior: 'smooth' });
         const notesContentArea = document.getElementById("notes-content-area");
@@ -662,8 +643,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenLastReadArticleInput) {
                 hiddenLastReadArticleInput.value = lastReadArticle;
             }
-            const pathParts = window.location.pathname.split('/');
-            const lawId = pathParts[pathParts.length - 1];
+            const lawId = window.location.pathname.split('/').pop();
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
@@ -699,12 +679,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 saveBookmarkBtn.innerHTML = originalText;
                 saveBookmarkBtn.disabled = false;
             });
-        });
-    }
-
-    function toggleElementsVisibility(selector, makeVisible) {
-        lawContent.querySelectorAll(selector).forEach(el => {
-            el.classList.toggle(hiddenClass, !makeVisible);
         });
     }
 
