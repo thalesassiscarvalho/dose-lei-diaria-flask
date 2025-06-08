@@ -308,16 +308,16 @@ def review_law(law_id):
     if not progress:
         return jsonify(success=False, error="Progresso não encontrado."), 404
 
-    progress.status = \'em_andamento\'
+    progress.status = 'em_andamento'
     progress.completed_at = None
 
     try:
         db.session.commit()
         logging.info(f"[REVIEW LAW] User {current_user.id} set law {law_id} back to \'em_andamento\'.")
-        return jsonify(success=True, new_status=\'em_andamento\')
+        return jsonify(success=True, new_status='em_andamento')
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[REVIEW LAW] Error setting law {law_id} to \'em_andamento\' for user {current_user.id}: {e}")
+        logging.error(f"[REVIEW LAW] Error setting law {law_id} to 'em_andamento' for user {current_user.id}: {e}")
         return jsonify(success=False, error=str(e)), 500
 
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
@@ -336,7 +336,7 @@ def save_last_read(law_id):
         progress = UserProgress(
             user_id=current_user.id,
             law_id=law_id,
-            status=\'em_andamento\',
+            status='em_andamento',
             last_accessed_at=now,
             last_read_article=last_read_article
         )
@@ -346,8 +346,8 @@ def save_last_read(law_id):
         progress.last_read_article = last_read_article
         progress.last_accessed_at = now
 
-        if progress.status != \'concluido\':
-            progress.status = \'em_andamento\'
+        if progress.status != 'concluido':
+            progress.status = 'em_andamento'
 
         logging.debug(f"[SAVE LAST READ] Updating progress for user {current_user.id}, law {law_id}, article: {last_read_article}")
 
