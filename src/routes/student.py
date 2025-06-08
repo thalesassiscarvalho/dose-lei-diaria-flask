@@ -492,3 +492,50 @@ def delete_comment(comment_id):
         db.session.rollback()
         logging.error(f"[DELETE COMMENT] Erro ao excluir comentário {comment_id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir o comentário."), 500
+
+
+
+@student_bp.route("/law/<int:law_id>/add_comment", methods=["POST"])
+@login_required
+def add_comment(law_id):
+    law = Law.query.get_or_404(law_id)
+    data = request.get_json()
+    comment_content = data.get("comment_content")
+    anchor_paragraph_id = data.get("anchor_paragraph_id")
+
+    if not comment_content or not anchor_paragraph_id:
+        return jsonify(success=False, error="Conteúdo do comentário ou ID do parágrafo âncora ausente."), 400
+
+    new_comment = UserComment(
+        content=comment_content,
+        user_id=current_user.id,
+        law_id=law.id,
+        anchor_paragraph_id=anchor_paragraph_id
+    )
+    db.session.add(new_comment)
+
+    try:
+        db.session.commit()
+        return jsonify(success=True, message="Comentário adicionado com sucesso!", comment_id=new_comment.id, username=current_user.username, created_at=new_comment.created_at.strftime("%d/%m/%Y %H:%M")), 201
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao adicionar comentário: {e}")
+        return jsonify(success=False, error=str(e)), 500
+
+@student_bp.route("/law/<int:law_id>/comments", methods=["GET"])
+@login_required
+def get_comments(law_id):
+    comments = UserComment.query.filter_by(law_id=law_id).order_by(UserComment.created_at.asc()).all()
+    comments_data = []
+    for comment in comments:
+        comments_data.append({
+            "id": comment.id,
+            "content": comment.content,
+            "user_id": comment.user_id,
+            "username": comment.user.username, # Assuming user relationship is loaded
+            "anchor_paragraph_id": comment.anchor_paragraph_id,
+            "created_at": comment.created_at.strftime("%d/%m/%Y %H:%M")
+        })
+    return jsonify(comments_data), 200
+
+
