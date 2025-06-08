@@ -394,7 +394,6 @@
         border: 1px solid #7c3aed; /* Tailwind purple-600 */
         display: flex;
         align-items: center;
-        margin-left: auto; /* Empurra o botão para a direita */
     }
 
     .go-to-notes-btn:hover {
@@ -563,7 +562,7 @@
 </div>
 {% endif %}
 
-<div class="sticky top-1 z-20 bg-gray-50 py-3 flex flex-wrap items-center justify-between mb-4 px-4 rounded-md shadow">
+<div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-wrap items-center justify-between mb-4">
     <div class="flex space-x-2 items-center">
         <button id="toggle-comments-btn" class="toggle-button">
             <i class="fas fa-eye-slash mr-1"></i> Ocultar Comentários
@@ -576,17 +575,19 @@
         </button>
     </div>
 
-    <div class="flex items-center space-x-1 mt-2 sm:mt-0">
-        <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
-        <input type="text" id="article-search-input" class="w-20 border-gray-300 rounded-md shadow-sm text-sm py-1">
-        <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
-            <i class="fas fa-search"></i> Ir
+    <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+        <div class="flex items-center space-x-1">
+            <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
+            <input type="text" id="article-search-input" class="w-20 border-gray-300 rounded-md shadow-sm text-sm py-1">
+            <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
+                <i class="fas fa-search"></i> Ir
+            </button>
+        </div>
+
+        <button id="go-to-notes-btn" class="go-to-notes-btn">
+            <i class="fas fa-pencil-alt mr-2"></i> Ir para minhas anotações
         </button>
     </div>
-
-    <button id="go-to-notes-btn" class="go-to-notes-btn mt-2 sm:mt-0">
-        <i class="fas fa-pencil-alt mr-2"></i> Ir para minhas anotações
-    </button>
 </div>
 <div class="law-content-container" id="law-content">
     {% if law.description %}
@@ -719,6 +720,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- INÍCIO: JAVASCRIPT PARA BUSCA DE ARTIGO ---
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
+    // 2. Adicionado referência à barra de ações para calcular sua altura
+    const stickyActionBar = document.getElementById('sticky-action-bar');
 
     // 1. Indexar Artigos: Roda uma vez para preparar a página.
     function indexArticles() {
@@ -737,7 +740,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Função para ir até o artigo
+    // 2. Função para ir até o artigo (MODIFICADA)
     function findAndGoToArticle() {
         const articleNumber = articleSearchInput.value.trim();
         if (!articleNumber) return; // Não faz nada se o campo estiver vazio
@@ -745,8 +748,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const targetElement = document.getElementById(`art-${articleNumber}`);
 
         if (targetElement) {
-            // Rola a tela até o elemento
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // ---- INÍCIO DA LÓGICA DE CÁLCULO DE ROLAGEM ----
+            const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+            const extraPadding = 16; // 1rem ou 16px de espaço extra
+            
+            // Calcula a posição do topo do elemento relativo ao topo do documento
+            const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+            
+            // Calcula o ponto final da rolagem
+            const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+
+            // Rola a tela para a posição calculada
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+            // ---- FIM DA LÓGICA DE CÁLCULO DE ROLAGEM ----
             
             // Aplica um destaque temporário
             targetElement.classList.add('highlight-article');
