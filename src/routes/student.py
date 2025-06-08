@@ -109,7 +109,7 @@ def dashboard():
             is_in_progress = law.id in in_progress_law_ids
             is_not_read = not is_completed and not is_in_progress
 
-            if selected_status == \'completed\' and is_completed:
+            if selected_status == 'completed' and is_completed:
                 laws_after_status_filter.append(law)
             elif selected_status == \'in_progress\' and is_in_progress:
                 laws_after_status_filter.append(law)
