@@ -319,32 +319,18 @@ def mark_complete(law_id):
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
-# =====================================================================
-# ROTA ADICIONADA PARA CORRIGIR O PROBLEMA
-# =====================================================================
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
 @login_required
 def review_law(law_id):
-    """
-    Handles the "Marcar como não concluído" action.
-    Sets a law's progress status back to 'em_andamento'.
-    """
-    # Find the progress record for the current user and the specific law.
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
 
     if not progress:
-        # This case is unlikely if the button is visible, but it's a good safeguard.
         return jsonify(success=False, error="Progresso não encontrado."), 404
 
-    # Change the status back to 'in_progress'.
-    # We do not deduct points here. The user can re-complete the law later.
     progress.status = 'em_andamento'
-    
-    # It's good practice to also clear the completion date.
     progress.completed_at = None
 
     try:
-        # Commit the change to the database. This is the crucial step that was missing.
         db.session.commit()
         logging.info(f"[REVIEW LAW] User {current_user.id} set law {law_id} back to 'em_andamento'.")
         return jsonify(success=True, new_status='em_andamento')
@@ -352,30 +338,24 @@ def review_law(law_id):
         db.session.rollback()
         logging.error(f"[REVIEW LAW] Error setting law {law_id} to 'em_andamento' for user {current_user.id}: {e}")
         return jsonify(success=False, error=str(e)), 500
-# =====================================================================
-# FIM DA ROTA ADICIONADA
-# =====================================================================
 
-
-# --- NOVA ROTA: Salvar onde parou via AJAX ---
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
 def save_last_read(law_id):
-    """Salva o ponto onde o usuário parou de ler via AJAX."""
     law = Law.query.get_or_404(law_id)
     last_read_article = request.form.get("last_read_article", "").strip()
-    
+
     if not last_read_article:
         return jsonify(success=False, error="Campo obrigatório não preenchido"), 400
-    
+
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     now = datetime.datetime.utcnow()
-    
+
     if not progress:
         progress = UserProgress(
             user_id=current_user.id,
             law_id=law_id,
-            status='em_andamento',  # Marcar como em andamento ao salvar onde parou
+            status='em_andamento',
             last_accessed_at=now,
             last_read_article=last_read_article
         )
@@ -384,41 +364,183 @@ def save_last_read(law_id):
     else:
         progress.last_read_article = last_read_article
         progress.last_accessed_at = now
-        
-        # Se não estiver concluído, marcar como em andamento
+
         if progress.status != 'concluido':
             progress.status = 'em_andamento'
-            
+
         logging.debug(f"[SAVE LAST READ] Updating progress for user {current_user.id}, law {law_id}, article: {last_read_article}")
-    
+
     try:
         db.session.commit()
-        logging.info(f"[SAVE LAST READ] Successfully saved last read article for user {current_user.id}, law {law_id}: {last_read_article}")
-        return jsonify(success=True, message="Ponto de leitura salvo com sucesso!")
+        logging.info(f"[SAVE LAST READ] Successfully saved last read article for user {current_user.id}, law {law_id}.")
+        return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
         logging.error(f"[SAVE LAST READ] Error saving last read article for user {current_user.id}, law {law_id}: {e}")
         return jsonify(success=False, error=str(e)), 500
-# --- FIM NOVA ROTA ---
 
-@student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
+# --- ROTAS PARA COMENTÁRIOS ---
+@student_bp.route("/law/<int:law_id>/add_comment", methods=["POST"])
+@login_required
+def add_comment(law_id):
+    """Adiciona um novo comentário a um parágrafo específico da lei"""
+    try:
+        data = request.get_json()
+        comment_content = data.get("comment_content")
+        anchor_paragraph_id = data.get("anchor_paragraph_id")
+
+        if not comment_content or not anchor_paragraph_id:
+            return jsonify(success=False, error="Dados incompletos para o comentário."), 400
+
+        # Verificar se a lei existe
+        law = Law.query.get_or_404(law_id)
+
+        # Criar novo comentário
+        new_comment = UserComment(
+            user_id=current_user.id,
+            law_id=law_id,
+            content=comment_content,
+            anchor_paragraph_id=anchor_paragraph_id
+        )
+        
+        db.session.add(new_comment)
+        db.session.commit()
+        
+        logging.info(f"[ADD COMMENT] User {current_user.id} added comment to law {law_id}, paragraph {anchor_paragraph_id}")
+        
+        return jsonify(
+            success=True, 
+            message="Comentário adicionado com sucesso!",
+            comment={
+                "id": new_comment.id,
+                "content": new_comment.content,
+                "anchor_paragraph_id": new_comment.anchor_paragraph_id,
+                "username": current_user.username,
+                "created_at": new_comment.created_at.strftime("%d/%m/%Y %H:%M")
+            }
+        )
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[ADD COMMENT] Error adding comment for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error="Erro interno ao adicionar comentário."), 500
+
+
+@student_bp.route("/law/<int:law_id>/comments", methods=["GET"])
+@login_required
+def get_comments(law_id):
+    """Retorna todos os comentários de uma lei específica"""
+    try:
+        # Verificar se a lei existe
+        law = Law.query.get_or_404(law_id)
+        
+        # Buscar comentários da lei
+        comments = UserComment.query.filter_by(law_id=law_id).order_by(UserComment.created_at.asc()).all()
+        
+        comments_data = []
+        for comment in comments:
+            comments_data.append({
+                "id": comment.id,
+                "content": comment.content,
+                "anchor_paragraph_id": comment.anchor_paragraph_id,
+                "username": comment.user.username,
+                "created_at": comment.created_at.strftime("%d/%m/%Y %H:%M")
+            })
+        
+        return jsonify(comments_data)
+        
+    except Exception as e:
+        logging.error(f"[GET COMMENTS] Error getting comments for law {law_id}: {e}")
+        return jsonify([]), 500
+
+
+@student_bp.route("/law/<int:law_id>/delete_comment/<int:comment_id>", methods=["DELETE"])
+@login_required
+def delete_comment(law_id, comment_id):
+    """Deleta um comentário específico"""
+    try:
+        comment = UserComment.query.get_or_404(comment_id)
+        
+        # Verificar se o comentário pertence ao usuário atual
+        if comment.user_id != current_user.id:
+            return jsonify(success=False, error="Você não tem permissão para deletar este comentário."), 403
+        
+        # Verificar se o comentário pertence à lei especificada
+        if comment.law_id != law_id:
+            return jsonify(success=False, error="Comentário não pertence a esta lei."), 400
+        
+        db.session.delete(comment)
+        db.session.commit()
+        
+        logging.info(f"[DELETE COMMENT] User {current_user.id} deleted comment {comment_id} from law {law_id}")
+        
+        return jsonify(success=True, message="Comentário deletado com sucesso!")
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[DELETE COMMENT] Error deleting comment {comment_id} for user {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao deletar comentário."), 500
+
+# --- ROTAS PARA ANOTAÇÕES ---
+@student_bp.route("/save_notes/<int:law_id>", methods=["POST"])
+@login_required
+def save_notes(law_id):
+    law = Law.query.get_or_404(law_id)
+    notes_content = request.form.get("notes_content", "").strip()
+
+    # Buscar anotação existente ou criar nova
+    user_notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+    if user_notes:
+        user_notes.content = notes_content
+        user_notes.updated_at = datetime.datetime.utcnow()
+        logging.debug(f"[SAVE NOTES] Updating existing notes for user {current_user.id}, law {law_id}")
+    else:
+        user_notes = UserNotes(
+            user_id=current_user.id,
+            law_id=law_id,
+            content=notes_content
+        )
+        db.session.add(user_notes)
+        logging.debug(f"[SAVE NOTES] Creating new notes for user {current_user.id}, law {law_id}")
+
+    try:
+        db.session.commit()
+        logging.info(f"[SAVE NOTES] Successfully saved notes for user {current_user.id}, law {law_id}")
+        return jsonify(success=True, message="Anotações salvas com sucesso!")
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[SAVE NOTES] Error saving notes for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error=str(e)), 500
+
+@student_bp.route("/get_notes/<int:law_id>", methods=["GET"])
+@login_required
+def get_notes(law_id):
+    user_notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    
+    if user_notes:
+        return jsonify(success=True, content=user_notes.content)
+    else:
+        return jsonify(success=True, content="")
+
+@student_bp.route("/mark_announcement_seen/<int:announcement_id>", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
-    """Mark an announcement as seen by the current user."""
+    # Verificar se o anúncio existe
     announcement = Announcement.query.get_or_404(announcement_id)
     
-    # Check if already marked as seen
+    # Verificar se já foi marcado como visto
     existing = UserSeenAnnouncement.query.filter_by(
         user_id=current_user.id, 
         announcement_id=announcement_id
     ).first()
     
     if not existing:
-        seen_record = UserSeenAnnouncement(
+        seen_announcement = UserSeenAnnouncement(
             user_id=current_user.id,
             announcement_id=announcement_id
         )
-        db.session.add(seen_record)
+        db.session.add(seen_announcement)
         
         try:
             db.session.commit()
@@ -429,117 +551,5 @@ def mark_announcement_seen(announcement_id):
             logging.error(f"[ANNOUNCEMENT] Error marking announcement {announcement_id} as seen for user {current_user.id}: {e}")
             return jsonify(success=False, error=str(e)), 500
     else:
-        # Already marked as seen, just return success
-        return jsonify(success=True)
+        return jsonify(success=True) # Já foi marcado como visto
 
-# --- Rotas para as anotações do usuário ---
-@student_bp.route("/law/<int:law_id>/notes", methods=["GET"])
-@login_required
-def get_user_notes(law_id):
-    """Retorna as anotações do usuário atual para uma lei específica."""
-    notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    
-    if notes:
-        return jsonify(success=True, content=notes.content)
-    else:
-        return jsonify(success=True, content="")
-
-@student_bp.route("/law/<int:law_id>/notes", methods=["POST"])
-@login_required
-def save_user_notes(law_id):
-    """Salva ou atualiza as anotações do usuário atual para uma lei específica."""
-    content = request.json.get("content", "")
-    
-    notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    
-    if notes:
-        notes.content = content
-        notes.updated_at = datetime.datetime.utcnow()
-    else:
-        notes = UserNotes(
-            user_id=current_user.id,
-            law_id=law_id,
-            content=content
-        )
-        db.session.add(notes)
-    
-    try:
-        db.session.commit()
-        logging.info(f"[SAVE NOTES] Successfully saved notes for user {current_user.id}, law {law_id}")
-        return jsonify(success=True, message="Anotações salvas com sucesso!")
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"[SAVE NOTES] Error saving notes for user {current_user.id}, law {law_id}: {e}")
-        return jsonify(success=False, error="Erro ao salvar anotações."), 500
-
-# =====================================================================
-# <<< INÍCIO: NOVAS ROTAS DA API DE COMENTÁRIOS (ADICIONAR NO FINAL) >>>
-# =====================================================================
-
-@student_bp.route("/law/<int:law_id>/comments", methods=["GET"])
-@login_required
-def get_comments(law_id):
-    """Carrega todos os comentários do usuário atual para uma lei específica."""
-    comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).order_by(UserComment.created_at.asc()).all()
-    
-    comments_data = [{
-        "id": comment.id,
-        "content": comment.content,
-        "anchor_paragraph_id": comment.anchor_paragraph_id,
-        "created_at": comment.created_at.strftime("%d/%m/%Y às %H:%M")
-    } for comment in comments]
-    
-    return jsonify(success=True, comments=comments_data)
-
-@student_bp.route("/law/<int:law_id>/comments", methods=["POST"])
-@login_required
-def add_comment(law_id):
-    """Adiciona um novo comentário a um parágrafo de uma lei."""
-    data = request.json
-    content = data.get("content")
-    anchor_id = data.get("anchor_paragraph_id")
-
-    if not content or not anchor_id:
-        return jsonify(success=False, error="Dados incompletos."), 400
-
-    try:
-        new_comment = UserComment(
-            content=content,
-            anchor_paragraph_id=anchor_id,
-            user_id=current_user.id,
-            law_id=law_id
-        )
-        db.session.add(new_comment)
-        db.session.commit()
-        
-        comment_data = {
-            "id": new_comment.id,
-            "content": new_comment.content,
-            "anchor_paragraph_id": new_comment.anchor_paragraph_id,
-            "created_at": new_comment.created_at.strftime("%d/%m/%Y às %H:%M")
-        }
-        
-        return jsonify(success=True, message="Comentário salvo!", comment=comment_data), 201
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"[ADD COMMENT] Erro ao salvar comentário para user {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao salvar o comentário."), 500
-
-@student_bp.route("/comments/<int:comment_id>", methods=["DELETE"])
-@login_required
-def delete_comment(comment_id):
-    """Exclui um comentário."""
-    comment = UserComment.query.get_or_404(comment_id)
-
-    # Medida de segurança: garante que apenas o dono do comentário possa excluí-lo.
-    if comment.user_id != current_user.id:
-        return jsonify(success=False, error="Ação não autorizada."), 403
-
-    try:
-        db.session.delete(comment)
-        db.session.commit()
-        return jsonify(success=True, message="Comentário excluído.")
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"[DELETE COMMENT] Erro ao excluir comentário {comment_id}: {e}")
-        return jsonify(success=False, error="Erro interno ao excluir o comentário."), 500
