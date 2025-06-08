@@ -232,7 +232,7 @@ def view_law(law_id):
         logging.error(f"[VIEW LAW] Error updating/creating progress on view for user {current_user.id}, law {law_id}: {e}")
 
     current_status = progress.status if progress else 'nao_iniciado'
-    is_completed = current_status == \'concluido\'
+    is_completed = current_status == 'concluido'
     last_read_article = progress.last_read_article if progress else None
 
     # Fetch comments for the law
