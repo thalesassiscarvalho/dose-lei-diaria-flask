@@ -327,6 +327,84 @@
             min-height: 150px; /* Nova altura para telas menores - ajuste este valor se necessário */
         }
     }
+
+    /* --- INÍCIO: ESTILOS PARA COMENTÁRIOS POR PARÁGRAFO --- */
+    .paragraph-wrapper {
+        position: relative;
+        padding-right: 30px; /* Espaço para o ícone de comentário */
+    }
+
+    .comment-icon {
+        position: absolute;
+        top: 5px;
+        right: 0;
+        cursor: pointer;
+        color: #a5b4fc; /* Roxo claro */
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        opacity: 0.5;
+    }
+
+    .paragraph-wrapper:hover .comment-icon {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    .comment-icon.has-comment {
+        color: #6366f1; /* Roxo mais forte */
+        opacity: 1;
+    }
+
+    .comment-display {
+        background-color: #eef2ff; /* Roxo bem clarinho */
+        border-left: 3px solid #6366f1; /* Roxo */
+        padding: 10px 15px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        border-radius: 0 5px 5px 0;
+        font-size: 0.9em;
+        position: relative;
+    }
+
+    .comment-delete-btn {
+        position: absolute;
+        top: 5px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .comment-delete-btn:hover { color: #ef4444; }
+
+    /* Modal de Comentário */
+    .comment-modal-backdrop {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; /* Começa oculto */
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .comment-modal-content {
+        background-color: white;
+        padding: 25px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .comment-modal-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    /* --- FIM: ESTILOS PARA COMENTÁRIOS POR PARÁGRAFO --- */
 </style>
 {% endblock %}
 
@@ -473,6 +551,17 @@
     </button>
 </div>
 {% endif %}
+
+<div id="comment-modal-backdrop" class="comment-modal-backdrop">
+    <div class="comment-modal-content">
+        <h3 class="text-lg font-bold mb-4">Adicionar Comentário</h3>
+        <textarea id="comment-modal-textarea" class="comment-modal-textarea" placeholder="Digite seu comentário privado aqui..."></textarea>
+        <div class="flex justify-end gap-3">
+            <button id="comment-modal-cancel" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md">Cancelar</button>
+            <button id="comment-modal-save" class="bg-indigo-600 text-white py-2 px-4 rounded-md">Salvar</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -770,6 +859,162 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS >>>
+    // =================================================================
+    const lawId = '{{ law.id }}';
+    const lawContentContainer = document.getElementById('law-content');
+    const modalBackdrop = document.getElementById('comment-modal-backdrop');
+    const modalTextarea = document.getElementById('comment-modal-textarea');
+    const modalSaveBtn = document.getElementById('comment-modal-save');
+    const modalCancelBtn = document.getElementById('comment-modal-cancel');
+    let currentAnchorId = null;
+
+    // Função para abrir o modal
+    function openCommentModal(anchorId) {
+        currentAnchorId = anchorId;
+        modalTextarea.value = '';
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
+    }
+
+    // Função para fechar o modal
+    function closeCommentModal() {
+        modalBackdrop.style.display = 'none';
+        currentAnchorId = null;
+    }
+
+    // Função para exibir um comentário na tela
+    function displayComment(comment) {
+        const anchorElement = document.getElementById(comment.anchor_paragraph_id);
+        if (!anchorElement) return;
+
+        // Cria o elemento do comentário
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment-display';
+        commentDiv.setAttribute('data-comment-id', comment.id);
+        commentDiv.innerHTML = `
+            <p>${comment.content.replace(/\n/g, '<br>')}</p>
+            <button class="comment-delete-btn" title="Excluir comentário">&times;</button>
+        `;
+
+        // Insere o comentário logo após o parágrafo
+        anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
+
+        // Adiciona evento de exclusão
+        commentDiv.querySelector('.comment-delete-btn').addEventListener('click', () => deleteComment(comment.id, commentDiv));
+        
+        // Marca o ícone como tendo um comentário
+        const icon = anchorElement.parentNode.querySelector('.comment-icon');
+        if(icon) icon.classList.add('has-comment');
+    }
+    
+    // Função para salvar um novo comentário
+    async function saveComment() {
+        const content = modalTextarea.value.trim();
+        if (!content || !currentAnchorId) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        try {
+            const response = await fetch(`/student/law/${lawId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                displayComment(data.comment);
+                closeCommentModal();
+            } else {
+                alert('Erro ao salvar comentário: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Erro de rede ao salvar comentário:', error);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+    
+    // Função para excluir um comentário
+    async function deleteComment(commentId, commentElement) {
+        if (!confirm('Tem certeza que deseja excluir este comentário?')) return;
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        try {
+            const response = await fetch(`/student/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Remove o ícone "has-comment" se for o último comentário do parágrafo
+                const anchorId = commentElement.previousElementSibling.id;
+                commentElement.remove(); // Remove o balão do comentário da tela
+
+                const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
+                if (remainingComments === 0) {
+                    const icon = document.getElementById(anchorId).parentNode.querySelector('.comment-icon');
+                    if (icon) icon.classList.remove('has-comment');
+                }
+            } else {
+                alert('Erro ao excluir comentário: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Erro de rede ao excluir comentário:', error);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+
+    // Função principal de inicialização
+    async function initCommentSystem() {
+        // 1. Identificar, envolver e adicionar ícones a cada parágrafo
+        const paragraphs = lawContentContainer.querySelectorAll('p, li, blockquote');
+        paragraphs.forEach((p, index) => {
+            // Ignorar parágrafos que já estão em um wrapper ou que são de "Doutrina", etc.
+            if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
+            
+            const anchorId = `law-p-${index}`;
+            p.id = anchorId;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'paragraph-wrapper';
+            p.parentNode.insertBefore(wrapper, p);
+            wrapper.appendChild(p);
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-comment-dots comment-icon';
+            icon.title = 'Adicionar comentário privado';
+            icon.addEventListener('click', () => openCommentModal(anchorId));
+            wrapper.appendChild(icon);
+        });
+
+        // 2. Carregar comentários existentes
+        try {
+            const response = await fetch(`/student/law/${lawId}/comments`);
+            const data = await response.json();
+            if (data.success) {
+                data.comments.forEach(displayComment);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar comentários:", error);
+        }
+        
+        // 3. Adicionar eventos ao modal
+        modalSaveBtn.addEventListener('click', saveComment);
+        modalCancelBtn.addEventListener('click', closeCommentModal);
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeCommentModal();
+        });
+    }
+
+    // Inicia o sistema de comentários
+    initCommentSystem();
+    // =================================================================
+    // <<< FIM: LÓGICA PARA O SISTEMA DE COMENTÁRIOS >>>
+    // =================================================================
 });
 </script>
 {% endblock %}
