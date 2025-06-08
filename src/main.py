@@ -22,6 +22,7 @@ load_dotenv()
 from src.models.user import db, User, Achievement # Import Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
+from src.models.comment import UserComment
 
 # Import blueprints
 from src.routes.auth import auth_bp
