@@ -261,7 +261,7 @@ def mark_complete(law_id):
         db.session.add(progress)
     else:
         logging.debug(f"[MARK COMPLETE] Progress found for user {current_user.id}, law {law_id}. Current status: {progress.status}")
-        if progress.status == \'concluido\':
+        if progress.status == 'concluido':
             was_already_completed = True
         progress.last_accessed_at = now 
         logging.debug(f"[MARK COMPLETE DEBUG] Updating existing progress LastAccessed for Law {law_id} to: {now}")
@@ -275,9 +275,9 @@ def mark_complete(law_id):
         db.session.add(current_user)
         logging.debug(f"[MARK COMPLETE] Awarding {points_to_award} points to user {current_user.id}. New total: {current_user.points}")
 
-        progress.status = \'concluido\'
+        progress.status = 'concluido'
         progress.completed_at = now
-        logging.debug(f"[MARK COMPLETE] Setting status to \'concluido\' and completed_at for user {current_user.id}, law {law_id}.")
+        logging.debug(f"[MARK COMPLETE] Setting status to 'concluido' and completed_at for user {current_user.id}, law {law_id}.")
 
     unlocked_achievements = check_and_award_achievements(current_user)
 
