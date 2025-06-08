@@ -861,7 +861,7 @@ document.addEventListener("DOMContentLoaded", function () {
     loadNotes();
 
     // =================================================================
-    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS >>>
+    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS (COM MODIFICAÇÕES) >>>
     // =================================================================
     const lawId = '{{ law.id }}';
     const lawContentContainer = document.getElementById('law-content');
@@ -890,7 +890,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
 
-        // Cria o elemento do comentário
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
@@ -899,13 +898,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <button class="comment-delete-btn" title="Excluir comentário">&times;</button>
         `;
 
-        // Insere o comentário logo após o parágrafo
         anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-
-        // Adiciona evento de exclusão
         commentDiv.querySelector('.comment-delete-btn').addEventListener('click', () => deleteComment(comment.id, commentDiv));
         
-        // Marca o ícone como tendo um comentário
         const icon = anchorElement.parentNode.querySelector('.comment-icon');
         if(icon) icon.classList.add('has-comment');
     }
@@ -949,9 +944,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const data = await response.json();
             if (data.success) {
-                // Remove o ícone "has-comment" se for o último comentário do parágrafo
                 const anchorId = commentElement.previousElementSibling.id;
-                commentElement.remove(); // Remove o balão do comentário da tela
+                commentElement.remove();
 
                 const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
                 if (remainingComments === 0) {
@@ -968,12 +962,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Função principal de inicialização
+    // Função principal de inicialização (MODIFICADA)
     async function initCommentSystem() {
-        // 1. Identificar, envolver e adicionar ícones a cada parágrafo
+        // --- INÍCIO DA MODIFICAÇÃO ---
+        let areIconsVisible = true; // Variável de estado para controlar a visibilidade
+        // --- FIM DA MODIFICAÇÃO ---
+        
         const paragraphs = lawContentContainer.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
-            // Ignorar parágrafos que já estão em um wrapper ou que são de "Doutrina", etc.
             if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
             
             const anchorId = `law-p-${index}`;
@@ -985,13 +981,38 @@ document.addEventListener("DOMContentLoaded", function () {
             wrapper.appendChild(p);
 
             const icon = document.createElement('i');
-            icon.className = 'fas fa-comment-dots comment-icon';
-            icon.title = 'Adicionar comentário privado';
-            icon.addEventListener('click', () => openCommentModal(anchorId));
+
+            // --- INÍCIO DA MODIFICAÇÃO ---
+            // Se for o primeiro ícone (index 0), ele vira o controle mestre.
+            if (index === 0) {
+                icon.className = 'fas fa-eye comment-icon'; // Ícone de olho
+                icon.title = 'Ocultar/Mostrar ícones de comentário';
+                
+                icon.addEventListener('click', () => {
+                    // Inverte o estado de visibilidade
+                    areIconsVisible = !areIconsVisible;
+                    
+                    // Atualiza o ícone mestre para refletir o estado
+                    icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
+
+                    // Encontra todos os outros ícones e altera a visibilidade deles
+                    const secondaryIcons = lawContentContainer.querySelectorAll('.secondary-comment-icon');
+                    secondaryIcons.forEach(secIcon => {
+                        secIcon.style.display = areIconsVisible ? 'block' : 'none';
+                    });
+                });
+            } else {
+                // Para todos os outros, cria o ícone de comentário normal
+                icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon'; // Adiciona classe secundária
+                icon.title = 'Adicionar comentário privado';
+                icon.addEventListener('click', () => openCommentModal(anchorId));
+            }
+            // --- FIM DA MODIFICAÇÃO ---
+
             wrapper.appendChild(icon);
         });
 
-        // 2. Carregar comentários existentes
+        // Carregar comentários existentes (lógica inalterada)
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
@@ -1002,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erro ao carregar comentários:", error);
         }
         
-        // 3. Adicionar eventos ao modal
+        // Adicionar eventos ao modal (lógica inalterada)
         modalSaveBtn.addEventListener('click', saveComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
