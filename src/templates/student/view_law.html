@@ -771,5 +771,29 @@ document.addEventListener("DOMContentLoaded", function () {
     
     loadNotes();
 });
+// --- INÍCIO: CÓDIGO DE PROTEÇÃO DE CONTEÚDO (ADICIONADO) ---
+        // ===============================================
+        if (lawContent) {
+            // 1. Bloqueia o menu de contexto (clique direito)
+            lawContent.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // 2. Bloqueia a ação de cópia (Ctrl+C)
+            lawContent.addEventListener('copy', e => {
+                e.preventDefault();
+                alert('Conteúdo protegido. A cópia não é permitida.');
+            });
+        }
+
+        // 3. Bloqueia a impressão da página
+        window.addEventListener('beforeprint', (e) => {
+            e.preventDefault();
+            alert('Impressão não permitida para proteger o conteúdo.');
+            // Opcional: redirecionar ou mostrar uma página em branco
+            // document.body.innerHTML = '<h1>Impressão desativada.</h1>';
+        });
+
+    });
+</script>
+{% endblock %}    
 </script>
 {% endblock %}
