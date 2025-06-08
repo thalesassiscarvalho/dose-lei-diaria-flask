@@ -66,7 +66,7 @@ def dashboard():
     selected_subject_id_str = request.args.get("subject_id", "") 
     selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
     selected_status = request.args.get("status_filter", "")
-    show_favorites = request.args.get("show_favorites") == \'on\' # Checkbox envia \'on\' se marcado
+    show_favorites = request.args.get("show_favorites") == 'on' # Checkbox envia 'on' se marcado
 
     # Fetch all subjects for the filter dropdown
     subjects = Subject.query.order_by(Subject.name).all()
