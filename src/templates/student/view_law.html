@@ -364,8 +364,13 @@
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        /* font-size: 0.9em; */ /* <-- Removido para igualar ao tamanho do texto base */
-        font-style: italic;     /* <-- Adicionado para que o texto do comentário fique em itálico */
+        font-style: italic;     /* Texto do comentário em itálico */
+        color: #f97316;         /* Cor do texto em laranja */
+        cursor: pointer;        /* Indica que o elemento é clicável para edição */
+    }
+    
+    .comment-display:hover {
+        background-color: #ffedd5; /* Laranja um pouco mais escuro no hover (orange-100) */
     }
     /* === FIM DA ALTERAÇÃO SOLICITADA === */
 
@@ -562,7 +567,7 @@
 
 <div id="comment-modal-backdrop" class="comment-modal-backdrop">
     <div class="comment-modal-content">
-        <h3 class="text-lg font-bold mb-4">Adicionar Comentário</h3>
+        <h3 id="comment-modal-title" class="text-lg font-bold mb-4">Adicionar Comentário</h3>
         <textarea id="comment-modal-textarea" class="comment-modal-textarea" placeholder="Digite seu comentário privado aqui..."></textarea>
         <div class="flex justify-end gap-3">
             <button id="comment-modal-cancel" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md">Cancelar</button>
@@ -877,31 +882,46 @@ document.addEventListener("DOMContentLoaded", function () {
     loadNotes();
 
     // =================================================================
-    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS (COM MODIFICAÇÕES) >>>
+    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE COMENTÁRIOS (COM EDIÇÃO) >>>
     // =================================================================
     const lawId = '{{ law.id }}';
     const lawContentContainer = document.getElementById('law-content');
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
+    const modalTitle = document.getElementById('comment-modal-title');
     const modalTextarea = document.getElementById('comment-modal-textarea');
     const modalSaveBtn = document.getElementById('comment-modal-save');
     const modalCancelBtn = document.getElementById('comment-modal-cancel');
     let currentAnchorId = null;
+    let currentEditingCommentId = null; // Guarda o ID do comentário em edição
 
-    // Função para abrir o modal
-    function openCommentModal(anchorId) {
+    // Função para abrir o modal para CRIAR um novo comentário
+    function openCommentModalForCreate(anchorId) {
+        currentEditingCommentId = null;
         currentAnchorId = anchorId;
+        modalTitle.textContent = 'Adicionar Comentário';
         modalTextarea.value = '';
         modalBackdrop.style.display = 'flex';
         modalTextarea.focus();
     }
 
-    // Função para fechar o modal
+    // Função para abrir o modal para EDITAR um comentário existente
+    function openCommentModalForEdit(commentId, currentContent) {
+        currentEditingCommentId = commentId;
+        currentAnchorId = null;
+        modalTitle.textContent = 'Editar Comentário';
+        modalTextarea.value = currentContent;
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
+    }
+
+    // Função para fechar o modal e resetar os estados
     function closeCommentModal() {
         modalBackdrop.style.display = 'none';
         currentAnchorId = null;
+        currentEditingCommentId = null;
     }
 
-    // Função para exibir um comentário na tela
+    // Função para exibir um comentário na tela (agora com listener de edição)
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
@@ -909,41 +929,91 @@ document.addEventListener("DOMContentLoaded", function () {
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
-        commentDiv.innerHTML = `
-            <p>${comment.content.replace(/\n/g, '<br>')}</p>
-            <button class="comment-delete-btn" title="Excluir comentário">&times;</button>
-        `;
+        
+        const commentParagraph = document.createElement('p');
+        commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'comment-delete-btn';
+        deleteButton.title = 'Excluir comentário';
+        deleteButton.innerHTML = '&times;';
+        
+        commentDiv.appendChild(commentParagraph);
+        commentDiv.appendChild(deleteButton);
+        
+        // Listener para abrir o modal de EDIÇÃO
+        commentDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('comment-delete-btn')) {
+                return; // Não faz nada se o clique foi no botão de excluir
+            }
+            const currentText = comment.content; // Usar o conteúdo original para evitar perdas de formatação
+            openCommentModalForEdit(comment.id, currentText);
+        });
+        
+        // Listener para o botão de EXCLUSÃO
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Impede que o clique no botão ative o listener de edição do div pai
+            deleteComment(comment.id, commentDiv);
+        });
 
         anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-        commentDiv.querySelector('.comment-delete-btn').addEventListener('click', () => deleteComment(comment.id, commentDiv));
         
         const icon = anchorElement.parentNode.querySelector('.comment-icon');
         if(icon) icon.classList.add('has-comment');
     }
     
-    // Função para salvar um novo comentário
-    async function saveComment() {
+    // Função para SALVAR (novo) ou ATUALIZAR (existente) um comentário
+    async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
-        if (!content || !currentAnchorId) return;
+        if (!content) return;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        try {
-            const response = await fetch(`/student/law/${lawId}/comments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
-            });
-            const data = await response.json();
-            if (data.success) {
-                displayComment(data.comment);
-                closeCommentModal();
-            } else {
-                alert('Erro ao salvar comentário: ' + data.error);
+        // Se currentEditingCommentId tem um valor, estamos no modo de EDIÇÃO
+        if (currentEditingCommentId) {
+            try {
+                const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
+                    if (commentDiv) {
+                        commentDiv.querySelector('p').innerHTML = data.comment.content.replace(/\n/g, '<br>');
+                        // Atualiza o conteúdo no objeto do comentário para futuras edições na mesma sessão
+                        // (Isso requer uma estrutura mais complexa, por ora a atualização visual é suficiente)
+                    }
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao atualizar comentário: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao atualizar comentário:', error);
+                alert('Erro de comunicação com o servidor.');
             }
-        } catch (error) {
-            console.error('Erro de rede ao salvar comentário:', error);
-            alert('Erro de comunicação com o servidor.');
+        } 
+        // Caso contrário, estamos no modo de CRIAÇÃO
+        else {
+            if (!currentAnchorId) return;
+            try {
+                const response = await fetch(`/student/law/${lawId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayComment(data.comment);
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao salvar comentário: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao salvar comentário:', error);
+                alert('Erro de comunicação com o servidor.');
+            }
         }
     }
     
@@ -963,9 +1033,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 const anchorId = commentElement.previousElementSibling.id;
                 commentElement.remove();
 
+                // Verifica se ainda existem outros comentários para este parágrafo
                 const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
                 if (remainingComments === 0) {
-                    const icon = document.getElementById(anchorId).parentNode.querySelector('.comment-icon');
+                    const icon = document.getElementById(anchorId)?.parentNode.querySelector('.comment-icon');
                     if (icon) icon.classList.remove('has-comment');
                 }
             } else {
@@ -978,7 +1049,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Função principal de inicialização (MODIFICADA)
+    // Função principal de inicialização
     async function initCommentSystem() {
         let areIconsVisible = true;
         
@@ -1011,12 +1082,13 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar comentário privado';
-                icon.addEventListener('click', () => openCommentModal(anchorId));
+                icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
 
             wrapper.appendChild(icon);
         });
 
+        // Carrega os comentários existentes
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
@@ -1027,7 +1099,8 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erro ao carregar comentários:", error);
         }
         
-        modalSaveBtn.addEventListener('click', saveComment);
+        // Listeners do modal
+        modalSaveBtn.addEventListener('click', saveOrUpdateComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
             if (e.target === modalBackdrop) closeCommentModal();
