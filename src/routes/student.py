@@ -525,6 +525,44 @@ def add_comment(law_id):
         logging.error(f"[ADD COMMENT] Erro ao salvar comentário para user {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao salvar o comentário."), 500
 
+# === INÍCIO DA NOVA ROTA PARA EDITAR COMENTÁRIO ===
+@student_bp.route("/comments/<int:comment_id>", methods=["PUT"])
+@login_required
+def update_comment(comment_id):
+    """Atualiza um comentário existente."""
+    comment = UserComment.query.get_or_404(comment_id)
+
+    # Medida de segurança: garante que apenas o dono do comentário possa editá-lo.
+    if comment.user_id != current_user.id:
+        return jsonify(success=False, error="Ação não autorizada."), 403
+
+    data = request.json
+    new_content = data.get("content")
+
+    if not new_content:
+        return jsonify(success=False, error="O conteúdo não pode ser vazio."), 400
+    
+    try:
+        comment.content = new_content
+        # Supondo que seu modelo UserComment tenha o campo 'updated_at'
+        if hasattr(comment, 'updated_at'):
+            comment.updated_at = datetime.datetime.utcnow()
+            
+        db.session.commit()
+        
+        # Retorna o comentário atualizado para o frontend
+        updated_comment_data = {
+            "id": comment.id,
+            "content": comment.content,
+        }
+        
+        return jsonify(success=True, message="Comentário atualizado!", comment=updated_comment_data)
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"[UPDATE COMMENT] Erro ao atualizar comentário {comment_id}: {e}")
+        return jsonify(success=False, error="Erro interno ao atualizar o comentário."), 500
+# === FIM DA NOVA ROTA PARA EDITAR COMENTÁRIO ===
+
 @student_bp.route("/comments/<int:comment_id>", methods=["DELETE"])
 @login_required
 def delete_comment(comment_id):
