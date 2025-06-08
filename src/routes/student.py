@@ -432,11 +432,11 @@ def mark_announcement_seen(announcement_id):
         # Already marked as seen, just return success
         return jsonify(success=True)
 
-# --- Rotas para as anotações do usuário ---
+# --- Rotas para as ANOTAÇÕES GERAIS do usuário (antigo "notes") ---
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET"])
 @login_required
 def get_user_notes(law_id):
-    """Retorna as anotações do usuário atual para uma lei específica."""
+    """Retorna as anotações gerais do usuário atual para uma lei específica."""
     notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
     if notes:
@@ -447,7 +447,7 @@ def get_user_notes(law_id):
 @student_bp.route("/law/<int:law_id>/notes", methods=["POST"])
 @login_required
 def save_user_notes(law_id):
-    """Salva ou atualiza as anotações do usuário atual para uma lei específica."""
+    """Salva ou atualiza as anotações gerais do usuário atual para uma lei específica."""
     content = request.json.get("content", "")
     
     notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -465,21 +465,21 @@ def save_user_notes(law_id):
     
     try:
         db.session.commit()
-        logging.info(f"[SAVE NOTES] Successfully saved notes for user {current_user.id}, law {law_id}")
-        return jsonify(success=True, message="Anotações salvas com sucesso!")
+        logging.info(f"[SAVE GENERAL NOTES] Successfully saved general notes for user {current_user.id}, law {law_id}")
+        return jsonify(success=True, message="Anotações gerais salvas com sucesso!")
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[SAVE NOTES] Error saving notes for user {current_user.id}, law {law_id}: {e}")
-        return jsonify(success=False, error="Erro ao salvar anotações."), 500
+        logging.error(f"[SAVE GENERAL NOTES] Error saving general notes for user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error="Erro ao salvar anotações gerais."), 500
 
 # =====================================================================
-# <<< INÍCIO: NOVAS ROTAS DA API DE COMENTÁRIOS (ADICIONAR NO FINAL) >>>
+# <<< INÍCIO: NOVAS ROTAS DA API DE ANOTAÇÕES POR PARÁGRAFO (antigo "comments") >>>
 # =====================================================================
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET"])
 @login_required
 def get_comments(law_id):
-    """Carrega todos os comentários do usuário atual para uma lei específica."""
+    """Carrega todas as anotações por parágrafo do usuário atual para uma lei específica."""
     comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).order_by(UserComment.created_at.asc()).all()
     
     comments_data = [{
@@ -494,7 +494,7 @@ def get_comments(law_id):
 @student_bp.route("/law/<int:law_id>/comments", methods=["POST"])
 @login_required
 def add_comment(law_id):
-    """Adiciona um novo comentário a um parágrafo de uma lei."""
+    """Adiciona uma nova anotação a um parágrafo de uma lei."""
     data = request.json
     content = data.get("content")
     anchor_id = data.get("anchor_paragraph_id")
@@ -519,20 +519,18 @@ def add_comment(law_id):
             "created_at": new_comment.created_at.strftime("%d/%m/%Y às %H:%M")
         }
         
-        return jsonify(success=True, message="Comentário salvo!", comment=comment_data), 201
+        return jsonify(success=True, message="Anotação salva!", comment=comment_data), 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[ADD COMMENT] Erro ao salvar comentário para user {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao salvar o comentário."), 500
+        logging.error(f"[ADD ANNOTATION] Erro ao salvar anotação para user {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao salvar a anotação."), 500
 
-# === INÍCIO DA NOVA ROTA PARA EDITAR COMENTÁRIO ===
 @student_bp.route("/comments/<int:comment_id>", methods=["PUT"])
 @login_required
 def update_comment(comment_id):
-    """Atualiza um comentário existente."""
+    """Atualiza uma anotação existente."""
     comment = UserComment.query.get_or_404(comment_id)
 
-    # Medida de segurança: garante que apenas o dono do comentário possa editá-lo.
     if comment.user_id != current_user.id:
         return jsonify(success=False, error="Ação não autorizada."), 403
 
@@ -544,40 +542,36 @@ def update_comment(comment_id):
     
     try:
         comment.content = new_content
-        # Supondo que seu modelo UserComment tenha o campo 'updated_at'
         if hasattr(comment, 'updated_at'):
             comment.updated_at = datetime.datetime.utcnow()
             
         db.session.commit()
         
-        # Retorna o comentário atualizado para o frontend
         updated_comment_data = {
             "id": comment.id,
             "content": comment.content,
         }
         
-        return jsonify(success=True, message="Comentário atualizado!", comment=updated_comment_data)
+        return jsonify(success=True, message="Anotação atualizada!", comment=updated_comment_data)
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[UPDATE COMMENT] Erro ao atualizar comentário {comment_id}: {e}")
-        return jsonify(success=False, error="Erro interno ao atualizar o comentário."), 500
-# === FIM DA NOVA ROTA PARA EDITAR COMENTÁRIO ===
+        logging.error(f"[UPDATE ANNOTATION] Erro ao atualizar anotação {comment_id}: {e}")
+        return jsonify(success=False, error="Erro interno ao atualizar a anotação."), 500
 
 @student_bp.route("/comments/<int:comment_id>", methods=["DELETE"])
 @login_required
 def delete_comment(comment_id):
-    """Exclui um comentário."""
+    """Exclui uma anotação."""
     comment = UserComment.query.get_or_404(comment_id)
 
-    # Medida de segurança: garante que apenas o dono do comentário possa excluí-lo.
     if comment.user_id != current_user.id:
         return jsonify(success=False, error="Ação não autorizada."), 403
 
     try:
         db.session.delete(comment)
         db.session.commit()
-        return jsonify(success=True, message="Comentário excluído.")
+        return jsonify(success=True, message="Anotação excluída.")
     except Exception as e:
         db.session.rollback()
-        logging.error(f"[DELETE COMMENT] Erro ao excluir comentário {comment_id}: {e}")
-        return jsonify(success=False, error="Erro interno ao excluir o comentário."), 500
+        logging.error(f"[DELETE ANNOTATION] Erro ao excluir anotação {comment_id}: {e}")
+        return jsonify(success=False, error="Erro interno ao excluir a anotação."), 500
