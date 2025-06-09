@@ -712,28 +712,23 @@
 </div>
 {% endif %}
 
-<div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-center md:justify-between gap-y-2 mb-4">
-    
-    <div class="flex flex-wrap gap-2 items-center justify-center md:justify-start">
-        <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários">
-            <i class="fas fa-eye-slash"></i>
-            <span>Comentários</span>
-        </button>
-        <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência">
-            <i class="fas fa-eye-slash"></i>
-            <span>Jurisprudência</span>
-        </button>
-        <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina">
-            <i class="fas fa-eye-slash"></i>
-            <span>Doutrina</span>
-        </button>
-        <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações">
-            <i class="fas fa-eye-slash"></i>
-            <span>Minhas Anotações</span>
-        </button>
+<div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-3 mb-4">
+
+    <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <div class="flex flex-wrap gap-2 items-center">
+            <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários"><i class="fas fa-eye-slash"></i><span>Comentários</span></button>
+            <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i><span>Jurisprudência</span></button>
+            <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina"><i class="fas fa-eye-slash"></i><span>Doutrina</span></button>
+            <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i><span>Minhas Anotações</span></button>
+        </div>
+        <div class="font-control-group flex items-center space-x-2">
+             <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
+             <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
+             <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
+       </div>
     </div>
 
-    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 mt-2 md:mt-0">
+    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2">
         <div class="flex items-center space-x-1">
             <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
             <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
@@ -741,20 +736,12 @@
                 <i class="fas fa-search"></i> Ir
             </button>
         </div>
-
         <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
             <i class="fas fa-pencil-alt mr-2"></i>
             <span class="hidden md:inline">Anotações Gerais</span>
             <span class="md:hidden">Anot. Gerais</span>
         </button>
-
-        <div class="font-control-group flex items-center space-x-2">
-             <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
-             <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
-             <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
-        </div>
-        </div>
-
+    </div>
 </div>
 
 
@@ -851,7 +838,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener('scroll', updateProgressBar);
     updateProgressBar();
 
-    const lawContent = document.getElementById("law-content");
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
     const backToTopBtn = document.getElementById("back-to-top-btn");
@@ -864,7 +850,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
     function indexArticles() {
-        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleElements = document.getElementById('law-content').querySelectorAll('p, strong, b');
         const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
         articleElements.forEach(el => {
             const match = el.textContent.trim().match(articleRegex);
@@ -896,9 +882,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function findAndGoToText(text) {
         if (!text || text.length < 3) return;
-        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        const lawContentEl = document.getElementById('law-content');
+        const highlighted = lawContentEl.querySelectorAll('span.highlight-article-search');
         highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        const walker = document.createTreeWalker(lawContentEl, NodeFilter.SHOW_TEXT, null, false);
         let node;
         let firstMatch = null;
         while (node = walker.nextNode()) {
@@ -961,15 +948,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const button = document.getElementById(buttonId);
         if (!button) return;
         
-        // Estado inicial: conteúdo visível
         let isVisible = true;
         
         button.addEventListener("click", function () {
             isVisible = !isVisible;
-            
+            const lawContentEl = document.getElementById('law-content');
             const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
                 ? document.querySelectorAll(contentSelector)
-                : lawContent.querySelectorAll(contentSelector);
+                : lawContentEl.querySelectorAll(contentSelector);
             
             elementsToToggle.forEach(el => {
                 el.classList.toggle("conteudo-oculto", !isVisible);
@@ -978,7 +964,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const icon = this.querySelector('i');
             this.classList.toggle("active", !isVisible);
             
-            // Apenas muda o ícone, sem alterar as classes de cor do botão.
             if (isVisible) {
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
@@ -1151,14 +1136,13 @@ document.addEventListener("DOMContentLoaded", function () {
     loadNotes();
 
     // =================================================================
-    // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI (NOVO) >>>
+    // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI >>>
     // =================================================================
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
             const lawId = this.getAttribute('data-law-id');
-            // Busca o token CSRF de uma meta tag (mais robusto)
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             const icon = this.querySelector('i');
@@ -1203,16 +1187,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
     const lawId = '{{ law.id }}';
-    const lawContentContainerForComments = document.getElementById('law-content'); // Renomeada para evitar conflito
+    const lawContentForComments = document.getElementById('law-content');
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
     const modalTextarea = document.getElementById('comment-modal-textarea');
     const modalSaveBtn = document.getElementById('comment-modal-save');
     const modalCancelBtn = document.getElementById('comment-modal-cancel');
     let currentAnchorId = null;
-    let currentEditingCommentId = null; // Guarda o ID da anotação em edição
+    let currentEditingCommentId = null; 
 
-    // Função para abrir o modal para CRIAR uma nova anotação
     function openCommentModalForCreate(anchorId) {
         currentEditingCommentId = null;
         currentAnchorId = anchorId;
@@ -1222,7 +1205,6 @@ document.addEventListener("DOMContentLoaded", function () {
         modalTextarea.focus();
     }
 
-    // Função para abrir o modal para EDITAR uma anotação existente
     function openCommentModalForEdit(commentId, currentContent) {
         currentEditingCommentId = commentId;
         currentAnchorId = null;
@@ -1232,14 +1214,12 @@ document.addEventListener("DOMContentLoaded", function () {
         modalTextarea.focus();
     }
 
-    // Função para fechar o modal e resetar os estados
     function closeCommentModal() {
         modalBackdrop.style.display = 'none';
         currentAnchorId = null;
         currentEditingCommentId = null;
     }
 
-    // Função para exibir uma anotação na tela (com listener de edição)
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
@@ -1259,18 +1239,13 @@ document.addEventListener("DOMContentLoaded", function () {
         commentDiv.appendChild(commentParagraph);
         commentDiv.appendChild(deleteButton);
         
-        // Listener para abrir o modal de EDIÇÃO
         commentDiv.addEventListener('click', (e) => {
-            if (e.target.classList.contains('comment-delete-btn')) {
-                return; // Não faz nada se o clique foi no botão de excluir
-            }
-            const currentText = comment.content;
-            openCommentModalForEdit(comment.id, currentText);
+            if (e.target.classList.contains('comment-delete-btn')) { return; }
+            openCommentModalForEdit(comment.id, comment.content);
         });
         
-        // Listener para o botão de EXCLUSÃO
         deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Impede que o clique no botão ative o listener de edição do div pai
+            e.stopPropagation();
             deleteComment(comment.id, commentDiv);
         });
 
@@ -1280,14 +1255,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if(icon) icon.classList.add('has-comment');
     }
     
-    // Função para SALVAR (nova) ou ATUALIZAR (existente) uma anotação
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
         if (!content) return;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        // Se currentEditingCommentId tem um valor, estamos no modo de EDIÇÃO
         if (currentEditingCommentId) {
             try {
                 const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
@@ -1310,7 +1283,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert('Erro de comunicação com o servidor.');
             }
         } 
-        // Caso contrário, estamos no modo de CRIAÇÃO
         else {
             if (!currentAnchorId) return;
             try {
@@ -1333,7 +1305,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
-    // Função para excluir uma anotação
     async function deleteComment(commentId, commentElement) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
         
@@ -1364,12 +1335,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Função principal de inicialização - MODIFICADA
     async function initCommentSystem() {
-        // 1. Mude o estado inicial para 'falso' (ícones não visíveis)
         let areIconsVisible = false;
         
-        const paragraphs = lawContentContainerForComments.querySelectorAll('p, li, blockquote');
+        const paragraphs = lawContentForComments.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
             if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
             
@@ -1384,16 +1353,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const icon = document.createElement('i');
 
             if (index === 0) {
-                // 2. Ícone principal começa como "olho fechado"
                 icon.className = 'fas fa-eye-slash comment-icon';
-                icon.title = 'Mostrar ícones de anotação'; // Título inicial
+                icon.title = 'Mostrar ícones de anotação';
                 
                 icon.addEventListener('click', () => {
                     areIconsVisible = !areIconsVisible;
                     icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
-                    // Atualiza o título da dica
                     icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
-                    const secondaryIcons = lawContentContainerForComments.querySelectorAll('.secondary-comment-icon');
+                    const secondaryIcons = lawContentForComments.querySelectorAll('.secondary-comment-icon');
                     secondaryIcons.forEach(secIcon => {
                         secIcon.style.display = areIconsVisible ? 'block' : 'none';
                     });
@@ -1401,7 +1368,6 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar anotação privada';
-                // 3. Ícones secundários (balões) começam escondidos
                 icon.style.display = 'none';
                 icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
@@ -1409,7 +1375,6 @@ document.addEventListener("DOMContentLoaded", function () {
             wrapper.appendChild(icon);
         });
 
-        // Carrega as anotações existentes
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
@@ -1420,7 +1385,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erro ao carregar anotações por parágrafo:", error);
         }
         
-        // Listeners do modal
         modalSaveBtn.addEventListener('click', saveOrUpdateComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
@@ -1428,7 +1392,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Inicia o sistema de anotações por parágrafo
     initCommentSystem();
     // =================================================================
     // <<< FIM: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
