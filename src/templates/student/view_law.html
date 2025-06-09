@@ -35,6 +35,29 @@
     }
     /* --- FIM: ESTILO PARA DESTAQUE --- */
 
+    /* --- INÍCIO: ESTILO PARA BOTÃO DE FAVORITAR (NOVO) --- */
+    .favorite-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        color: #9ca3af; /* Cor padrão (cinza) */
+        font-size: 1.5rem; /* Tamanho do ícone */
+        transition: color 0.2s ease, transform 0.2s ease;
+        line-height: 1; /* Alinha o ícone verticalmente */
+    }
+    .favorite-btn:hover {
+        transform: scale(1.15);
+        color: #fde047; /* Amarelo claro no hover */
+    }
+    .favorite-btn.favorited {
+        color: #facc15; /* Amarelo forte para estado favoritado */
+    }
+    .favorite-btn.favorited:hover {
+        color: #eab308; /* Amarelo mais escuro no hover quando favoritado */
+    }
+    /* --- FIM: ESTILO PARA BOTÃO DE FAVORITAR --- */
+    
     .law-content-container {
         background-color: white;
         border-radius: 0.5rem;
@@ -454,7 +477,13 @@
 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
 
-    <div class="flex justify-end w-full sm:w-auto">
+    <div class="flex justify-end w-full sm:w-auto items-center space-x-4">
+        <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
+                data-law-id="{{ law.id }}"
+                title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+            <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
+        </button>
+
         <a href="{{ url_for('student.dashboard') }}" class="flex items-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 text-sm">
             <i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel
         </a>
@@ -920,6 +949,55 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI (NOVO) >>>
+    // =================================================================
+    const favoriteBtn = document.querySelector('.js-favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            this.disabled = true;
+            const lawId = this.getAttribute('data-law-id');
+            // Busca o token CSRF de uma meta tag (mais robusto)
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
+            const icon = this.querySelector('i');
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) { throw new Error('Erro ao atualizar favorito'); }
+                return response.json();
+            })
+            .then(data => {
+                if (data.favorited) {
+                    this.classList.add('favorited');
+                    this.title = 'Remover dos Favoritos';
+                    if (icon) { icon.className = 'fas fa-star'; }
+                } else {
+                    this.classList.remove('favorited');
+                    this.title = 'Adicionar aos Favoritos';
+                    if (icon) { icon.className = 'far fa-star'; }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Ocorreu um erro ao favoritar a lei. Tente novamente.');
+            })
+            .finally(() => {
+                this.disabled = false;
+            });
+        });
+    }
+    // =================================================================
+    // <<< FIM: LÓGICA PARA FAVORITAR A LEI >>>
+    // =================================================================
+
 
     // =================================================================
     // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
