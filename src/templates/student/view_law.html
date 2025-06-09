@@ -387,69 +387,45 @@
     /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO (ANTIGOS COMENTÁRIOS) --- */
     .paragraph-wrapper {
         position: relative;
-        padding-right: 40px; /* Espaço para o grupo de ícones */
-        padding-left: 10px; /* Espaço para a borda colorida */
-        margin-left: -10px; /* Compensa o padding para alinhar o texto */
-        border-left: 3px solid transparent; /* Borda inicial transparente */
-        transition: border-color 0.3s ease;
+        padding-right: 30px; /* Espaço para o ícone de anotação */
     }
-    
-    /* BORDAS COLORIDAS PARA MARCAÇÕES */
-    .paragraph-wrapper.tagged-1 { border-left-color: #22c55e; } /* Verde - Aprendido */
-    .paragraph-wrapper.tagged-2 { border-left-color: #facc15; } /* Amarelo - Dúvida */
-    .paragraph-wrapper.tagged-3 { border-left-color: #ef4444; } /* Vermelho - Urgente */
-    .dark-mode .paragraph-wrapper.tagged-1 { border-left-color: #4ade80; }
-    .dark-mode .paragraph-wrapper.tagged-2 { border-left-color: #fde047; }
-    .dark-mode .paragraph-wrapper.tagged-3 { border-left-color: #f87171; }
 
-    .paragraph-icons-group {
+    .comment-icon {
         position: absolute;
-        top: 2px;
+        top: 5px;
         right: 0;
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        opacity: 0.15;
+        cursor: pointer;
+        color: #a5b4fc; /* Roxo claro */
+        font-size: 1.1rem;
         transition: all 0.2s ease;
+        opacity: 0.5;
     }
-    .paragraph-wrapper:hover .paragraph-icons-group {
+
+    .paragraph-wrapper:hover .comment-icon {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    .comment-icon.has-comment {
+        color: #6366f1; /* Roxo mais forte */
         opacity: 1;
     }
-    .paragraph-icons-group i {
-        cursor: pointer;
-        font-size: 0.9rem;
-        padding: 2px;
-        border-radius: 3px;
-        color: #9ca3af;
-    }
-    .paragraph-icons-group i:hover {
-        transform: scale(1.2);
-        color: #6b7280;
-    }
-    .dark-mode .paragraph-icons-group i { color: #6b7280; }
-    .dark-mode .paragraph-icons-group i:hover { color: #9ca3af; }
 
-    /* Estilo para ícones ativos */
-    .paragraph-icons-group i.active.tag-learned { color: #22c55e; }
-    .paragraph-icons-group i.active.tag-doubt { color: #facc15; }
-    .paragraph-icons-group i.active.tag-urgent { color: #ef4444; }
-    .paragraph-icons-group i.has-comment { color: #6366f1; opacity: 1; }
-    
     .comment-display {
-        background-color: #fff7ed;
-        border-left: 3px solid #f97316;
+        background-color: #fff7ed; /* Laranja bem clarinho (Tailwind orange-50) */
+        border-left: 3px solid #f97316; /* Laranja (Tailwind orange-500) */
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        font-style: italic;
-        color: #c2410c;
-        cursor: pointer;
+        font-style: italic;     /* Texto da anotação em itálico */
+        color: #f97316;         /* Cor do texto em laranja */
+        cursor: pointer;        /* Indica que o elemento é clicável para edição */
     }
     
     .comment-display:hover {
-        background-color: #ffedd5;
+        background-color: #ffedd5; /* Laranja um pouco mais escuro no hover (orange-100) */
     }
 
     .comment-delete-btn {
@@ -1273,17 +1249,10 @@ document.addEventListener("DOMContentLoaded", function () {
             deleteComment(comment.id, commentDiv);
         });
 
-        // Remove o display de comentário antigo se houver
-        const oldCommentDisplay = anchorElement.parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
-        if(oldCommentDisplay) oldCommentDisplay.remove();
-
-        // Adiciona o novo se houver conteúdo
-        if(comment.content && comment.content.trim() !== "") {
-            anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-        }
+        anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
         
-        const icon = anchorElement.parentNode.querySelector('.fa-comment-dots');
-        if(icon) icon.classList.toggle('has-comment', !!comment.content);
+        const icon = anchorElement.parentNode.querySelector('.comment-icon');
+        if(icon) icon.classList.add('has-comment');
     }
     
     async function saveOrUpdateComment() {
@@ -1292,28 +1261,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        const url = currentEditingCommentId ? `/student/comments/${currentEditingCommentId}` : `/student/law/${lawId}/comments`;
-        const method = currentEditingCommentId ? 'PUT' : 'POST';
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ 
-                    content: content, 
-                    anchor_paragraph_id: currentAnchorId 
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                displayComment(data.comment);
-                closeCommentModal();
-            } else {
-                alert('Erro ao salvar anotação: ' + data.error);
+        if (currentEditingCommentId) {
+            try {
+                const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
+                    if (commentDiv) {
+                        commentDiv.querySelector('p').innerHTML = data.comment.content.replace(/\n/g, '<br>');
+                    }
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao atualizar anotação: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao atualizar anotação:', error);
+                alert('Erro de comunicação com o servidor.');
             }
-        } catch (error) {
-            console.error('Erro de rede ao salvar anotação:', error);
-            alert('Erro de comunicação com o servidor.');
+        } 
+        else {
+            if (!currentAnchorId) return;
+            try {
+                const response = await fetch(`/student/law/${lawId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayComment(data.comment);
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao salvar anotação: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao salvar anotação:', error);
+                alert('Erro de comunicação com o servidor.');
+            }
         }
     }
     
@@ -1329,9 +1317,14 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const data = await response.json();
             if (data.success) {
-                const icon = commentElement.parentNode.querySelector('.fa-comment-dots');
-                if(icon) icon.classList.remove('has-comment');
+                const anchorId = commentElement.previousElementSibling.id;
                 commentElement.remove();
+
+                const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
+                if (remainingComments === 0) {
+                    const icon = document.getElementById(anchorId)?.parentNode.querySelector('.comment-icon');
+                    if (icon) icon.classList.remove('has-comment');
+                }
             } else {
                 alert('Erro ao excluir anotação: ' + data.error);
             }
@@ -1341,54 +1334,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    async function handleTagClick(event) {
-        const target = event.target;
-        if (!target.matches('.tag-icon')) return;
-
-        const wrapper = target.closest('.paragraph-wrapper');
-        const anchorId = wrapper.querySelector('p, li, blockquote').id;
-        const currentTag = parseInt(target.dataset.tagId, 10);
-        
-        let newTag = currentTag;
-        // Se o ícone clicado já estiver ativo, desativa (envia 0)
-        if (target.classList.contains('active')) {
-            newTag = 0;
-        }
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        try {
-            const response = await fetch(`/student/law/${lawId}/paragraph/tag`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ anchor_paragraph_id: anchorId, status_tag: newTag })
-            });
-            const data = await response.json();
-            if (data.success) {
-                // Atualiza a UI
-                wrapper.className = 'paragraph-wrapper'; // Limpa classes antigas
-                if (newTag > 0) {
-                    wrapper.classList.add(`tagged-${newTag}`);
-                }
-                
-                // Atualiza os ícones ativos
-                wrapper.querySelectorAll('.tag-icon').forEach(icon => icon.classList.remove('active'));
-                if (newTag > 0) {
-                    target.classList.add('active');
-                }
-            } else {
-                alert('Erro ao salvar marcação: ' + data.error);
-            }
-        } catch (error) {
-             console.error('Erro de rede ao salvar marcação:', error);
-        }
-    }
-
 
     async function initCommentSystem() {
-        // Adiciona o listener para os cliques de marcação, usando delegação de evento
-        lawContentForComments.addEventListener('click', handleTagClick);
-
+        let areIconsVisible = false;
+        
         const paragraphs = lawContentForComments.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
             if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
@@ -1401,65 +1350,41 @@ document.addEventListener("DOMContentLoaded", function () {
             p.parentNode.insertBefore(wrapper, p);
             wrapper.appendChild(p);
 
-            const iconsGroup = document.createElement('div');
-            iconsGroup.className = 'paragraph-icons-group';
+            const icon = document.createElement('i');
 
-            // Ícone de Olho Mestre (não adicionado por parágrafo)
             if (index === 0) {
-                const masterEye = document.createElement('i');
-                masterEye.className = 'fas fa-eye-slash';
-                masterEye.title = 'Mostrar/Ocultar controles de parágrafo';
-                masterEye.style.cursor = 'pointer';
-                masterEye.style.opacity = '0.5';
-                masterEye.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isHidden = masterEye.classList.toggle('fa-eye-slash');
-                    masterEye.classList.toggle('fa-eye', !isHidden);
-                    document.querySelectorAll('.paragraph-icons-group').forEach(group => {
-                        group.style.opacity = isHidden ? '0.15' : '1';
+                icon.className = 'fas fa-eye-slash comment-icon';
+                icon.title = 'Mostrar ícones de anotação';
+                
+                icon.addEventListener('click', () => {
+                    areIconsVisible = !areIconsVisible;
+                    icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
+                    icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
+                    const secondaryIcons = lawContentForComments.querySelectorAll('.secondary-comment-icon');
+                    secondaryIcons.forEach(secIcon => {
+                        secIcon.style.display = areIconsVisible ? 'block' : 'none';
                     });
                 });
-                iconsGroup.appendChild(masterEye);
+            } else {
+                icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
+                icon.title = 'Adicionar anotação privada';
+                icon.style.display = 'none';
+                icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
-            
-            // Ícones de Marcação Rápida
-            iconsGroup.innerHTML += `
-                <i class="fas fa-check tag-icon tag-learned" data-tag-id="1" title="Marcar como Aprendido"></i>
-                <i class="fas fa-question tag-icon tag-doubt" data-tag-id="2" title="Marcar como Dúvida"></i>
-                <i class="fas fa-exclamation tag-icon tag-urgent" data-tag-id="3" title="Marcar como Urgente"></i>
-                <i class="fas fa-comment-dots" title="Adicionar anotação privada"></i>
-            `;
-            
-            wrapper.appendChild(iconsGroup);
-            iconsGroup.querySelector('.fa-comment-dots').addEventListener('click', () => openCommentModalForCreate(anchorId));
+
+            wrapper.appendChild(icon);
         });
 
-        // Carrega as anotações e marcações existentes
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
             if (data.success) {
-                data.comments.forEach(comment => {
-                    const wrapper = document.getElementById(comment.anchor_paragraph_id)?.parentNode;
-                    if (!wrapper) return;
-
-                    // Aplica marcação de status visual
-                    if (comment.status_tag > 0) {
-                        wrapper.classList.add(`tagged-${comment.status_tag}`);
-                        const activeIcon = wrapper.querySelector(`.tag-icon[data-tag-id='${comment.status_tag}']`);
-                        if(activeIcon) activeIcon.classList.add('active');
-                    }
-                    // Exibe o comentário de texto se existir
-                    if (comment.content && comment.content.trim() !== "") {
-                        displayComment(comment);
-                    }
-                });
+                data.comments.forEach(displayComment);
             }
         } catch (error) {
-            console.error("Erro ao carregar anotações e marcações:", error);
+            console.error("Erro ao carregar anotações por parágrafo:", error);
         }
         
-        // Listeners do modal
         modalSaveBtn.addEventListener('click', saveOrUpdateComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
