@@ -9,7 +9,7 @@ from src.models.user import db, Achievement, Announcement, User, UserSeenAnnounc
 from src.models.law import Law, Subject # Import Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes # Importar o novo modelo de anotações
-from src.models.comment import UserComment # <<< IMPORTANTE: Modelo deve ter a coluna 'status_tag'
+from src.models.comment import UserComment # <<< NOVO IMPORT
 import datetime
 import logging # Import logging
 
@@ -479,74 +479,28 @@ def save_user_notes(law_id):
         return jsonify(success=False, error="Erro ao salvar anotações gerais."), 500
 
 # =====================================================================
-# <<< INÍCIO: NOVAS ROTAS DA API DE ANOTAÇÕES E MARCAÇÕES POR PARÁGRAFO >>>
+# <<< INÍCIO: NOVAS ROTAS DA API DE ANOTAÇÕES POR PARÁGRAFO (antigo "comments") >>>
 # =====================================================================
 
-# ROTA MODIFICADA para carregar também as marcações
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET"])
 @login_required
 def get_comments(law_id):
-    """Carrega todas as anotações E marcações por parágrafo do usuário para uma lei."""
-    # Retorna todos os registros de interação, mesmo que não tenham texto de comentário
-    comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).all()
+    """Carrega todas as anotações por parágrafo do usuário atual para uma lei específica."""
+    comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).order_by(UserComment.created_at.asc()).all()
     
     comments_data = [{
         "id": comment.id,
         "content": comment.content,
         "anchor_paragraph_id": comment.anchor_paragraph_id,
-        "created_at": comment.created_at.strftime("%d/%m/%Y às %H:%M"),
-        "status_tag": comment.status_tag # <-- NOVO: envia o status salvo
+        "created_at": comment.created_at.strftime("%d/%m/%Y às %H:%M")
     } for comment in comments]
     
     return jsonify(success=True, comments=comments_data)
 
-# NOVA ROTA para salvar/atualizar uma marcação de status
-@student_bp.route("/law/<int:law_id>/paragraph/tag", methods=["POST"])
-@login_required
-def tag_paragraph(law_id):
-    """Cria ou atualiza a marcação de status de um parágrafo."""
-    data = request.json
-    anchor_id = data.get("anchor_paragraph_id")
-    status_tag = data.get("status_tag")
-
-    if not anchor_id or status_tag is None:
-        return jsonify(success=False, error="Dados incompletos."), 400
-
-    # Busca um registro existente (anotação ou apenas marcação)
-    record = UserComment.query.filter_by(
-        user_id=current_user.id,
-        law_id=law_id,
-        anchor_paragraph_id=anchor_id
-    ).first()
-
-    try:
-        if record:
-            # Se já existe, apenas atualiza o status
-            record.status_tag = status_tag
-        else:
-            # Se não existe, cria um novo registro apenas com o status
-            record = UserComment(
-                user_id=current_user.id,
-                law_id=law_id,
-                anchor_paragraph_id=anchor_id,
-                status_tag=status_tag,
-                content="" # Deixa o conteúdo do texto vazio
-            )
-            db.session.add(record)
-        
-        db.session.commit()
-        return jsonify(success=True, message="Marcação salva!")
-        
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"[TAG PARAGRAPH] Erro ao salvar marcação para user {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao salvar a marcação."), 500
-
-# ROTA MODIFICADA para lidar com registros pré-existentes (de marcações)
 @student_bp.route("/law/<int:law_id>/comments", methods=["POST"])
 @login_required
 def add_comment(law_id):
-    """Adiciona/Atualiza uma anotação de texto a um parágrafo de uma lei."""
+    """Adiciona uma nova anotação a um parágrafo de uma lei."""
     data = request.json
     content = data.get("content")
     anchor_id = data.get("anchor_paragraph_id")
@@ -554,38 +508,21 @@ def add_comment(law_id):
     if not content or not anchor_id:
         return jsonify(success=False, error="Dados incompletos."), 400
 
-    # Busca um registro existente para não criar um novo se já houver uma marcação
-    record = UserComment.query.filter_by(
-        user_id=current_user.id,
-        law_id=law_id,
-        anchor_paragraph_id=anchor_id
-    ).first()
-    
     try:
-        if record:
-            # Se já existe, atualiza o conteúdo do texto
-            record.content = content
-            if hasattr(record, 'updated_at'):
-                record.updated_at = datetime.datetime.utcnow()
-        else:
-            # Se não existe, cria um novo com o conteúdo
-            record = UserComment(
-                content=content,
-                anchor_paragraph_id=anchor_id,
-                user_id=current_user.id,
-                law_id=law_id
-            )
-            db.session.add(record)
-            
+        new_comment = UserComment(
+            content=content,
+            anchor_paragraph_id=anchor_id,
+            user_id=current_user.id,
+            law_id=law_id
+        )
+        db.session.add(new_comment)
         db.session.commit()
         
-        # Retorna o registro completo, incluindo o status_tag que pode já existir
         comment_data = {
-            "id": record.id,
-            "content": record.content,
-            "anchor_paragraph_id": record.anchor_paragraph_id,
-            "created_at": record.created_at.strftime("%d/%m/%Y às %H:%M"),
-            "status_tag": record.status_tag
+            "id": new_comment.id,
+            "content": new_comment.content,
+            "anchor_paragraph_id": new_comment.anchor_paragraph_id,
+            "created_at": new_comment.created_at.strftime("%d/%m/%Y às %H:%M")
         }
         
         return jsonify(success=True, message="Anotação salva!", comment=comment_data), 201
@@ -597,7 +534,7 @@ def add_comment(law_id):
 @student_bp.route("/comments/<int:comment_id>", methods=["PUT"])
 @login_required
 def update_comment(comment_id):
-    """Atualiza uma anotação de texto existente."""
+    """Atualiza uma anotação existente."""
     comment = UserComment.query.get_or_404(comment_id)
 
     if comment.user_id != current_user.id:
@@ -627,26 +564,17 @@ def update_comment(comment_id):
         logging.error(f"[UPDATE ANNOTATION] Erro ao atualizar anotação {comment_id}: {e}")
         return jsonify(success=False, error="Erro interno ao atualizar a anotação."), 500
 
-# ROTA MODIFICADA para preservar a marcação ao deletar um comentário
 @student_bp.route("/comments/<int:comment_id>", methods=["DELETE"])
 @login_required
 def delete_comment(comment_id):
-    """Exclui uma anotação de texto. Preserva a marcação de status se houver."""
+    """Exclui uma anotação."""
     comment = UserComment.query.get_or_404(comment_id)
 
     if comment.user_id != current_user.id:
         return jsonify(success=False, error="Ação não autorizada."), 403
 
     try:
-        # Se não houver marcação de status, pode deletar o registro inteiro
-        if not comment.status_tag or comment.status_tag == 0:
-            db.session.delete(comment)
-        else:
-            # Se houver, apenas limpa o conteúdo do texto e a data de atualização
-            comment.content = ""
-            if hasattr(comment, 'updated_at'):
-                comment.updated_at = comment.created_at # ou None, dependendo da lógica
-            
+        db.session.delete(comment)
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída.")
     except Exception as e:
