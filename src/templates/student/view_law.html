@@ -1165,9 +1165,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Função principal de inicialização
+    // Função principal de inicialização - MODIFICADA
     async function initCommentSystem() {
-        let areIconsVisible = true;
+        // 1. Mude o estado inicial para 'falso' (ícones não visíveis)
+        let areIconsVisible = false;
         
         const paragraphs = lawContentContainer.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
@@ -1184,12 +1185,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const icon = document.createElement('i');
 
             if (index === 0) {
-                icon.className = 'fas fa-eye comment-icon';
-                icon.title = 'Ocultar/Mostrar ícones de anotação';
+                // 2. Ícone principal começa como "olho fechado"
+                icon.className = 'fas fa-eye-slash comment-icon';
+                icon.title = 'Mostrar ícones de anotação'; // Título inicial
                 
                 icon.addEventListener('click', () => {
                     areIconsVisible = !areIconsVisible;
                     icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
+                    // Atualiza o título da dica
+                    icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
                     const secondaryIcons = lawContentContainer.querySelectorAll('.secondary-comment-icon');
                     secondaryIcons.forEach(secIcon => {
                         secIcon.style.display = areIconsVisible ? 'block' : 'none';
@@ -1198,6 +1202,8 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar anotação privada';
+                // 3. Ícones secundários (balões) começam escondidos
+                icon.style.display = 'none';
                 icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
 
