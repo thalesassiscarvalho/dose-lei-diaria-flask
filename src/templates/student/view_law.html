@@ -676,6 +676,36 @@
         }
     }
     /* --- FIM: AJUSTE DE ROLAGEM HORIZONTAL --- */
+    
+    /* NOVO: Estilos para a seção de links úteis */
+    .links-container {
+        background-color: #f0f9ff; /* Azul muito claro */
+        border: 1px solid #bae6fd; /* Azul claro */
+    }
+    .links-container #toggle-links-btn {
+        background-color: #e0f2fe; /* Azul um pouco mais escuro */
+        border-bottom-color: #bae6fd;
+    }
+    .links-container #toggle-links-btn h3 {
+        color: #0c4a6e; /* Azul escuro */
+    }
+    .dark-mode .links-container {
+        background-color: #1e3a8a; /* Azul escuro para o fundo no modo noturno */
+        border-color: #3b82f6;
+    }
+    .dark-mode .links-container #toggle-links-btn {
+        background-color: #1e40af;
+        border-bottom-color: #3b82f6;
+    }
+    .dark-mode .links-container #toggle-links-btn h3 {
+        color: #dbeafe; /* Texto claro */
+    }
+    .dark-mode .links-container a {
+        color: #93c5fd; /* Links azuis claros */
+    }
+    .dark-mode .links-container a:hover {
+        color: #eff6ff;
+    }
 </style>
 {% endblock %}
 
@@ -803,6 +833,29 @@
     </div>
 </div>
 
+<div class="mt-8" id="links-section">
+    <div class="links-container bg-white border border-green-200 rounded-lg shadow-sm">
+        <div class="p-4 bg-green-50 border-b border-green-200 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
+            <h3 class="text-lg font-medium text-green-800"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="links-chevron"></i>
+        </div>
+        <div class="p-4 hidden" id="links-content-area">
+            {% if law.useful_links and law.useful_links.count() > 0 %}
+                <ul class="list-disc pl-5 space-y-2">
+                    {% for link in law.useful_links %}
+                        <li>
+                            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                                {{ link.title }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500 italic">Nenhum link útil adicionado para esta lei.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% if not is_completed %}
 <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1515,6 +1568,19 @@ document.addEventListener("DOMContentLoaded", function () {
     // =================================================================
     // <<< FIM: LÓGICA PARA MODO NOTURNO >>>
     // =================================================================
+    
+    // ****** INÍCIO: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
+    const toggleLinksBtn = document.getElementById("toggle-links-btn");
+    const linksContentArea = document.getElementById("links-content-area");
+    const linksChevron = document.getElementById("links-chevron");
+    
+    if (toggleLinksBtn) {
+        toggleLinksBtn.addEventListener("click", function() {
+            linksContentArea.classList.toggle("hidden");
+            linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
+    // ****** FIM: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
 });
 </script>
 {% endblock %}
