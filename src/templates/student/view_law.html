@@ -477,15 +477,16 @@
 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
 
-    <div class="flex justify-end w-full sm:w-auto items-center space-x-4">
+    <div class="flex justify-end w-full sm:w-auto items-center space-x-3 sm:space-x-4">
         <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
                 data-law-id="{{ law.id }}"
                 title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
             <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
         </button>
 
-        <a href="{{ url_for('student.dashboard') }}" class="flex items-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 text-sm">
-            <i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel
+        <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
+            <i class="fas fa-arrow-left"></i>
+            <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
         </a>
     </div>
 </div>
