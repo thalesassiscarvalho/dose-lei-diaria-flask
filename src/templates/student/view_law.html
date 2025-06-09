@@ -656,6 +656,26 @@
         font-family: Georgia, 'Times New Roman', Times, serif;
     }
     /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
+
+    /* --- INÍCIO: AJUSTE DE ROLAGEM HORIZONTAL PARA BARRA DE AÇÕES --- */
+    @media (max-width: 480px) {
+        #sticky-action-bar .flex-wrap.items-center.justify-center.gap-x-4 {
+            flex-wrap: nowrap; /* Impede que os botões quebrem para a próxima linha */
+            overflow-x: auto;  /* Adiciona a rolagem horizontal */
+            justify-content: flex-start; /* Alinha os botões ao início */
+            padding: 0 10px; /* Adiciona um respiro nas laterais */
+
+            /* Oculta a barra de rolagem na maioria dos navegadores */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Oculta a barra de rolagem para navegadores WebKit (Chrome, Safari) */
+        #sticky-action-bar .flex-wrap.items-center.justify-center.gap-x-4::-webkit-scrollbar {
+            display: none;
+        }
+    }
+    /* --- FIM: AJUSTE DE ROLAGEM HORIZONTAL --- */
 </style>
 {% endblock %}
 
