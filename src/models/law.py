@@ -14,13 +14,29 @@ class Law(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.String(500), nullable=True)
     content = db.Column(db.Text, nullable=False)
-    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True) # Allow nullable initially for existing laws
-    audio_url = db.Column(db.String(500), nullable=True) # Campo para URL do áudio
+    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True)
+    audio_url = db.Column(db.String(500), nullable=True)
 
-    # Define relationships if not already defined via backref
-    # (progress_records relationship is defined in UserProgress model via backref)
+    # NOVO: Relacionamento com Links Úteis
+    # A cascata garante que, se uma lei for deletada, seus links também serão.
+    useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
-        # CORRIGIDO: Removido erro de sintaxe com barras invertidas
         audio_indicator = " (Audio)" if self.audio_url else ""
         return f"<Law {self.title}{audio_indicator}>"
+
+# --- NOVO MODELO PARA LINKS ÚTEIS ---
+class UsefulLink(db.Model):
+    __tablename__ = 'useful_link' # Nome explícito para a tabela
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    
+    # Chave estrangeira para conectar o link à lei
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
+    
+    # Relação de volta para a Lei
+    law = db.relationship('Law', back_populates='useful_links')
+
+    def __repr__(self):
+        return f'<UsefulLink {self.title}>'
