@@ -256,11 +256,17 @@ def view_law(law_id):
     is_completed = current_status == 'concluido'
     last_read_article = progress.last_read_article if progress else None
     
+    # --- ALTERAÇÃO AQUI: Verificar se a lei é favorita ---
+    favorite_law_ids = {law.id for law in current_user.favorite_laws}
+    is_favorited = law_id in favorite_law_ids
+    # --- FIM DA ALTERAÇÃO ---
+    
     return render_template("student/view_law.html", 
                            law=law, 
                            is_completed=is_completed, 
                            last_read_article=last_read_article,
-                           current_status=current_status)
+                           current_status=current_status,
+                           is_favorited=is_favorited) # <- E Passar a variável para o template
 
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
