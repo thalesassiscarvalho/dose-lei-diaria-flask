@@ -606,6 +606,56 @@
         background-color: #1f2937;
     }
     /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
+
+    /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
+    .font-control-group {
+        border-left: 1px solid #d1d5db;
+        margin-left: 0.75rem;
+        padding-left: 0.75rem;
+    }
+    .dark-mode .font-control-group {
+        border-left-color: #4b5563;
+    }
+    .font-control-btn {
+        background-color: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        width: 34px;
+        height: 34px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+    }
+    .font-control-btn:hover {
+        background-color: #e5e7eb;
+        border-color: #9ca3af;
+    }
+    .dark-mode .font-control-btn {
+        background-color: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+    .dark-mode .font-control-btn:hover {
+        background-color: #4b5563;
+    }
+    
+    /* Classes de Tamanho de Fonte */
+    #law-content.font-size-sm, #law-content.font-size-sm p { font-size: 0.85rem; line-height: 1.6; }
+    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; } /* Padrão */
+    #law-content.font-size-lg, #law-content.font-size-lg p { font-size: 1.1rem; line-height: 1.8; }
+    #law-content.font-size-xl, #law-content.font-size-xl p { font-size: 1.2rem; line-height: 1.85; }
+
+    /* Classe de Tipo de Fonte */
+    #law-content.font-serif, 
+    #law-content.font-serif p, 
+    #law-content.font-serif li {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+    /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
 </style>
 {% endblock %}
 
@@ -697,7 +747,13 @@
             <span class="hidden md:inline">Anotações Gerais</span>
             <span class="md:hidden">Anot. Gerais</span>
         </button>
-    </div>
+
+        <div class="font-control-group flex items-center space-x-2">
+             <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
+             <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
+             <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
+        </div>
+        </div>
 
 </div>
 
@@ -1147,7 +1203,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
     const lawId = '{{ law.id }}';
-    const lawContentContainer = document.getElementById('law-content');
+    const lawContentContainerForComments = document.getElementById('law-content'); // Renomeada para evitar conflito
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
     const modalTextarea = document.getElementById('comment-modal-textarea');
@@ -1313,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // 1. Mude o estado inicial para 'falso' (ícones não visíveis)
         let areIconsVisible = false;
         
-        const paragraphs = lawContentContainer.querySelectorAll('p, li, blockquote');
+        const paragraphs = lawContentContainerForComments.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
             if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
             
@@ -1337,7 +1393,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
                     // Atualiza o título da dica
                     icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
-                    const secondaryIcons = lawContentContainer.querySelectorAll('.secondary-comment-icon');
+                    const secondaryIcons = lawContentContainerForComments.querySelectorAll('.secondary-comment-icon');
                     secondaryIcons.forEach(secIcon => {
                         secIcon.style.display = areIconsVisible ? 'block' : 'none';
                     });
@@ -1377,6 +1433,72 @@ document.addEventListener("DOMContentLoaded", function () {
     // =================================================================
     // <<< FIM: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA CONTROLE DE FONTE >>>
+    // =================================================================
+    const lawContentContainer = document.getElementById('law-content');
+    const increaseFontBtn = document.getElementById('increase-font-btn');
+    const decreaseFontBtn = document.getElementById('decrease-font-btn');
+    const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
+
+    // Lógica para Tamanho da Fonte
+    const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
+    let currentSizeIndex = 1; // Padrão é 'font-size-md'
+
+    function applyFontSize(sizeClass) {
+        fontSizes.forEach(s => lawContentContainer.classList.remove(s));
+        lawContentContainer.classList.add(sizeClass);
+        localStorage.setItem('fontSize', sizeClass);
+        currentSizeIndex = fontSizes.indexOf(sizeClass);
+    }
+
+    increaseFontBtn.addEventListener('click', () => {
+        if (currentSizeIndex < fontSizes.length - 1) {
+            currentSizeIndex++;
+            applyFontSize(fontSizes[currentSizeIndex]);
+        }
+    });
+
+    decreaseFontBtn.addEventListener('click', () => {
+        if (currentSizeIndex > 0) {
+            currentSizeIndex--;
+            applyFontSize(fontSizes[currentSizeIndex]);
+        }
+    });
+
+    // Lógica para Tipo de Fonte (Serif/Sans-serif)
+    function applyFontFamily(fontType) {
+        if (fontType === 'serif') {
+            lawContentContainer.classList.add('font-serif');
+        } else {
+            lawContentContainer.classList.remove('font-serif');
+        }
+        localStorage.setItem('fontFamily', fontType);
+    }
+
+    toggleFontFamilyBtn.addEventListener('click', () => {
+        const isSerif = lawContentContainer.classList.contains('font-serif');
+        applyFontFamily(isSerif ? 'sans' : 'serif');
+    });
+
+    // Aplicar preferências salvas ao carregar a página
+    const savedFontSize = localStorage.getItem('fontSize');
+    const savedFontFamily = localStorage.getItem('fontFamily');
+
+    if (savedFontSize && fontSizes.includes(savedFontSize)) {
+        applyFontSize(savedFontSize);
+    } else {
+        applyFontSize('font-size-md'); // Aplica o padrão se nada for salvo
+    }
+    
+    if (savedFontFamily) {
+        applyFontFamily(savedFontFamily);
+    }
+    // =================================================================
+    // <<< FIM: LÓGICA PARA CONTROLE DE FONTE >>>
+    // =================================================================
+
 
     // =================================================================
     // <<< INÍCIO: LÓGICA PARA MODO NOTURNO >>>
