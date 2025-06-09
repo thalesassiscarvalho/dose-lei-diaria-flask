@@ -467,6 +467,145 @@
         margin-bottom: 15px;
     }
     /* --- FIM: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
+
+    /* --- INÍCIO: ESTILOS PARA MODO NOTURNO --- */
+    body.dark-mode {
+        background-color: #030712; /* Fundo geral da página (quase preto) */
+    }
+
+    .dark-mode .law-content-container,
+    .dark-mode .completed-banner,
+    .dark-mode .last-read-info,
+    .dark-mode #sticky-action-bar,
+    .dark-mode .bookmark-section,
+    .dark-mode .notes-container,
+    .dark-mode .comment-modal-content,
+    .dark-mode .audio-player-container {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* Conteúdo principal da lei */
+    .dark-mode .law-content-container {
+        background-color: #1f2937; /* Cinza escuro para o conteúdo */
+        color: #d1d5db; /* Texto principal - cinza claro */
+        border-color: #374151; /* Borda sutil */
+    }
+
+    /* Títulos dentro da lei */
+    .dark-mode .law-content-container h1,
+    .dark-mode .law-content-container h2,
+    .dark-mode .law-content-container h3,
+    .dark-mode .law-content-container h4,
+    .dark-mode .law-content-container h5,
+    .dark-mode .law-content-container h6 {
+        color: #93c5fd; /* Azul claro para títulos */
+    }
+
+    /* Cabeçalho da página */
+    .dark-mode h1.text-blue-700 {
+        color: #93c5fd;
+    }
+
+    /* Banners e seções */
+    .dark-mode .completed-banner {
+        background-color: #064e3b; /* Verde escuro */
+        color: #a7f3d0;
+        border-color: #059669;
+    }
+    .dark-mode .last-read-info {
+        background-color: #3730a3; /* Indigo escuro */
+        color: #c7d2fe;
+        border-color: #4f46e5;
+    }
+    .dark-mode .bookmark-section {
+        background-color: #1e293b; /* Azul-acinzentado escuro */
+        border-color: #374151;
+    }
+    .dark-mode .bookmark-section h3 {
+        color: #e5e7eb;
+    }
+
+    /* Barra de Ações Fixa */
+    .dark-mode #sticky-action-bar {
+        background-color: #111827; /* Fundo da barra */
+        border-color: #374151;
+    }
+    .dark-mode #sticky-action-bar label {
+        color: #d1d5db;
+    }
+    .dark-mode #sticky-action-bar input[type="text"] {
+        background-color: #374151;
+        color: #e5e7eb;
+        border-color: #4b5563;
+    }
+
+    /* Seção de Anotações */
+    .dark-mode .notes-container {
+        background-color: #1f2937;
+        border-color: #374151;
+    }
+    .dark-mode .notes-container #toggle-notes-btn {
+        background-color: #111827;
+        border-bottom-color: #374151;
+    }
+    .dark-mode .notes-container #toggle-notes-btn h3 {
+        color: #93c5fd;
+    }
+    .dark-mode .notes-container #notes-editor {
+        background-color: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+
+    /* Player de Áudio */
+    .dark-mode .audio-player-container {
+        background-color: #1f2937;
+        border-color: #374151;
+    }
+     .dark-mode .audio-player-container h4 {
+        color: #d1d5db;
+     }
+
+    /* Modal de anotação */
+    .dark-mode .comment-modal-content {
+        background-color: #1f2937;
+    }
+     .dark-mode .comment-modal-content h3 {
+        color: #e5e7eb;
+     }
+    .dark-mode .comment-modal-textarea {
+        background-color: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+
+    /* Botão de Toggle do Tema */
+    .theme-toggle-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #4b5563;
+        color: #fde047; /* Amarelo para sol/lua */
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1001;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .theme-toggle-btn:hover {
+        transform: scale(1.1);
+    }
+    .dark-mode .theme-toggle-btn {
+        background-color: #1f2937;
+    }
+    /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 </style>
 {% endblock %}
 
@@ -632,6 +771,10 @@
         </div>
     </div>
 </div>
+
+<button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar tema">
+    <i class="fas fa-moon"></i>
+</button>
 {% endblock %}
 
 {% block scripts %}
@@ -1233,6 +1376,39 @@ document.addEventListener("DOMContentLoaded", function () {
     initCommentSystem();
     // =================================================================
     // <<< FIM: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
+    // =================================================================
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA MODO NOTURNO >>>
+    // =================================================================
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const body = document.body;
+    const themeIcon = themeToggleBtn.querySelector('i');
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.className = 'fas fa-sun';
+            themeToggleBtn.title = 'Alternar para tema claro';
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.className = 'fas fa-moon';
+            themeToggleBtn.title = 'Alternar para tema escuro';
+        }
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        const isDarkMode = body.classList.contains('dark-mode');
+        const newTheme = isDarkMode ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+
+    // Aplica o tema salvo ao carregar a página
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+    // =================================================================
+    // <<< FIM: LÓGICA PARA MODO NOTURNO >>>
     // =================================================================
 });
 </script>
