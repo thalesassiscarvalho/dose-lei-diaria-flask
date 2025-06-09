@@ -5,35 +5,66 @@
 {% endblock %}
 
 {% block head_extra %}
-<!-- Adicione aqui qualquer CSS ou JS específico para esta página, como o do editor de texto -->
-<!-- Atualizado para TinyMCE v7 -->
 <script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
   tinymce.init({
-    selector: '#content', // Mantido o seletor original
+    selector: '#content',
     plugins: [
-      // Core editing features (baseado no exemplo v7)
       'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-      // Premium features (baseado no exemplo v7 - podem exigir plano pago após trial)
       'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
     ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat', // Toolbar do exemplo v7
-    height: 400, // Mantida a altura original
-    tinycomments_mode: 'embedded', // Configuração do exemplo v7
-    tinycomments_author: 'Admin', // Ajuste o nome do autor se necessário
-    mergetags_list: [ // Exemplo do v7 - ajuste conforme sua necessidade
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    height: 400,
+    tinycomments_mode: 'embedded',
+    tinycomments_author: 'Admin',
+    mergetags_list: [
       { value: 'First.Name', title: 'First Name' },
       { value: 'Email', title: 'Email' },
     ],
-    // A configuração de AI pode precisar de implementação no backend
     ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
   });
 </script>
 <style>
-    /* Estilos adicionais se necessário */
-    /* Garante que o editor não fique escondido por outros elementos */
-    .tox-tinymce {
-        z-index: 10; /* Ou um valor menor se necessário, mas maior que elementos adjacentes */
+    /* --- NOVO: Estilos para a seção de links --- */
+    .link-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+    }
+    .link-group input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+    }
+    .delete-link-btn {
+        background-color: #ef4444;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        border: none;
+        font-weight: bold;
+    }
+    .delete-link-btn:hover {
+        background-color: #dc2626;
+    }
+    .add-link-btn {
+        background-color: #10b981;
+        color: white;
+        font-weight: bold;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        border: none;
+    }
+    .add-link-btn:hover {
+        background-color: #059669;
     }
 </style>
 {% endblock %}
@@ -42,19 +73,15 @@
 <h1 class="text-2xl font-bold mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
 
 <form method="POST" action="{% if law %}{{ url_for('admin.edit_law', law_id=law.id) }}{% else %}{{ url_for('admin.add_law') }}{% endif %}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
     <div class="mb-4">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
-            Título:
-        </label>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Título:</label>
         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="title" name="title" type="text" placeholder="Título da Lei" value="{{ law.title if law else '' }}" required>
     </div>
 
     <div class="mb-4">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="subject_id">
-            Matéria:
-        </label>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="subject_id">Matéria:</label>
         <select id="subject_id" name="subject_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <option value="None">-- Nenhuma --</option>
             {% for subject in subjects %}
@@ -65,31 +92,38 @@
     </div>
 
     <div class="mb-4">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
-            Descrição (Opcional):
-        </label>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Descrição (Opcional):</label>
         <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="3" placeholder="Breve descrição da lei">{{ law.description if law else '' }}</textarea>
     </div>
 
-    <!-- ****** NOVO CAMPO PARA URL DO ÁUDIO ****** -->
     <div class="mb-4">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="audio_url">
-            URL do Áudio (Opcional):
-        </label>
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="audio_url">URL do Áudio (Opcional):</label>
         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="audio_url" name="audio_url" type="url" placeholder="https://.../arquivo.mp3" value="{{ law.audio_url if law and law.audio_url else '' }}">
-        <p class="text-xs text-gray-600 mt-1">Cole aqui o link completo (URL) para o arquivo de áudio externo (MP3, OGG, etc.).</p>
     </div>
-    <!-- ****** FIM NOVO CAMPO ****** -->
 
     <div class="mb-6">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="content">
-            Conteúdo:
-        </label>
-        <!-- O seletor '#content' no script tinymce.init vai mirar neste textarea -->
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="content">Conteúdo:</label>
         <textarea id="content" name="content">{{ law.content | safe if law else '' }}</textarea>
     </div>
 
-    <div class="flex items-center justify-between">
+    <div class="mb-6 border-t pt-6 mt-6">
+        <label class="block text-gray-700 text-sm font-bold mb-2">Links Úteis (Opcional):</label>
+        <div id="useful-links-container">
+            {% if law and law.useful_links %}
+                {% for link in law.useful_links.all() %} {# Usar .all() por causa do lazy='dynamic' #}
+                <div class="link-group">
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-{{ loop.index0 }}-title" type="text" placeholder="Título do Link" value="{{ link.title }}" required>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-{{ loop.index0 }}-url" type="url" placeholder="https://exemplo.com" value="{{ link.url }}" required>
+                    <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button type="button" id="add-link-btn" class="mt-2 add-link-btn">
+            + Adicionar Link
+        </button>
+    </div>
+    <div class="flex items-center justify-between mt-8">
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
             {% if law %}Salvar Alterações{% else %}Adicionar Lei{% endif %}
         </button>
@@ -98,5 +132,26 @@
         </a>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addLinkBtn = document.getElementById('add-link-btn');
+    const linksContainer = document.getElementById('useful-links-container');
+    // Inicia o índice a partir do número de links já existentes na página
+    let linkIndex = linksContainer.getElementsByClassName('link-group').length;
+
+    addLinkBtn.addEventListener('click', function() {
+        const newLinkGroup = document.createElement('div');
+        newLinkGroup.className = 'link-group';
+        newLinkGroup.innerHTML = `
+            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
+            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
+            <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
+        `;
+        linksContainer.appendChild(newLinkGroup);
+        linkIndex++; // Incrementa o índice para o próximo link
+    });
+});
+</script>
 
 {% endblock %}
