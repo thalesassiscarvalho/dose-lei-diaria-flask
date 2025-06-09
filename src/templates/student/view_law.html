@@ -387,69 +387,45 @@
     /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO (ANTIGOS COMENTÁRIOS) --- */
     .paragraph-wrapper {
         position: relative;
-        padding-right: 40px; /* Espaço para o grupo de ícones */
-        padding-left: 10px; /* Espaço para a borda colorida */
-        margin-left: -10px; /* Compensa o padding para alinhar o texto */
-        border-left: 3px solid transparent; /* Borda inicial transparente */
-        transition: border-color 0.3s ease;
+        padding-right: 30px; /* Espaço para o ícone de anotação */
     }
-    
-    /* BORDAS COLORIDAS PARA MARCAÇÕES */
-    .paragraph-wrapper.tagged-1 { border-left-color: #22c55e; } /* Verde - Aprendido */
-    .paragraph-wrapper.tagged-2 { border-left-color: #facc15; } /* Amarelo - Dúvida */
-    .paragraph-wrapper.tagged-3 { border-left-color: #ef4444; } /* Vermelho - Urgente */
-    .dark-mode .paragraph-wrapper.tagged-1 { border-left-color: #4ade80; }
-    .dark-mode .paragraph-wrapper.tagged-2 { border-left-color: #fde047; }
-    .dark-mode .paragraph-wrapper.tagged-3 { border-left-color: #f87171; }
 
-    .paragraph-icons-group {
+    .comment-icon {
         position: absolute;
-        top: 2px;
+        top: 5px;
         right: 0;
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        opacity: 0.15;
+        cursor: pointer;
+        color: #a5b4fc; /* Roxo claro */
+        font-size: 1.1rem;
         transition: all 0.2s ease;
+        opacity: 0.5;
     }
-    .paragraph-wrapper:hover .paragraph-icons-group {
+
+    .paragraph-wrapper:hover .comment-icon {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    .comment-icon.has-comment {
+        color: #6366f1; /* Roxo mais forte */
         opacity: 1;
     }
-    .paragraph-icons-group i {
-        cursor: pointer;
-        font-size: 0.9rem;
-        padding: 2px;
-        border-radius: 3px;
-        color: #9ca3af;
-    }
-    .paragraph-icons-group i:hover {
-        transform: scale(1.2);
-        color: #6b7280;
-    }
-    .dark-mode .paragraph-icons-group i { color: #6b7280; }
-    .dark-mode .paragraph-icons-group i:hover { color: #9ca3af; }
 
-    /* Estilo para ícones ativos */
-    .paragraph-icons-group i.active.tag-learned { color: #22c55e; }
-    .paragraph-icons-group i.active.tag-doubt { color: #facc15; }
-    .paragraph-icons-group i.active.tag-urgent { color: #ef4444; }
-    .paragraph-icons-group i.has-comment { color: #6366f1; opacity: 1; }
-    
     .comment-display {
-        background-color: #fff7ed;
-        border-left: 3px solid #f97316;
+        background-color: #fff7ed; /* Laranja bem clarinho (Tailwind orange-50) */
+        border-left: 3px solid #f97316; /* Laranja (Tailwind orange-500) */
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        font-style: italic;
-        color: #c2410c;
-        cursor: pointer;
+        font-style: italic;     /* Texto da anotação em itálico */
+        color: #f97316;         /* Cor do texto em laranja */
+        cursor: pointer;        /* Indica que o elemento é clicável para edição */
     }
     
     .comment-display:hover {
-        background-color: #ffedd5;
+        background-color: #ffedd5; /* Laranja um pouco mais escuro no hover (orange-100) */
     }
 
     .comment-delete-btn {
@@ -680,16 +656,6 @@
         font-family: Georgia, 'Times New Roman', Times, serif;
     }
     /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
-
-    /* --- INÍCIO: CSS para esconder a barra de rolagem --- */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera */
-    }
-    .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
-    /* --- FIM: CSS para esconder a barra de rolagem --- */
 </style>
 {% endblock %}
 
@@ -748,7 +714,7 @@
 
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-3 mb-4">
 
-    <div class="no-scrollbar flex items-center justify-start gap-x-4 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-x-visible sm:pb-0">
+    <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         <div class="flex flex-wrap gap-2 items-center">
             <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários"><i class="fas fa-eye-slash"></i><span>Comentários</span></button>
             <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i><span>Jurisprudência</span></button>
@@ -1234,10 +1200,7 @@ document.addEventListener("DOMContentLoaded", function () {
         currentEditingCommentId = null;
         currentAnchorId = anchorId;
         modalTitle.textContent = 'Adicionar Anotação';
-        
-        const existingRecord = document.querySelector(`.comment-display[data-anchor-id='${anchorId}']`);
-        modalTextarea.value = existingRecord ? existingRecord.querySelector('p').textContent : '';
-
+        modalTextarea.value = '';
         modalBackdrop.style.display = 'flex';
         modalTextarea.focus();
     }
@@ -1260,71 +1223,85 @@ document.addEventListener("DOMContentLoaded", function () {
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
-        
-        // Remove display de comentário antigo se houver
-        const oldCommentDisplay = anchorElement.parentNode.querySelector(`.comment-display`);
-        if(oldCommentDisplay) oldCommentDisplay.remove();
 
-        // Adiciona o novo se houver conteúdo
-        if(comment.content && comment.content.trim() !== "") {
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-display';
-            commentDiv.setAttribute('data-comment-id', comment.id);
-            commentDiv.setAttribute('data-anchor-id', comment.anchor_paragraph_id);
-            
-            const commentParagraph = document.createElement('p');
-            commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'comment-delete-btn';
-            deleteButton.title = 'Excluir anotação';
-            deleteButton.innerHTML = '&times;';
-            
-            commentDiv.appendChild(commentParagraph);
-            commentDiv.appendChild(deleteButton);
-            
-            commentDiv.addEventListener('click', (e) => {
-                if (e.target.classList.contains('comment-delete-btn')) { return; }
-                openCommentModalForEdit(comment.id, comment.content);
-            });
-            
-            deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteComment(comment.id, commentDiv);
-            });
-            anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-        }
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment-display';
+        commentDiv.setAttribute('data-comment-id', comment.id);
         
-        const icon = anchorElement.parentNode.querySelector('.fa-comment-dots');
-        if(icon) icon.classList.toggle('has-comment', !!(comment.content && comment.content.trim() !== ""));
+        const commentParagraph = document.createElement('p');
+        commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'comment-delete-btn';
+        deleteButton.title = 'Excluir anotação';
+        deleteButton.innerHTML = '&times;';
+        
+        commentDiv.appendChild(commentParagraph);
+        commentDiv.appendChild(deleteButton);
+        
+        commentDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('comment-delete-btn')) { return; }
+            openCommentModalForEdit(comment.id, comment.content);
+        });
+        
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteComment(comment.id, commentDiv);
+        });
+
+        anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
+        
+        const icon = anchorElement.parentNode.querySelector('.comment-icon');
+        if(icon) icon.classList.add('has-comment');
     }
     
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
+        if (!content) return;
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        const url = `/student/law/${lawId}/comments`;
-        const method = 'POST';
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ 
-                    content: content, 
-                    anchor_paragraph_id: currentAnchorId 
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                displayComment(data.comment);
-                closeCommentModal();
-            } else {
-                alert('Erro ao salvar anotação: ' + data.error);
+        if (currentEditingCommentId) {
+            try {
+                const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
+                    if (commentDiv) {
+                        commentDiv.querySelector('p').innerHTML = data.comment.content.replace(/\n/g, '<br>');
+                    }
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao atualizar anotação: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao atualizar anotação:', error);
+                alert('Erro de comunicação com o servidor.');
             }
-        } catch (error) {
-            console.error('Erro de rede ao salvar anotação:', error);
-            alert('Erro de comunicação com o servidor.');
+        } 
+        else {
+            if (!currentAnchorId) return;
+            try {
+                const response = await fetch(`/student/law/${lawId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayComment(data.comment);
+                    closeCommentModal();
+                } else {
+                    alert('Erro ao salvar anotação: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro de rede ao salvar anotação:', error);
+                alert('Erro de comunicação com o servidor.');
+            }
         }
     }
     
@@ -1340,9 +1317,14 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const data = await response.json();
             if (data.success) {
-                const icon = commentElement.parentNode.querySelector('.fa-comment-dots');
-                if(icon) icon.classList.remove('has-comment');
+                const anchorId = commentElement.previousElementSibling.id;
                 commentElement.remove();
+
+                const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
+                if (remainingComments === 0) {
+                    const icon = document.getElementById(anchorId)?.parentNode.querySelector('.comment-icon');
+                    if (icon) icon.classList.remove('has-comment');
+                }
             } else {
                 alert('Erro ao excluir anotação: ' + data.error);
             }
@@ -1352,53 +1334,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    async function handleTagClick(event) {
-        const target = event.target;
-        if (!target.matches('.tag-icon')) return;
-
-        const wrapper = target.closest('.paragraph-wrapper');
-        const anchorId = wrapper.querySelector('p, li, blockquote').id;
-        const currentTag = parseInt(target.dataset.tagId, 10);
-        
-        let newTag = currentTag;
-        if (target.classList.contains('active')) {
-            newTag = 0; // Desmarcar
-        }
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        try {
-            const response = await fetch(`/student/law/${lawId}/paragraph/tag`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ anchor_paragraph_id: anchorId, status_tag: newTag })
-            });
-            const data = await response.json();
-            if (data.success) {
-                wrapper.className = 'paragraph-wrapper'; // Limpa classes de tag antigas
-                if (newTag > 0) {
-                    wrapper.classList.add(`tagged-${newTag}`);
-                }
-                wrapper.querySelectorAll('.tag-icon').forEach(icon => icon.classList.remove('active'));
-                if (newTag > 0) {
-                    target.classList.add('active');
-                }
-            } else {
-                alert('Erro ao salvar marcação: ' + data.error);
-            }
-        } catch (error) {
-             console.error('Erro de rede ao salvar marcação:', error);
-        }
-    }
 
     async function initCommentSystem() {
-        lawContentForComments.addEventListener('click', handleTagClick);
-
+        let areIconsVisible = false;
+        
         const paragraphs = lawContentForComments.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
-            if (p.closest('.paragraph-wrapper')) return;
-            if (p.closest('.comment-display')) return;
-            if (getComputedStyle(p).display === 'none') return;
+            if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
             
             const anchorId = `law-p-${index}`;
             p.id = anchorId;
@@ -1408,57 +1350,39 @@ document.addEventListener("DOMContentLoaded", function () {
             p.parentNode.insertBefore(wrapper, p);
             wrapper.appendChild(p);
 
-            const iconsGroup = document.createElement('div');
-            iconsGroup.className = 'paragraph-icons-group';
+            const icon = document.createElement('i');
 
             if (index === 0) {
-                const masterEye = document.createElement('i');
-                masterEye.className = 'fas fa-eye-slash';
-                masterEye.title = 'Mostrar/Ocultar controles de parágrafo';
-                masterEye.style.cursor = 'pointer';
-                masterEye.style.opacity = '0.5';
-                masterEye.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isHidden = masterEye.classList.toggle('fa-eye-slash');
-                    masterEye.classList.toggle('fa-eye', !isHidden);
-                    document.querySelectorAll('.paragraph-icons-group').forEach(group => {
-                        group.style.opacity = isHidden ? '0.15' : '1';
+                icon.className = 'fas fa-eye-slash comment-icon';
+                icon.title = 'Mostrar ícones de anotação';
+                
+                icon.addEventListener('click', () => {
+                    areIconsVisible = !areIconsVisible;
+                    icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
+                    icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
+                    const secondaryIcons = lawContentForComments.querySelectorAll('.secondary-comment-icon');
+                    secondaryIcons.forEach(secIcon => {
+                        secIcon.style.display = areIconsVisible ? 'block' : 'none';
                     });
                 });
-                iconsGroup.appendChild(masterEye);
+            } else {
+                icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
+                icon.title = 'Adicionar anotação privada';
+                icon.style.display = 'none';
+                icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
-            
-            iconsGroup.innerHTML += `
-                <i class="fas fa-check tag-icon tag-learned" data-tag-id="1" title="Marcar como Aprendido"></i>
-                <i class="fas fa-question tag-icon tag-doubt" data-tag-id="2" title="Marcar como Dúvida"></i>
-                <i class="fas fa-exclamation tag-icon tag-urgent" data-tag-id="3" title="Marcar como Urgente"></i>
-                <i class="fas fa-comment-dots" title="Adicionar anotação privada"></i>
-            `;
-            
-            wrapper.appendChild(iconsGroup);
-            iconsGroup.querySelector('.fa-comment-dots').addEventListener('click', () => openCommentModalForCreate(anchorId));
+
+            wrapper.appendChild(icon);
         });
 
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
             if (data.success) {
-                data.comments.forEach(comment => {
-                    const wrapper = document.getElementById(comment.anchor_paragraph_id)?.parentNode;
-                    if (!wrapper) return;
-
-                    if (comment.status_tag > 0) {
-                        wrapper.classList.add(`tagged-${comment.status_tag}`);
-                        const activeIcon = wrapper.querySelector(`.tag-icon[data-tag-id='${comment.status_tag}']`);
-                        if(activeIcon) activeIcon.classList.add('active');
-                    }
-                    if (comment.content && comment.content.trim() !== "") {
-                        displayComment(comment);
-                    }
-                });
+                data.comments.forEach(displayComment);
             }
         } catch (error) {
-            console.error("Erro ao carregar anotações e marcações:", error);
+            console.error("Erro ao carregar anotações por parágrafo:", error);
         }
         
         modalSaveBtn.addEventListener('click', saveOrUpdateComment);
