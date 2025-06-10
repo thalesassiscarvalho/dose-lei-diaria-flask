@@ -65,6 +65,11 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
+        /*
+          A proteção de cópia foi movida para o JavaScript para permitir
+          a seleção de texto, necessária para as ferramentas de formatação.
+          user-select: none; foi REMOVIDO daqui.
+        */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
 
@@ -134,170 +139,512 @@
         justify-content: center;
     }
     
+    /* Esconde o texto do botão em todas as resoluções */
     .toggle-button span {
         display: none;
     }
 
-    .toggle-btn-comments { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-    .toggle-btn-comments:hover { background-color: #a7f3d0; }
+    /* Comentários (Verde) */
+    .toggle-btn-comments {
+        background-color: #d1fae5; /* green-100 */
+        color: #065f46; /* green-800 */
+        border-color: #a7f3d0; /* green-200 */
+    }
+    .toggle-btn-comments:hover { background-color: #a7f3d0; /* green-200 */ }
     
-    .toggle-btn-juris { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
-    .toggle-btn-juris:hover { background-color: #fecaca; }
+    /* Jurisprudência (Vermelho) */
+    .toggle-btn-juris {
+        background-color: #fee2e2; /* red-100 */
+        color: #991b1b; /* red-800 */
+        border-color: #fecaca; /* red-200 */
+    }
+    .toggle-btn-juris:hover { background-color: #fecaca; /* red-200 */ }
 
-    .toggle-btn-doutrina { background-color: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
-    .toggle-btn-doutrina:hover { background-color: #c7d2fe; }
+    /* Doutrina (Roxo) */
+    .toggle-btn-doutrina {
+        background-color: #e0e7ff; /* indigo-100 */
+        color: #3730a3; /* indigo-800 */
+        border-color: #c7d2fe; /* indigo-200 */
+    }
+    .toggle-btn-doutrina:hover { background-color: #c7d2fe; /* indigo-200 */ }
     
-    .toggle-btn-my-notes { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
-    .toggle-btn-my-notes:hover { background-color: #fed7aa; }
+    /* Minhas Anotações (Laranja) */
+    .toggle-btn-my-notes {
+        background-color: #ffedd5; /* orange-100 */
+        color: #9a3412; /* orange-800 */
+        border-color: #fed7aa; /* orange-200 */
+    }
+    .toggle-btn-my-notes:hover { background-color: #fed7aa; /* orange-200 */ }
     
     /* --- FIM: NOVOS ESTILOS PARA BOTÕES DE FILTRO --- */
 
-    .conteudo-oculto { display: none !important; }
 
+    /* Classe CSS para ocultar elementos */
+    .conteudo-oculto {
+        display: none !important; /* Usar !important para garantir a sobreposição */
+    }
+    /* Estilos para o container do player de áudio */
     .audio-player-container {
-        background-color: #f9fafb; border-radius: 0.5rem; padding: 1rem;
-        border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        background-color: #f9fafb; /* Tailwind gray-50 */
+        border-radius: 0.5rem; /* Tailwind rounded-lg */
+        padding: 1rem; /* Tailwind p-4 */
+        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         margin-bottom: 1.5rem;
     }
-    .audio-player-container audio { border-radius: 0.375rem; }
+
+    .audio-player-container audio {
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+    }
     
-    .neural-waves-container { display: flex; justify-content: flex-start; gap: 10px; margin: 15px 0 20px; flex-wrap: wrap; }
-    .neural-wave-button { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; border: none; position: relative; }
-    .neural-wave-button i { font-size: 20px; color: white; transition: transform 0.3s ease; }
-    .neural-wave-button:hover i { transform: scale(1.2); }
-    .neural-wave-button.playing { animation: pulse 2s infinite; }
+    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+    .neural-waves-container {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .neural-wave-button {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+    }
+
+    .neural-wave-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 50%;
+    }
+
+    .neural-wave-button:hover::before {
+        opacity: 1;
+    }
+
+    .neural-wave-button i {
+        font-size: 20px;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+
+    .neural-wave-button:hover i {
+        transform: scale(1.2);
+    }
+
+    .neural-wave-button.playing {
+        animation: pulse 2s infinite;
+    }
+
+    .neural-wave-button.playing i {
+        animation: spin 10s linear infinite;
+    }
+
     .wave-alpha { background: linear-gradient(135deg, #4f46e5, #818cf8); }
     .wave-beta { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
     .wave-theta { background: linear-gradient(135deg, #10b981, #34d399); }
     .wave-classical { background: linear-gradient(135deg, #7e22ce, #a855f7); }
     .wave-white-noise { background: linear-gradient(135deg, #64748b, #94a3b8); }
-    .neural-wave-button .tooltip { position: absolute; background-color: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; white-space: normal; top: 50px; left: 50%; transform: translateX(-50%); opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; width: 220px; text-align: left; z-index: 100; line-height: 1.4; }
-    .neural-wave-button .tooltip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent; }
-    .neural-wave-button:hover .tooltip { opacity: 1; visibility: visible; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+    .neural-wave-button .tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: normal;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        width: 220px;
+        text-align: left;
+        z-index: 100;
+        line-height: 1.4;
+    }
+
+    .neural-wave-button .tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+    }
+
+    .neural-wave-button:hover .tooltip { opacity: 1; visibility: visible; }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .neural-waves-container { gap: 8px; }
+        .neural-wave-button { width: 40px; height: 40px; }
+        .neural-wave-button i { font-size: 18px; }
+        .neural-wave-button .tooltip { width: 200px; }
+    }
+    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+
+    /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
     .notes-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
     .format-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; }
-    .notes-editor { min-height: 200px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 12px; background-color: white; overflow-y: auto; line-height: 1.5; margin-bottom: 10px; }
+    .format-btn:hover { background-color: #e5e7eb; }
+    .format-btn.active { background-color: #dbeafe; border-color: #93c5fd; }
+    .format-btn i { font-size: 14px; }
+    .notes-editor {
+        min-height: 200px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 12px;
+        background-color: white;
+        overflow-y: auto;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+    .notes-editor:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
+    .notes-editor strong { font-weight: bold; }
+    .notes-editor em { font-style: italic; }
+    .notes-editor .highlight { background-color: #fef08a; padding: 0 2px; }
+    /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
 
-    .paragraph-wrapper { position: relative; padding-right: 30px; }
-    .comment-icon { position: absolute; top: 5px; right: 0; cursor: pointer; color: #a5b4fc; font-size: 1.1rem; transition: all 0.2s ease; opacity: 0.5; }
-    .paragraph-wrapper:hover .comment-icon { opacity: 1; transform: scale(1.2); }
-    .comment-icon.has-comment { color: #6366f1; opacity: 1; }
-    .comment-icon-toggle { color: #8b5cf6 !important; opacity: 0.8 !important; }
-    .comment-icons-hidden .comment-icon:not(.comment-icon-toggle) { display: none !important; }
-    .comment-display { background-color: #fff7ed; border-left: 3px solid #f97316; padding: 10px 15px; margin: 5px 0 15px; border-radius: 0 5px 5px 0; position: relative; font-style: italic; color: #f97316; cursor: pointer; }
-    .comment-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .comment-modal-content { background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .comment-modal-textarea { width: 100%; min-height: 120px; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; margin-bottom: 15px; }
+    .go-to-notes-btn { background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #7c3aed; display: flex; align-items: center; }
+    .go-to-notes-btn:hover { background-color: #7c3aed; }
+    .back-to-top-btn { background-color: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; margin-left: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+    .back-to-top-btn:hover { background-color: #2563eb; }
+    .save-bookmark-btn { background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; }
+    .save-bookmark-btn:hover { background-color: #059669; }
+    .bookmark-section { margin-top: 1.5rem; padding: 1rem; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .bookmark-input-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+    .bookmark-input { flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+    .bookmark-input:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
 
+    @media (max-width: 640px) {
+        .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
+        .back-to-top-btn { margin-left: 0; margin-top: 1rem; }
+    }
+
+    @media (min-width: 641px) {
+        .bookmark-section { max-width: 33.33%; }
+    }
+    
+    @media (max-width: 768px) {
+        .notes-editor { min-height: 150px; }
+    }
+
+    /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
+    .paragraph-wrapper {
+        position: relative;
+        padding-right: 30px; /* Espaço para o ícone de anotação */
+    }
+    .comment-icon {
+        position: absolute;
+        top: 5px;
+        right: 0;
+        cursor: pointer;
+        color: #a5b4fc; /* Roxo claro */
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        opacity: 0.5;
+    }
+    .paragraph-wrapper:hover .comment-icon {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    .comment-icon.has-comment {
+        color: #6366f1; /* Roxo mais forte */
+        opacity: 1;
+    }
+    
+    /* NOVO: Estilos para o ícone "Olho" de controle */
+    .comment-icon-toggle {
+        color: #8b5cf6 !important; /* Roxo para destacar */
+        opacity: 0.8 !important;
+    }
+    .comment-icon-toggle:hover {
+        opacity: 1 !important;
+    }
+    /* NOVO: Classe para ocultar os ícones de comentário */
+    .comment-icons-hidden .comment-icon:not(.comment-icon-toggle) {
+        display: none !important;
+    }
+
+    .comment-display {
+        background-color: #fff7ed; /* Laranja bem clarinho */
+        border-left: 3px solid #f97316; /* Laranja */
+        padding: 10px 15px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        border-radius: 0 5px 5px 0;
+        position: relative;
+        font-style: italic;
+        color: #f97316;
+        cursor: pointer;
+    }
+    .comment-display:hover { background-color: #ffedd5; }
+    .comment-delete-btn {
+        position: absolute;
+        top: 5px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .comment-delete-btn:hover { color: #ef4444; }
+
+    /* Modal de Anotação */
+    .comment-modal-backdrop {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .comment-modal-content {
+        background-color: white; padding: 25px; border-radius: 8px;
+        width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .comment-modal-textarea {
+        width: 100%; min-height: 120px; padding: 10px;
+        border: 1px solid #d1d5db; border-radius: 5px; margin-bottom: 15px;
+    }
+    /* --- FIM: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
+
+    /* --- INÍCIO: ESTILOS PARA MODO NOTURNO --- */
     body.dark-mode { background-color: #030712; }
-    .dark-mode .law-content-container, .dark-mode .completed-banner, .dark-mode .last-read-info, .dark-mode #sticky-action-bar, .dark-mode .bookmark-section, .dark-mode .notes-container, .dark-mode .comment-modal-content, .dark-mode .audio-player-container, .dark-mode .links-container { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
-    .dark-mode .law-content-container { background-color: #1f2937; color: #d1d5db; border-color: #374151; }
-    .dark-mode .law-content-container h1, .dark-mode .law-content-container h2, .dark-mode .law-content-container h3 { color: #93c5fd; }
+
+    .dark-mode .law-content-container,
+    .dark-mode .completed-banner, .dark-mode .last-read-info,
+    .dark-mode #sticky-action-bar, .dark-mode .bookmark-section,
+    .dark-mode .notes-container, .dark-mode .comment-modal-content,
+    .dark-mode .audio-player-container, .dark-mode .links-container {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    .dark-mode .law-content-container {
+        background-color: #1f2937; color: #d1d5db; border-color: #374151;
+    }
+    .dark-mode .law-content-container h1, .dark-mode .law-content-container h2,
+    .dark-mode .law-content-container h3, .dark-mode .law-content-container h4,
+    .dark-mode .law-content-container h5, .dark-mode .law-content-container h6 {
+        color: #93c5fd;
+    }
     .dark-mode .user-text-highlight { background-color: #a16207; color: #fefce8; }
     .dark-mode h1.text-blue-700 { color: #93c5fd; }
     .dark-mode .completed-banner { background-color: #064e3b; color: #a7f3d0; border-color: #059669; }
     .dark-mode .last-read-info { background-color: #3730a3; color: #c7d2fe; border-color: #4f46e5; }
     .dark-mode .bookmark-section { background-color: #1e293b; border-color: #374151; }
+    .dark-mode .bookmark-section h3 { color: #e5e7eb; }
     .dark-mode #sticky-action-bar { background-color: #111827; border-color: #374151; }
+    .dark-mode #sticky-action-bar label { color: #d1d5db; }
+    .dark-mode #sticky-action-bar input[type="text"] { background-color: #374151; color: #e5e7eb; border-color: #4b5563; }
     .dark-mode .notes-container { background-color: #1f2937; border-color: #374151; }
-    .dark-mode .notes-editor { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+    .dark-mode .notes-container #toggle-notes-btn { background-color: #111827; border-bottom-color: #374151; }
+    .dark-mode .notes-container #toggle-notes-btn h3 { color: #93c5fd; }
+    .dark-mode .notes-container #notes-editor { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+    .dark-mode .audio-player-container { background-color: #1f2937; border-color: #374151; }
+    .dark-mode .audio-player-container h4 { color: #d1d5db; }
     .dark-mode .comment-modal-content { background-color: #1f2937; }
+    .dark-mode .comment-modal-content h3 { color: #e5e7eb; }
     .dark-mode .comment-modal-textarea { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
-    .theme-toggle-btn { position: fixed; bottom: 20px; right: 20px; background-color: #4b5563; color: #fde047; border: none; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); z-index: 1001; }
+    .theme-toggle-btn {
+        position: fixed; bottom: 20px; right: 20px;
+        background-color: #4b5563; color: #fde047; border: none;
+        width: 50px; height: 50px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1001; transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .theme-toggle-btn:hover { transform: scale(1.1); }
+    .dark-mode .theme-toggle-btn { background-color: #1f2937; }
+    /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
+    /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
     .font-control-group { border-left: 1px solid #d1d5db; margin-left: 0.75rem; padding-left: 0.75rem; }
-    .font-control-btn { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 34px; height: 34px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.875rem; }
-    #law-content.font-size-sm { font-size: 0.85rem; }
-    #law-content.font-size-md { font-size: 1rem; }
-    #law-content.font-size-lg { font-size: 1.1rem; }
-    #law-content.font-size-xl { font-size: 1.2rem; }
-    #law-content.font-serif { font-family: Georgia, 'Times New Roman', Times, serif; }
+    .dark-mode .font-control-group { border-left-color: #4b5563; }
+    .font-control-btn {
+        background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.375rem;
+        width: 34px; height: 34px; font-weight: 600;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s; font-size: 0.875rem;
+    }
+    .font-control-btn:hover { background-color: #e5e7eb; border-color: #9ca3af; }
+    .dark-mode .font-control-btn { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+    .dark-mode .font-control-btn:hover { background-color: #4b5563; }
+    
+    #law-content.font-size-sm, #law-content.font-size-sm p { font-size: 0.85rem; line-height: 1.6; }
+    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; }
+    #law-content.font-size-lg, #law-content.font-size-lg p { font-size: 1.1rem; line-height: 1.8; }
+    #law-content.font-size-xl, #law-content.font-size-xl p { font-size: 1.2rem; line-height: 1.85; }
+    #law-content.font-serif, #law-content.font-serif p, #law-content.font-serif li { font-family: Georgia, 'Times New Roman', Times, serif; }
+    /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
+    
+    /* Estilos para a seção de links úteis */
+    .links-container { background-color: #f0f9ff; border: 1px solid #bae6fd; }
+    .links-container #toggle-links-btn { background-color: #e0f2fe; border-bottom-color: #bae6fd; }
+    .links-container #toggle-links-btn h3 { color: #0c4a6e; }
+    .dark-mode .links-container { background-color: #1e3a8a; border-color: #3b82f6; }
+    .dark-mode .links-container #toggle-links-btn { background-color: #1e40af; border-bottom-color: #3b82f6; }
+    .dark-mode .links-container #toggle-links-btn h3 { color: #dbeafe; }
+    .dark-mode .links-container a { color: #93c5fd; }
+    .dark-mode .links-container a:hover { color: #eff6ff; }
 
+    /* Ajuste de rolagem horizontal para barra de ações */
+    @media (max-width: 480px) {
+        #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
+            flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+            padding: 0 10px; -ms-overflow-style: none; scrollbar-width: none;
+        }
+        #sticky-action-bar > .flex.flex-wrap.items-center.justify-center::-webkit-scrollbar { display: none; }
+    }
+
+    /* Proteção de Impressão */
     @media print {
         body * { visibility: hidden; }
-        body::after { visibility: visible; position: fixed; top: 40%; left: 50%; transform: translateX(-50%); width: 80%; content: "A impressão foi desabilitada para proteger a propriedade intelectual."; font-size: 14pt; text-align: center; }
+        body { background-color: #fff; }
+        body::after {
+            visibility: visible; position: fixed; top: 40%; left: 50%;
+            transform: translateX(-50%); width: 80%; max-width: 500px;
+            content: "A impressão deste conteúdo foi desabilitada para proteger a propriedade intelectual e incentivar o uso da plataforma interativa. Obrigado pela compreensão.";
+            font-size: 14pt; color: #000; text-align: center;
+            line-height: 1.5; font-family: sans-serif;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="progress-bar-container"><div class="progress-bar" id="reading-progress-bar"></div></div>
-<div class="flex flex-col sm:flex-row justify-between items-center mb-4" id="page-top">
+<div class="progress-bar-container">
+    <div class="progress-bar" id="reading-progress-bar"></div>
+</div>
+<div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-    <div class="flex items-center space-x-3">
-        <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}" data-law-id="{{ law.id }}" title="{% if is_favorited %}Remover{% else %}Adicionar{% endif %} aos Favoritos">
+    <div class="flex justify-end w-full sm:w-auto items-center space-x-3 sm:space-x-4">
+        <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
+                data-law-id="{{ law.id }}"
+                title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
             <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
         </button>
-        <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full w-10 h-10 sm:w-auto sm:px-4 sm:py-2 text-sm">
+        <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
             <i class="fas fa-arrow-left"></i>
             <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
         </a>
     </div>
 </div>
+
 <div class="neural-waves-container">
-    <button class="neural-wave-button wave-alpha" data-wave="alpha"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz)</span></button>
-    <button class="neural-wave-button wave-beta" data-wave="beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz)</span></button>
-    <button class="neural-wave-button wave-theta" data-wave="theta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz)</span></button>
-    <button class="neural-wave-button wave-classical" data-wave="classical"><i class="fas fa-music"></i><span class="tooltip">Música Clássica</span></button>
-    <button class="neural-wave-button wave-white-noise" data-wave="white-noise"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco</span></button>
+    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
+    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
+    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
+    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
+    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
 </div>
-<audio id="audio-alpha" src="..." loop style="display: none;"></audio>
-<audio id="audio-beta" src="..." loop style="display: none;"></audio>
-<audio id="audio-theta" src="..." loop style="display: none;"></audio>
-<audio id="audio-classical" src="..." loop style="display: none;"></audio>
-<audio id="audio-white-noise" src="..." loop style="display: none;"></audio>
+<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
+
 {% if law.audio_url %}
 <div class="audio-player-container">
-    <h4 class="text-sm font-medium text-gray-700 mb-2"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
+    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
     <audio controls controlslist="nodownload" class="w-full">
         <source src="{{ law.audio_url }}" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
     </audio>
 </div>
 {% endif %}
 {% if is_completed %}
-<div class="completed-banner"><i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!</div>
+<div class="completed-banner" role="alert">
+    <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
+</div>
 {% elif last_read_article %}
-<div class="last-read-info"><i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>{{ last_read_article }}</strong></div>
+<div class="last-read-info" role="alert">
+    <i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>{{ last_read_article }}</strong>
+</div>
 {% endif %}
+
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-3 mb-4">
     <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 items-center">
             <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários"><i class="fas fa-eye-slash"></i></button>
             <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i></button>
             <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina"><i class="fas fa-eye-slash"></i></button>
             <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i></button>
         </div>
         <div class="font-control-group flex items-center space-x-2">
-            <button id="format-bold-btn" class="font-control-btn" title="Negrito"><b>B</b></button>
-            <button id="format-highlight-btn" class="font-control-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
+            <button id="format-bold-btn" class="font-control-btn" title="Negrito (selecione o texto)"><b>B</b></button>
+            <button id="format-highlight-btn" class="font-control-btn" title="Marca-texto (selecione o texto)"><i class="fas fa-highlighter"></i></button>
             <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
             <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
-            <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar fonte">Aa</button>
+            <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
        </div>
     </div>
-    <div class="flex items-center">
-        <label for="article-search-input" class="text-sm font-medium text-gray-700 mr-2">Art.</label>
-        <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
-        <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 ml-2"><i class="fas fa-search"></i> Ir</button>
-        <button id="go-to-notes-btn" class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm hover:bg-purple-700 ml-4">Anotações Gerais</button>
+    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2">
+        <div class="flex items-center space-x-1">
+            <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
+            <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
+            <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
+                <i class="fas fa-search"></i> Ir
+            </button>
+        </div>
+        <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
+            <i class="fas fa-pencil-alt mr-2"></i>
+            <span class="hidden md:inline">Anotações Gerais</span>
+            <span class="md:hidden">Anot. Gerais</span>
+        </button>
     </div>
 </div>
-<div class="law-content-container" id="law-content">{{ display_content | safe }}</div>
-<div class="bookmark-section mt-6">
+
+<div class="law-content-container" id="law-content">
+    {# O conteúdo da lei é inserido aqui e manipulado via JS #}
+    {{ display_content | safe }}
+</div>
+
+<div class="bookmark-section">
     <h3 class="text-lg font-medium text-gray-800 mb-2">Marcar onde parei:</h3>
-    <div class="flex items-center">
-        <input type="text" id="last_read_article" class="w-full px-3 py-2 border rounded-md" placeholder="Ex: Art. 5º, inciso I" value="{{ last_read_article or '' }}">
-        <button id="save-bookmark-btn" class="bg-green-500 text-white px-4 py-2 rounded-md ml-2">Salvar</button>
+    <div class="bookmark-input-group">
+        <input type="text" id="last_read_article" class="bookmark-input" placeholder="Ex: Art. 5º, inciso I" value="{{ last_read_article or '' }}">
+        <button id="save-bookmark-btn" class="save-bookmark-btn">
+            <i class="fas fa-bookmark mr-2"></i> Salvar
+        </button>
     </div>
 </div>
+
 <div class="mt-8" id="notes-section">
     <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
         <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
             <h3 class="text-lg font-medium text-blue-800"><i class="fas fa-pencil-alt mr-2"></i> Anotações Gerais</h3>
-            <i class="fas fa-chevron-down" id="notes-chevron"></i>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
         </div>
         <div class="p-4 hidden" id="notes-content-area">
             <div class="notes-toolbar">
@@ -306,27 +653,69 @@
                 <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
             </div>
             <div id="notes-editor" class="notes-editor" contenteditable="true"></div>
-            <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md">Salvar Anotações Gerais</button>
+            <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+                <i class="fas fa-save mr-2"></i> Salvar Anotações Gerais
+            </button>
         </div>
     </div>
 </div>
+
+{% if law.useful_links and law.useful_links.count() > 0 %}
+<div class="mt-8" id="links-section">
+    <div class="links-container bg-white border border-green-200 rounded-lg shadow-sm">
+        <div class="p-4 bg-green-50 border-b border-green-200 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
+            <h3 class="text-lg font-medium text-green-800"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="links-chevron"></i>
+        </div>
+        <div class="p-4 hidden" id="links-content-area">
+            <ul class="list-disc pl-5 space-y-2">
+                {% for link in law.useful_links %}
+                    <li>
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                            {{ link.title }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% if not is_completed %}
 <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md">Marcar como Concluído</button>
+    <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
+    <div class="action-buttons flex justify-center items-center">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
+            <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
+        </button>
+        <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+            <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+        </button>
+    </div>
 </form>
+{% else %}
+<div class="mt-8 flex justify-center">
+    <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+    </button>
+</div>
 {% endif %}
+
 <div id="comment-modal-backdrop" class="comment-modal-backdrop">
     <div class="comment-modal-content">
         <h3 id="comment-modal-title" class="text-lg font-bold mb-4">Adicionar Anotação</h3>
-        <textarea id="comment-modal-textarea" class="comment-modal-textarea" placeholder="Digite sua anotação..."></textarea>
+        <textarea id="comment-modal-textarea" class="comment-modal-textarea" placeholder="Digite sua anotação privada aqui..."></textarea>
         <div class="flex justify-end gap-3">
             <button id="comment-modal-cancel" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md">Cancelar</button>
             <button id="comment-modal-save" class="bg-indigo-600 text-white py-2 px-4 rounded-md">Salvar</button>
         </div>
     </div>
 </div>
-<button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar tema"><i class="fas fa-moon"></i></button>
+
+<button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar tema">
+    <i class="fas fa-moon"></i>
+</button>
 {% endblock %}
 
 {% block scripts %}
@@ -338,67 +727,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContentEl = document.getElementById('law-content');
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
+    // --- Variáveis globais para armazenar dados e estados ---
     let currentMarkups = {{ markups_json | safe }};
     let lawComments = []; 
     let saveMarkupTimeout;
 
+    // =======================================================
+    // INÍCIO: PROTEÇÃO DE CÓPIA (AJUSTADA)
+    // =======================================================
     lawContentEl.addEventListener('copy', function(e) {
+        // Permite a seleção de texto, mas bloqueia a ação de copiar (Ctrl+C).
+        // Isso é necessário para que as ferramentas de formatação funcionem.
         e.preventDefault();
+        console.log('Ação de copiar bloqueada para proteger o conteúdo.');
     });
 
     // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (COM DIAGNÓSTICO)
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (NOVA ABORDAGEM ROBUSTA)
     // =======================================================
     
-    function getSelectionOffsets(container) {
-        const selection = window.getSelection();
-        console.log("DIAGNÓSTICO: Selection object:", selection);
-        if (selection.rangeCount === 0) {
-            console.log("DIAGNÓSTICO: No range found in selection.");
-            return null;
-        }
-
-        const range = selection.getRangeAt(0);
-        console.log("DIAGNÓSTICO: Range object:", range);
-        const { startContainer, endContainer, startOffset, endOffset } = range;
-        console.log("DIAGNÓSTICO: startContainer:", startContainer, "startOffset:", startOffset);
-        console.log("DIAGNÓSTICO: endContainer:", endContainer, "endOffset:", endOffset);
-        
-        let charCount = 0;
-        let start = -1;
-        let end = -1;
-
-        const walker = document.createTreeWalker(container, Node.TEXT_NODE);
-        let node;
-
-        while ( (node = walker.nextNode()) ) {
-            if (node.nodeValue === null) {
-                continue;
-            }
-
-            if (node === startContainer) {
-                start = charCount + startOffset;
-                console.log(`DIAGNÓSTICO: Found startContainer. Start set to ${start}`);
-            }
-            if (node === endContainer) {
-                end = charCount + endOffset;
-                console.log(`DIAGNÓSTICO: Found endContainer. End set to ${end}`);
-                break;
-            }
-            charCount += node.nodeValue.length;
-        }
-
-        if (start === -1 || end === -1) {
-            console.error("DIAGNÓSTICO: Failed to find start or end container in walker. Returning null.");
-            return null;
-        }
-
-        return {
-            start: Math.min(start, end),
-            end: Math.max(start, end)
-        };
-    }
-    
+    /**
+     * Função que encontra um Range no container baseado em offsets de caracteres.
+     * Essencial para aplicar as marcações salvas quando a página é carregada.
+     */
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
         const walker = document.createTreeWalker(container, Node.TEXT_NODE);
@@ -406,9 +757,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let foundStart = false;
         let node;
 
-        while ( (node = walker.nextNode()) ) {
-            if (node.nodeValue === null) continue;
-
+        while ((node = walker.nextNode())) {
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -423,14 +772,19 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
+    /**
+     * Aplica TODAS as marcações da lista `markups` no container.
+     * Chamada apenas uma vez no carregamento da página para restaurar o estado salvo.
+     */
     function applyAllMarkups(container, markups) {
+        // Limpa marcações existentes para evitar duplicatas ao carregar
         container.querySelectorAll('strong, span.user-text-highlight').forEach(el => {
-            if (el.tagName === 'STRONG' || el.classList.contains('user-text-highlight')) {
-                el.replaceWith(...el.childNodes);
-            }
+            el.replaceWith(...el.childNodes);
         });
-        container.normalize();
+        container.normalize(); // Junta nós de texto adjacentes
 
+        // Ordena do fim para o começo. Isso é crucial para que os offsets
+        // das marcações iniciais não sejam invalidados pela inserção de tags HTML.
         const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
 
         sortedMarkups.forEach(markup => {
@@ -443,59 +797,103 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     range.surroundContents(wrapper);
                 } catch (e) {
-                    console.error("Erro ao aplicar marcação:", e, markup);
+                    console.error("Erro ao aplicar marcação salva:", e, markup);
                 }
             }
         });
     }
 
-    function toggleMarkup(type) {
-        const selection = window.getSelection();
-        if (!selection.rangeCount || selection.isCollapsed || !lawContentEl.contains(selection.anchorNode)) return;
+    /**
+     * Após uma formatação visual, esta função varre todo o conteúdo,
+     * reconstrói la lista de marcações do zero e aciona o salvamento.
+     * Esta é a parte "inteligente" da nova abordagem.
+     */
+    function rebuildAndSave() {
+        const newMarkups = [];
+        let runningOffset = 0;
 
-        const range = selection.getRangeAt(0);
-        let container = range.commonAncestorContainer;
-        if (container.nodeType !== Node.ELEMENT_NODE) {
-            container = container.parentNode;
-        }
-        if (container.closest('.comment-display, p[style*="background-color"]')) {
-            window.getSelection().removeAllRanges();
-            return;
-        }
+        // O TreeWalker percorre todos os nós de texto na ordem em que aparecem.
+        const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
+        let node;
+        while ((node = walker.nextNode())) {
+            const parent = node.parentNode;
+            let type = null;
 
-        const offsets = getSelectionOffsets(lawContentEl);
-        if (!offsets || offsets.start === offsets.end) {
-            console.error("DIAGNÓSTICO: toggleMarkup exiting because offsets are invalid or selection is zero-length.", offsets);
-            return;
-        }
-
-        let markupExists = false;
-        let indexToRemove = -1;
-
-        currentMarkups.forEach((m, index) => {
-            if (m.type === type && m.start === offsets.start && m.end === offsets.end) {
-                markupExists = true;
-                indexToRemove = index;
+            // Verifica se o texto está dentro de uma tag de formatação.
+            if (parent.tagName === 'STRONG') {
+                type = 'bold';
+            } else if (parent.classList.contains('user-text-highlight')) {
+                type = 'highlight';
             }
-        });
+
+            if (type) {
+                const text = node.textContent;
+                // Se o nó foi formatado, calcula seu início e fim e adiciona à lista.
+                newMarkups.push({
+                    type: type,
+                    start: runningOffset,
+                    end: runningOffset + text.length,
+                    text: text
+                });
+            }
+            // O offset continua a contar, independentemente de o texto ser formatado ou não.
+            runningOffset += node.textContent.length;
+        }
         
-        if (markupExists) {
-            currentMarkups.splice(indexToRemove, 1);
-        } else {
-            const newMarkup = { type: type, start: offsets.start, end: offsets.end, text: selection.toString().trim() };
-            currentMarkups.push(newMarkup);
+        // Substitui a lista antiga pela nova, recém-calculada e precisa.
+        currentMarkups = newMarkups;
+        debounceSaveMarkup(); // Aciona o salvamento (com delay).
+    }
+
+    /**
+     * Aplica a formatação visual (Negrito ou Marca-texto) no texto selecionado pelo usuário.
+     * Usa o método nativo e robusto do navegador `document.execCommand`.
+     */
+    function applyFormat(type) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount || selection.isCollapsed) return;
+
+        // Evita formatação em áreas não permitidas
+        let container = selection.getRangeAt(0).commonAncestorContainer;
+        container = container.nodeType === 1 ? container : container.parentNode;
+        if (container.closest('.comment-display, p[style*="background-color"]')) {
+            selection.removeAllRanges();
+            return;
         }
 
-        applyAllMarkups(lawContentEl, currentMarkups);
-        window.getSelection().removeAllRanges();
-        debounceSaveMarkup();
+        // Usa um comando nativo do navegador para aplicar o estilo. É seguro e funciona.
+        document.execCommand('styleWithCSS', false, true);
+        if (type === 'highlight') {
+            document.execCommand('hiliteColor', false, '#fef9c3'); // Amarelo (Tailwind yellow-100)
+            // O comando acima cria <span style="background-color: ...">.
+            // Nós limpamos isso e usamos nossa própria classe para consistência e modo noturno.
+            lawContentEl.querySelectorAll('span[style]').forEach(el => {
+                if (el.style.backgroundColor) {
+                    el.classList.add('user-text-highlight');
+                    el.style.backgroundColor = ''; // Remove o estilo inline.
+                }
+            });
+        } else { // 'bold'
+            document.execCommand('bold', false, null);
+        }
+        
+        // IMPORTANTE: Após a mudança visual, recalcula TUDO para garantir que
+        // os dados a serem salvos no backend estejam corretos e sincronizados.
+        rebuildAndSave();
+        selection.removeAllRanges();
     }
     
+    /**
+     * Adia a chamada para salvar as marcações, evitando chamadas excessivas à API.
+     */
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
-        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000); // Salva 2 segundos após a última edição.
     }
     
+    /**
+     * Envia a lista de marcações atualizada para o backend via API.
+     */
     async function saveLawMarkup() {
         try {
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
@@ -514,13 +912,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    document.getElementById('format-bold-btn').addEventListener('click', () => toggleMarkup('bold'));
-    document.getElementById('format-highlight-btn').addEventListener('click', () => toggleMarkup('highlight'));
+    // ATUALIZADO: Os event listeners dos botões agora chamam a nova função `applyFormat`.
+    document.getElementById('format-bold-btn').addEventListener('click', () => applyFormat('bold'));
+    document.getElementById('format-highlight-btn').addEventListener('click', () => applyFormat('highlight'));
     
     // =======================================================
     // FIM: LÓGICA DE MARCAÇÕES DE TEXTO
     // =======================================================
 
+    // =======================================================
+    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO (COM ÍCONE "OLHO")
+    // =======================================================
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTextarea = document.getElementById('comment-modal-textarea');
     let currentAnchorId = null, currentEditingCommentId = null; 
@@ -643,6 +1045,13 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
     document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
 
+    // =======================================================
+    // FIM: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
+    // =======================================================
+
+    // =======================================================
+    // INÍCIO: BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
+    // =======================================================
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
@@ -731,7 +1140,9 @@ document.addEventListener("DOMContentLoaded", function () {
             const waveType = this.dataset.wave;
             const audio = document.getElementById(`audio-${waveType}`);
             if (this.classList.contains('playing')) {
-                audio.pause(); this.classList.remove('playing'); currentlyPlaying = null;
+                audio.pause();
+                this.classList.remove('playing');
+                currentlyPlaying = null;
             } else {
                 if (currentlyPlaying) {
                     document.querySelector('.neural-wave-button.playing')?.classList.remove('playing');
@@ -812,16 +1223,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =======================================================
+    // INICIALIZAÇÃO DA PÁGINA (ORDEM CORRIGIDA)
+    // =======================================================
     async function initializePage() {
+        // Aplica preferências do usuário salvas localmente
         applyTheme(localStorage.getItem('theme') || 'light');
         applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
-        if (localStorage.getItem('fontFamily') === 'serif') {
-            lawContentEl.classList.add('font-serif');
-        }
+        if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
+        // Inicia o sistema de anotações por parágrafo
         await initCommentSystem();
+        
+        // Aplica as marcações de texto (negrito/highlight) salvas no banco de dados
         applyAllMarkups(lawContentEl, currentMarkups);
+        
+        // Indexa os artigos para a função "Ir para Artigo"
         indexArticles();
+
+        // Atualiza a barra de progresso inicial
         updateProgressBar();
     }
 
