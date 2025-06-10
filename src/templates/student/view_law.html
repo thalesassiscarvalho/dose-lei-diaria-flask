@@ -743,7 +743,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (CORRIGIDA E OTIMIZADA)
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (COM DIAGNÓSTICO)
     // =======================================================
     
     function getTextNodes(node) {
@@ -774,9 +774,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return { start: startOffset, end: endOffset };
     }
     
-    /**
-     * CORREÇÃO FINAL: Adicionada uma verificação para ignorar nós de texto inválidos.
-     */
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
         const textNodes = getTextNodes(container);
@@ -784,9 +781,8 @@ document.addEventListener("DOMContentLoaded", function () {
         let foundStart = false;
 
         for (const node of textNodes) {
-            // **BLINDAGEM ADICIONADA AQUI**
-            // Ignora nós que possam ser inválidos ou vazios para prevenir o erro.
             if (node.nodeValue === null) {
+                console.warn('DIAGNÓSTICO: Encontrado um nó de texto nulo, pulando.');
                 continue;
             }
             
@@ -804,29 +800,25 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
-    /**
-     * CORRIGIDO: Aplica marcações de forma inteligente, sem destruir o DOM.
-     * A versão anterior tinha um bug. Esta versão ordena as marcações
-     * do final para o início antes de aplicar, evitando problemas de offset.
-     */
     function applyAllMarkups(container, markups) {
-        // 1. Remove marcações antigas (negrito e marca-texto) de forma segura.
+        console.log('DIAGNÓSTICO: Iniciando applyAllMarkups. Total de marcações:', markups.length);
+        
         container.querySelectorAll('strong, span.user-text-highlight').forEach(el => {
-            // Apenas remove os wrappers que foram criados por esta funcionalidade.
             if (el.tagName === 'STRONG' || el.classList.contains('user-text-highlight')) {
                 el.replaceWith(...el.childNodes);
             }
         });
-        container.normalize(); // Junta nós de texto adjacentes, crucial para a precisão dos offsets.
+        container.normalize();
 
-        // 2. **CORREÇÃO PRINCIPAL**: Ordena as marcações em ordem decrescente (do fim para o começo).
-        // Isso evita que a aplicação de uma marcação invalide os offsets das próximas.
         const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
+        console.log('DIAGNÓSTICO: Marcações ordenadas para aplicação:', sortedMarkups);
 
-        // 3. Re-aplica todas as marcações da lista `currentMarkups`.
         sortedMarkups.forEach(markup => {
+            console.log('DIAGNÓSTICO: Tentando aplicar marcação:', markup);
             const range = findRangeByOffsets(container, markup.start, markup.end);
+            
             if (range) {
+                 console.log('%cDIAGNÓSTICO: Range encontrado com sucesso!', 'color: green;', range);
                 try {
                     const wrapper = document.createElement(markup.type === 'bold' ? 'strong' : 'span');
                     if (markup.type === 'highlight') {
@@ -834,8 +826,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     range.surroundContents(wrapper);
                 } catch (e) {
-                    console.error("Erro ao aplicar marcação:", e, markup);
+                    console.error("DIAGNÓSTICO: Erro ao tentar envolver o conteúdo (surroundContents):", e, markup);
                 }
+            } else {
+                console.error('%cDIAGNÓSTICO: Falha ao encontrar range para a marcação. Verifique os offsets.', 'color: red;', markup);
             }
         });
     }
@@ -844,20 +838,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed || !lawContentEl.contains(selection.anchorNode)) return;
 
-        // INÍCIO: RESTRIÇÃO DE MARCAÇÃO
         const range = selection.getRangeAt(0);
         let container = range.commonAncestorContainer;
         if (container.nodeType !== Node.ELEMENT_NODE) {
             container = container.parentNode;
         }
-        // Bloqueia se a seleção estiver dentro de uma anotação, comentário, doutrina, etc.
         if (container.closest('.comment-display, p[style*="background-color"]')) {
-            window.getSelection().removeAllRanges(); // Limpa a seleção para evitar confusão do usuário.
+            window.getSelection().removeAllRanges();
             return;
         }
-        // FIM: RESTRIÇÃO DE MARCAÇÃO
 
         const offsets = getSelectionOffsets(lawContentEl);
+        console.log('DIAGNÓSTICO: Offsets calculados da seleção:', offsets);
+
         if (!offsets || offsets.start === offsets.end || !selection.toString().trim()) return;
 
         let markupExists = false;
@@ -871,9 +864,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
         if (markupExists) {
+            console.log('DIAGNÓSTICO: Removendo marcação existente.');
             currentMarkups.splice(indexToRemove, 1);
         } else {
-            currentMarkups.push({ type: type, start: offsets.start, end: offsets.end, text: selection.toString().trim() });
+            const newMarkup = { type: type, start: offsets.start, end: offsets.end, text: selection.toString().trim() };
+            console.log('DIAGNÓSTICO: Adicionando nova marcação:', newMarkup);
+            currentMarkups.push(newMarkup);
         }
 
         applyAllMarkups(lawContentEl, currentMarkups);
