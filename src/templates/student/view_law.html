@@ -897,59 +897,46 @@ applySavedMarkups();
 
     // Escaneia o DOM para encontrar todas as marcações e prepara para salvar.
     // Esta é a função mais importante da nova abordagem.
-    // =====================================================================
-// Reescrita completa – mais robusta e sem "..." acidentais
-// =====================================================================
-function scanAndSave() {
-    const newMarkups = [];
-    let runningOffset = 0;
+    function scanAndSave() {
+        const newMarkups = [];
+        let runningOffset = 0;
+        const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
+        let node;
 
-    const walker = document.createTreeWalker(
-        lawContentEl,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-
-    let node;
-    while ((node = walker.nextNode())) {
-        // Ignora texto dentro de widgets de comentários
-        if (node.parentElement.closest('.comment-display')) {
-            runningOffset += node.textContent.length;
-            continue;
-        }
-
-        let type = null;
-        const parent = node.parentElement;
-
-        if (parent.closest('strong, b')) {
-            type = 'bold';
-        } else if (parent.closest('.user-text-highlight')) {
-            type = 'highlight';
-        }
-
-        if (type) {
-            const text = node.textContent;
-            if (text.trim() !== '') {
-                newMarkups.push({
-                    type: type,
-                    start: runningOffset,
-                    end: runningOffset + text.length,
-                    text: text
-                });
+        while (node = walker.nextNode()) {
+            if (node.parentElement.closest('.comment-display')) {
+                continue;
             }
+            
+            let type = null;
+            // A verificação com .closest() é mais robusta que .parentNode.
+            // Ela encontra o ancestral mais próximo que corresponda à tag ou classe.
+            if (node.parentElement.closest('strong, b') || (node.parentElement.tagName === 'SPAN' && (node.parentElement.style.fontWeight === 'bold' || parseInt(node.parentElement.style.fontWeight||0) >= 600))) {
+                type = 'bold';
+            } else if (node.parentElement.closest('.user-text-highlight') || (node.parentElement.tagName === 'SPAN' && node.parentElement.classList.contains('user-text-highlight'))) {
+                type = 'highlight';
+            }
+
+            if (type) {
+                const text = node.textContent;
+                if (text) { 
+                    newMarkups.push({
+                        type: type,
+                        start: runningOffset,
+                        end: runningOffset + text.length,
+                        text: text
+                    });
+                }
+            }
+            runningOffset += node.textContent.length;
         }
-
-        runningOffset += node.textContent.length;
+        
+        // Apenas salva se houver uma mudança real, para evitar chamadas desnecessárias.
+        if (JSON.stringify(currentMarkups) !== JSON.stringify(newMarkups)) {
+            currentMarkups = newMarkups;
+            debounceSaveMarkup();
+        }
     }
-
-    // Só dispara salvamento se algo mudou
-    if (JSON.stringify(currentMarkups) !== JSON.stringify(newMarkups)) {
-        currentMarkups = newMarkups;
-        debounceSaveMarkup(); // agenda POST (debounce) ou salva já
-    }
-}
-// =====================================================================
     
     // Simplificado: apenas aplica o estilo visual. O MutationObserver cuidará do resto.
     function applyFormat(type) {
