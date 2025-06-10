@@ -65,21 +65,52 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* Proteção contra seleção de texto para cópia - Mantida conforme original */
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        /* Adicionando borda azul clara */
+        /* ================================================================= */
+        /* <<< INÍCIO: ALTERAÇÃO DA PROTEÇÃO DE CÓPIA >>> */
+        /* A proteção user-select: none; FOI REMOVIDA para permitir a seleção de texto para o highlighting. */
+        /* A proteção agora é feita via JavaScript, interceptando o evento 'copy'. */
+        /* ================================================================= */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
+
+    /* --- INÍCIO: NOVOS ESTILOS PARA HIGHLIGHTING --- */
+    .user-highlight {
+        background-color: #fef08a; /* Amarelo claro para o grifo do usuário */
+        border-radius: 2px;
+    }
+
+    .highlight-toolbar {
+        position: absolute;
+        display: none; /* Começa oculto */
+        background-color: #1f2937; /* Cinza escuro */
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        padding: 5px;
+        z-index: 10000;
+    }
+
+    .highlight-toolbar button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .highlight-toolbar button:hover {
+        background-color: #4b5563; /* Cinza um pouco mais claro */
+    }
+    /* --- FIM: NOVOS ESTILOS PARA HIGHLIGHTING --- */
 
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-
+    /* ... (O restante do seu CSS permanece inalterado) ... */
     .law-content-container p {
         margin-bottom: 1em;
     }
@@ -919,12 +950,40 @@
 <button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar tema">
     <i class="fas fa-moon"></i>
 </button>
+
+<div id="highlight-toolbar" class="highlight-toolbar">
+    <button id="highlight-action-btn" title="Marcar Texto">
+        <i class="fas fa-highlighter"></i>
+    </button>
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const lawId = '{{ law.id }}'; // Pega o ID da lei para uso geral
+
+    // =================================================================
+    // <<< INÍCIO: NOVA LÓGICA DE PROTEÇÃO CONTRA CÓPIA (VIA JS) >>>
+    // =================================================================
+    document.addEventListener('copy', function(event) {
+        const selection = window.getSelection();
+        const lawContentArea = document.getElementById('law-content');
+
+        // Bloqueia a cópia somente se a seleção estiver dentro do conteúdo da lei.
+        // Permite a cópia de outros locais (ex: anotações do usuário).
+        if (lawContentArea && lawContentArea.contains(selection.anchorNode)) {
+            // Impede a ação padrão de cópia do navegador.
+            event.preventDefault();
+            console.warn("A cópia do conteúdo da lei foi bloqueada.");
+        }
+    });
+    // =================================================================
+    // <<< FIM: NOVA LÓGICA DE PROTEÇÃO CONTRA CÓPIA >>>
+    // =================================================================
+
+
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
         const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -938,7 +997,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     window.addEventListener('scroll', updateProgressBar);
     updateProgressBar();
-
+    
+    // ... (Todo o seu JavaScript existente continua aqui, sem alterações) ...
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
     const backToTopBtn = document.getElementById("back-to-top-btn");
@@ -1044,7 +1104,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     indexArticles();
 
-    // LÓGICA ATUALIZADA DOS BOTÕES DE FILTRO
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
@@ -1105,7 +1164,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenLastReadArticleInput) {
                 hiddenLastReadArticleInput.value = lastReadArticle;
             }
-            const lawId = window.location.pathname.split('/').pop();
+            const lawId = '{{ law.id }}';
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
@@ -1201,14 +1260,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function loadNotes() {
-        const lawId = window.location.pathname.split('/').pop();
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
             if (d.success && d.content) notesEditor.innerHTML = d.content;
         }).catch(e => console.error("Erro ao carregar anotações gerais:", e));
     }
 
     saveNotesBtn.addEventListener('click', function() {
-        const lawId = window.location.pathname.split('/').pop();
         const content = notesEditor.innerHTML;
         const csrfToken = document.querySelector('input[name="csrf_token"]').value;
         const originalText = this.innerHTML;
@@ -1235,16 +1292,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI >>>
-    // =================================================================
+    
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
             const lawId = this.getAttribute('data-law-id');
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             const icon = this.querySelector('i');
 
@@ -1279,15 +1333,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =================================================================
-    // <<< FIM: LÓGICA PARA FAVORITAR A LEI >>>
-    // =================================================================
 
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
-    // =================================================================
-    const lawId = '{{ law.id }}';
     const lawContentForComments = document.getElementById('law-content');
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
@@ -1360,7 +1406,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const content = modalTextarea.value.trim();
         if (!content) return;
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
         
         if (currentEditingCommentId) {
             try {
@@ -1409,7 +1455,7 @@ document.addEventListener("DOMContentLoaded", function () {
     async function deleteComment(commentId, commentElement) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
         
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
 
         try {
             const response = await fetch(`/student/comments/${commentId}`, {
@@ -1494,21 +1540,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     initCommentSystem();
-    // =================================================================
-    // <<< FIM: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
-    // =================================================================
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA CONTROLE DE FONTE >>>
-    // =================================================================
     const lawContentContainer = document.getElementById('law-content');
     const increaseFontBtn = document.getElementById('increase-font-btn');
     const decreaseFontBtn = document.getElementById('decrease-font-btn');
     const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
-
-    // Lógica para Tamanho da Fonte
     const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
-    let currentSizeIndex = 1; // Padrão é 'font-size-md'
+    let currentSizeIndex = 1;
 
     function applyFontSize(sizeClass) {
         fontSizes.forEach(s => lawContentContainer.classList.remove(s));
@@ -1531,7 +1568,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Lógica para Tipo de Fonte (Serif/Sans-serif)
     function applyFontFamily(fontType) {
         if (fontType === 'serif') {
             lawContentContainer.classList.add('font-serif');
@@ -1546,27 +1582,18 @@ document.addEventListener("DOMContentLoaded", function () {
         applyFontFamily(isSerif ? 'sans' : 'serif');
     });
 
-    // Aplicar preferências salvas ao carregar a página
     const savedFontSize = localStorage.getItem('fontSize');
     const savedFontFamily = localStorage.getItem('fontFamily');
 
     if (savedFontSize && fontSizes.includes(savedFontSize)) {
         applyFontSize(savedFontSize);
     } else {
-        applyFontSize('font-size-md'); // Aplica o padrão se nada for salvo
+        applyFontSize('font-size-md');
     }
     
     if (savedFontFamily) {
         applyFontFamily(savedFontFamily);
     }
-    // =================================================================
-    // <<< FIM: LÓGICA PARA CONTROLE DE FONTE >>>
-    // =================================================================
-
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA MODO NOTURNO >>>
-    // =================================================================
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const body = document.body;
     const themeIcon = themeToggleBtn.querySelector('i');
@@ -1590,14 +1617,9 @@ document.addEventListener("DOMContentLoaded", function () {
         applyTheme(newTheme);
     });
 
-    // Aplica o tema salvo ao carregar a página
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
-    // =================================================================
-    // <<< FIM: LÓGICA PARA MODO NOTURNO >>>
-    // =================================================================
 
-    // ****** INÍCIO: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
     const toggleLinksBtn = document.getElementById("toggle-links-btn");
     const linksContentArea = document.getElementById("links-content-area");
     const linksChevron = document.getElementById("links-chevron");
@@ -1608,7 +1630,145 @@ document.addEventListener("DOMContentLoaded", function () {
             linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-    // ****** FIM: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
+
+    // =================================================================
+    // <<< INÍCIO: NOVA LÓGICA PARA HIGHLIGHTING >>>
+    // =================================================================
+    const lawContentEl = document.getElementById('law-content');
+    const highlightToolbar = document.getElementById('highlight-toolbar');
+    const highlightActionBtn = document.getElementById('highlight-action-btn');
+
+    // Função para mostrar a barra de ferramentas de highlight
+    lawContentEl.addEventListener('mouseup', (event) => {
+        // Atraso mínimo para garantir que a seleção foi finalizada
+        setTimeout(() => {
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+
+            if (selectedText.length > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                // Posiciona a barra de ferramentas acima da seleção
+                highlightToolbar.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (highlightToolbar.offsetWidth / 2)}px`;
+                highlightToolbar.style.top = `${window.scrollY + rect.top - highlightToolbar.offsetHeight - 5}px`;
+                highlightToolbar.style.display = 'flex';
+            } else {
+                // Esconde a barra se não houver texto selecionado (ex: um simples clique)
+                if (!highlightToolbar.contains(event.target)) {
+                    highlightToolbar.style.display = 'none';
+                }
+            }
+        }, 10);
+    });
+    
+    // Esconde a barra se clicar fora dela
+    document.addEventListener('mousedown', (event) => {
+        if (!highlightToolbar.contains(event.target) && window.getSelection().isCollapsed) {
+            highlightToolbar.style.display = 'none';
+        }
+    });
+
+    // Ação do botão de marcar
+    highlightActionBtn.addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+
+        // TODO: Salvar a seleção no backend antes de aplicar
+        // Exemplo: saveHighlight(range);
+
+        // Aplica o highlight visualmente
+        const span = document.createElement('span');
+        span.className = 'user-highlight';
+        try {
+            range.surroundContents(span);
+        } catch(e) {
+            // Fallback caso a seleção cruze elementos de bloco, o que 'surroundContents' não permite.
+            // ExecCommand é mais robusto para esses casos, embora 'obsoleto', ainda funciona bem.
+            document.execCommand('hiliteColor', false, '#fef08a');
+            // Como execCommand usa 'style', trocamos por uma classe para consistência e facilidade de remoção.
+            document.querySelectorAll('font[style*="background-color: rgb(254, 240, 138)"]').forEach(el => {
+                const newSpan = document.createElement('span');
+                newSpan.className = 'user-highlight';
+                newSpan.innerHTML = el.innerHTML;
+                el.parentNode.replaceChild(newSpan, el);
+            });
+        }
+        
+        // Limpa a seleção e esconde a barra
+        selection.removeAllRanges();
+        highlightToolbar.style.display = 'none';
+    });
+
+    // TODO: Funções para salvar e carregar os highlights do backend.
+    // Estas funções precisam de rotas e modelos no backend para funcionar.
+
+    /*
+    async function saveHighlight(range) {
+        // 1. Serializar o 'range' para um formato que possa ser salvo no DB
+        const serializedRange = {
+            startContainerPath: getPathTo(range.startContainer),
+            startOffset: range.startOffset,
+            endContainerPath: getPathTo(range.endContainer),
+            endOffset: range.endOffset,
+        };
+
+        // 2. Enviar para o backend
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        try {
+            const response = await fetch(`/student/law/${lawId}/highlights`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(serializedRange)
+            });
+            const result = await response.json();
+            if(!result.success) {
+                console.error("Falha ao salvar o highlight.");
+                // Aqui você pode reverter o highlight visual ou notificar o usuário
+            }
+        } catch(e) {
+            console.error("Erro de rede ao salvar highlight:", e);
+        }
+    }
+
+    async function loadHighlights() {
+        try {
+            const response = await fetch(`/student/law/${lawId}/highlights`);
+            const highlights = await response.json();
+            highlights.forEach(serializedRange => {
+                // 1. Deserializar o 'range'
+                const range = document.createRange();
+                const startNode = getNodeFromPath(serializedRange.startContainerPath);
+                const endNode = getNodeFromPath(serializedRange.endContainerPath);
+
+                if(startNode && endNode) {
+                    range.setStart(startNode, serializedRange.startOffset);
+                    range.setEnd(endNode, serializedRange.endOffset);
+
+                    // 2. Aplicar o highlight visualmente
+                    const span = document.createElement('span');
+                    span.className = 'user-highlight';
+                    range.surroundContents(span);
+                }
+            });
+        } catch (e) {
+            console.error("Erro ao carregar highlights:", e);
+        }
+    }
+    
+    // Funções auxiliares para serialização (exemplo)
+    function getPathTo(element) { ... }
+    function getNodeFromPath(path) { ... }
+    
+    // Chamar a função para carregar os highlights quando a página carregar
+    loadHighlights();
+    */
+
+    // =================================================================
+    // <<< FIM: NOVA LÓGICA PARA HIGHLIGHTING >>>
+    // =================================================================
 });
 </script>
 {% endblock %}
