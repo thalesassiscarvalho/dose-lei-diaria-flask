@@ -9,14 +9,10 @@
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
     .progress-bar-fill { height: 100%; border-radius: 5px; background-color: #2563eb; transition: width 0.5s ease; }
-    .completed-badge { background-color: #D1FAE5; color: #065F46; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
-    .in-progress-badge { background-color: #DBEAFE; color: #1E40AF; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+    .completed-badge { background-color: #D1FAE5; color: #065F46; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; }
+    .in-progress-badge { background-color: #DBEAFE; color: #1E40AF; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; }
     .action-button { background-color: #2563eb; color: white; font-size: 0.875rem; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.2s ease; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
     .action-button:hover { background-color: #1d4ed8; }
-    .review-button { background-color: #D1D5DB; color: #4B5563; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s ease; align-self: center; }
-    .review-button:hover { background-color: #9CA3AF; }
-    .card-content { flex-grow: 1; }
-    .card-actions { margin-top: auto; padding-top: 1rem; }
     .achievement-badge { display: inline-flex; align-items: center; background-color: #FEF3C7; color: #92400E; font-size: 0.8rem; padding: 0.3rem 0.7rem; border-radius: 15px; font-weight: 500; border: 1px solid #FDE68A; }
     .achievement-badge i { margin-right: 0.4rem; color: #D97706; }
     .favorite-btn { background: none; border: none; cursor: pointer; padding: 0.25rem; color: #d1d5db; font-size: 1.25rem; transition: color 0.2s ease, transform 0.2s ease; }
@@ -52,7 +48,7 @@
     .mark-seen-checkbox-container .checkmark:after { left: 0.45rem; top: 0.2rem; width: 0.35rem; height: 0.7rem; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
     .mark-seen-checkbox-container .tooltip { visibility: hidden; width: 120px; background-color: rgba(0, 0, 0, 0.8); color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; }
     .mark-seen-checkbox-container:hover .tooltip { visibility: visible; opacity: 1; }
-    @keyframes fadeOut { from { opacity: 1; height: auto; margin-top: inherit; margin-bottom: inherit; padding-top: inherit; padding-bottom: inherit; } to { opacity: 0; height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; } }
+    @keyframes fadeOut { from { opacity: 1; height: auto; } to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border-width: 0; } }
     .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
     .continue-block { background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #3B82F6; color: #1E40AF; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06); transition: all 0.3s ease; }
     .continue-block:hover { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05); transform: translateY(-2px); }
@@ -93,6 +89,26 @@
     .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
     .accordion-toggle-icon { transition: transform 0.3s ease; }
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
+    
+    /* <<< INÍCIO: NOVO ESTILO PARA O BOTÃO "MARCAR COMO NÃO CONCLUÍDO" >>> */
+    .review-button {
+        background-color: #6b7280; /* Cinza-500 */
+        color: white;
+        border: none;
+        border-radius: 9999px; /* Formato de pílula/círculo */
+        width: 32px; /* Largura fixa */
+        height: 32px; /* Altura fixa */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .review-button:hover {
+        background-color: #4b5563; /* Cinza-600 */
+    }
+    /* <<< FIM: NOVO ESTILO >>> */
+
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
         .non-fixed-announcement-item { gap: 0.75rem; }
@@ -116,10 +132,10 @@
 <div class="announcement-container">
     <div class="fixed-announcement-box">
         {% for announcement in fixed_announcements %}
-            <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
-                <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
-                <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
-            </div>
+        <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
+            <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
+            <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
+        </div>
         {% endfor %}
     </div>
 </div>
@@ -129,17 +145,17 @@
     <div class="announcement-box">
         <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
         {% for announcement in non_fixed_announcements %}
-            <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-                <div class="mark-seen-checkbox-container">
-                    <input type="checkbox" class="mark-seen-checkbox">
-                    <span class="checkmark"></span>
-                    <span class="tooltip">Marcar como visto</span>
-                </div>
-                <div class="announcement-content">
-                    <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                    <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
-                </div>
+        <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+            <div class="mark-seen-checkbox-container">
+                <input type="checkbox" class="mark-seen-checkbox">
+                <span class="checkmark"></span>
+                <span class="tooltip">Marcar como visto</span>
             </div>
+            <div class="announcement-content">
+                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
+            </div>
+        </div>
         {% endfor %}
     </div>
 </div>
@@ -257,6 +273,11 @@
                                     {% elif topic.id in in_progress_law_ids %}<i class="fas fa-book-reader mr-1"></i> Continuar
                                     {% else %}<i class="fas fa-book mr-1"></i> Começar{% endif %}
                                 </a>
+                                {% if topic.id in completed_law_ids %}
+                                    <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                        <i class="fas fa-undo-alt"></i>
+                                    </button>
+                                {% endif %}
                                 <button type="button" class="favorite-btn js-favorite-btn {% if topic.id in favorite_law_ids %}favorited{% endif %}" data-law-id="{{ topic.id }}" title="{% if topic.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
                                     <i class="{% if topic.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i>
                                 </button>
@@ -271,7 +292,7 @@
             </div>
         {% endfor %}
     {% else %}
-        <div class="col-span-3 text-center py-8">
+        <div class="text-center py-8">
             <p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p>
         </div>
     {% endif %}
@@ -281,19 +302,17 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Script do Acordeão
     const accordionHeaders = document.querySelectorAll('.accordion-header');
     accordionHeaders.forEach(header => {
         header.addEventListener('click', function() {
             const content = this.nextElementSibling;
             this.classList.toggle('open');
-            if (content.style.display === "block") {
-                content.style.display = "none";
-            } else {
-                content.style.display = "block";
-            }
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
         });
     });
 
+    // Script de Avisos
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -304,10 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
             })
             .then(response => response.json())
             .then(data => {
@@ -320,24 +336,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (container) container.remove();
                         }
                     }, 500);
-                } else {
-                    this.checked = false;
-                    this.disabled = false;
-                }
+                } else { this.checked = false; this.disabled = false; }
             })
-            .catch(error => {
-                console.error('Erro ao marcar aviso como visto:', error);
-                this.checked = false;
-                this.disabled = false;
-            });
+            .catch(error => { console.error('Erro:', error); this.checked = false; this.disabled = false; });
         });
     });
 
+    // Script de Favoritos
     const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
     favoriteButtons.forEach(button => {
         button.addEventListener('click', function() {
             this.disabled = true;
-            
             const lawId = this.getAttribute('data-law-id');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
@@ -357,10 +366,59 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon.className = 'far fa-star';
                 }
             })
-            .catch(error => console.error('Erro ao favoritar:', error))
+            .catch(error => console.error('Erro:', error))
             .finally(() => { this.disabled = false; });
         });
     });
+
+    // =====================================================================
+    // <<< INÍCIO: SCRIPT PARA O BOTÃO "MARCAR COMO NÃO CONCLUÍDO" >>>
+    // =====================================================================
+    document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const buttonEl = this;
+            buttonEl.disabled = true;
+            
+            const lawId = buttonEl.dataset.lawId;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const topicItem = buttonEl.closest('.topic-item');
+
+            fetch(`/student/law/review/${lawId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Falha na resposta do servidor.');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const badge = topicItem.querySelector('.completed-badge');
+                    if (badge) {
+                        badge.textContent = 'Em Andamento';
+                        badge.classList.remove('completed-badge');
+                        badge.classList.add('in-progress-badge');
+                    }
+                    const actionButton = topicItem.querySelector('.action-button');
+                    if (actionButton) {
+                        actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                    }
+                    buttonEl.remove();
+                } else {
+                    alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
+                    buttonEl.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Ocorreu um erro de comunicação.');
+                buttonEl.disabled = false;
+            });
+        });
+    });
+    // =====================================================================
+    // <<< FIM: SCRIPT >>>
+    // =====================================================================
 });
 </script>
 {% endblock %}
