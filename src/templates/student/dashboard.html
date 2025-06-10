@@ -87,7 +87,7 @@
     .topic-title { display: flex; align-items: center; color: #334155; }
     .topic-title .icon { margin-right: 0.75rem; color: #94a3b8; }
     .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
-    .accordion-toggle-icon { transition: transform 0.3s ease; }
+    .accordion-toggle-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
     .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
     .review-button:hover { background-color: #4b5563; }
@@ -176,13 +176,24 @@
 
 
 <div class="filter-container mb-8">
-    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
         <div>
-            <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação</label>
-            <input type="text" id="search" name="search" placeholder="Título ou descrição..." class="custom-input">
+             <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação (Independente)</label>
+             <input type="text" id="search" name="search" placeholder="Buscar por matéria ou título..." class="custom-input">
         </div>
+        <div class="flex items-end pb-2">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
+                <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
+            </label>
+        </div>
+    </div>
+
+    <hr class="my-6 border-t border-gray-200">
+
+    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
         <div>
-            <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>Filtrar por Matéria</label>
+            <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
             <select id="subject_id" name="subject_id" class="custom-input">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
@@ -191,39 +202,37 @@
             </select>
         </div>
         <div>
-            <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="custom-input">
+            <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
+            <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
+                <option value="">-- Selecione uma Matéria --</option>
+            </select>
+        </div>
+        <div>
+            <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>3. Filtrar por Status</label>
+            <select id="status_filter" name="status_filter" class="custom-input" disabled>
                 <option value="">-- Todos os Status --</option>
                 <option value="not_read">Não Lidas</option>
                 <option value="in_progress">Em Andamento</option>
                 <option value="completed">Concluídas</option>
             </select>
         </div>
-        <div class="flex items-end pb-2">
-            <label class="flex items-center cursor-pointer">
-                <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
-                <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
-            </label>
-        </div>
-        <div class="flex items-stretch">
-            <button type="button" id="clear-filters-btn" class="w-full md:w-auto flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar</button>
+        <div>
+            <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
         </div>
     </div>
 </div>
 <h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
 <div id="laws-accordion-container">
-    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // =====================================================================
-    // <<< INÍCIO: SCRIPT PARA FILTROS DINÂMICOS E RENDERIZAÇÃO >>>
-    // =====================================================================
     const filterControls = {
         search: document.getElementById('search'),
         subject: document.getElementById('subject_id'),
+        diploma: document.getElementById('diploma_id'),
         status: document.getElementById('status_filter'),
         favorites: document.getElementById('show_favorites'),
         clearButton: document.getElementById('clear-filters-btn')
@@ -231,37 +240,72 @@ document.addEventListener('DOMContentLoaded', function() {
     const accordionContainer = document.getElementById('laws-accordion-container');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-    // Função para buscar e renderizar as leis
+    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
+
     async function fetchAndRenderLaws() {
         const search = filterControls.search.value;
         const subjectId = filterControls.subject.value;
+        const diplomaId = filterControls.diploma.value;
         const status = filterControls.status.value;
         const showFavorites = filterControls.favorites.checked;
 
-        // Mostrar um estado de carregamento
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
 
-        const query = new URLSearchParams({
-            search,
-            subject_id: subjectId,
-            status_filter: status,
-            show_favorites: showFavorites
-        }).toString();
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        } else {
+            if (subjectId) params.append('subject_id', subjectId);
+            if (diplomaId) params.append('diploma_id', diplomaId);
+            if (status) params.append('status_filter', status);
+        }
+        if (showFavorites) params.append('show_favorites', showFavorites);
 
         try {
-            const response = await fetch(`/student/filter_laws?${query}`);
+            const response = await fetch(`/student/filter_laws?${params.toString()}`);
             if (!response.ok) throw new Error('Falha na resposta do servidor.');
             
             const data = await response.json();
-            renderLaws(data.subjects_with_diplomas);
+            renderLaws(data.subjects_with_diplomas, !!search); // Passa um flag se a busca está ativa
         } catch (error) {
             console.error('Erro ao buscar leis:', error);
             accordionContainer.innerHTML = '<p class="text-center py-8 text-red-500">Ocorreu um erro ao carregar as legislações. Tente novamente.</p>';
         }
     }
+    
+    async function updateDiplomaFilter(subjectId) {
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
+        filterControls.status.value = '';
+        filterControls.status.disabled = true;
 
-    // Função para renderizar o HTML das leis no container
-    function renderLaws(subjects) {
+        if (!subjectId) {
+            fetchAndRenderLaws();
+            return;
+        }
+
+        filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
+        try {
+            const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
+            const laws = await response.json();
+
+            filterControls.diploma.innerHTML = '<option value="">-- Todas as Leis da Matéria --</option>';
+            laws.forEach(law => {
+                const option = new Option(law.title, law.id);
+                filterControls.diploma.appendChild(option);
+            });
+            filterControls.diploma.disabled = false;
+        } catch (error) {
+            console.error("Erro ao buscar leis:", error);
+            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+
+        fetchAndRenderLaws();
+    }
+
+    // --- FUNÇÕES DE RENDERIZAÇÃO ---
+
+    function renderLaws(subjects, isSearchActive) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
             return;
@@ -271,28 +315,33 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const subjectName in subjects) {
             html += `<div class="mb-6"><h3 class="text-lg font-bold text-gray-700 mb-3">${subjectName}</h3>`;
             subjects[subjectName].forEach(diploma => {
+                // Se a busca estiver ativa, o acordeão já vem aberto
+                const isOpen = isSearchActive || filterControls.diploma.value;
+                const openClass = isOpen ? 'open' : '';
+                const displayStyle = isOpen ? 'block' : 'none';
+                const iconRotation = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+
                 html += `
                 <div class="accordion-item">
-                    <div class="accordion-header">
+                    <div class="accordion-header ${openClass}">
                         <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
                         <div class="diploma-progress">
                             <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
                             <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
-                            <i class="fas fa-chevron-right accordion-toggle-icon"></i>
+                            <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
                         </div>
                     </div>
-                    <div class="accordion-content">
-                        ${diploma.filtered_children.length > 0 ? diploma.filtered_children.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado para este diploma com os filtros atuais.</p>'}
+                    <div class="accordion-content" style="display: ${displayStyle};">
+                        ${diploma.filtered_children.length > 0 ? diploma.filtered_children.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
                     </div>
                 </div>`;
             });
             html += `</div>`;
         }
         accordionContainer.innerHTML = html;
-        attachEventListeners(); // Anexa eventos aos novos elementos
+        attachEventListeners();
     }
 
-    // Função para gerar o HTML de um único tópico
     function renderTopicItem(topic) {
         let statusBadge = '';
         if (topic.is_completed) statusBadge = '<span class="completed-badge">Concluída</span>';
@@ -326,55 +375,74 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    // Anexa todos os event listeners necessários (pode ser chamado novamente após renderizar)
+    // --- EVENT LISTENERS ---
+
     function attachEventListeners() {
-        // Acordeão
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', function() {
                 const content = this.nextElementSibling;
+                const icon = this.querySelector('.accordion-toggle-icon');
                 this.classList.toggle('open');
-                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.display = 'block';
+                    icon.style.transform = 'rotate(90deg)';
+                }
             });
         });
 
-        // Favoritos
-        document.querySelectorAll('.js-favorite-btn').forEach(button => {
-            button.addEventListener('click', handleFavoriteClick);
-        });
-
-        // Marcar como não concluído
-        document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => {
-            button.addEventListener('click', handleMarkIncompleteClick);
-        });
+        document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
+        document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
 
-    // Adiciona os eventos de input/change nos filtros
     let debounceTimer;
     filterControls.search.addEventListener('input', () => {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(fetchAndRenderLaws, 300); // Debounce para não fazer requisições a cada tecla
+        filterControls.subject.value = '';
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
+        filterControls.status.value = '';
+        filterControls.status.disabled = true;
+        debounceTimer = setTimeout(fetchAndRenderLaws, 300);
     });
-    filterControls.subject.addEventListener('change', fetchAndRenderLaws);
-    filterControls.status.addEventListener('change', fetchAndRenderLaws);
+
+    filterControls.subject.addEventListener('change', () => {
+        filterControls.search.value = '';
+        updateDiplomaFilter(filterControls.subject.value);
+    });
+
+    filterControls.diploma.addEventListener('change', () => {
+        filterControls.search.value = '';
+        const diplomaId = filterControls.diploma.value;
+        filterControls.status.disabled = !diplomaId;
+        if (!diplomaId) {
+            filterControls.status.value = '';
+        }
+        fetchAndRenderLaws();
+    });
+
+    filterControls.status.addEventListener('change', () => {
+        filterControls.search.value = '';
+        fetchAndRenderLaws();
+    });
+
     filterControls.favorites.addEventListener('change', fetchAndRenderLaws);
 
-    // Limpar filtros
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         filterControls.subject.value = '';
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
         filterControls.status.value = '';
+        filterControls.status.disabled = true;
         filterControls.favorites.checked = false;
         fetchAndRenderLaws();
     });
 
-    // Carga inicial
-    fetchAndRenderLaws();
-    // =====================================================================
-    // <<< FIM: SCRIPT DE FILTROS >>>
-    // =====================================================================
+    // --- OUTRAS FUNCIONALIDADES (INALTERADAS) ---
 
-
-    // Script de Avisos (sem alterações)
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -403,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Função para lidar com clique no botão de favoritar
     function handleFavoriteClick() {
         const button = this;
         button.disabled = true;
@@ -424,42 +491,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.classList.remove('favorited');
                 icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
+                if (filterControls.favorites.checked) {
+                    button.closest('.topic-item').remove();
+                }
             }
         })
         .catch(error => console.error('Erro:', error))
         .finally(() => { button.disabled = false; });
     }
 
-    // Função para lidar com clique no botão de "marcar como não concluído"
     function handleMarkIncompleteClick() {
         const buttonEl = this;
         buttonEl.disabled = true;
-        
         const lawId = buttonEl.dataset.lawId;
-        const topicItem = buttonEl.closest('.topic-item');
-
+        
         fetch(`/student/law/review/${lawId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Falha na resposta do servidor.');
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                // Atualiza a UI sem recarregar a página
-                const badge = topicItem.querySelector('.completed-badge');
-                if (badge) {
-                    badge.textContent = 'Em Andamento';
-                    badge.classList.remove('completed-badge');
-                    badge.classList.add('in-progress-badge');
-                }
-                const actionButton = topicItem.querySelector('.action-button');
-                if (actionButton) {
-                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                }
-                buttonEl.remove(); // Remove o botão de "desfazer"
+                // Ao invés de recarregar tudo, apenas refaz a busca com os filtros atuais
+                // para garantir que a UI fique consistente.
+                fetchAndRenderLaws();
             } else {
                 alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
                 buttonEl.disabled = false;
@@ -471,6 +526,9 @@ document.addEventListener('DOMContentLoaded', function() {
             buttonEl.disabled = false;
         });
     }
+
+    // --- CARGA INICIAL ---
+    fetchAndRenderLaws();
 });
 </script>
 {% endblock %}
