@@ -727,36 +727,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContentEl = document.getElementById('law-content');
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
-    // --- Variáveis globais para armazenar dados e estados ---
     let currentMarkups = {{ markups_json | safe }};
     let lawComments = []; 
     let saveMarkupTimeout;
 
-    // =======================================================
-    // INÍCIO: PROTEÇÃO DE CÓPIA (AJUSTADA)
-    // =======================================================
     lawContentEl.addEventListener('copy', function(e) {
         e.preventDefault();
-        console.log('Ação de copiar bloqueada.');
     });
 
     // =======================================================
     // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (CORREÇÃO FINAL)
     // =======================================================
     
-    function getTextNodes(node) {
-        const textNodes = [];
-        const walker = document.createTreeWalker(node, Node.TEXT_NODE);
-        while(walker.nextNode()) {
-            textNodes.push(walker.currentNode);
-        }
-        return textNodes;
-    }
-
     /**
-     * CORREÇÃO DEFINITIVA: A função foi "blindada" com uma verificação para
-     * ignorar nós de texto com valor nulo, o que impede o erro "cannot read
-     * properties of null (reading 'length')".
+     * CORREÇÃO DEFINITIVA: Função `getSelectionOffsets` reescrita para ser
+     * mais robusta e consistente, com uma blindagem contra nós de texto nulos.
      */
     function getSelectionOffsets(container) {
         const selection = window.getSelection();
@@ -773,28 +758,23 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ( (node = walker.nextNode()) ) {
-            // ---> INÍCIO DA CORREÇÃO <---
-            // Ignora nós de texto "fantasmas" ou inválidos que não possuem valor.
-            if (!node.nodeValue) {
+            // **BLINDAGEM ADICIONADA AQUI** para ignorar nós inválidos.
+            if (node.nodeValue === null) {
                 continue;
             }
-            // ---> FIM DA CORREÇÃO <---
 
             if (node === startContainer) {
                 start = charCount + startOffset;
             }
             if (node === endContainer) {
                 end = charCount + endOffset;
-                break; // Encontramos o final, podemos parar
+                break; 
             }
             charCount += node.nodeValue.length;
         }
 
-        // Se a seleção terminar em um nó que já passamos (seleção invertida),
-        // ou se não encontramos um dos pontos, retornamos nulo.
         if (start === -1 || end === -1) return null;
 
-        // Garante que start seja sempre menor que end
         return {
             start: Math.min(start, end),
             end: Math.max(start, end)
@@ -809,6 +789,9 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ( (node = walker.nextNode()) ) {
+            // Failsafe
+            if (node.nodeValue === null) continue;
+
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -864,13 +847,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const offsets = getSelectionOffsets(lawContentEl);
-
         if (!offsets || offsets.start === offsets.end) return;
 
         let markupExists = false;
         let indexToRemove = -1;
 
-        // Procura por uma marcação que *seja exatamente igual* à nova seleção
         currentMarkups.forEach((m, index) => {
             if (m.type === type && m.start === offsets.start && m.end === offsets.end) {
                 markupExists = true;
@@ -920,9 +901,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // FIM: LÓGICA DE MARCAÇÕES DE TEXTO
     // =======================================================
 
-    // =======================================================
-    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO (COM ÍCONE "OLHO")
-    // =======================================================
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTextarea = document.getElementById('comment-modal-textarea');
     let currentAnchorId = null, currentEditingCommentId = null; 
@@ -1045,13 +1023,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
     document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
 
-    // =======================================================
-    // FIM: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
-    // =======================================================
-
-    // =======================================================
-    // INÍCIO: BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
-    // =======================================================
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
@@ -1140,9 +1111,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const waveType = this.dataset.wave;
             const audio = document.getElementById(`audio-${waveType}`);
             if (this.classList.contains('playing')) {
-                audio.pause();
-                this.classList.remove('playing');
-                currentlyPlaying = null;
+                audio.pause(); this.classList.remove('playing'); currentlyPlaying = null;
             } else {
                 if (currentlyPlaying) {
                     document.querySelector('.neural-wave-button.playing')?.classList.remove('playing');
@@ -1223,13 +1192,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =======================================================
-    // INICIALIZAÇÃO DA PÁGINA (ORDEM CORRIGIDA)
-    // =======================================================
     async function initializePage() {
         applyTheme(localStorage.getItem('theme') || 'light');
         applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
-        if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
+        if (localStorage.getItem('fontFamily') === 'serif') {
+            lawContentEl.classList.add('font-serif');
+        }
 
         await initCommentSystem();
         applyAllMarkups(lawContentEl, currentMarkups);
