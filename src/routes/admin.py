@@ -2,7 +2,8 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
-from sqlalchemy.orm import joinedload
+# <<< MODIFICADO: Importado 'subqueryload' >>>
+from sqlalchemy.orm import subqueryload
 from src.models.user import db, User, Announcement, UserSeenAnnouncement 
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
@@ -26,17 +27,12 @@ def dashboard():
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
     
-    # =====================================================================
-    # <<< INÍCIO DA CORREÇÃO >>>
-    # A query foi reescrita para fazer um `outerjoin` explícito com a tabela
-    # `Subject` antes de tentar ordenar por `Subject.name`.
-    # =====================================================================
+    # --- CORREÇÃO FINAL APLICADA AQUI ---
+    # <<< MODIFICADO: Trocado 'joinedload' por 'subqueryload' para a relação 'children' >>>
     query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
-        joinedload(Law.children)
+        subqueryload(Law.children)
     ).order_by(Subject.name, Law.title)
-    # =====================================================================
-    # <<< FIM DA CORREÇÃO >>>
-    # =====================================================================
+    # --- FIM DA CORREÇÃO ---
 
     # Aplica o filtro de matéria
     if subject_filter and subject_filter != "all":
@@ -59,8 +55,8 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
     
-    # Note que o template renderizado é "dashboard.html", não "dashboard_atual.html"
-    # Certifique-se que o seu arquivo de template se chama `dashboard.html` na pasta `admin`
+    # O template HTML que você me enviou como "dashboard_atual.html" está correto.
+    # Renomeie ele para "dashboard.html" na pasta de templates do admin.
     return render_template("admin/dashboard.html", 
                            subjects_with_diplomas=subjects_with_diplomas,
                            pending_users_count=pending_users_count,
@@ -68,8 +64,7 @@ def dashboard():
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
-# --- O restante do arquivo permanece exatamente como na versão anterior, ---
-# --- pois a lógica de adicionar, editar e deletar já estava correta. ---
+# --- O restante do arquivo está correto e não foi alterado ---
 
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
@@ -97,7 +92,8 @@ def manage_subjects():
 @admin_required
 def delete_subject(subject_id):
     subject = Subject.query.get_or_404(subject_id)
-    if subject.laws:
+    # Usamos .first() para checar a existência de qualquer lei associada
+    if subject.laws.first():
         flash(f"Não é possível excluir a matéria '{subject.name}', pois ela contém itens de estudo associados.", "danger")
     else:
         db.session.delete(subject)
