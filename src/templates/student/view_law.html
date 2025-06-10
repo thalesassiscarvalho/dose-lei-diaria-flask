@@ -935,6 +935,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
+    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
+
 
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
@@ -1113,8 +1116,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenLastReadArticleInput) {
                 hiddenLastReadArticleInput.value = lastReadArticle;
             }
-            const lawId = window.location.pathname.split('/').pop();
-            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
@@ -1216,7 +1218,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     saveNotesBtn.addEventListener('click', function() {
         const content = notesEditor.innerHTML;
-        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
         const originalText = this.innerHTML;
         this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         this.disabled = true;
@@ -1241,31 +1242,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
-
-    // =================================================================
-    // <<< INÍCIO: NOVA LÓGICA PARA BLOQUEAR CTRL+C NA LEI >>>
-    // =================================================================
+    
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
-            // Impede a ação padrão de cópia
             event.preventDefault();
-            
-            // Opcional: exibe um alerta para o usuário
             alert('A cópia deste conteúdo está desabilitada para proteger a propriedade intelectual.');
-            
-            // Opcional: em vez de bloquear, você pode copiar um texto alternativo.
-            // Ex: const customText = 'Conteúdo protegido por direitos autorais. Visite estudoleiseca.com.br';
-            // Ex: navigator.clipboard.writeText(customText);
         });
     }
-    // =================================================================
-    // <<< FIM: NOVA LÓGICA PARA BLOQUEAR CTRL+C NA LEI >>>
-    // =================================================================
-    
 
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
-    // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatHighlightBtn = document.getElementById('format-highlight-btn');
     let saveMarkupTimeout;
@@ -1301,28 +1285,17 @@ document.addEventListener("DOMContentLoaded", function () {
     
     async function saveLawMarkup() {
         const content = lawContent.innerHTML;
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
         console.log("Salvando marcações...");
-        
         try {
-            // IMPORTANTE: A rota '/student/law/${lawId}/save_markup' deve existir no seu backend!
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ content: content })
             });
-            
             if (!response.ok) {
-                // Se a resposta não for OK (ex: 404, 500), lança um erro para ser pego pelo catch
                 throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
             }
-
             const data = await response.json();
-            
             if (data.success) {
                 console.log("Marcações salvas com sucesso!");
             } else {
@@ -1337,29 +1310,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     formatHighlightBtn.addEventListener('click', () => applyMarkup('highlight'));
-    // =================================================================
-    // <<< FIM: LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
-    // =================================================================
 
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI >>>
-    // =================================================================
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
             const lawId = this.getAttribute('data-law-id');
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             const icon = this.querySelector('i');
-
-            fetch(apiUrl, {
+            fetch(`/student/law/toggle_favorite/${lawId}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
             })
             .then(response => {
                 if (!response.ok) { throw new Error('Erro ao atualizar favorito'); }
@@ -1385,15 +1345,10 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =================================================================
-    // <<< FIM: LÓGICA PARA FAVORITAR A LEI >>>
-    // =================================================================
-
 
     // =================================================================
-    // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
+    // <<< INÍCIO: LÓGICA CORRIGIDA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
-    const lawContentForComments = lawContent;
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
     const modalTextarea = document.getElementById('comment-modal-textarea');
@@ -1430,6 +1385,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
 
+        // Remove anotação antiga se existir, para evitar duplicatas
+        const oldCommentDiv = anchorElement.parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
+        if(oldCommentDiv) oldCommentDiv.remove();
+
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
@@ -1464,10 +1423,8 @@ document.addEventListener("DOMContentLoaded", function () {
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
         if (!content) return;
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        if (currentEditingCommentId) {
+        if (currentEditingCommentId) { // Atualizando um comentário existente
             try {
                 const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
                     method: 'PUT',
@@ -1489,7 +1446,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert('Erro de comunicação com o servidor.');
             }
         } 
-        else {
+        else { // Criando um novo comentário
             if (!currentAnchorId) return;
             try {
                 const response = await fetch(`/student/law/${lawId}/comments`, {
@@ -1514,8 +1471,6 @@ document.addEventListener("DOMContentLoaded", function () {
     async function deleteComment(commentId, commentElement) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
         
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
         try {
             const response = await fetch(`/student/comments/${commentId}`, {
                 method: 'DELETE',
@@ -1524,11 +1479,13 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
             if (data.success) {
                 const anchorId = commentElement.previousElementSibling.id;
+                const anchorElement = document.getElementById(anchorId);
                 commentElement.remove();
 
-                const remainingComments = document.querySelectorAll(`.comment-display[data-anchor-id="${anchorId}"]`).length;
+                // Verifica se ainda existem outros comentários para este parágrafo
+                const remainingComments = anchorElement.parentNode.querySelectorAll(`.comment-display`).length;
                 if (remainingComments === 0) {
-                    const icon = document.getElementById(anchorId)?.parentNode.querySelector('.comment-icon');
+                    const icon = anchorElement.parentNode.querySelector('.comment-icon');
                     if (icon) icon.classList.remove('has-comment');
                 }
             } else {
@@ -1540,13 +1497,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-
     async function initCommentSystem() {
         let areIconsVisible = false;
         
-        const paragraphs = lawContentForComments.querySelectorAll('p, li, blockquote');
+        const paragraphs = lawContent.querySelectorAll('p, li, blockquote');
+        
         paragraphs.forEach((p, index) => {
-            if (p.closest('.paragraph-wrapper') || p.style.backgroundColor) return;
+            // Se o parágrafo já está dentro de um wrapper, não faz nada para evitar duplicatas.
+            if (p.closest('.paragraph-wrapper')) return;
+            // Ignora os parágrafos de jurisprudência/doutrina/etc.
+            if (p.style.backgroundColor) return;
             
             const anchorId = `law-p-${index}`;
             p.id = anchorId;
@@ -1558,6 +1518,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const icon = document.createElement('i');
 
+            // O primeiro ícone controla a visibilidade dos outros
             if (index === 0) {
                 icon.className = 'fas fa-eye-slash comment-icon';
                 icon.title = 'Mostrar ícones de anotação';
@@ -1566,7 +1527,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     areIconsVisible = !areIconsVisible;
                     icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
                     icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
-                    const secondaryIcons = lawContentForComments.querySelectorAll('.secondary-comment-icon');
+                    const secondaryIcons = lawContent.querySelectorAll('.secondary-comment-icon');
                     secondaryIcons.forEach(secIcon => {
                         secIcon.style.display = areIconsVisible ? 'block' : 'none';
                     });
@@ -1574,13 +1535,14 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar anotação privada';
-                icon.style.display = 'none';
+                icon.style.display = 'none'; // Começam ocultos
                 icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
             }
 
             wrapper.appendChild(icon);
         });
 
+        // Após criar a estrutura, busca e exibe os comentários existentes
         try {
             const response = await fetch(`/student/law/${lawId}/comments`);
             const data = await response.json();
@@ -1591,6 +1553,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erro ao carregar anotações por parágrafo:", error);
         }
         
+        // Listeners do Modal (adicionados apenas uma vez)
         modalSaveBtn.addEventListener('click', saveOrUpdateComment);
         modalCancelBtn.addEventListener('click', closeCommentModal);
         modalBackdrop.addEventListener('click', (e) => {
@@ -1600,16 +1563,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initCommentSystem();
     // =================================================================
-    // <<< FIM: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
+    // <<< FIM: LÓGICA CORRIGIDA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
 
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA CONTROLE DE FONTE >>>
-    // =================================================================
     const increaseFontBtn = document.getElementById('increase-font-btn');
     const decreaseFontBtn = document.getElementById('decrease-font-btn');
     const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
-
     const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
     let currentSizeIndex = 1;
 
@@ -1650,24 +1609,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const savedFontSize = localStorage.getItem('fontSize');
     const savedFontFamily = localStorage.getItem('fontFamily');
-
     if (savedFontSize && fontSizes.includes(savedFontSize)) {
         applyFontSize(savedFontSize);
     } else {
         applyFontSize('font-size-md');
     }
-    
     if (savedFontFamily) {
         applyFontFamily(savedFontFamily);
     }
-    // =================================================================
-    // <<< FIM: LÓGICA PARA CONTROLE DE FONTE >>>
-    // =================================================================
 
-
-    // =================================================================
-    // <<< INÍCIO: LÓGICA PARA MODO NOTURNO >>>
-    // =================================================================
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const body = document.body;
     const themeIcon = themeToggleBtn.querySelector('i');
@@ -1693,11 +1643,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
-    // =================================================================
-    // <<< FIM: LÓGICA PARA MODO NOTURNO >>>
-    // =================================================================
 
-    // ****** INÍCIO: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
     const toggleLinksBtn = document.getElementById("toggle-links-btn");
     const linksContentArea = document.getElementById("links-content-area");
     const linksChevron = document.getElementById("links-chevron");
@@ -1708,7 +1654,6 @@ document.addEventListener("DOMContentLoaded", function () {
             linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-    // ****** FIM: SCRIPT PARA A NOVA SEÇÃO DE LINKS ÚTEIS ******
 });
 </script>
 {% endblock %}
