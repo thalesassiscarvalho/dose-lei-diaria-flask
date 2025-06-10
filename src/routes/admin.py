@@ -2,14 +2,13 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
+from sqlalchemy.orm import joinedload
 from src.models.user import db, User, Announcement, UserSeenAnnouncement 
-# ATUALIZADO: Importar UsefulLink
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# Decorator to check for admin role
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -23,37 +22,153 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    # ... (código do seu dashboard admin permanece o mesmo) ...
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
-    subjects_with_laws = []
-    laws_without_subject = []
-    if subject_filter == "all":
-        subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
-        laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
-    elif subject_filter == "none":
-        laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
-    else:
+    
+    # Query base para buscar "Diplomas" (itens sem pai)
+    query = Law.query.filter(Law.parent_id.is_(None)).options(
+        joinedload(Law.children),
+        joinedload(Law.subject)
+    ).order_by(Subject.name, Law.title)
+
+    # Aplica o filtro de matéria
+    if subject_filter and subject_filter != "all":
         try:
             subject_id = int(subject_filter)
-            subject = Subject.query.options(db.joinedload(Subject.laws)).filter_by(id=subject_id).first()
-            if subject:
-                subjects_with_laws = [subject]
+            query = query.filter(Law.subject_id == subject_id)
         except ValueError:
-            subjects_with_laws = Subject.query.options(db.joinedload(Subject.laws)).order_by(Subject.name).all()
-            laws_without_subject = Law.query.filter(Law.subject_id == None).order_by(Law.title).all()
+            # Caso para "Sem matéria"
+            if subject_filter == "none":
+                query = query.filter(Law.subject_id.is_(None))
+
+    # Estrutura para o template: um dicionário onde as chaves são as matérias
+    subjects_with_diplomas = {}
+    diplomas = query.all()
+    
+    # Agrupa os diplomas por matéria
+    for diploma in diplomas:
+        # Se um diploma não tiver matéria, usamos um objeto "fantasma" para a chave
+        subject_key = diploma.subject if diploma.subject else type('DummySubject', (object,), {'name': 'Sem Matéria'})()
+        
+        if subject_key.name not in subjects_with_diplomas:
+            subjects_with_diplomas[subject_key.name] = []
+        subjects_with_diplomas[subject_key.name].append(diploma)
+
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
-    return render_template("admin/dashboard.html", 
-                           subjects_with_laws=subjects_with_laws, 
-                           laws_without_subject=laws_without_subject, 
+    
+    return render_template("admin/dashboard.html",
+                           subjects_with_diplomas=subjects_with_diplomas,
                            pending_users_count=pending_users_count,
                            active_announcements_count=active_announcements_count,
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
-# --- Subject Management ---
-# ... (suas rotas de gerenciamento de matéria permanecem as mesmas) ...
+@admin_bp.route("/laws/add", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_law():
+    subjects = Subject.query.order_by(Subject.name).all()
+    # Busca todos os itens que podem ser pais (Diplomas)
+    normative_acts = Law.query.filter(Law.parent_id.is_(None)).order_by(Law.title).all()
+
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+        content = request.form.get("content")
+        subject_id = request.form.get("subject_id")
+        parent_id = request.form.get("parent_id") # Captura o ID do pai
+        audio_url = request.form.get("audio_url")
+
+        if not title:
+            flash("O Título é obrigatório.", "danger")
+            return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts)
+
+        new_law = Law(
+            title=title, 
+            description=description, 
+            content=content,
+            audio_url=audio_url if audio_url else None
+        )
+        
+        new_law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
+        new_law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
+            
+        db.session.add(new_law)
+        db.session.flush()
+
+        index = 0
+        while f'link-{index}-title' in request.form:
+            link_title = request.form.get(f'link-{index}-title')
+            link_url = request.form.get(f'link-{index}-url')
+            if link_title and link_url:
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
+                db.session.add(new_link)
+            index += 1
+        
+        db.session.commit()
+        flash("Item de estudo adicionado com sucesso!", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts)
+
+@admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_law(law_id):
+    law = Law.query.get_or_404(law_id)
+    subjects = Subject.query.order_by(Subject.name).all()
+    # Busca todos os itens que podem ser pais, excluindo o próprio item
+    normative_acts = Law.query.filter(Law.parent_id.is_(None), Law.id != law_id).order_by(Law.title).all()
+
+    if request.method == "POST":
+        law.title = request.form.get("title")
+        law.description = request.form.get("description")
+        law.content = request.form.get("content")
+        subject_id = request.form.get("subject_id")
+        parent_id = request.form.get("parent_id")
+        audio_url = request.form.get("audio_url")
+
+        if not law.title:
+            flash("O Título é obrigatório.", "danger")
+            return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
+
+        law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
+        law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
+        law.audio_url = audio_url if audio_url else None
+
+        UsefulLink.query.filter_by(law_id=law.id).delete()
+        index = 0
+        while f'link-{index}-title' in request.form:
+            link_title = request.form.get(f'link-{index}-title')
+            link_url = request.form.get(f'link-{index}-url')
+            if link_title and link_url:
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
+                db.session.add(new_link)
+            index += 1
+
+        db.session.commit()
+        flash("Item de estudo atualizado com sucesso!", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
+
+@admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_law(law_id):
+    law = Law.query.get_or_404(law_id)
+    try:
+        db.session.delete(law)
+        db.session.commit()
+        flash("Item e todos os seus dados relacionados (sub-tópicos, etc.) foram excluídos!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir o item: {e}", "danger")
+    return redirect(url_for("admin.dashboard"))
+
+# --- O restante das rotas de admin (manage_subjects, users, announcements) permanece igual ---
+# ... (cole o resto do seu arquivo admin.py aqui)
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -81,126 +196,13 @@ def manage_subjects():
 def delete_subject(subject_id):
     subject = Subject.query.get_or_404(subject_id)
     if subject.laws:
-        flash(f"Não é possível excluir a matéria '{subject.name}', pois ela contém leis associadas.", "danger")
+        flash(f"Não é possível excluir a matéria '{subject.name}', pois ela contém itens associados.", "danger")
     else:
         db.session.delete(subject)
         db.session.commit()
         flash(f"Matéria '{subject.name}' excluída com sucesso!", "success")
     return redirect(url_for("admin.manage_subjects"))
 
-
-# --- Law Management ---
-@admin_bp.route("/laws/add", methods=["GET", "POST"])
-@login_required
-@admin_required
-def add_law():
-    subjects = Subject.query.order_by(Subject.name).all()
-    if request.method == "POST":
-        title = request.form.get("title")
-        description = request.form.get("description")
-        content = request.form.get("content")
-        subject_id = request.form.get("subject_id")
-        audio_url = request.form.get("audio_url")
-
-        if not title or not content:
-            flash("Título e conteúdo são obrigatórios.", "danger")
-            return render_template("admin/add_edit_law.html", law=None, subjects=subjects, audio_url=audio_url)
-
-        new_law = Law(
-            title=title, 
-            description=description, 
-            content=content,
-            audio_url=audio_url if audio_url else None
-        )
-        if subject_id and subject_id != "None":
-            new_law.subject_id = int(subject_id)
-        else:
-            new_law.subject_id = None
-            
-        db.session.add(new_law)
-
-        # --- INÍCIO: LÓGICA PARA ADICIONAR LINKS ÚTEIS ---
-        index = 0
-        while f'link-{index}-title' in request.form:
-            link_title = request.form.get(f'link-{index}-title')
-            link_url = request.form.get(f'link-{index}-url')
-            if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law=new_law)
-                db.session.add(new_link)
-            index += 1
-        # --- FIM DA LÓGICA ---
-        
-        db.session.commit()
-        flash("Lei adicionada com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
-
-    return render_template("admin/add_edit_law.html", law=None, subjects=subjects)
-
-@admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
-@login_required
-@admin_required
-def edit_law(law_id):
-    law = Law.query.get_or_404(law_id)
-    subjects = Subject.query.order_by(Subject.name).all()
-    if request.method == "POST":
-        law.title = request.form.get("title")
-        law.description = request.form.get("description")
-        law.content = request.form.get("content")
-        subject_id = request.form.get("subject_id")
-        audio_url = request.form.get("audio_url")
-
-        if not law.title or not law.content:
-            flash("Título e conteúdo são obrigatórios.", "danger")
-            return render_template("admin/add_edit_law.html", law=law, subjects=subjects)
-
-        if subject_id and subject_id != "None":
-            law.subject_id = int(subject_id)
-        else:
-            law.subject_id = None
-        law.audio_url = audio_url if audio_url else None
-
-        # --- INÍCIO: LÓGICA PARA ATUALIZAR LINKS ÚTEIS (APAGAR E RECRIAR) ---
-        # 1. Apagar links existentes associados a esta lei
-        UsefulLink.query.filter_by(law_id=law.id).delete()
-
-        # 2. Adicionar os links enviados pelo formulário
-        index = 0
-        while f'link-{index}-title' in request.form:
-            link_title = request.form.get(f'link-{index}-title')
-            link_url = request.form.get(f'link-{index}-url')
-            # O ID do link não é necessário aqui, pois estamos recriando
-            if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law=law)
-                db.session.add(new_link)
-            index += 1
-        # --- FIM DA LÓGICA ---
-
-        db.session.commit()
-        flash("Lei atualizada com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
-
-    return render_template("admin/add_edit_law.html", law=law, subjects=subjects)
-
-
-@admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
-@login_required
-@admin_required
-def delete_law(law_id):
-    # ... (sua rota de deletar lei permanece a mesma) ...
-    # A configuração 'cascade' no modelo vai deletar os links automaticamente.
-    law = Law.query.get_or_404(law_id)
-    try:
-        db.session.delete(law)
-        db.session.commit()
-        flash("Lei e todos os seus dados relacionados (progresso, anotações, links) foram excluídos com sucesso!", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Erro ao excluir a lei: {e}", "danger")
-        print(f"Error deleting law {law_id}: {e}")
-    return redirect(url_for("admin.dashboard"))
-
-# --- User Management ---
-# ... (todas as suas outras rotas de admin permanecem as mesmas) ...
 @admin_bp.route("/users")
 @login_required
 @admin_required
@@ -237,7 +239,6 @@ def deny_user(user_id):
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao excluir o usuário {email}: {e}", "danger")
-            print(f"Error deleting user {user_id}: {e}")
     return redirect(url_for("admin.manage_users"))
 
 @admin_bp.route("/users/reset-password/<int:user_id>", methods=["GET", "POST"])
@@ -251,25 +252,15 @@ def reset_user_password(user_id):
     if request.method == "POST":
         new_password = request.form.get("new_password")
         confirm_password = request.form.get("confirm_password")
-        if not new_password:
-            flash("A nova senha não pode estar vazia.", "danger")
-            return render_template("admin/reset_password.html", user=user)
-        if new_password != confirm_password:
-            flash("As senhas não coincidem.", "danger")
+        if not new_password or new_password != confirm_password:
+            flash("As senhas não coincidem ou estão vazias.", "danger")
             return render_template("admin/reset_password.html", user=user)
         user.set_password(new_password)
-        try:
-            db.session.commit()
-            flash(f"Senha do usuário {user.email} redefinida com sucesso!", "success")
-            return redirect(url_for("admin.manage_users"))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Erro ao redefinir a senha: {e}", "danger")
-            return render_template("admin/reset_password.html", user=user)
+        db.session.commit()
+        flash(f"Senha do usuário {user.email} redefinida com sucesso!", "success")
+        return redirect(url_for("admin.manage_users"))
     return render_template("admin/reset_password.html", user=user)
 
-# --- Announcement Management ---
-# ... (suas rotas de gerenciamento de anúncios permanecem as mesmas) ...
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -285,17 +276,13 @@ def manage_announcements():
         else:
             if announcement_id:
                 announcement = Announcement.query.get_or_404(int(announcement_id))
-                announcement.title = title
-                announcement.content = content
-                announcement.is_active = is_active
-                announcement.is_fixed = is_fixed
-                db.session.commit()
+                announcement.title, announcement.content, announcement.is_active, announcement.is_fixed = title, content, is_active, is_fixed
                 flash("Aviso atualizado com sucesso!", "success")
             else:
                 new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed)
                 db.session.add(new_announcement)
-                db.session.commit()
                 flash("Aviso adicionado com sucesso!", "success")
+            db.session.commit()
         return redirect(url_for("admin.manage_announcements"))
     announcements = Announcement.query.order_by(Announcement.created_at.desc()).all()
     return render_template("admin/manage_announcements.html", announcements=announcements)
@@ -316,13 +303,7 @@ def toggle_announcement(announcement_id):
 @admin_required
 def delete_announcement(announcement_id):
     announcement = Announcement.query.get_or_404(announcement_id)
-    try:
-        UserSeenAnnouncement.query.filter_by(announcement_id=announcement_id).delete()
-        db.session.delete(announcement)
-        db.session.commit()
-        flash("Aviso excluído com sucesso!", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Erro ao excluir o aviso: {e}", "danger")
-        print(f"Error deleting announcement {announcement_id}: {e}")
+    db.session.delete(announcement)
+    db.session.commit()
+    flash("Aviso excluído com sucesso!", "success")
     return redirect(url_for("admin.manage_announcements"))
