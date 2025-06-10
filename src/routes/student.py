@@ -210,53 +210,54 @@ def filter_laws():
 
 
 # =====================================================================
-# <<< INÍCIO: FUNÇÃO view_law MODIFICADA >>>
+# <<< INÍCIO: FUNÇÃO view_law REESTRUTURADA >>>
 # =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
+    # --- PASSO 1: LER TODOS OS DADOS DO BANCO PRIMEIRO ---
     law = Law.query.get_or_404(law_id)
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
 
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    now = datetime.datetime.utcnow()
+    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    is_favorited = law in current_user.favorite_laws
 
+    # --- PASSO 2: MODIFICAR OS DADOS E SALVAR NO BANCO (COMMIT) UMA ÚNICA VEZ ---
+    now = datetime.datetime.utcnow()
     if progress:
         progress.last_accessed_at = now
     else:
+        # Se não há progresso, cria um novo registro
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
 
+    # O commit agora acontece aqui, depois de todas as leituras e modificações.
     db.session.commit()
-    is_favorited = law in current_user.favorite_laws
 
-    # --- LÓGICA DE CONTEÚDO MELHORADA ---
-    # 1. Busca o conteúdo personalizado que o usuário salvou
-    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-
-    # 2. Decide qual conteúdo exibir
+    # --- PASSO 3: PREPARAR OS DADOS PARA ENVIAR AO TEMPLATE ---
     if user_markup:
-        # Se houver marcação salva, use-a.
+        # Se encontrou marcação salva, usa o conteúdo dela
         content_to_display = user_markup.content
     else:
-        # Senão, use o conteúdo original da lei.
+        # Senão, usa o conteúdo original da lei
         content_to_display = law.content
 
-    # 3. Garante que nunca seja None, para evitar o erro no template.
+    # Garante que o conteúdo nunca seja None
     if content_to_display is None:
         content_to_display = ""
 
     return render_template("student/view_law.html",
                            law=law,
-                           is_completed=(progress.status == 'concluido' if progress else False),
-                           last_read_article=(progress.last_read_article if progress else None),
-                           current_status=(progress.status if progress else 'nao_iniciado'),
+                           is_completed=(progress.status == 'concluido'),
+                           last_read_article=progress.last_read_article,
+                           current_status=progress.status,
                            is_favorited=is_favorited,
-                           display_content=content_to_display) # <<< Passa a variável segura para o template
+                           display_content=content_to_display)
 # =====================================================================
-# <<< FIM: FUNÇÃO view_law MODIFICADA >>>
+# <<< FIM: FUNÇÃO view_law REESTRUTURADA >>>
 # =====================================================================
 
 
