@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {% if law %}Editar Lei: {{ law.title }}{% else %}Adicionar Nova Lei{% endif %}
+    {% if law %}Editar Item de Estudo{% else %}Adicionar Novo Item de Estudo{% endif %}
 {% endblock %}
 
 {% block head_extra %}
@@ -9,96 +9,67 @@
 <script>
   tinymce.init({
     selector: '#content',
-    plugins: [
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
-    ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
     height: 400,
-    tinycomments_mode: 'embedded',
-    tinycomments_author: 'Admin',
-    mergetags_list: [
-      { value: 'First.Name', title: 'First Name' },
-      { value: 'Email', title: 'Email' },
-    ],
-    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
   });
 </script>
 <style>
-    /* --- NOVO: Estilos para a seção de links --- */
-    .link-group {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        padding: 0.75rem;
-        background-color: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.375rem;
-    }
-    .link-group input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-    }
-    .delete-link-btn {
-        background-color: #ef4444;
-        color: white;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.375rem;
-        cursor: pointer;
-        border: none;
-        font-weight: bold;
-    }
-    .delete-link-btn:hover {
-        background-color: #dc2626;
-    }
-    .add-link-btn {
-        background-color: #10b981;
-        color: white;
-        font-weight: bold;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.375rem;
-        cursor: pointer;
-        border: none;
-    }
-    .add-link-btn:hover {
-        background-color: #059669;
-    }
+    .link-group { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; padding: 0.75rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
+    .link-group input { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+    .delete-link-btn { background-color: #ef4444; color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; cursor: pointer; border: none; font-weight: bold; }
+    .delete-link-btn:hover { background-color: #dc2626; }
+    .add-link-btn { background-color: #10b981; color: white; font-weight: bold; padding: 0.5rem 0.75rem; border-radius: 0.375rem; cursor: pointer; border: none; }
+    .add-link-btn:hover { background-color: #059669; }
 </style>
 {% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">{% if law %}Editar Lei{% else %}Adicionar Nova Lei{% endif %}</h1>
+<h1 class="text-2xl font-bold mb-6">{% if law %}Editar Item de Estudo{% else %}Adicionar Novo Item de Estudo{% endif %}</h1>
 
 <form method="POST" action="{% if law %}{{ url_for('admin.edit_law', law_id=law.id) }}{% else %}{{ url_for('admin.add_law') }}{% endif %}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Título:</label>
-        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="title" name="title" type="text" placeholder="Título da Lei" value="{{ law.title if law else '' }}" required>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="title" name="title" type="text" placeholder="Ex: Constituição Federal ou Art. 1º a 4º" value="{{ law.title if law else '' }}" required>
     </div>
 
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="subject_id">Matéria:</label>
-        <select id="subject_id" name="subject_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        <select id="subject_id" name="subject_id" class="shadow border rounded w-full py-2 px-3 text-gray-700">
             <option value="None">-- Nenhuma --</option>
             {% for subject in subjects %}
             <option value="{{ subject.id }}" {% if law and law.subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
             {% endfor %}
         </select>
-        <p class="text-xs text-gray-600 mt-1">Você pode gerenciar as matérias <a href="{{ url_for('admin.manage_subjects') }}" class="text-blue-500 hover:text-blue-700">aqui</a>.</p>
+    </div>
+
+    <div class="mb-4 bg-yellow-50 border border-yellow-200 p-3 rounded-md">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="parent_id">
+            Item Pai (Diploma Normativo):
+        </label>
+        <select id="parent_id" name="parent_id" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            <option value="">-- Nenhum (Este é um item principal, ex: 'CF/88') --</option>
+            {% for diploma in normative_acts %} 
+            <option value="{{ diploma.id }}" {% if law and law.parent_id == diploma.id %}selected{% endif %}>
+                {{ diploma.title }} (Matéria: {{ diploma.subject.name or 'N/A' }})
+            </option>
+            {% endfor %}
+        </select>
+        <p class="text-xs text-gray-600 mt-1">
+          Selecione um pai se este for um tópico dentro de uma lei maior. Deixe em branco para criar um novo item principal.
+        </p>
     </div>
 
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Descrição (Opcional):</label>
-        <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="3" placeholder="Breve descrição da lei">{{ law.description if law else '' }}</textarea>
+        <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="description" name="description" rows="3">{{ law.description if law else '' }}</textarea>
     </div>
 
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="audio_url">URL do Áudio (Opcional):</label>
-        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="audio_url" name="audio_url" type="url" placeholder="https://.../arquivo.mp3" value="{{ law.audio_url if law and law.audio_url else '' }}">
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="audio_url" name="audio_url" type="url" value="{{ law.audio_url if law and law.audio_url else '' }}">
     </div>
 
     <div class="mb-6">
@@ -110,26 +81,23 @@
         <label class="block text-gray-700 text-sm font-bold mb-2">Links Úteis (Opcional):</label>
         <div id="useful-links-container">
             {% if law and law.useful_links %}
-                {% for link in law.useful_links.all() %} {# Usar .all() por causa do lazy='dynamic' #}
+                {% for link in law.useful_links.all() %}
                 <div class="link-group">
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-{{ loop.index0 }}-title" type="text" placeholder="Título do Link" value="{{ link.title }}" required>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-{{ loop.index0 }}-url" type="url" placeholder="https://exemplo.com" value="{{ link.url }}" required>
+                    <input name="link-{{ loop.index0 }}-title" type="text" value="{{ link.title }}" required>
+                    <input name="link-{{ loop.index0 }}-url" type="url" value="{{ link.url }}" required>
                     <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
                 </div>
                 {% endfor %}
             {% endif %}
         </div>
-        <button type="button" id="add-link-btn" class="mt-2 add-link-btn">
-            + Adicionar Link
-        </button>
+        <button type="button" id="add-link-btn" class="mt-2 add-link-btn">+ Adicionar Link</button>
     </div>
+
     <div class="flex items-center justify-between mt-8">
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-            {% if law %}Salvar Alterações{% else %}Adicionar Lei{% endif %}
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">
+            {% if law %}Salvar Alterações{% else %}Adicionar Item{% endif %}
         </button>
-        <a href="{{ url_for('admin.dashboard') }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-            Cancelar
-        </a>
+        <a href="{{ url_for('admin.dashboard') }}" class="font-bold text-sm text-blue-500 hover:text-blue-800">Cancelar</a>
     </div>
 </form>
 
@@ -137,19 +105,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     const addLinkBtn = document.getElementById('add-link-btn');
     const linksContainer = document.getElementById('useful-links-container');
-    // Inicia o índice a partir do número de links já existentes na página
     let linkIndex = linksContainer.getElementsByClassName('link-group').length;
 
     addLinkBtn.addEventListener('click', function() {
         const newLinkGroup = document.createElement('div');
         newLinkGroup.className = 'link-group';
         newLinkGroup.innerHTML = `
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
+            <input name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
+            <input name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
             <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
         `;
         linksContainer.appendChild(newLinkGroup);
-        linkIndex++; // Incrementa o índice para o próximo link
+        linkIndex++;
     });
 });
 </script>
