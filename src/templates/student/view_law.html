@@ -1283,14 +1283,31 @@ document.addEventListener("DOMContentLoaded", function () {
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
+    // =================================================================
+    // <<< INÍCIO DA CORREÇÃO DEFINITIVA (PARTE 1) >>>
+    // Função saveLawMarkup agora limpa a interface de comentários antes de salvar.
+    // =================================================================
     async function saveLawMarkup() {
-        const content = lawContent.innerHTML;
-        console.log("Salvando marcações...");
+        // 1. Clonar o conteúdo para não modificar a página visível
+        const clonedContent = lawContent.cloneNode(true);
+
+        // 2. Remover todos os elementos da interface de comentários do clone
+        clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+
+        // 3. Desembrulhar todos os parágrafos de seus wrappers no clone
+        clonedContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
+            wrapper.replaceWith(...wrapper.childNodes);
+        });
+
+        // 4. Obter o HTML limpo para salvar
+        const contentToSave = clonedContent.innerHTML;
+
+        console.log("Salvando marcações (conteúdo limpo)...");
         try {
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ content: content })
+                body: JSON.stringify({ content: contentToSave })
             });
             if (!response.ok) {
                 throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
@@ -1307,6 +1324,10 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Ocorreu um erro de comunicação ao salvar suas marcações.");
         }
     }
+    // =================================================================
+    // <<< FIM DA CORREÇÃO DEFINITIVA (PARTE 1) >>>
+    // =================================================================
+
 
     formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     formatHighlightBtn.addEventListener('click', () => applyMarkup('highlight'));
@@ -1347,7 +1368,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =================================================================
-    // <<< INÍCIO: LÓGICA CORRIGIDA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
+    // <<< INÍCIO DA CORREÇÃO DEFINITIVA (PARTE 2) >>>
+    // Lógica para o sistema de anotações por parágrafo foi reestruturada.
     // =================================================================
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
@@ -1383,7 +1405,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
-        if (!anchorElement) return;
+        if (!anchorElement || !anchorElement.parentNode) return;
 
         // Remove anotação antiga se existir, para evitar duplicatas
         const oldCommentDiv = anchorElement.parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
@@ -1482,11 +1504,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 const anchorElement = document.getElementById(anchorId);
                 commentElement.remove();
 
-                // Verifica se ainda existem outros comentários para este parágrafo
-                const remainingComments = anchorElement.parentNode.querySelectorAll(`.comment-display`).length;
-                if (remainingComments === 0) {
-                    const icon = anchorElement.parentNode.querySelector('.comment-icon');
-                    if (icon) icon.classList.remove('has-comment');
+                if (anchorElement && anchorElement.parentNode) {
+                    const remainingComments = anchorElement.parentNode.querySelectorAll(`.comment-display`).length;
+                    if (remainingComments === 0) {
+                        const icon = anchorElement.parentNode.querySelector('.comment-icon');
+                        if (icon) icon.classList.remove('has-comment');
+                    }
                 }
             } else {
                 alert('Erro ao excluir anotação: ' + data.error);
@@ -1498,15 +1521,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function initCommentSystem() {
+        // Limpa a interface de qualquer estado anterior para garantir uma inicialização limpa
+        lawContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+        lawContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
+            wrapper.replaceWith(...wrapper.childNodes);
+        });
+
         let areIconsVisible = false;
-        
         const paragraphs = lawContent.querySelectorAll('p, li, blockquote');
         
         paragraphs.forEach((p, index) => {
-            // Se o parágrafo já está dentro de um wrapper, não faz nada para evitar duplicatas.
-            if (p.closest('.paragraph-wrapper')) return;
-            // Ignora os parágrafos de jurisprudência/doutrina/etc.
-            if (p.style.backgroundColor) return;
+            if (p.style.backgroundColor) return; // Ignora os parágrafos de jurisprudência/doutrina/etc.
             
             const anchorId = `law-p-${index}`;
             p.id = anchorId;
@@ -1518,7 +1543,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const icon = document.createElement('i');
 
-            // O primeiro ícone controla a visibilidade dos outros
             if (index === 0) {
                 icon.className = 'fas fa-eye-slash comment-icon';
                 icon.title = 'Mostrar ícones de anotação';
@@ -1552,18 +1576,19 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Erro ao carregar anotações por parágrafo:", error);
         }
-        
-        // Listeners do Modal (adicionados apenas uma vez)
-        modalSaveBtn.addEventListener('click', saveOrUpdateComment);
-        modalCancelBtn.addEventListener('click', closeCommentModal);
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) closeCommentModal();
-        });
     }
+    
+    // Adiciona os listeners ao modal uma única vez.
+    modalSaveBtn.addEventListener('click', saveOrUpdateComment);
+    modalCancelBtn.addEventListener('click', closeCommentModal);
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeCommentModal();
+    });
 
+    // Inicia todo o sistema.
     initCommentSystem();
     // =================================================================
-    // <<< FIM: LÓGICA CORRIGIDA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
+    // <<< FIM DA CORREÇÃO DEFINITIVA (PARTE 2) >>>
     // =================================================================
 
     const increaseFontBtn = document.getElementById('increase-font-btn');
