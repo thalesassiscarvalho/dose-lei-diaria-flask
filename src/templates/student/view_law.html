@@ -625,7 +625,7 @@
     </div>
 </div>
 
-<div class="law-content-container" id="law-content">
+<div class="law-content-container" id="law-content" contenteditable="true">
     {# O conteúdo da lei é inserido aqui e manipulado via JS #}
     {{ display_content | safe }}
 </div>
@@ -1172,7 +1172,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('decrease-font-btn').addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
     document.getElementById('toggle-font-family-btn').addEventListener('click', () => {
         lawContentEl.classList.toggle('font-serif');
-        localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
+        
+    // === Adicionado: botões de formatação de seleção ===
+document.getElementById('format-bold-btn')
+        .addEventListener('click', () => applyFormat('bold'));
+document.getElementById('format-highlight-btn')
+        .addEventListener('click', () => applyFormat('highlight'));localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
     });
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
