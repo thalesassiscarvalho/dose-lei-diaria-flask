@@ -735,15 +735,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // =======================================================
     // INÍCIO: PROTEÇÃO DE CÓPIA (AJUSTADA)
     // =======================================================
-    // Permite a seleção, mas bloqueia o ato de copiar.
     lawContentEl.addEventListener('copy', function(e) {
         e.preventDefault();
-        // Opcional: pode-se adicionar um alerta ou uma notificação aqui.
         console.log('Ação de copiar bloqueada.');
     });
 
     // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (COM DIAGNÓSTICO)
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (CORREÇÃO FINAL)
     // =======================================================
     
     function getTextNodes(node) {
@@ -755,37 +753,54 @@ document.addEventListener("DOMContentLoaded", function () {
         return textNodes;
     }
 
+    /**
+     * CORREÇÃO DEFINITIVA: Esta função agora usa um TreeWalker para calcular os offsets,
+     * garantindo consistência com a função findRangeByOffsets.
+     */
     function getSelectionOffsets(container) {
         const selection = window.getSelection();
         if (selection.rangeCount === 0) return null;
 
         const range = selection.getRangeAt(0);
-        const preRange = document.createRange();
-        preRange.selectNodeContents(container);
-        preRange.setEnd(range.startContainer, range.startOffset);
-        let startOffset = preRange.toString().length;
+        const { startContainer, endContainer, startOffset, endOffset } = range;
+        
+        let charCount = 0;
+        let start = -1;
+        let end = -1;
 
-        preRange.setEnd(range.endContainer, range.endOffset);
-        let endOffset = preRange.toString().length;
+        const walker = document.createTreeWalker(container, Node.TEXT_NODE);
+        let node;
 
-        if (startOffset > endOffset) {
-            [startOffset, endOffset] = [endOffset, startOffset];
+        while ( (node = walker.nextNode()) ) {
+            if (node === startContainer) {
+                start = charCount + startOffset;
+            }
+            if (node === endContainer) {
+                end = charCount + endOffset;
+                break; // Encontramos o final, podemos parar
+            }
+            charCount += node.nodeValue.length;
         }
-        return { start: startOffset, end: endOffset };
+
+        // Se a seleção terminar em um nó que já passamos (seleção invertida),
+        // ou se não encontramos um dos pontos, retornamos nulo.
+        if (start === -1 || end === -1) return null;
+
+        // Garante que start seja sempre menor que end
+        return {
+            start: Math.min(start, end),
+            end: Math.max(start, end)
+        };
     }
     
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
-        const textNodes = getTextNodes(container);
+        const walker = document.createTreeWalker(container, Node.TEXT_NODE);
         let charCount = 0;
         let foundStart = false;
+        let node;
 
-        for (const node of textNodes) {
-            if (node.nodeValue === null) {
-                console.warn('DIAGNÓSTICO: Encontrado um nó de texto nulo, pulando.');
-                continue;
-            }
-            
+        while ( (node = walker.nextNode()) ) {
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -801,8 +816,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyAllMarkups(container, markups) {
-        console.log('DIAGNÓSTICO: Iniciando applyAllMarkups. Total de marcações:', markups.length);
-        
         container.querySelectorAll('strong, span.user-text-highlight').forEach(el => {
             if (el.tagName === 'STRONG' || el.classList.contains('user-text-highlight')) {
                 el.replaceWith(...el.childNodes);
@@ -811,14 +824,10 @@ document.addEventListener("DOMContentLoaded", function () {
         container.normalize();
 
         const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
-        console.log('DIAGNÓSTICO: Marcações ordenadas para aplicação:', sortedMarkups);
 
         sortedMarkups.forEach(markup => {
-            console.log('DIAGNÓSTICO: Tentando aplicar marcação:', markup);
             const range = findRangeByOffsets(container, markup.start, markup.end);
-            
             if (range) {
-                 console.log('%cDIAGNÓSTICO: Range encontrado com sucesso!', 'color: green;', range);
                 try {
                     const wrapper = document.createElement(markup.type === 'bold' ? 'strong' : 'span');
                     if (markup.type === 'highlight') {
@@ -826,10 +835,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     range.surroundContents(wrapper);
                 } catch (e) {
-                    console.error("DIAGNÓSTICO: Erro ao tentar envolver o conteúdo (surroundContents):", e, markup);
+                    console.error("Erro ao aplicar marcação:", e, markup);
                 }
-            } else {
-                console.error('%cDIAGNÓSTICO: Falha ao encontrar range para a marcação. Verifique os offsets.', 'color: red;', markup);
             }
         });
     }
@@ -849,13 +856,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const offsets = getSelectionOffsets(lawContentEl);
-        console.log('DIAGNÓSTICO: Offsets calculados da seleção:', offsets);
 
-        if (!offsets || offsets.start === offsets.end || !selection.toString().trim()) return;
+        if (!offsets || offsets.start === offsets.end) return;
 
         let markupExists = false;
         let indexToRemove = -1;
 
+        // Procura por uma marcação que *seja exatamente igual* à nova seleção
         currentMarkups.forEach((m, index) => {
             if (m.type === type && m.start === offsets.start && m.end === offsets.end) {
                 markupExists = true;
@@ -864,11 +871,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
         if (markupExists) {
-            console.log('DIAGNÓSTICO: Removendo marcação existente.');
             currentMarkups.splice(indexToRemove, 1);
         } else {
             const newMarkup = { type: type, start: offsets.start, end: offsets.end, text: selection.toString().trim() };
-            console.log('DIAGNÓSTICO: Adicionando nova marcação:', newMarkup);
             currentMarkups.push(newMarkup);
         }
 
@@ -894,7 +899,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("Marcações salvas com sucesso!");
             } else {
                 console.error("Falha ao salvar marcações:", data.error);
-                alert("Ocorreu um erro ao salvar suas marcações.");
             }
         } catch (error) {
             console.error("Erro de rede ao salvar marcações:", error);
@@ -949,9 +953,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /**
-     * CORRIGIDO: Função que desenha a UI de anotações, com o primeiro ícone sendo um "olho".
-     */
     function renderCommentUI() {
         let pIndex = 0;
         lawContentEl.querySelectorAll('p, li, blockquote').forEach(p => {
@@ -966,7 +967,6 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const icon = document.createElement('i');
             
-            // O primeiro ícone (pIndex 0) vira o controlador de visibilidade
             if (pIndex === 0) {
                 icon.className = 'fas fa-eye-slash comment-icon comment-icon-toggle';
                 icon.title = 'Ocultar/Mostrar ícones de anotação';
@@ -975,7 +975,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     icon.className = `fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'} comment-icon comment-icon-toggle`;
                 });
             } else {
-                // Os outros ícones são para adicionar comentários
                 icon.className = 'fas fa-comment-dots comment-icon';
                 icon.title = 'Adicionar anotação';
                 icon.addEventListener('click', () => openCommentModal(anchorId));
@@ -1032,7 +1031,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch(e) {
             console.error("Falha ao buscar anotações por parágrafo.", e);
         }
-        renderCommentUI(); // Desenha os ícones e comentários existentes
+        renderCommentUI(); 
     }
 
     document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
@@ -1051,10 +1050,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function indexArticles() {
         lawContentEl.querySelectorAll('p, strong, b').forEach(el => {
-            // Verifica se o elemento já não tem um ID para não sobrescrever
             if (el.id) return;
-
-            // Tenta encontrar o padrão "Art. X" no início do texto do elemento
             const match = el.textContent.trim().match(/^(Art(igo)?\.?\s*)(\d+)/i);
             if (match) {
                  el.id = `art-${match[3]}`;
@@ -1227,19 +1223,9 @@ document.addEventListener("DOMContentLoaded", function () {
         applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
         if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
-        // Etapa 1: Busca os comentários e desenha a UI (ícones e balões).
-        // Isso pode modificar a estrutura do DOM, então deve vir antes da aplicação de marcações.
         await initCommentSystem();
-
-        // Etapa 2: Aplica as marcações de texto (negrito/highlight) sobre o DOM.
-        // Isso também modifica a estrutura, então deve vir antes da indexação final.
         applyAllMarkups(lawContentEl, currentMarkups);
-
-        // Etapa 3: Indexa os artigos para a busca "Ir para".
-        // Executado por último, para garantir que o DOM está estável e os IDs não serão perdidos.
         indexArticles();
-
-        // Etapa 4: Atualiza a barra de progresso
         updateProgressBar();
     }
 
