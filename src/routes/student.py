@@ -169,8 +169,7 @@ def filter_laws():
                     "is_favorite": is_favorite
                 })
 
-        is_hierarchical_filter_active = selected_subject_id_str or selected_diploma_id_str or selected_status or show_favorites
-
+        # Removido: is_hierarchical_filter_active não era usado
         children_final = children_to_display
 
         if search_query:
@@ -210,7 +209,7 @@ def filter_laws():
 
 
 # =====================================================================
-# <<< INÍCIO: FUNÇÃO view_law REESTRUTURADA >>>
+# <<< INÍCIO: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
 # =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
@@ -257,7 +256,7 @@ def view_law(law_id):
                            is_favorited=is_favorited,
                            display_content=content_to_display)
 # =====================================================================
-# <<< FIM: FUNÇÃO view_law REESTRUTURADA >>>
+# <<< FIM: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
 # =====================================================================
 
 
@@ -382,14 +381,12 @@ def handle_user_notes(law_id):
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
 
-# --- INÍCIO: NOVA ROTA PARA SALVAR MARCAÇÕES DE TEXTO ---
 @student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
 @login_required
 def save_law_markup(law_id):
     """
     Recebe o conteúdo HTML de uma lei com as marcações do usuário e salva no banco de dados.
     """
-    # Garante que a lei para a qual estamos salvando existe.
     Law.query.get_or_404(law_id)
 
     try:
@@ -398,15 +395,11 @@ def save_law_markup(law_id):
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
 
         content = data.get('content')
-
-        # Procura por uma marcação existente para este usuário e lei
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
 
         if user_markup:
-            # Se já existe, apenas atualiza o conteúdo
             user_markup.content = content
         else:
-            # Se não existe, cria um novo registro
             new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
             db.session.add(new_markup)
 
@@ -417,8 +410,6 @@ def save_law_markup(law_id):
         db.session.rollback()
         logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
-# --- FIM: NOVA ROTA PARA SALVAR MARCAÇÕES DE TEXTO ---
-
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
 @login_required
