@@ -95,6 +95,12 @@ def delete_subject(subject_id):
 @login_required
 @admin_required
 def add_law():
+    # =====================================================================
+    # <<< INÍCIO DA MODIFICAÇÃO >>>
+    # Pega o ID do pai da URL (ex: /laws/add?parent_id=123)
+    # =====================================================================
+    pre_selected_parent_id = request.args.get('parent_id', type=int)
+    
     subjects = Subject.query.order_by(Subject.name).all()
     normative_acts = Law.query.filter(Law.parent_id.is_(None)).order_by(Law.title).all()
 
@@ -108,7 +114,8 @@ def add_law():
 
         if not title:
             flash("O Título é obrigatório.", "danger")
-            return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts)
+            # Passa a variável de pré-seleção de volta em caso de erro no formulário
+            return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts, pre_selected_parent_id=pre_selected_parent_id)
 
         new_law = Law(
             title=title, 
@@ -136,7 +143,16 @@ def add_law():
         flash("Item de estudo adicionado com sucesso!", "success")
         return redirect(url_for("admin.dashboard"))
 
-    return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts)
+    # =====================================================================
+    # <<< MODIFICAÇÃO CORRESPONDENTE >>>
+    # Passa a variável `pre_selected_parent_id` para o template
+    # =====================================================================
+    return render_template("admin/add_edit_law.html", 
+                           law=None, 
+                           subjects=subjects, 
+                           normative_acts=normative_acts,
+                           pre_selected_parent_id=pre_selected_parent_id)
+
 
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
 @login_required
@@ -240,9 +256,6 @@ def reset_user_password(user_id):
         return redirect(url_for("admin.manage_users"))
     return render_template("admin/reset_password.html", user=user)
 
-# =====================================================================
-# <<< INÍCIO DA LÓGICA CORRIGIDA E COMPLETA PARA AVISOS >>>
-# =====================================================================
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -259,7 +272,6 @@ def manage_announcements():
         else:
             try:
                 if announcement_id:
-                    # Atualiza um aviso existente
                     announcement = Announcement.query.get_or_404(int(announcement_id))
                     announcement.title = title
                     announcement.content = content
@@ -267,7 +279,6 @@ def manage_announcements():
                     announcement.is_fixed = is_fixed
                     flash("Aviso atualizado com sucesso!", "success")
                 else:
-                    # Cria um novo aviso
                     new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed)
                     db.session.add(new_announcement)
                     flash("Aviso adicionado com sucesso!", "success")
@@ -309,6 +320,3 @@ def delete_announcement(announcement_id):
         db.session.rollback()
         flash(f"Erro ao excluir o aviso: {e}", "danger")
     return redirect(url_for('admin.manage_announcements'))
-# =====================================================================
-# <<< FIM DA LÓGICA CORRIGIDA E COMPLETA PARA AVISOS >>>
-# =====================================================================
