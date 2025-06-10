@@ -1172,6 +1172,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('decrease-font-btn').addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
     document.getElementById('toggle-font-family-btn').addEventListener('click', () => {
         lawContentEl.classList.toggle('font-serif');
+    // === Adicionado: botões de formatação de seleção (mousedown para manter seleção) ===
+['format-bold-btn', 'format-highlight-btn'].forEach(id => {
+    const cmd = id === 'format-bold-btn' ? 'bold' : 'highlight';
+    const btn = document.getElementById(id);
+    btn?.addEventListener('mousedown', e => {
+        e.preventDefault();              // impede perda do foco/seleção
+        applyFormat(cmd);
+    });
+});
         
     // === Adicionado: botões de formatação de seleção ===
 document.getElementById('format-bold-btn')
