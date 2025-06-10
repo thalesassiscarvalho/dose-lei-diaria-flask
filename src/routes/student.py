@@ -196,10 +196,10 @@ def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
-    # Verifica se deve pontuar: apenas se não houver progresso ou se nunca foi concluído antes
+    # A condição para pontuar é se o progresso não existir OU se a data de conclusão for nula.
     should_award_points = not progress or not progress.completed_at
 
-    # Sempre marca o status como concluído se não estiver
+    # Apenas executa a lógica se o status não for 'concluido'
     if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
@@ -207,16 +207,16 @@ def mark_complete(law_id):
         
         progress.status = 'concluido'
         
-        # A data de conclusão só é definida na PRIMEIRA vez
+        # A data de conclusão só é definida na PRIMEIRA vez que o tópico é completado.
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
         
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
-            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
+            flash(f"Tópico \"{law.title}\" concluído! Você ganhou {points_to_award} pontos.", "success")
         else:
-            flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
+            flash(f"Tópico \"{law.title}\" concluído novamente!", "info")
 
         unlocked = check_and_award_achievements(current_user)
         if unlocked:
@@ -228,7 +228,7 @@ def mark_complete(law_id):
             db.session.rollback()
             flash(f"Erro ao salvar progresso: {e}", "danger")
     else:
-        flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
+        flash(f"Você já marcou \"{law.title}\" como concluído.", "info")
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
@@ -239,10 +239,8 @@ def review_law(law_id):
     if not progress:
         return jsonify(success=False, error="Progresso não encontrado."), 404
     
+    # Apenas muda o status, mantendo a data da primeira conclusão como registro.
     progress.status = 'em_andamento'
-    # MODIFICAÇÃO: Não apagar a data de conclusão. Ela agora é um registro histórico.
-    # A linha abaixo foi REMOVIDA:
-    # progress.completed_at = None 
     
     try:
         db.session.commit()
