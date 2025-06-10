@@ -5,7 +5,6 @@ from sqlalchemy.orm import backref
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    # MODIFICADO: Alterado o backref para não conflitar com a nova relação em Law
     laws = db.relationship("Law", backref="subject", lazy=True, foreign_keys='Law.subject_id')
 
     def __repr__(self):
@@ -18,23 +17,17 @@ class Law(db.Model):
     content = db.Column(db.Text, nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True)
     audio_url = db.Column(db.String(500), nullable=True)
-
-    # =====================================================================
-    # <<< INÍCIO: CAMPOS PARA A NOVA ESTRUTURA HIERÁRQUICA >>>
-    # =====================================================================
-    
-    # Campo que armazena o ID do pai. Se for nulo, é um item principal (Diploma).
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
 
-    # Relação para acessar os filhos de um item principal (Diploma).
-    # A cascata garante que, se um Diploma for deletado, todos os seus Tópicos filhos também serão.
-    children = db.relationship('Law', 
-                               backref=backref('parent', remote_side=[id]), 
-                               lazy='dynamic', 
-                               cascade="all, delete-orphan")
-    
     # =====================================================================
-    # <<< FIM: CAMPOS PARA A NOVA ESTRUTURA HIERÁRQUICA >>>
+    # <<< INÍCIO DA CORREÇÃO DEFINITIVA >>>
+    # O parâmetro 'lazy="dynamic"' foi REMOVIDO da relação abaixo.
+    # =====================================================================
+    children = db.relationship('Law', 
+                               backref=backref('parent', remote_side=[id]),
+                               cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO DEFINITIVA >>>
     # =====================================================================
 
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
