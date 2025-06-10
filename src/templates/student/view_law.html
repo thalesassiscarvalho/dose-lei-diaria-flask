@@ -774,6 +774,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return { start: startOffset, end: endOffset };
     }
     
+    /**
+     * CORREÇÃO FINAL: Adicionada uma verificação para ignorar nós de texto inválidos.
+     */
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
         const textNodes = getTextNodes(container);
@@ -781,6 +784,12 @@ document.addEventListener("DOMContentLoaded", function () {
         let foundStart = false;
 
         for (const node of textNodes) {
+            // **BLINDAGEM ADICIONADA AQUI**
+            // Ignora nós que possam ser inválidos ou vazios para prevenir o erro.
+            if (node.nodeValue === null) {
+                continue;
+            }
+            
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
