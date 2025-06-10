@@ -194,9 +194,6 @@ def filter_laws():
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
 
 
-# =====================================================================
-# <<< INÍCIO: FUNÇÃO view_law ATUALIZADA PARA O NOVO SISTEMA DE MARCAÇÕES >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
@@ -241,9 +238,6 @@ def view_law(law_id):
                            is_favorited=is_favorited,
                            display_content=content_to_display,
                            markups_json=markups_json) # Envia as marcações para o template
-# =====================================================================
-# <<< FIM: FUNÇÃO view_law ATUALIZADA >>>
-# =====================================================================
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -285,7 +279,7 @@ def mark_complete(law_id):
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
-            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
+            flash(f"ATUALIZACAO FUNCIONOU! Lei {law.title} concluída!", "success")
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
 
@@ -373,15 +367,13 @@ def handle_user_notes(law_id):
         return jsonify(success=True, message="Anotações salvas!")
 
 
-# =====================================================================
-# <<< INÍCIO: FUNÇÃO CORRIGIDA >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
 @login_required
 def save_law_markup(law_id):
     """
     Recebe uma LISTA de marcações (offsets) do cliente e as salva.
-    Este método é muito mais eficiente do que salvar o HTML inteiro.
+    Esta versão usa um método de salvamento mais robusto (db.session.add)
+    para garantir a consistência da transação.
     """
     Law.query.get_or_404(law_id)
     try:
@@ -391,7 +383,7 @@ def save_law_markup(law_id):
 
         markups_data = data['markups']
 
-        # Estratégia "Delete-and-Replace" com correção para garantir a consistência da sessão.
+        # Estratégia "Delete-and-Replace" com a máxima segurança de sessão.
         UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete(synchronize_session='fetch')
 
         # Cria as novas marcações a partir da lista recebida.
@@ -411,19 +403,20 @@ def save_law_markup(law_id):
             )
             new_markups.append(new_markup)
 
+        # --- ALTERAÇÃO PRINCIPAL ---
+        # Em vez de usar 'bulk_save_objects', adicionamos cada objeto
+        # individualmente. Isso é mais explícito e confiável.
         if new_markups:
-            db.session.bulk_save_objects(new_markups)
+            for markup in new_markups:
+                db.session.add(markup)
 
         db.session.commit()
         return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
 
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao salvar marcações otimizadas para law_id {law_id} para o usuário {current_user.id}: {e}")
+        logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
-# =====================================================================
-# <<< FIM: FUNÇÃO CORRIGIDA >>>
-# =====================================================================
 
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
