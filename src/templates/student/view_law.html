@@ -835,10 +835,11 @@
     {% if law.description %}
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
     {% endif %}
-    
-    {# O conteúdo da lei, possivelmente com marcações prévias do usuário, é renderizado aqui. #}
-    {{ user_law_markup | default(law.content) | safe }}
+
+    {# Esta linha agora usa a variável 'display_content' que é preparada de forma segura no backend #}
+    {{ display_content | safe }}
 </div>
+
 
 <div class="bookmark-section">
     <h3 class="text-lg font-medium text-gray-800 mb-2">Marcar onde parei:</h3>
