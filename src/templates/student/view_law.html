@@ -1240,9 +1240,30 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
-    
+
     // =================================================================
-    // <<< INÍCIO: NOVA LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
+    // <<< INÍCIO: NOVA LÓGICA PARA BLOQUEAR CTRL+C NA LEI >>>
+    // =================================================================
+    if (lawContent) {
+        lawContent.addEventListener('copy', function(event) {
+            // Impede a ação padrão de cópia
+            event.preventDefault();
+            
+            // Opcional: exibe um alerta para o usuário
+            alert('A cópia deste conteúdo está desabilitada para proteger a propriedade intelectual.');
+            
+            // Opcional: em vez de bloquear, você pode copiar um texto alternativo.
+            // Ex: const customText = 'Conteúdo protegido por direitos autorais. Visite estudoleiseca.com.br';
+            // Ex: navigator.clipboard.writeText(customText);
+        });
+    }
+    // =================================================================
+    // <<< FIM: NOVA LÓGICA PARA BLOQUEAR CTRL+C NA LEI >>>
+    // =================================================================
+    
+
+    // =================================================================
+    // <<< INÍCIO: LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
     // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatHighlightBtn = document.getElementById('format-highlight-btn');
@@ -1253,18 +1274,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!selection.rangeCount || selection.isCollapsed) return;
 
         const range = selection.getRangeAt(0);
-        // Garante que a marcação está acontecendo dentro do contêiner da lei
         if (!lawContent.contains(range.commonAncestorContainer)) {
             return;
         }
         
-        // Habilita a edição para usar o execCommand e desabilita logo em seguida
         lawContent.setAttribute('contenteditable', 'true');
         
         if (command === 'bold') {
             document.execCommand('bold', false, null);
         } else if (command === 'highlight') {
-            // Usamos 'insertHTML' para ter controle sobre a tag/classe, em vez de 'backColor' que insere style.
             const selectionHtml = selection.toString();
             const span = `<span class="user-text-highlight">${selectionHtml}</span>`;
             document.execCommand('insertHTML', false, span);
@@ -1272,14 +1290,11 @@ document.addEventListener("DOMContentLoaded", function () {
         
         lawContent.setAttribute('contenteditable', 'false');
         
-        // Dispara o salvamento automático com um pequeno atraso
         debounceSaveMarkup();
     }
     
     function debounceSaveMarkup() {
-        // Cancela o timeout anterior se houver
         clearTimeout(saveMarkupTimeout);
-        // Configura um novo timeout para salvar após 2 segundos da última edição
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
@@ -1287,9 +1302,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const content = lawContent.innerHTML;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        console.log("Salvando marcações..."); // Log para depuração
+        console.log("Salvando marcações...");
         
         try {
+            // IMPORTANTE: A rota '/student/law/${lawId}/save_markup' deve existir no seu backend!
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
                 method: 'POST',
                 headers: {
@@ -1299,11 +1315,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({ content: content })
             });
             
+            if (!response.ok) {
+                // Se a resposta não for OK (ex: 404, 500), lança um erro para ser pego pelo catch
+                throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
+            }
+
             const data = await response.json();
             
             if (data.success) {
                 console.log("Marcações salvas com sucesso!");
-                // Poderia adicionar um feedback visual sutil aqui, se desejado
             } else {
                 console.error("Falha ao salvar marcações:", data.error);
                 alert("Ocorreu um erro ao salvar suas marcações. Tente novamente.");
@@ -1317,7 +1337,7 @@ document.addEventListener("DOMContentLoaded", function () {
     formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     formatHighlightBtn.addEventListener('click', () => applyMarkup('highlight'));
     // =================================================================
-    // <<< FIM: NOVA LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
+    // <<< FIM: LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
     // =================================================================
 
 
