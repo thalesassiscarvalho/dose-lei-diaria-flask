@@ -65,14 +65,17 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* Proteção contra seleção de texto para cópia - Mantida conforme original */
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
+        /* A proteção contra cópia (user-select: none) foi REMOVIDA para permitir a marcação de texto. */
+        /* A proteção de impressão via @media print foi mantida. */
         /* Adicionando borda azul clara */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
+
+    /* INÍCIO: NOVO ESTILO PARA MARCA-TEXTO DO USUÁRIO */
+    .user-text-highlight {
+        background-color: #fef9c3; /* Amarelo claro (Tailwind yellow-100) */
+    }
+    /* FIM: NOVO ESTILO PARA MARCA-TEXTO DO USUÁRIO */
 
     .law-content-container h1, .law-content-container h2, .law-content-container h3 {
         margin-top: 1.5em;
@@ -90,6 +93,7 @@
     .law-content-container li {
         margin-bottom: 0.5em;
     }
+    /* Estilos para tags de formatação que serão salvas */
     .law-content-container strong { font-weight: bold; }
     .law-content-container em { font-style: italic; }
     .law-content-container u { text-decoration: underline; }
@@ -802,9 +806,11 @@
             <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i><span>Minhas Anotações</span></button>
         </div>
         <div class="font-control-group flex items-center space-x-2">
-             <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
-             <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
-             <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
+            <button id="format-bold-btn" class="font-control-btn" title="Negrito (selecione o texto)"><b>B</b></button>
+            <button id="format-highlight-btn" class="font-control-btn" title="Marca-texto (selecione o texto)"><i class="fas fa-highlighter"></i></button>
+            <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
+            <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
+            <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
        </div>
     </div>
 
@@ -830,7 +836,8 @@
         <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
     {% endif %}
     
-    {{ law.content | safe }}
+    {# O conteúdo da lei, possivelmente com marcações prévias do usuário, é renderizado aqui. #}
+    {{ user_law_markup | default(law.content) | safe }}
 </div>
 
 <div class="bookmark-section">
@@ -925,6 +932,9 @@
 {{ super() }}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const lawId = '{{ law.id }}';
+    const lawContent = document.getElementById('law-content');
+
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
         const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -951,7 +961,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
     function indexArticles() {
-        const articleElements = document.getElementById('law-content').querySelectorAll('p, strong, b');
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
         const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
         articleElements.forEach(el => {
             const match = el.textContent.trim().match(articleRegex);
@@ -983,10 +993,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function findAndGoToText(text) {
         if (!text || text.length < 3) return;
-        const lawContentEl = document.getElementById('law-content');
-        const highlighted = lawContentEl.querySelectorAll('span.highlight-article-search');
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
         highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
-        const walker = document.createTreeWalker(lawContentEl, NodeFilter.SHOW_TEXT, null, false);
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
         let node;
         let firstMatch = null;
         while (node = walker.nextNode()) {
@@ -1044,7 +1053,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     indexArticles();
 
-    // LÓGICA ATUALIZADA DOS BOTÕES DE FILTRO
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
@@ -1053,10 +1061,9 @@ document.addEventListener("DOMContentLoaded", function () {
         
         button.addEventListener("click", function () {
             isVisible = !isVisible;
-            const lawContentEl = document.getElementById('law-content');
             const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
                 ? document.querySelectorAll(contentSelector)
-                : lawContentEl.querySelectorAll(contentSelector);
+                : lawContent.querySelectorAll(contentSelector);
             
             elementsToToggle.forEach(el => {
                 el.classList.toggle("conteudo-oculto", !isVisible);
@@ -1201,14 +1208,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function loadNotes() {
-        const lawId = window.location.pathname.split('/').pop();
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
             if (d.success && d.content) notesEditor.innerHTML = d.content;
         }).catch(e => console.error("Erro ao carregar anotações gerais:", e));
     }
 
     saveNotesBtn.addEventListener('click', function() {
-        const lawId = window.location.pathname.split('/').pop();
         const content = notesEditor.innerHTML;
         const csrfToken = document.querySelector('input[name="csrf_token"]').value;
         const originalText = this.innerHTML;
@@ -1235,6 +1240,86 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
+    
+    // =================================================================
+    // <<< INÍCIO: NOVA LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
+    // =================================================================
+    const formatBoldBtn = document.getElementById('format-bold-btn');
+    const formatHighlightBtn = document.getElementById('format-highlight-btn');
+    let saveMarkupTimeout;
+
+    function applyMarkup(command) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount || selection.isCollapsed) return;
+
+        const range = selection.getRangeAt(0);
+        // Garante que a marcação está acontecendo dentro do contêiner da lei
+        if (!lawContent.contains(range.commonAncestorContainer)) {
+            return;
+        }
+        
+        // Habilita a edição para usar o execCommand e desabilita logo em seguida
+        lawContent.setAttribute('contenteditable', 'true');
+        
+        if (command === 'bold') {
+            document.execCommand('bold', false, null);
+        } else if (command === 'highlight') {
+            // Usamos 'insertHTML' para ter controle sobre a tag/classe, em vez de 'backColor' que insere style.
+            const selectionHtml = selection.toString();
+            const span = `<span class="user-text-highlight">${selectionHtml}</span>`;
+            document.execCommand('insertHTML', false, span);
+        }
+        
+        lawContent.setAttribute('contenteditable', 'false');
+        
+        // Dispara o salvamento automático com um pequeno atraso
+        debounceSaveMarkup();
+    }
+    
+    function debounceSaveMarkup() {
+        // Cancela o timeout anterior se houver
+        clearTimeout(saveMarkupTimeout);
+        // Configura um novo timeout para salvar após 2 segundos da última edição
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
+    }
+    
+    async function saveLawMarkup() {
+        const content = lawContent.innerHTML;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        console.log("Salvando marcações..."); // Log para depuração
+        
+        try {
+            const response = await fetch(`/student/law/${lawId}/save_markup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ content: content })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log("Marcações salvas com sucesso!");
+                // Poderia adicionar um feedback visual sutil aqui, se desejado
+            } else {
+                console.error("Falha ao salvar marcações:", data.error);
+                alert("Ocorreu um erro ao salvar suas marcações. Tente novamente.");
+            }
+        } catch (error) {
+            console.error("Erro de rede ao salvar marcações:", error);
+            alert("Ocorreu um erro de comunicação ao salvar suas marcações.");
+        }
+    }
+
+    formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
+    formatHighlightBtn.addEventListener('click', () => applyMarkup('highlight'));
+    // =================================================================
+    // <<< FIM: NOVA LÓGICA PARA MARCAÇÃO DE TEXTO NA LEI >>>
+    // =================================================================
+
 
     // =================================================================
     // <<< INÍCIO: LÓGICA PARA FAVORITAR A LEI >>>
@@ -1287,8 +1372,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // =================================================================
     // <<< INÍCIO: LÓGICA PARA O SISTEMA DE ANOTAÇÕES POR PARÁGRAFO >>>
     // =================================================================
-    const lawId = '{{ law.id }}';
-    const lawContentForComments = document.getElementById('law-content');
+    const lawContentForComments = lawContent;
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTitle = document.getElementById('comment-modal-title');
     const modalTextarea = document.getElementById('comment-modal-textarea');
@@ -1501,18 +1585,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // =================================================================
     // <<< INÍCIO: LÓGICA PARA CONTROLE DE FONTE >>>
     // =================================================================
-    const lawContentContainer = document.getElementById('law-content');
     const increaseFontBtn = document.getElementById('increase-font-btn');
     const decreaseFontBtn = document.getElementById('decrease-font-btn');
     const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
 
-    // Lógica para Tamanho da Fonte
     const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
-    let currentSizeIndex = 1; // Padrão é 'font-size-md'
+    let currentSizeIndex = 1;
 
     function applyFontSize(sizeClass) {
-        fontSizes.forEach(s => lawContentContainer.classList.remove(s));
-        lawContentContainer.classList.add(sizeClass);
+        fontSizes.forEach(s => lawContent.classList.remove(s));
+        lawContent.classList.add(sizeClass);
         localStorage.setItem('fontSize', sizeClass);
         currentSizeIndex = fontSizes.indexOf(sizeClass);
     }
@@ -1531,29 +1613,27 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Lógica para Tipo de Fonte (Serif/Sans-serif)
     function applyFontFamily(fontType) {
         if (fontType === 'serif') {
-            lawContentContainer.classList.add('font-serif');
+            lawContent.classList.add('font-serif');
         } else {
-            lawContentContainer.classList.remove('font-serif');
+            lawContent.classList.remove('font-serif');
         }
         localStorage.setItem('fontFamily', fontType);
     }
 
     toggleFontFamilyBtn.addEventListener('click', () => {
-        const isSerif = lawContentContainer.classList.contains('font-serif');
+        const isSerif = lawContent.classList.contains('font-serif');
         applyFontFamily(isSerif ? 'sans' : 'serif');
     });
 
-    // Aplicar preferências salvas ao carregar a página
     const savedFontSize = localStorage.getItem('fontSize');
     const savedFontFamily = localStorage.getItem('fontFamily');
 
     if (savedFontSize && fontSizes.includes(savedFontSize)) {
         applyFontSize(savedFontSize);
     } else {
-        applyFontSize('font-size-md'); // Aplica o padrão se nada for salvo
+        applyFontSize('font-size-md');
     }
     
     if (savedFontFamily) {
@@ -1590,7 +1670,6 @@ document.addEventListener("DOMContentLoaded", function () {
         applyTheme(newTheme);
     });
 
-    // Aplica o tema salvo ao carregar a página
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
     // =================================================================
