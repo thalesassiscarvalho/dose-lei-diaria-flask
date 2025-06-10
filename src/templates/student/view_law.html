@@ -863,6 +863,7 @@
     </div>
 </div>
 
+{% if law.useful_links and law.useful_links.count() > 0 %}
 <div class="mt-8" id="links-section">
     <div class="links-container bg-white border border-green-200 rounded-lg shadow-sm">
         <div class="p-4 bg-green-50 border-b border-green-200 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
@@ -870,22 +871,19 @@
             <i class="fas fa-chevron-down transition-transform duration-300" id="links-chevron"></i>
         </div>
         <div class="p-4 hidden" id="links-content-area">
-            {% if law.useful_links and law.useful_links.count() > 0 %}
-                <ul class="list-disc pl-5 space-y-2">
-                    {% for link in law.useful_links %}
-                        <li>
-                            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                                {{ link.title }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-gray-500 italic">Nenhum link útil adicionado para esta lei.</p>
-            {% endif %}
+            <ul class="list-disc pl-5 space-y-2">
+                {% for link in law.useful_links %}
+                    <li>
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                            {{ link.title }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
+{% endif %}
 {% if not is_completed %}
 <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
