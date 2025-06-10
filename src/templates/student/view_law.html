@@ -758,6 +758,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ((node = walker.nextNode())) {
+            // CORREÇÃO: Ignora texto que pertence a um comentário de parágrafo
+            if (node.parentElement.closest('.comment-display')) {
+                continue;
+            }
+
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -805,7 +810,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /**
      * Após uma formatação visual, esta função varre todo o conteúdo,
-     * reconstrói la lista de marcações do zero e aciona o salvamento.
+     * reconstrói a lista de marcações do zero e aciona o salvamento.
      * Esta é a parte "inteligente" da nova abordagem.
      */
     function rebuildAndSave() {
@@ -816,6 +821,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
         let node;
         while ((node = walker.nextNode())) {
+            // CORREÇÃO: Ignora texto que pertence a um comentário de parágrafo
+            if (node.parentElement.closest('.comment-display')) {
+                continue;
+            }
+            
             const parent = node.parentNode;
             let type = null;
 
