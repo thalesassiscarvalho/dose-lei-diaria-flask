@@ -911,9 +911,9 @@ applySavedMarkups();
             let type = null;
             // A verificação com .closest() é mais robusta que .parentNode.
             // Ela encontra o ancestral mais próximo que corresponda à tag ou classe.
-            if (node.parentElement.closest('strong, b')) {
+            if (node.parentElement.closest('strong, b') || (node.parentElement.tagName === 'SPAN' && (node.parentElement.style.fontWeight === 'bold' || parseInt(node.parentElement.style.fontWeight||0) >= 600))) {
                 type = 'bold';
-            } else if (node.parentElement.closest('.user-text-highlight')) {
+            } else if (node.parentElement.closest('.user-text-highlight') || (node.parentElement.tagName === 'SPAN' && node.parentElement.classList.contains('user-text-highlight'))) {
                 type = 'highlight';
             }
 
@@ -943,25 +943,38 @@ applySavedMarkups();
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
-        document.execCommand('styleWithCSS', false, true);
+        // Garante que execCommand use elementos em vez de CSS inline
+        document.execCommand('styleWithCSS', false, false);
+
         if (type === 'highlight') {
             document.execCommand('hiliteColor', false, '#fef9c3');
+            // Converte qualquer <span style> gerado pelo browser em <span class="user-text-highlight">
             lawContentEl.querySelectorAll('span[style]').forEach(el => {
                 if (el.style.backgroundColor) {
                     el.classList.add('user-text-highlight');
-                    el.style.backgroundColor = '';
+                    el.removeAttribute('style');
                 }
             });
-        } else {
+        } else if (type === 'bold') {
             document.execCommand('bold', false, null);
+            // Alguns navegadores produzem <span style="font-weight: bold;">. Convertemos para <strong>
+            lawContentEl.querySelectorAll('span[style]').forEach(el => {
+                const fw = el.style.fontWeight;
+                if (fw && (fw === 'bold' or fw === '700' or parseInt(fw) >= 600)) {
+                    const strongEl = document.createElement('strong');
+                    strongEl.innerHTML = el.innerHTML;
+                    el.replaceWith(strongEl);
+                }
+            });
         }
-        
-        
-        // Salva imediatamente para garantir persistência mesmo se o usuário sair rápido da página
+
+        // Remove ranges salvos para evitar sobreposição duplicada
+        savedRange = null;
+
+        // Atualiza o snapshot das marcações e salva
         scanAndSave();
-        // Chama o salvamento sem esperar pelo debounce
-        saveLawMarkup();
-    }
+        saveLawMarkup(); // Salva imediatamente
+}
     
     // Função para salvar com atraso (debounce)
     function debounceSaveMarkup() {
