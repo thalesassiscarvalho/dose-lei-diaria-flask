@@ -285,7 +285,7 @@ def mark_complete(law_id):
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
-            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
+            flash(f"ATUALIZACAO FUNCIONOU! Lei {law.title} concluída!", "success")
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
 
