@@ -65,11 +65,7 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* ADICIONADO: Proteção contra cópia reativada */
-        user-select: none;
-        -webkit-user-select: none; /* Safari */
-        -moz-user-select: none;    /* Firefox */
-        -ms-user-select: none;     /* IE10+/Edge */
+        /* A proteção contra cópia (user-select: none) foi REMOVIDA para permitir a marcação de texto. */
         /* A proteção de impressão via @media print foi mantida. */
         /* Adicionando borda azul clara */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
@@ -357,7 +353,6 @@
     .paragraph-wrapper {
         position: relative;
         padding-right: 30px; /* Espaço para o ícone de anotação */
-        transition: padding-right 0.3s ease; /* Adicionada transição suave */
     }
     .comment-icon {
         position: absolute;
@@ -402,15 +397,6 @@
     }
     .comment-delete-btn:hover { color: #ef4444; }
 
-    /* ADICIONADO: Estilo para ocultar a UI de anotações (ícones e balões) */
-    .law-content-container.hide-annotation-ui .paragraph-wrapper {
-        padding-right: 0;
-    }
-    .law-content-container.hide-annotation-ui .comment-icon,
-    .law-content-container.hide-annotation-ui .comment-display {
-        display: none !important;
-    }
-
     /* Modal de Anotação */
     .comment-modal-backdrop {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -451,6 +437,7 @@
     .dark-mode .completed-banner { background-color: #064e3b; color: #a7f3d0; border-color: #059669; }
     .dark-mode .last-read-info { background-color: #3730a3; color: #c7d2fe; border-color: #4f46e5; }
     .dark-mode .bookmark-section { background-color: #1e293b; border-color: #374151; }
+    .dark-mode .bookmark-section h3 { color: #e5e7eb; }
     .dark-mode #sticky-action-bar { background-color: #111827; border-color: #374151; }
     .dark-mode #sticky-action-bar label { color: #d1d5db; }
     .dark-mode #sticky-action-bar input[type="text"] { background-color: #374151; color: #e5e7eb; border-color: #4b5563; }
@@ -1078,19 +1065,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
     setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
     setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
-    
-    // ATUALIZADO: Nova lógica para o botão "Minhas Anotações" que oculta ícones e balões via CSS
-    const toggleMyAnnotationsBtn = document.getElementById('toggle-my-comments-btn');
-    if (toggleMyAnnotationsBtn) {
-        let annotationsUIVisible = true; // Começa visível por padrão
-        toggleMyAnnotationsBtn.addEventListener('click', function() {
-            annotationsUIVisible = !annotationsUIVisible;
-            // Adiciona/remove a classe no container principal para que o CSS faça o resto
-            lawContentEl.classList.toggle('hide-annotation-ui', !annotationsUIVisible);
-            // Atualiza o ícone do botão
-            this.querySelector('i').className = annotationsUIVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
-        });
-    }
+    setupToggleButton('toggle-my-comments-btn', '.comment-display');
 
     // --- Player de Ondas Neurais ---
     const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
