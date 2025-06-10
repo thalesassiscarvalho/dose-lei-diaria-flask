@@ -727,35 +727,39 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContentEl = document.getElementById('law-content');
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
-    // --- Variáveis globais para armazenar dados e estados ---
+    // --- Variáveis globais ---
     let currentMarkups = {{ markups_json | safe }};
     let lawComments = []; 
     let saveMarkupTimeout;
 
     // =======================================================
-    // INÍCIO: PROTEÇÃO DE CÓPIA (AJUSTADA)
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (ABORDAGEM ROBUSTA COM MUTATION OBSERVER)
     // =======================================================
-    lawContentEl.addEventListener('copy', function(e) {
-        e.preventDefault();
-        console.log('Ação de copiar bloqueada para proteger o conteúdo.');
-    });
 
-    // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO
-    // =======================================================
-    
+    // Função genérica para "atrasar" a execução de uma função.
+    // Evita que a função de salvar seja chamada dezenas de vezes durante uma única edição.
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Função que encontra um trecho de texto baseado em posições (offsets).
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
         const walker = document.createTreeWalker(container, Node.TEXT_NODE);
         let charCount = 0;
         let foundStart = false;
         let node;
-
-        while ((node = walker.nextNode())) {
-            // Ignora texto que pertence a um comentário de parágrafo
-            if (node.parentElement.closest('.comment-display')) {
-                continue;
-            }
+        while (node = walker.nextNode()) {
+            if (node.parentElement.closest('.comment-display')) continue;
+            
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -770,20 +774,16 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
+    // Aplica as marcações salvas (vindas do servidor) na página.
     function applyAllMarkups(container, markups) {
-        // Limpa marcações existentes de forma mais robusta
         container.querySelectorAll('strong, b, span.user-text-highlight').forEach(el => {
             el.replaceWith(...el.childNodes);
         });
         container.normalize();
 
-        if (!markups || markups.length === 0) {
-            console.log("Nenhuma marcação para aplicar.");
-            return;
-        }
+        if (!markups || markups.length === 0) return;
 
         const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
-
         sortedMarkups.forEach(markup => {
             const range = findRangeByOffsets(container, markup.start, markup.end);
             if (range) {
@@ -800,25 +800,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function rebuildAndSave() {
+    // Escaneia o DOM para encontrar todas as marcações e prepara para salvar.
+    // Esta é a função mais importante da nova abordagem.
+    function scanAndSave() {
         const newMarkups = [];
         let runningOffset = 0;
-
         const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
         let node;
-        while ((node = walker.nextNode())) {
+
+        while (node = walker.nextNode()) {
             if (node.parentElement.closest('.comment-display')) {
                 continue;
             }
             
-            const parent = node.parentNode;
             let type = null;
-
-            // ***** CORREÇÃO DEFINITIVA *****
-            // Verifica se o elemento pai é <STRONG> ou <B> para o negrito.
-            if (parent.tagName === 'STRONG' || parent.tagName === 'B') {
+            // A verificação com .closest() é mais robusta que .parentNode.
+            // Ela encontra o ancestral mais próximo que corresponda à tag ou classe.
+            if (node.parentElement.closest('strong, b')) {
                 type = 'bold';
-            } else if (parent.classList && parent.classList.contains('user-text-highlight')) {
+            } else if (node.parentElement.closest('.user-text-highlight')) {
                 type = 'highlight';
             }
 
@@ -836,20 +836,17 @@ document.addEventListener("DOMContentLoaded", function () {
             runningOffset += node.textContent.length;
         }
         
-        currentMarkups = newMarkups;
-        debounceSaveMarkup();
+        // Apenas salva se houver uma mudança real, para evitar chamadas desnecessárias.
+        if (JSON.stringify(currentMarkups) !== JSON.stringify(newMarkups)) {
+            currentMarkups = newMarkups;
+            debounceSaveMarkup();
+        }
     }
-
+    
+    // Simplificado: apenas aplica o estilo visual. O MutationObserver cuidará do resto.
     function applyFormat(type) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
-
-        let container = selection.getRangeAt(0).commonAncestorContainer;
-        container = container.nodeType === 1 ? container : container.parentNode;
-        if (container.closest('.comment-display, p[style*="background-color"]')) {
-            selection.removeAllRanges();
-            return;
-        }
 
         document.execCommand('styleWithCSS', false, true);
         if (type === 'highlight') {
@@ -864,16 +861,18 @@ document.addEventListener("DOMContentLoaded", function () {
             document.execCommand('bold', false, null);
         }
         
-        rebuildAndSave();
         selection.removeAllRanges();
     }
     
+    // Função para salvar com atraso (debounce)
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
+    // Envia os dados para o servidor.
     async function saveLawMarkup() {
+        console.log("Enviando para salvar:", currentMarkups);
         try {
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
                 method: 'POST',
@@ -891,13 +890,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    document.getElementById('format-bold-btn').addEventListener('click', () => applyFormat('bold'));
-    document.getElementById('format-highlight-btn').addEventListener('click', () => applyFormat('highlight'));
-    
     // =======================================================
     // FIM: LÓGICA DE MARCAÇÕES DE TEXTO
     // =======================================================
 
+    // ... (O restante do seu código, como o sistema de comentários, permanece aqui) ...
+    // ... (Ele foi omitido desta resposta para focar na correção, mas deve estar no seu arquivo final) ...
     // =======================================================
     // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
     // =======================================================
@@ -1022,10 +1020,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
     document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
-
-    // =======================================================
-    // FIM: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
-    // =======================================================
 
     // =======================================================
     // INÍCIO: BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
@@ -1216,6 +1210,25 @@ document.addEventListener("DOMContentLoaded", function () {
         indexArticles();
 
         updateProgressBar();
+        
+        // --- INÍCIO: CONFIGURAÇÃO DO MUTATION OBSERVER ---
+        // Prepara a função de escaneamento com um "debounce" para não rodar excessivamente.
+        const debouncedScanAndSave = debounce(scanAndSave, 1500);
+
+        // Cria o observador que vai chamar a função de escaneamento sempre que o DOM mudar.
+        const observer = new MutationObserver((mutations) => {
+            // Não precisamos olhar as 'mutations' em si, apenas saber que algo mudou.
+            debouncedScanAndSave();
+        });
+
+        // Manda o observador vigiar o elemento do conteúdo da lei.
+        observer.observe(lawContentEl, {
+            attributes: true, 
+            childList: true, 
+            subtree: true,
+            characterData: true
+        });
+        // --- FIM: CONFIGURAÇÃO DO MUTATION OBSERVER ---
     }
 
     initializePage();
