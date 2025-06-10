@@ -703,17 +703,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     const originalContentHTML = lawContentEl.innerHTML;
 
-    // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO OTIMIZADA
-    // =======================================================
-    
-    // As marcações são recebidas do backend e inseridas aqui.
+    // --- Variáveis globais para armazenar dados e estados ---
     let currentMarkups = {{ markups_json | safe }};
+    let lawComments = []; // NOVO: Armazenar comentários da lei para evitar múltiplas buscas
     let saveMarkupTimeout;
 
-    /**
-     * Retorna todos os nós de texto dentro de um elemento.
-     */
+    // =======================================================
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (CORRIGIDA)
+    // =======================================================
+    
     function getTextNodes(node) {
         const textNodes = [];
         if (node.nodeType === Node.TEXT_NODE) {
@@ -726,48 +724,39 @@ document.addEventListener("DOMContentLoaded", function () {
         return textNodes;
     }
 
-    /**
-     * Calcula o offset (posição) inicial e final de uma seleção
-     * dentro de um elemento container, relativo ao texto puro.
-     */
     function getSelectionOffsets(container) {
         const selection = window.getSelection();
         if (selection.rangeCount === 0) return null;
 
         const range = selection.getRangeAt(0);
-        const allTextNodes = getTextNodes(container);
-        let startOffset = 0;
-        let endOffset = 0;
-        let charCount = 0;
-
         const preRange = document.createRange();
         preRange.selectNodeContents(container);
         preRange.setEnd(range.startContainer, range.startOffset);
-        startOffset = preRange.toString().length;
+        let startOffset = preRange.toString().length;
 
         preRange.setEnd(range.endContainer, range.endOffset);
-        endOffset = preRange.toString().length;
+        let endOffset = preRange.toString().length;
 
         if (startOffset > endOffset) {
-            [startOffset, endOffset] = [endOffset, startOffset]; // Swap if selection is backwards
+            [startOffset, endOffset] = [endOffset, startOffset];
         }
-
         return { start: startOffset, end: endOffset };
     }
 
-
     /**
-     * Aplica uma lista de marcações a um container.
-     * Esta é a função principal que "desenha" os highlights e negritos.
+     * Aplica todas as marcações (bold/highlight) ao conteúdo.
+     * Esta função agora também reconstrói a UI de anotações e artigos.
      */
     function applyAllMarkups(container, markups) {
-        // Restaura o HTML original para garantir um estado limpo
+        // 1. Restaura o HTML original, limpando tudo (inclusive anotações e IDs de artigos)
         container.innerHTML = originalContentHTML;
         
-        // Ignora aninhamento para simplificar, apenas pega o nó de texto e aplica
-        const textNodes = getTextNodes(container);
+        // 2. MODIFICAÇÃO: Reconstrói os elementos dinâmicos que foram apagados
+        indexArticles();      // Recria os IDs "art-X" para a busca
+        renderCommentUI();    // Redesenha os ícones e anotações por parágrafo
         
-        // Ordena as marcações do final para o começo para não bagunçar os offsets
+        // 3. Agora, aplica as marcações de texto (bold, highlight) sobre o conteúdo reconstruído
+        const textNodes = getTextNodes(container);
         markups.sort((a, b) => b.start - a.start);
 
         let cumulativeLength = 0;
@@ -777,18 +766,16 @@ document.addEventListener("DOMContentLoaded", function () {
             for (const textNode of textNodes) {
                 const nodeStart = cumulativeLength;
                 const nodeEnd = nodeStart + textNode.length;
-                cumulativeLength = nodeEnd;
 
                 if (markup.end > nodeStart && markup.start < nodeEnd) {
                     const range = document.createRange();
                     const start = Math.max(markup.start, nodeStart);
                     const end = Math.min(markup.end, nodeEnd);
 
-                    if (start < end) { // Garante que há algo a ser marcado
+                    if (start < end) {
                         range.setStart(textNode, start - nodeStart);
                         range.setEnd(textNode, end - nodeStart);
                         
-                        // Evita aplicar a mesma marcação duas vezes no mesmo lugar
                         const isProcessed = processedRanges.some(r => r.intersectsNode(range.startContainer));
                         if(isProcessed) continue;
 
@@ -805,30 +792,22 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
                 }
+                cumulativeLength = nodeEnd;
             }
-            cumulativeLength = 0; // Reset for next markup
+            cumulativeLength = 0;
         }
     }
 
-
-    /**
-     * Adiciona ou remove uma marcação da lista e agenda o salvamento.
-     */
     function toggleMarkup(type) {
         const selection = window.getSelection();
-        if (!selection.rangeCount || selection.isCollapsed) return;
-        if (!lawContentEl.contains(selection.anchorNode)) return;
+        if (!selection.rangeCount || selection.isCollapsed || !lawContentEl.contains(selection.anchorNode)) return;
 
         const offsets = getSelectionOffsets(lawContentEl);
-        if (!offsets || offsets.start === offsets.end) return;
-
-        const selectedText = selection.toString().trim();
-        if (!selectedText) return;
+        if (!offsets || offsets.start === offsets.end || !selection.toString().trim()) return;
 
         let markupExists = false;
         let indexToRemove = -1;
 
-        // Verifica se a nova seleção se sobrepõe ou é idêntica a uma existente
         currentMarkups.forEach((m, index) => {
             if (m.type === type && m.start === offsets.start && m.end === offsets.end) {
                 markupExists = true;
@@ -837,10 +816,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
         if (markupExists) {
-            currentMarkups.splice(indexToRemove, 1); // Remove a marcação existente
+            currentMarkups.splice(indexToRemove, 1);
         } else {
-            // Adiciona a nova marcação
-            currentMarkups.push({ type: type, start: offsets.start, end: offsets.end, text: selectedText });
+            currentMarkups.push({ type: type, start: offsets.start, end: offsets.end, text: selection.toString().trim() });
         }
 
         applyAllMarkups(lawContentEl, currentMarkups);
@@ -848,19 +826,12 @@ document.addEventListener("DOMContentLoaded", function () {
         debounceSaveMarkup();
     }
     
-    /**
-     * Agenda o salvamento para evitar chamadas excessivas à API.
-     */
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
-    /**
-     * Envia a lista de marcações para o backend para persistência.
-     */
     async function saveLawMarkup() {
-        console.log("Salvando marcações (abordagem otimizada)...");
         try {
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
                 method: 'POST',
@@ -872,90 +843,157 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("Marcações salvas com sucesso!");
             } else {
                 console.error("Falha ao salvar marcações:", data.error);
-                alert("Ocorreu um erro ao salvar suas marcações. Tente novamente.");
+                alert("Ocorreu um erro ao salvar suas marcações.");
             }
         } catch (error) {
             console.error("Erro de rede ao salvar marcações:", error);
-            alert("Ocorreu um erro de comunicação ao salvar suas marcações.");
         }
     }
 
     document.getElementById('format-bold-btn').addEventListener('click', () => toggleMarkup('bold'));
     document.getElementById('format-highlight-btn').addEventListener('click', () => toggleMarkup('highlight'));
-
-    if (currentMarkups.length > 0) {
-        // Atraso mínimo para garantir que o DOM está pronto para manipulação
-        setTimeout(() => applyAllMarkups(lawContentEl, currentMarkups), 100);
-    }
-    // =======================================================
-    // FIM: LÓGICA DE MARCAÇÕES DE TEXTO OTIMIZADA
-    // =======================================================
-
-
-    // =======================================================
-    // INÍCIO: OUTRAS FUNCIONALIDADES DA PÁGINA
-    // =======================================================
     
-    // --- Barra de Progresso ---
-    const progressBar = document.getElementById('reading-progress-bar');
-    function updateProgressBar() {
-        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-        progressBar.style.width = scrollableHeight > 0 ? (scrollTop / scrollableHeight) * 100 + '%' : '0%';
+    // =======================================================
+    // FIM: LÓGICA DE MARCAÇÕES DE TEXTO
+    // =======================================================
+
+    // =======================================================
+    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO (REATORADO)
+    // =======================================================
+    const modalBackdrop = document.getElementById('comment-modal-backdrop');
+    const modalTextarea = document.getElementById('comment-modal-textarea');
+    let currentAnchorId = null, currentEditingCommentId = null; 
+
+    function openCommentModal(anchorId, commentId = null, content = '') {
+        currentAnchorId = anchorId;
+        currentEditingCommentId = commentId;
+        document.getElementById('comment-modal-title').textContent = commentId ? 'Editar Anotação' : 'Adicionar Anotação';
+        modalTextarea.value = content;
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
     }
-    window.addEventListener('scroll', updateProgressBar);
-    updateProgressBar();
+    function closeCommentModal() { modalBackdrop.style.display = 'none'; }
 
-    // --- Navegação e Bookmarks ---
-    const goToNotesBtn = document.getElementById("go-to-notes-btn");
-    const notesSection = document.getElementById("notes-section");
-    const backToTopBtn = document.getElementById("back-to-top-btn");
-    const pageTop = document.getElementById("page-top");
-    const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
-    const lastReadArticleInput = document.getElementById("last_read_article");
-    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
+    function displayComment(comment) {
+        const anchorEl = document.getElementById(comment.anchor_paragraph_id);
+        if (!anchorEl) return;
+        
+        // Remove anotação antiga se já existir, para evitar duplicação ao redesenhar
+        const oldComment = anchorEl.parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
+        if(oldComment) oldComment.remove();
 
-    goToNotesBtn.addEventListener("click", function() {
-        notesSection.scrollIntoView({ behavior: 'smooth' });
-        const notesContentArea = document.getElementById("notes-content-area");
-        if (notesContentArea.classList.contains("hidden")) {
-            setTimeout(() => { document.getElementById("toggle-notes-btn").click(); }, 500);
-        }
-    });
-    backToTopBtn.addEventListener("click", () => pageTop.scrollIntoView({ behavior: 'smooth' }));
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment-display';
+        commentDiv.dataset.commentId = comment.id;
+        commentDiv.innerHTML = `<p>${comment.content.replace(/\n/g, '<br>')}</p><button class="comment-delete-btn" title="Excluir">&times;</button>`;
+        anchorEl.parentNode.insertBefore(commentDiv, anchorEl.nextSibling);
+        anchorEl.parentNode.querySelector('.comment-icon')?.classList.add('has-comment');
 
-    if (saveBookmarkBtn) {
-        saveBookmarkBtn.addEventListener("click", function() {
-            const lastReadArticle = lastReadArticleInput.value.trim();
-            if (!lastReadArticle) return alert("Por favor, informe onde você parou.");
-            if (hiddenLastReadArticleInput) hiddenLastReadArticleInput.value = lastReadArticle;
-            
-            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
-            this.disabled = true;
-            fetch(`/student/save_last_read/${lawId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
-                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
-            }).then(r => r.json()).then(data => {
-                if (data.success) {
-                    this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
-                    setTimeout(() => { this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false; }, 2000);
-                } else {
-                    alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
-                    this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false;
-                }
-            }).catch(error => {
-                alert("Erro de comunicação ao salvar.");
-                this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false;
-            });
+        commentDiv.addEventListener('click', e => {
+            if (e.target.classList.contains('comment-delete-btn')) {
+                e.stopPropagation();
+                if (confirm('Tem certeza que deseja excluir esta anotação?')) deleteComment(comment.id);
+            } else {
+                openCommentModal(comment.anchor_paragraph_id, comment.id, comment.content);
+            }
         });
     }
 
-    // --- Busca de Artigo ---
+    /**
+     * NOVO: Função que DESENHA a UI de anotações. Pode ser chamada a qualquer momento.
+     */
+    function renderCommentUI() {
+        let pIndex = 0;
+        lawContentEl.querySelectorAll('p, li, blockquote').forEach(p => {
+            if (p.closest('.comment-display') || p.parentNode.classList.contains('paragraph-wrapper')) return; // Evita re-embrulhar
+            const anchorId = `law-p-${pIndex++}`; p.id = anchorId;
+            const wrapper = document.createElement('div'); wrapper.className = 'paragraph-wrapper';
+            p.parentNode.insertBefore(wrapper, p); wrapper.appendChild(p);
+            const icon = document.createElement('i'); icon.className = 'fas fa-comment-dots comment-icon';
+            icon.title = 'Adicionar anotação';
+            icon.addEventListener('click', () => openCommentModal(anchorId));
+            wrapper.appendChild(icon);
+        });
+        // Usa a variável global `lawComments` para exibir os comentários
+        lawComments.forEach(displayComment);
+    }
+    
+    async function saveOrUpdateComment() {
+        const content = modalTextarea.value.trim();
+        if (!content) return;
+        const url = currentEditingCommentId ? `/student/comments/${currentEditingCommentId}` : `/student/law/${lawId}/comments`;
+        const method = currentEditingCommentId ? 'PUT' : 'POST';
+        const body = JSON.stringify({ content, anchor_paragraph_id: currentAnchorId });
+        
+        try {
+            const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body });
+            const data = await response.json();
+            if (data.success) {
+                if (method === 'POST') {
+                    lawComments.push(data.comment); // Adiciona o novo comentário à lista local
+                    displayComment(data.comment);
+                } else {
+                    // Atualiza o comentário na lista local
+                    const index = lawComments.findIndex(c => c.id === data.comment.id);
+                    if (index > -1) lawComments[index] = data.comment;
+                    document.querySelector(`.comment-display[data-comment-id='${data.comment.id}'] p`).innerHTML = data.comment.content.replace(/\n/g, '<br>');
+                }
+                closeCommentModal();
+            } else {
+                alert('Erro ao salvar anotação: ' + data.error);
+            }
+        } catch(e) { alert('Erro de comunicação ao salvar anotação.'); }
+    }
+
+    async function deleteComment(commentId) {
+        try {
+            const response = await fetch(`/student/comments/${commentId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
+            const data = await response.json();
+            if (data.success) {
+                document.querySelector(`.comment-display[data-comment-id='${commentId}']`)?.remove();
+                // Remove da lista local
+                lawComments = lawComments.filter(c => c.id !== commentId);
+                // Atualiza o ícone se não houver mais comentários para aquele parágrafo
+                // (Lógica simplificada, para um caso real seria preciso verificar o anchor_id)
+            } else { 
+                alert('Erro ao excluir: ' + data.error);
+            }
+        } catch(e) { alert('Erro de comunicação ao excluir anotação.'); }
+    }
+
+    /**
+     * MODIFICAÇÃO: A função agora busca os dados, armazena e chama a renderização.
+     */
+    async function initCommentSystem() {
+        try {
+            const response = await fetch(`/student/law/${lawId}/comments`);
+            const data = await response.json();
+            if (data.success) {
+                lawComments = data.comments; // Armazena os comentários na variável global
+            }
+        } catch(e) {
+            console.error("Falha ao buscar anotações por parágrafo.", e);
+        }
+        // A renderização é chamada junto com a aplicação inicial das marcações
+    }
+
+    document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
+    document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
+
+    // =======================================================
+    // FIM: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
+    // =======================================================
+
+    // =======================================================
+    // INÍCIO: BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
+    // =======================================================
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
+    /**
+     * MODIFICAÇÃO: Esta função agora pode ser chamada a qualquer momento para reindexar.
+     */
     function indexArticles() {
         lawContentEl.querySelectorAll('p, strong, b').forEach(el => {
             const match = el.textContent.trim().match(/^(Art(igo)?\.?\s*)(\d+)/i);
@@ -963,17 +1001,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function scrollToElement(element, useAnimationClass = true) {
+    function scrollToElement(element) {
         const offsetPosition = element.getBoundingClientRect().top + window.pageYOffset - (stickyActionBar ? stickyActionBar.offsetHeight : 0) - 16;
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        if (useAnimationClass) {
-            element.classList.add('highlight-article');
-            setTimeout(() => element.classList.remove('highlight-article'), 2000);
-        }
+        element.classList.add('highlight-article');
+        setTimeout(() => element.classList.remove('highlight-article'), 2000);
     }
 
     function findAndGoToArticle() {
-        const query = articleSearchInput.value.trim();
+        const query = articleSearchInput.value.trim().replace(/^art\.?\s*/i, ''); // Permite buscar por "art 5" ou "5"
         if (/^\d+$/.test(query)) {
             const target = document.getElementById(`art-${query}`);
             if (target) scrollToElement(target); else alert(`Artigo ${query} não encontrado.`);
@@ -984,24 +1020,46 @@ document.addEventListener("DOMContentLoaded", function () {
     
     goToArticleBtn.addEventListener('click', findAndGoToArticle);
     articleSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); findAndGoToArticle(); } });
-    indexArticles();
+    
+    // --- Barra de Progresso ---
+    const progressBar = document.getElementById('reading-progress-bar');
+    function updateProgressBar() {
+        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        progressBar.style.width = scrollableHeight > 0 ? (scrollTop / scrollableHeight) * 100 + '%' : '0%';
+    }
+    window.addEventListener('scroll', updateProgressBar);
+    
+    // --- Bookmarks e Navegação ---
+    document.getElementById("go-to-notes-btn").addEventListener("click", () => document.getElementById("notes-section").scrollIntoView({ behavior: 'smooth' }));
+    document.getElementById("back-to-top-btn").addEventListener("click", () => document.getElementById("page-top").scrollIntoView({ behavior: 'smooth' }));
+    
+    const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
+    if (saveBookmarkBtn) {
+        saveBookmarkBtn.addEventListener("click", function() {
+            const lastReadArticle = document.getElementById("last_read_article").value.trim();
+            if (!lastReadArticle) return;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...'; this.disabled = true;
+            fetch(`/student/save_last_read/${lawId}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(r => r.json()).then(data => {
+                this.innerHTML = data.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-times mr-2"></i> Erro!';
+            }).catch(() => this.innerHTML = '<i class="fas fa-times mr-2"></i> Erro!')
+              .finally(() => setTimeout(() => { this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false; }, 2000));
+        });
+    }
 
     // --- Toggles de Filtro (Juris, Doutrina, etc.) ---
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
-        
         let isVisible = true;
         button.addEventListener("click", function () {
             isVisible = !isVisible;
-            const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
-                ? document.querySelectorAll(contentSelector)
-                : lawContentEl.querySelectorAll(contentSelector);
-            
+            const elementsToToggle = document.querySelectorAll(contentSelector);
             elementsToToggle.forEach(el => el.classList.toggle("conteudo-oculto", !isVisible));
-            const icon = this.querySelector('i');
-            icon.className = isVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
-            this.title = this.title.includes('Ocultar') ? this.title.replace('Ocultar', 'Mostrar') : this.title.replace('Mostrar', 'Ocultar');
+            this.querySelector('i').className = isVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
         });
     }
     setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
@@ -1035,28 +1093,23 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- Anotações Gerais (Editor inferior) ---
     const notesEditor = document.getElementById('notes-editor');
     document.getElementById('toggle-notes-btn').addEventListener("click", function() {
-        document.getElementById("notes-content-area").classList.toggle("hidden");
-        this.querySelector("#notes-chevron").style.transform = document.getElementById("notes-content-area").classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        const contentArea = document.getElementById("notes-content-area");
+        contentArea.classList.toggle("hidden");
+        this.querySelector("#notes-chevron").style.transform = contentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
     });
     document.getElementById('bold-btn').addEventListener('click', () => document.execCommand('bold'));
     document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic'));
     document.getElementById('highlight-btn').addEventListener('click', () => document.execCommand('hiliteColor', false, '#fef08a'));
     
-    fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
-        if (d.success && d.content) notesEditor.innerHTML = d.content;
-    });
+    fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => { if (d.success && d.content) notesEditor.innerHTML = d.content; });
     document.getElementById('save-notes-btn').addEventListener('click', function() {
         this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...'; this.disabled = true;
         fetch(`/student/law/${lawId}/notes`, {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content: notesEditor.innerHTML })
         }).then(r => r.json()).then(d => {
             this.innerHTML = d.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
-            setTimeout(() => { this.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar Anotações Gerais'; this.disabled = false; }, 2000);
-        });
+        }).finally(() => setTimeout(() => { this.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar Anotações Gerais'; this.disabled = false; }, 2000));
     });
-
-    // --- Proteção contra Cópia ---
-    lawContentEl.addEventListener('copy', e => { e.preventDefault(); alert('A cópia deste conteúdo está desabilitada.'); });
 
     // --- Botão de Favoritar ---
     const favoriteBtn = document.querySelector('.js-favorite-btn');
@@ -1073,104 +1126,20 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // --- Sistema de Anotações por Parágrafo ---
-    const modalBackdrop = document.getElementById('comment-modal-backdrop');
-    const modalTextarea = document.getElementById('comment-modal-textarea');
-    let currentAnchorId = null, currentEditingCommentId = null; 
-
-    function openCommentModal(anchorId, commentId = null, content = '') {
-        currentAnchorId = anchorId; currentEditingCommentId = commentId;
-        document.getElementById('comment-modal-title').textContent = commentId ? 'Editar Anotação' : 'Adicionar Anotação';
-        modalTextarea.value = content;
-        modalBackdrop.style.display = 'flex';
-        modalTextarea.focus();
-    }
-    function closeCommentModal() { modalBackdrop.style.display = 'none'; }
-
-    function displayComment(comment) {
-        const anchorEl = document.getElementById(comment.anchor_paragraph_id);
-        if (!anchorEl) return;
-        const commentDiv = document.createElement('div');
-        commentDiv.className = 'comment-display';
-        commentDiv.dataset.commentId = comment.id;
-        commentDiv.innerHTML = `<p>${comment.content.replace(/\n/g, '<br>')}</p><button class="comment-delete-btn" title="Excluir">&times;</button>`;
-        anchorEl.parentNode.insertBefore(commentDiv, anchorEl.nextSibling);
-        anchorEl.parentNode.querySelector('.comment-icon')?.classList.add('has-comment');
-
-        commentDiv.addEventListener('click', e => {
-            if (e.target.classList.contains('comment-delete-btn')) {
-                e.stopPropagation();
-                if (confirm('Tem certeza?')) deleteComment(comment.id, commentDiv);
-            } else {
-                openCommentModal(null, comment.id, comment.content);
-            }
-        });
-    }
-    
-    async function saveOrUpdateComment() {
-        const content = modalTextarea.value.trim();
-        if (!content) return;
-        const url = currentEditingCommentId ? `/student/comments/${currentEditingCommentId}` : `/student/law/${lawId}/comments`;
-        const method = currentEditingCommentId ? 'PUT' : 'POST';
-        const body = JSON.stringify({ content, anchor_paragraph_id: currentAnchorId });
-        const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body });
-        const data = await response.json();
-        if (data.success) {
-            if (method === 'POST') {
-                displayComment(data.comment);
-            } else {
-                document.querySelector(`.comment-display[data-comment-id='${data.comment.id}'] p`).innerHTML = data.comment.content.replace(/\n/g, '<br>');
-            }
-            closeCommentModal();
-        } else alert('Erro: ' + data.error);
-    }
-
-    async function deleteComment(commentId, el) {
-        const response = await fetch(`/student/comments/${commentId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
-        const data = await response.json();
-        if (data.success) el.remove(); else alert('Erro: ' + data.error);
-    }
-
-    async function initCommentSystem() {
-        let pIndex = 0;
-        lawContentEl.querySelectorAll('p, li, blockquote').forEach(p => {
-            if (p.closest('.comment-display')) return;
-            const anchorId = `law-p-${pIndex++}`; p.id = anchorId;
-            const wrapper = document.createElement('div'); wrapper.className = 'paragraph-wrapper';
-            p.parentNode.insertBefore(wrapper, p); wrapper.appendChild(p);
-            const icon = document.createElement('i'); icon.className = 'fas fa-comment-dots comment-icon';
-            icon.title = 'Adicionar anotação';
-            icon.addEventListener('click', () => openCommentModal(anchorId));
-            wrapper.appendChild(icon);
-        });
-        const response = await fetch(`/student/law/${lawId}/comments`);
-        const data = await response.json();
-        if (data.success) data.comments.forEach(displayComment);
-    }
-    document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
-    document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
-    initCommentSystem();
-
     // --- Controles de Fonte e Tema ---
-    const increaseFontBtn = document.getElementById('increase-font-btn');
-    const decreaseFontBtn = document.getElementById('decrease-font-btn');
-    const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
     const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
     let currentSizeIndex = fontSizes.indexOf(localStorage.getItem('fontSize')) || 1;
-    
     function applyFontSize(sizeClass) {
         fontSizes.forEach(s => lawContentEl.classList.remove(s));
         lawContentEl.classList.add(sizeClass);
         localStorage.setItem('fontSize', sizeClass);
     }
-    increaseFontBtn.addEventListener('click', () => { if(currentSizeIndex < fontSizes.length - 1) applyFontSize(fontSizes[++currentSizeIndex]) });
-    decreaseFontBtn.addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
-    toggleFontFamilyBtn.addEventListener('click', () => {
+    document.getElementById('increase-font-btn').addEventListener('click', () => { if(currentSizeIndex < fontSizes.length - 1) applyFontSize(fontSizes[++currentSizeIndex]) });
+    document.getElementById('decrease-font-btn').addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
+    document.getElementById('toggle-font-family-btn').addEventListener('click', () => {
         lawContentEl.classList.toggle('font-serif');
         localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
     });
-    applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
-    if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     function applyTheme(theme) {
@@ -1182,17 +1151,38 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem('theme', newTheme);
         applyTheme(newTheme);
     });
-    applyTheme(localStorage.getItem('theme') || 'light');
 
     // --- Toggle de Links Úteis ---
     const toggleLinksBtn = document.getElementById("toggle-links-btn");
     if(toggleLinksBtn) {
         toggleLinksBtn.addEventListener("click", function() {
-            document.getElementById("links-content-area").classList.toggle("hidden");
-            this.querySelector("#links-chevron").style.transform = document.getElementById("links-content-area").classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+            const contentArea = document.getElementById("links-content-area");
+            contentArea.classList.toggle("hidden");
+            this.querySelector("#links-chevron").style.transform = contentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
 
+    // =======================================================
+    // INICIALIZAÇÃO DA PÁGINA
+    // =======================================================
+    async function initializePage() {
+        // Aplica configurações salvas de tema e fonte
+        applyTheme(localStorage.getItem('theme') || 'light');
+        applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
+        if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
+
+        // Busca os comentários por parágrafo
+        await initCommentSystem();
+
+        // Aplica as marcações de texto (bold/highlight) salvas.
+        // A função applyAllMarkups também chamará indexArticles e renderCommentUI
+        applyAllMarkups(lawContentEl, currentMarkups);
+
+        // Atualiza a barra de progresso inicial
+        updateProgressBar();
+    }
+
+    initializePage();
 });
 </script>
 {% endblock %}
