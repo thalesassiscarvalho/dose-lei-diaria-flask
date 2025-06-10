@@ -22,6 +22,7 @@ class Law(db.Model):
     # =====================================================================
     # <<< INÍCIO DA CORREÇÃO DEFINITIVA >>>
     # O parâmetro 'lazy="dynamic"' foi REMOVIDO da relação abaixo.
+    # Esta é a principal correção que resolve o conflito.
     # =====================================================================
     children = db.relationship('Law', 
                                backref=backref('parent', remote_side=[id]),
