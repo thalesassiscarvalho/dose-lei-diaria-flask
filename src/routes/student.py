@@ -374,7 +374,7 @@ def handle_user_notes(law_id):
 
 
 # =====================================================================
-# <<< INÍCIO: ENDPOINT ATUALIZADO PARA SALVAR MARCAÇÕES OTIMIZADAS >>>
+# <<< INÍCIO: FUNÇÃO CORRIGIDA >>>
 # =====================================================================
 @student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
 @login_required
@@ -391,11 +391,10 @@ def save_law_markup(law_id):
 
         markups_data = data['markups']
 
-        # Estratégia "Delete-and-Replace": Simples e eficaz.
-        # 1. Deleta todas as marcações antigas para esta lei e usuário.
+        # Estratégia "Delete-and-Replace" com correção para garantir a consistência da sessão.
         UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete(synchronize_session='fetch')
 
-        # 2. Cria as novas marcações a partir da lista recebida.
+        # Cria as novas marcações a partir da lista recebida.
         new_markups = []
         for markup_info in markups_data:
             # Validação básica
@@ -423,11 +422,10 @@ def save_law_markup(law_id):
         logging.error(f"Erro ao salvar marcações otimizadas para law_id {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
 # =====================================================================
-# <<< FIM: ENDPOINT ATUALIZADO >>>
+# <<< FIM: FUNÇÃO CORRIGIDA >>>
 # =====================================================================
 
 
-# ... (endpoints de comentários permanecem os mesmos) ...
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
 @login_required
 def handle_comments(law_id):
