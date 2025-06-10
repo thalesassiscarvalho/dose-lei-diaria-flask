@@ -760,6 +760,73 @@ document.getElementById('format-highlight-btn')
     let lawComments = []; 
     let saveMarkupTimeout;
 
+    // ============ APLICA MARCAÇÕES SALVAS =============
+// Converte quaisquer formatos diferentes de chaves para o padrão {type, start, end, text}
+if (Array.isArray(currentMarkups)) {
+    currentMarkups = currentMarkups.map(m => ({
+        type: m.type || m.markup_type,
+        start: (m.start !== undefined) ? m.start : m.start_offset,
+        end:   (m.end !== undefined)   ? m.end   : m.end_offset,
+        text:  m.text || m.selected_text || ''
+    }));
+} else {
+    currentMarkups = [];
+}
+
+// Aplica visualmente as marcações existentes ao carregar a página
+function applySavedMarkups() {
+    if (!currentMarkups.length) return;
+
+    // Ordena para garantir que aplicamos da esquerda para direita
+    const markups = [...currentMarkups].sort((a,b) => a.start - b.start);
+
+    // Helper para obter {node, offset} a partir de um offset absoluto
+    function getPos(absOffset) {
+        const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
+        let node, running = 0;
+        while(node = walker.nextNode()) {
+            const next = running + node.textContent.length;
+            if (absOffset <= next) {
+                return { node, offset: absOffset - running };
+            }
+            running = next;
+        }
+        return null;
+    }
+
+    for (const mk of markups) {
+        const startPos = getPos(mk.start);
+        const endPos   = getPos(mk.end);
+        if (!startPos || !endPos) continue;
+
+        const range = document.createRange();
+        range.setStart(startPos.node, startPos.offset);
+        range.setEnd(endPos.node, endPos.offset);
+
+        let wrapper;
+        if (mk.type === 'bold') {
+            wrapper = document.createElement('strong');
+        } else if (mk.type === 'highlight') {
+            wrapper = document.createElement('span');
+            wrapper.className = 'user-text-highlight';
+        } else {
+            continue;
+        }
+
+        try {
+            range.surroundContents(wrapper);
+        } catch(err) {
+            console.warn('Não foi possível aplicar markup:', err);
+        }
+    }
+}
+
+// Executa assim que o DOM estiver pronto
+applySavedMarkups();
+// ===================================================
+
+    
+
     // =======================================================
     // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (ABORDAGEM ROBUSTA COM MUTATION OBSERVER)
     // =======================================================
