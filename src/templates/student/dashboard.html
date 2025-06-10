@@ -4,7 +4,7 @@
 
 {% block head_extra %}
 <style>
-    /* Seus estilos CSS originais e os do acordeão permanecem aqui */
+    /* ... (Todos os seus estilos CSS permanecem exatamente os mesmos) ... */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
@@ -89,26 +89,8 @@
     .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
     .accordion-toggle-icon { transition: transform 0.3s ease; }
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
-    
-    /* <<< INÍCIO: NOVO ESTILO PARA O BOTÃO "MARCAR COMO NÃO CONCLUÍDO" >>> */
-    .review-button {
-        background-color: #6b7280; /* Cinza-500 */
-        color: white;
-        border: none;
-        border-radius: 9999px; /* Formato de pílula/círculo */
-        width: 32px; /* Largura fixa */
-        height: 32px; /* Altura fixa */
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    .review-button:hover {
-        background-color: #4b5563; /* Cinza-600 */
-    }
-    /* <<< FIM: NOVO ESTILO >>> */
-
+    .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
+    .review-button:hover { background-color: #4b5563; }
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
         .non-fixed-announcement-item { gap: 0.75rem; }
@@ -194,17 +176,17 @@
 
 
 <div class="filter-container mb-8">
-    <form method="GET" action="{{ url_for('student.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
         <div>
             <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação</label>
-            <input type="text" id="search" name="search" placeholder="Título ou descrição..." class="custom-input" value="{{ search_query }}">
+            <input type="text" id="search" name="search" placeholder="Título ou descrição..." class="custom-input">
         </div>
         <div>
             <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>Filtrar por Matéria</label>
             <select id="subject_id" name="subject_id" class="custom-input">
                 <option value="">-- Todas as Matérias --</option>
                 {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if selected_subject_id == subject.id %}selected{% endif %}>{{ subject.name }}</option>
+                    <option value="{{ subject.id }}">{{ subject.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -212,107 +194,187 @@
             <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>Filtrar por Status</label>
             <select id="status_filter" name="status_filter" class="custom-input">
                 <option value="">-- Todos os Status --</option>
-                <option value="not_read" {% if selected_status == 'not_read' %}selected{% endif %}>Não Lidas</option>
-                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em Andamento</option>
-                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Concluídas</option>
+                <option value="not_read">Não Lidas</option>
+                <option value="in_progress">Em Andamento</option>
+                <option value="completed">Concluídas</option>
             </select>
         </div>
         <div class="flex items-end pb-2">
             <label class="flex items-center cursor-pointer">
-                <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300" {% if show_favorites %}checked{% endif %} onchange="this.form.submit()">
+                <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
                 <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
             </label>
         </div>
-        <div class="flex items-stretch space-x-2">
-            <button type="submit" class="w-full md:w-auto text-white px-4 rounded-md focus:outline-none transition duration-300 flex items-center justify-center bg-blue-600 hover:bg-blue-700">
-                Aplicar Filtros
-            </button>
-            {% if search_query or selected_subject_id or selected_status or show_favorites %}
-                <a href="{{ url_for('student.dashboard') }}" class="w-full md:w-auto flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar</a>
-            {% endif %}
+        <div class="flex items-stretch">
+            <button type="button" id="clear-filters-btn" class="w-full md:w-auto flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar</button>
         </div>
-    </form>
+    </div>
 </div>
-
 <h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
 <div id="laws-accordion-container">
-    {% if subjects_with_diplomas %}
-        {% for subject_name, diplomas in subjects_with_diplomas.items() %}
-            <div class="mb-6">
-                <h3 class="text-lg font-bold text-gray-700 mb-3">{{ subject_name }}</h3>
-                {% for diploma in diplomas %}
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <div class="diploma-title">
-                            <i class="fas fa-gavel icon"></i>
-                            <span>{{ diploma.title }}</span>
-                        </div>
-                        <div class="diploma-progress">
-                            <div class="progress-bar-container w-full">
-                                <div class="progress-bar-fill" style="width: {{ diploma.progress_percentage | default(0) }}%;"></div>
-                            </div>
-                            <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(diploma.progress_percentage | default(0)) }}%</span>
-                            <i class="fas fa-chevron-right accordion-toggle-icon"></i>
-                        </div>
-                    </div>
-                    <div class="accordion-content">
-                        {% for topic in diploma.filtered_children %}
-                        <div class="topic-item" data-law-id="{{ topic.id }}">
-                            <div class="topic-title">
-                                <i class="fas fa-file-alt icon"></i>
-                                <span>{{ topic.title }}</span>
-                            </div>
-                            <div class="topic-actions">
-                                {% if topic.id in completed_law_ids %}
-                                    <span class="completed-badge">Concluída</span>
-                                {% elif topic.id in in_progress_law_ids %}
-                                    <span class="in-progress-badge">Em Andamento</span>
-                                {% endif %}
-                                <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
-                                    {% if topic.id in completed_law_ids %}<i class="fas fa-check-circle mr-1"></i> Revisar
-                                    {% elif topic.id in in_progress_law_ids %}<i class="fas fa-book-reader mr-1"></i> Continuar
-                                    {% else %}<i class="fas fa-book mr-1"></i> Começar{% endif %}
-                                </a>
-                                {% if topic.id in completed_law_ids %}
-                                    <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
-                                        <i class="fas fa-undo-alt"></i>
-                                    </button>
-                                {% endif %}
-                                <button type="button" class="favorite-btn js-favorite-btn {% if topic.id in favorite_law_ids %}favorited{% endif %}" data-law-id="{{ topic.id }}" title="{% if topic.id in favorite_law_ids %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                                    <i class="{% if topic.id in favorite_law_ids %}fas fa-star{% else %}far fa-star{% endif %}"></i>
-                                </button>
-                            </div>
-                        </div>
-                        {% else %}
-                        <p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado para este diploma com os filtros atuais.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="text-center py-8">
-            <p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p>
-        </div>
-    {% endif %}
-</div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Script do Acordeão
-    const accordionHeaders = document.querySelectorAll('.accordion-header');
-    accordionHeaders.forEach(header => {
-        header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            this.classList.toggle('open');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    // =====================================================================
+    // <<< INÍCIO: SCRIPT PARA FILTROS DINÂMICOS E RENDERIZAÇÃO >>>
+    // =====================================================================
+    const filterControls = {
+        search: document.getElementById('search'),
+        subject: document.getElementById('subject_id'),
+        status: document.getElementById('status_filter'),
+        favorites: document.getElementById('show_favorites'),
+        clearButton: document.getElementById('clear-filters-btn')
+    };
+    const accordionContainer = document.getElementById('laws-accordion-container');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    // Função para buscar e renderizar as leis
+    async function fetchAndRenderLaws() {
+        const search = filterControls.search.value;
+        const subjectId = filterControls.subject.value;
+        const status = filterControls.status.value;
+        const showFavorites = filterControls.favorites.checked;
+
+        // Mostrar um estado de carregamento
+        accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
+
+        const query = new URLSearchParams({
+            search,
+            subject_id: subjectId,
+            status_filter: status,
+            show_favorites: showFavorites
+        }).toString();
+
+        try {
+            const response = await fetch(`/student/filter_laws?${query}`);
+            if (!response.ok) throw new Error('Falha na resposta do servidor.');
+            
+            const data = await response.json();
+            renderLaws(data.subjects_with_diplomas);
+        } catch (error) {
+            console.error('Erro ao buscar leis:', error);
+            accordionContainer.innerHTML = '<p class="text-center py-8 text-red-500">Ocorreu um erro ao carregar as legislações. Tente novamente.</p>';
+        }
+    }
+
+    // Função para renderizar o HTML das leis no container
+    function renderLaws(subjects) {
+        if (Object.keys(subjects).length === 0) {
+            accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
+            return;
+        }
+
+        let html = '';
+        for (const subjectName in subjects) {
+            html += `<div class="mb-6"><h3 class="text-lg font-bold text-gray-700 mb-3">${subjectName}</h3>`;
+            subjects[subjectName].forEach(diploma => {
+                html += `
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
+                        <div class="diploma-progress">
+                            <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
+                            <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
+                            <i class="fas fa-chevron-right accordion-toggle-icon"></i>
+                        </div>
+                    </div>
+                    <div class="accordion-content">
+                        ${diploma.filtered_children.length > 0 ? diploma.filtered_children.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado para este diploma com os filtros atuais.</p>'}
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+        accordionContainer.innerHTML = html;
+        attachEventListeners(); // Anexa eventos aos novos elementos
+    }
+
+    // Função para gerar o HTML de um único tópico
+    function renderTopicItem(topic) {
+        let statusBadge = '';
+        if (topic.is_completed) statusBadge = '<span class="completed-badge">Concluída</span>';
+        else if (topic.is_in_progress) statusBadge = '<span class="in-progress-badge">Em Andamento</span>';
+
+        let actionButtonText = '';
+        if (topic.is_completed) actionButtonText = '<i class="fas fa-check-circle mr-1"></i> Revisar';
+        else if (topic.is_in_progress) actionButtonText = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+        else actionButtonText = '<i class="fas fa-book mr-1"></i> Começar';
+
+        const reviewButton = topic.is_completed ? `
+            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído">
+                <i class="fas fa-undo-alt"></i>
+            </button>` : '';
+        
+        const favoriteClass = topic.is_favorite ? 'favorited' : '';
+        const favoriteIcon = topic.is_favorite ? 'fas fa-star' : 'far fa-star';
+        const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+
+        return `
+        <div class="topic-item" data-law-id="${topic.id}">
+            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
+            <div class="topic-actions">
+                ${statusBadge}
+                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
+                ${reviewButton}
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
+                    <i class="${favoriteIcon}"></i>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    // Anexa todos os event listeners necessários (pode ser chamado novamente após renderizar)
+    function attachEventListeners() {
+        // Acordeão
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                this.classList.toggle('open');
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            });
         });
+
+        // Favoritos
+        document.querySelectorAll('.js-favorite-btn').forEach(button => {
+            button.addEventListener('click', handleFavoriteClick);
+        });
+
+        // Marcar como não concluído
+        document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => {
+            button.addEventListener('click', handleMarkIncompleteClick);
+        });
+    }
+
+    // Adiciona os eventos de input/change nos filtros
+    let debounceTimer;
+    filterControls.search.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchAndRenderLaws, 300); // Debounce para não fazer requisições a cada tecla
+    });
+    filterControls.subject.addEventListener('change', fetchAndRenderLaws);
+    filterControls.status.addEventListener('change', fetchAndRenderLaws);
+    filterControls.favorites.addEventListener('change', fetchAndRenderLaws);
+
+    // Limpar filtros
+    filterControls.clearButton.addEventListener('click', () => {
+        filterControls.search.value = '';
+        filterControls.subject.value = '';
+        filterControls.status.value = '';
+        filterControls.favorites.checked = false;
+        fetchAndRenderLaws();
     });
 
-    // Script de Avisos
+    // Carga inicial
+    fetchAndRenderLaws();
+    // =====================================================================
+    // <<< FIM: SCRIPT DE FILTROS >>>
+    // =====================================================================
+
+
+    // Script de Avisos (sem alterações)
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -323,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
             })
             .then(response => response.json())
             .then(data => {
@@ -332,8 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         announcementItem.remove();
                         if (document.querySelectorAll('.non-fixed-announcement-item').length === 0) {
-                            const container = document.getElementById('non-fixed-announcements-container');
-                            if (container) container.remove();
+                            document.getElementById('non-fixed-announcements-container')?.remove();
                         }
                     }, 500);
                 } else { this.checked = false; this.disabled = false; }
@@ -342,83 +403,74 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Script de Favoritos
-    const favoriteButtons = document.querySelectorAll('.js-favorite-btn');
-    favoriteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            this.disabled = true;
-            const lawId = this.getAttribute('data-law-id');
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const apiUrl = `/student/law/toggle_favorite/${lawId}`;
-            const icon = this.querySelector('i');
-            
-            fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.favorited) {
-                    button.classList.add('favorited');
-                    icon.className = 'fas fa-star';
-                } else {
-                    button.classList.remove('favorited');
-                    icon.className = 'far fa-star';
-                }
-            })
-            .catch(error => console.error('Erro:', error))
-            .finally(() => { this.disabled = false; });
-        });
-    });
+    // Função para lidar com clique no botão de favoritar
+    function handleFavoriteClick() {
+        const button = this;
+        button.disabled = true;
+        const lawId = button.dataset.lawId;
+        const icon = button.querySelector('i');
+        
+        fetch(`/student/law/toggle_favorite/${lawId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.favorited) {
+                button.classList.add('favorited');
+                icon.className = 'fas fa-star';
+                button.title = 'Remover dos Favoritos';
+            } else {
+                button.classList.remove('favorited');
+                icon.className = 'far fa-star';
+                button.title = 'Adicionar aos Favoritos';
+            }
+        })
+        .catch(error => console.error('Erro:', error))
+        .finally(() => { button.disabled = false; });
+    }
 
-    // =====================================================================
-    // <<< INÍCIO: SCRIPT PARA O BOTÃO "MARCAR COMO NÃO CONCLUÍDO" >>>
-    // =====================================================================
-    document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const buttonEl = this;
-            buttonEl.disabled = true;
-            
-            const lawId = buttonEl.dataset.lawId;
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const topicItem = buttonEl.closest('.topic-item');
+    // Função para lidar com clique no botão de "marcar como não concluído"
+    function handleMarkIncompleteClick() {
+        const buttonEl = this;
+        buttonEl.disabled = true;
+        
+        const lawId = buttonEl.dataset.lawId;
+        const topicItem = buttonEl.closest('.topic-item');
 
-            fetch(`/student/law/review/${lawId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Falha na resposta do servidor.');
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    const badge = topicItem.querySelector('.completed-badge');
-                    if (badge) {
-                        badge.textContent = 'Em Andamento';
-                        badge.classList.remove('completed-badge');
-                        badge.classList.add('in-progress-badge');
-                    }
-                    const actionButton = topicItem.querySelector('.action-button');
-                    if (actionButton) {
-                        actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
-                    }
-                    buttonEl.remove();
-                } else {
-                    alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
-                    buttonEl.disabled = false;
+        fetch(`/student/law/review/${lawId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Falha na resposta do servidor.');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.new_status === 'em_andamento') {
+                // Atualiza a UI sem recarregar a página
+                const badge = topicItem.querySelector('.completed-badge');
+                if (badge) {
+                    badge.textContent = 'Em Andamento';
+                    badge.classList.remove('completed-badge');
+                    badge.classList.add('in-progress-badge');
                 }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Ocorreu um erro de comunicação.');
+                const actionButton = topicItem.querySelector('.action-button');
+                if (actionButton) {
+                    actionButton.innerHTML = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+                }
+                buttonEl.remove(); // Remove o botão de "desfazer"
+            } else {
+                alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
                 buttonEl.disabled = false;
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Ocorreu um erro de comunicação.');
+            buttonEl.disabled = false;
         });
-    });
-    // =====================================================================
-    // <<< FIM: SCRIPT >>>
-    // =====================================================================
+    }
 });
 </script>
 {% endblock %}
