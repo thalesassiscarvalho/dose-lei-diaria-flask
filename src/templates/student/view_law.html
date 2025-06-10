@@ -758,11 +758,6 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ((node = walker.nextNode())) {
-            // CORREÇÃO: Ignora texto que pertence a um comentário de parágrafo
-            if (node.parentElement.closest('.comment-display')) {
-                continue;
-            }
-
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -783,7 +778,7 @@ document.addEventListener("DOMContentLoaded", function () {
      */
     function applyAllMarkups(container, markups) {
         // Limpa marcações existentes para evitar duplicatas ao carregar
-        container.querySelectorAll('strong, span.user-text-highlight').forEach(el => {
+        container.querySelectorAll('strong, b, span.user-text-highlight').forEach(el => {
             el.replaceWith(...el.childNodes);
         });
         container.normalize(); // Junta nós de texto adjacentes
@@ -811,17 +806,15 @@ document.addEventListener("DOMContentLoaded", function () {
     /**
      * Após uma formatação visual, esta função varre todo o conteúdo,
      * reconstrói a lista de marcações do zero e aciona o salvamento.
-     * Esta é a parte "inteligente" da nova abordagem.
      */
     function rebuildAndSave() {
         const newMarkups = [];
         let runningOffset = 0;
 
-        // O TreeWalker percorre todos os nós de texto na ordem em que aparecem.
         const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
         let node;
         while ((node = walker.nextNode())) {
-            // CORREÇÃO: Ignora texto que pertence a um comentário de parágrafo
+            // Ignora texto que pertence a um comentário de parágrafo
             if (node.parentElement.closest('.comment-display')) {
                 continue;
             }
@@ -829,16 +822,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const parent = node.parentNode;
             let type = null;
 
-            // Verifica se o texto está dentro de uma tag de formatação.
-            if (parent.tagName === 'STRONG') {
+            // ***** INÍCIO DA CORREÇÃO DEFINITIVA *****
+            // Verifica se o elemento pai é <STRONG> ou <B> para o negrito.
+            if (parent.tagName === 'STRONG' || parent.tagName === 'B') {
                 type = 'bold';
-            } else if (parent.classList.contains('user-text-highlight')) {
+            } 
+            // ***** FIM DA CORREÇÃO DEFINITIVA *****
+            
+            else if (parent.classList.contains('user-text-highlight')) {
                 type = 'highlight';
             }
 
             if (type) {
                 const text = node.textContent;
-                // Se o nó foi formatado, calcula seu início e fim e adiciona à lista.
                 newMarkups.push({
                     type: type,
                     start: runningOffset,
@@ -846,13 +842,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     text: text
                 });
             }
-            // O offset continua a contar, independentemente de o texto ser formatado ou não.
             runningOffset += node.textContent.length;
         }
         
-        // Substitui a lista antiga pela nova, recém-calculada e precisa.
         currentMarkups = newMarkups;
-        debounceSaveMarkup(); // Aciona o salvamento (com delay).
+        debounceSaveMarkup();
     }
 
     /**
@@ -874,21 +868,17 @@ document.addEventListener("DOMContentLoaded", function () {
         // Usa um comando nativo do navegador para aplicar o estilo. É seguro e funciona.
         document.execCommand('styleWithCSS', false, true);
         if (type === 'highlight') {
-            document.execCommand('hiliteColor', false, '#fef9c3'); // Amarelo (Tailwind yellow-100)
-            // O comando acima cria <span style="background-color: ...">.
-            // Nós limpamos isso e usamos nossa própria classe para consistência e modo noturno.
+            document.execCommand('hiliteColor', false, '#fef9c3');
             lawContentEl.querySelectorAll('span[style]').forEach(el => {
                 if (el.style.backgroundColor) {
                     el.classList.add('user-text-highlight');
-                    el.style.backgroundColor = ''; // Remove o estilo inline.
+                    el.style.backgroundColor = '';
                 }
             });
         } else { // 'bold'
             document.execCommand('bold', false, null);
         }
         
-        // IMPORTANTE: Após a mudança visual, recalcula TUDO para garantir que
-        // os dados a serem salvos no backend estejam corretos e sincronizados.
         rebuildAndSave();
         selection.removeAllRanges();
     }
@@ -898,7 +888,7 @@ document.addEventListener("DOMContentLoaded", function () {
      */
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
-        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000); // Salva 2 segundos após a última edição.
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
     /**
@@ -922,7 +912,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // ATUALIZADO: Os event listeners dos botões agora chamam a nova função `applyFormat`.
     document.getElementById('format-bold-btn').addEventListener('click', () => applyFormat('bold'));
     document.getElementById('format-highlight-btn').addEventListener('click', () => applyFormat('highlight'));
     
