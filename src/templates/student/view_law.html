@@ -960,7 +960,7 @@ applySavedMarkups();
             // Alguns navegadores produzem <span style="font-weight: bold;">. Convertemos para <strong>
             lawContentEl.querySelectorAll('span[style]').forEach(el => {
                 const fw = el.style.fontWeight;
-                if (fw && (fw === 'bold' or fw === '700' or parseInt(fw) >= 600)) {
+                if (fw && (fw === 'bold' || fw === '700' || parseInt(fw) >= 600)) {
                     const strongEl = document.createElement('strong');
                     strongEl.innerHTML = el.innerHTML;
                     el.replaceWith(strongEl);
