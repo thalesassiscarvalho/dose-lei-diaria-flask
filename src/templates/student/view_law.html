@@ -754,8 +754,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /**
-     * CORREÇÃO DEFINITIVA: Esta função agora usa um TreeWalker para calcular os offsets,
-     * garantindo consistência com a função findRangeByOffsets.
+     * CORREÇÃO DEFINITIVA: A função foi "blindada" com uma verificação para
+     * ignorar nós de texto com valor nulo, o que impede o erro "cannot read
+     * properties of null (reading 'length')".
      */
     function getSelectionOffsets(container) {
         const selection = window.getSelection();
@@ -772,6 +773,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ( (node = walker.nextNode()) ) {
+            // ---> INÍCIO DA CORREÇÃO <---
+            // Ignora nós de texto "fantasmas" ou inválidos que não possuem valor.
+            if (!node.nodeValue) {
+                continue;
+            }
+            // ---> FIM DA CORREÇÃO <---
+
             if (node === startContainer) {
                 start = charCount + startOffset;
             }
