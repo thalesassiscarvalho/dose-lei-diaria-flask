@@ -889,13 +889,17 @@ document.getElementById('format-highlight-btn')
             document.execCommand('bold', false, null);
         }
         
-        selection.removeAllRanges();
+        
+        // Salva imediatamente para garantir persistência mesmo se o usuário sair rápido da página
+        scanAndSave();
+        // Chama o salvamento sem esperar pelo debounce
+        saveLawMarkup();
     }
     
     // Função para salvar com atraso (debounce)
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
-        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 800);
     }
     
     // Envia os dados para o servidor.
@@ -1257,6 +1261,15 @@ document.getElementById('format-highlight-btn')
             subtree: true,
             characterData: true
         });
+// Garante que qualquer marcação pendente seja salva antes de sair da página
+window.addEventListener('beforeunload', () => {
+    if (saveMarkupTimeout) {
+        clearTimeout(saveMarkupTimeout);
+        scanAndSave(); // Atualiza currentMarkups, se necessário
+        navigator.sendBeacon(`/student/law/${lawId}/save_markup`, JSON.stringify({markups: currentMarkups}));
+    }
+});
+
         // --- FIM: CONFIGURAÇÃO DO MUTATION OBSERVER ---
     }
 
