@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
-from src.models.notes import UserNotes, UserLawMarkup # <<< IMPORTANTE: Importe o novo modelo aqui
+from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
 import datetime
 import logging
@@ -43,11 +43,11 @@ def check_and_award_achievements(user):
                 unlocked = True
             if achievement.laws_completed_threshold and completed_laws_count >= achievement.laws_completed_threshold:
                 unlocked = True
-            
+
             if unlocked:
                 user.achievements.append(achievement)
                 unlocked_achievements_names.append(achievement.name)
-    
+
     return unlocked_achievements_names
 
 @student_bp.route("/dashboard")
@@ -62,20 +62,20 @@ def dashboard():
     total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
     completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
     global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
-    
+
     last_progress = UserProgress.query.join(Law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
     ).order_by(UserProgress.last_accessed_at.desc()).first()
     last_accessed_law = last_progress.law if last_progress else None
-    
+
     fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
     seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
     non_fixed_announcements = Announcement.query.filter(
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
-    
+
     # Apenas renderiza o template base. Os dados de leis serão buscados via API.
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -100,7 +100,7 @@ def filter_laws():
     Modificado para aceitar filtros hierárquicos e busca independente.
     """
     search_query = request.args.get("search", "")
-    
+
     # Filtros hierárquicos
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "") # Novo filtro para a Lei/Diploma
@@ -137,13 +137,13 @@ def filter_laws():
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
             diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
-        
+
         selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
         if selected_diploma_id:
             diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
 
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
-    
+
     processed_diplomas = []
     for diploma in all_diplomas:
         children_to_display = []
@@ -157,13 +157,9 @@ def filter_laws():
                              (selected_status == 'completed' and is_completed) or
                              (selected_status == 'in_progress' and is_in_progress) or
                              (selected_status == 'not_read' and is_not_read))
-            
+
             passes_favorite = not show_favorites or is_favorite
 
-            # A busca por texto não deve ser filtrada por status ou favoritos nos tópicos,
-            # mas sim mostrar o diploma se algum tópico corresponder.
-            # A lógica atual já faz isso bem. Apenas aplicamos o filtro se o filho passar
-            # nos critérios de status e favorito.
             if passes_status and passes_favorite:
                 children_to_display.append({
                     "id": topic.id,
@@ -172,13 +168,11 @@ def filter_laws():
                     "is_in_progress": is_in_progress,
                     "is_favorite": is_favorite
                 })
-        
-        # Determina se algum filtro está ativo para decidir se renderiza todos os filhos ou só os filtrados
+
         is_hierarchical_filter_active = selected_subject_id_str or selected_diploma_id_str or selected_status or show_favorites
-        
+
         children_final = children_to_display
-        
-        # Na busca por texto, queremos exibir todos os filhos do diploma correspondente
+
         if search_query:
             children_final = [
                 {
@@ -193,7 +187,7 @@ def filter_laws():
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
             progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
-            
+
             diploma_data = {
                 "title": diploma.title,
                 "progress_percentage": progress_percentage,
@@ -215,6 +209,9 @@ def filter_laws():
 # =====================================================================
 
 
+# =====================================================================
+# <<< INÍCIO: FUNÇÃO view_law MODIFICADA >>>
+# =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
@@ -222,32 +219,45 @@ def view_law(law_id):
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
-    
+
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     now = datetime.datetime.utcnow()
-    
+
     if progress:
         progress.last_accessed_at = now
     else:
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
-        
+
     db.session.commit()
     is_favorited = law in current_user.favorite_laws
 
-    # --- INÍCIO: CARREGAMENTO DAS MARCAÇÕES DO USUÁRIO ---
-    # Busca o conteúdo personalizado que o usuário salvou
+    # --- LÓGICA DE CONTEÚDO MELHORADA ---
+    # 1. Busca o conteúdo personalizado que o usuário salvou
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    user_law_markup_content = user_markup.content if user_markup else None
-    # --- FIM: CARREGAMENTO DAS MARCAÇÕES DO USUÁRIO ---
 
-    return render_template("student/view_law.html", 
-                           law=law, 
-                           is_completed=(progress.status == 'concluido' if progress else False), 
+    # 2. Decide qual conteúdo exibir
+    if user_markup:
+        # Se houver marcação salva, use-a.
+        content_to_display = user_markup.content
+    else:
+        # Senão, use o conteúdo original da lei.
+        content_to_display = law.content
+
+    # 3. Garante que nunca seja None, para evitar o erro no template.
+    if content_to_display is None:
+        content_to_display = ""
+
+    return render_template("student/view_law.html",
+                           law=law,
+                           is_completed=(progress.status == 'concluido' if progress else False),
                            last_read_article=(progress.last_read_article if progress else None),
                            current_status=(progress.status if progress else 'nao_iniciado'),
                            is_favorited=is_favorited,
-                           user_law_markup=user_law_markup_content) # <<< Variável passada para o template
+                           display_content=content_to_display) # <<< Passa a variável segura para o template
+# =====================================================================
+# <<< FIM: FUNÇÃO view_law MODIFICADA >>>
+# =====================================================================
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -272,19 +282,19 @@ def toggle_favorite(law_id):
 def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    
+
     should_award_points = not progress or not progress.completed_at
 
     if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
             db.session.add(progress)
-        
+
         progress.status = 'concluido'
-        
+
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
-        
+
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
@@ -312,9 +322,9 @@ def review_law(law_id):
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     if not progress:
         return jsonify(success=False, error="Progresso não encontrado."), 404
-    
+
     progress.status = 'em_andamento'
-    
+
     try:
         db.session.commit()
         return jsonify(success=True, new_status='em_andamento')
@@ -328,18 +338,18 @@ def save_last_read(law_id):
     last_read_article = request.form.get("last_read_article", "").strip()
     if not last_read_article:
         return jsonify(success=False, error="Campo obrigatório"), 400
-    
+
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    
+
     if not progress:
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento')
         db.session.add(progress)
-    
+
     progress.last_read_article = last_read_article
     progress.last_accessed_at = datetime.datetime.utcnow()
     if progress.status != 'concluido':
         progress.status = 'em_andamento'
-        
+
     db.session.commit()
     return jsonify(success=True, message="Ponto de leitura salvo!")
 
@@ -359,7 +369,7 @@ def handle_user_notes(law_id):
     if request.method == "GET":
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
-    
+
     if request.method == "POST":
         content = request.json.get("content", "")
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -380,7 +390,7 @@ def save_law_markup(law_id):
     """
     # Garante que a lei para a qual estamos salvando existe.
     Law.query.get_or_404(law_id)
-    
+
     try:
         data = request.get_json()
         if not data or 'content' not in data:
@@ -398,7 +408,7 @@ def save_law_markup(law_id):
             # Se não existe, cria um novo registro
             new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
             db.session.add(new_markup)
-        
+
         db.session.commit()
         return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
 
@@ -433,7 +443,7 @@ def handle_comments(law_id):
 @login_required
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
-    
+
     if request.method == "PUT":
         comment.content = request.json.get("content", "")
         db.session.commit()
