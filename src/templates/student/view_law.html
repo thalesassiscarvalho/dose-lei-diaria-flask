@@ -1270,6 +1270,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightBtn = document.getElementById('format-highlight-btn');
     let saveMarkupTimeout;
 
+    // CÓDIGO CORRIGIDO
     function applyMarkup(command) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
@@ -1278,19 +1279,37 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!lawContent.contains(range.commonAncestorContainer)) {
             return;
         }
-        
+
         lawContent.setAttribute('contenteditable', 'true');
-        
+        lawContent.focus(); // Garante que o container está focado para os comandos
+
         if (command === 'bold') {
             document.execCommand('bold', false, null);
         } else if (command === 'highlight') {
-            const selectionHtml = selection.toString();
-            const span = `<span class="user-text-highlight">${selectionHtml}</span>`;
-            document.execCommand('insertHTML', false, span);
+            let parent = range.commonAncestorContainer;
+            if (parent.nodeType !== Node.ELEMENT_NODE) {
+                parent = parent.parentNode;
+            }
+
+            // Verifica se o elemento pai da seleção já é um marca-texto
+            if (parent.nodeName === 'SPAN' && parent.classList.contains('user-text-highlight')) {
+                // Se for, remove a formatação "desembrulhando" o conteúdo do <span>
+                const content = document.createDocumentFragment();
+                while (parent.firstChild) {
+                    content.appendChild(parent.firstChild);
+                }
+                parent.parentNode.replaceChild(content, parent);
+                // Limpa a seleção após a modificação para evitar comportamento inesperado
+                window.getSelection().removeAllRanges();
+            } else {
+                // Se não for, aplica a formatação de marca-texto como antes
+                const selectionHtml = selection.toString();
+                const span = `<span class="user-text-highlight">${selectionHtml}</span>`;
+                document.execCommand('insertHTML', false, span);
+            }
         }
-        
+
         lawContent.setAttribute('contenteditable', 'false');
-        
         debounceSaveMarkup();
     }
     
