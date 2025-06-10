@@ -2,6 +2,28 @@
 
 {% block title %}Painel Admin - Dose de Lei Diária{% endblock %}
 
+{% block head_extra %}
+<style>
+    .accordion-header {
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+    .accordion-header:hover {
+        background-color: #f3f4f6; /* Um cinza um pouco mais escuro no hover */
+    }
+    .accordion-toggle-icon {
+        transition: transform 0.3s ease-in-out;
+        font-size: 0.8em; /* Deixa o ícone um pouco menor */
+    }
+    .accordion-body.collapsed {
+        display: none;
+    }
+    .accordion-header.open .accordion-toggle-icon {
+        transform: rotate(90deg);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-brand-purple">Painel do Administrador</h1>
@@ -35,13 +57,17 @@
         {% for diploma in diplomas %}
         <div class="bg-white shadow-md rounded-lg border overflow-hidden mb-4">
             <table class="min-w-full">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 accordion-header" data-target="#accordion-body-{{ diploma.id }}">
                     <tr>
-                        <th colspan="2" class="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase"><i class="fas fa-gavel mr-2"></i> {{ diploma.title }}</th>
+                        <th colspan="2" class="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase">
+                            <i class="fas fa-chevron-right accordion-toggle-icon mr-3"></i>
+                            <i class="fas fa-gavel mr-2"></i>
+                            {{ diploma.title }}
+                        </th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200 accordion-body collapsed" id="accordion-body-{{ diploma.id }}">
                     <tr class="bg-blue-50">
                         <td colspan="2" class="px-6 py-4 text-sm text-brand-text-light italic">{{ diploma.description or "Item principal." }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
@@ -80,4 +106,30 @@
 {% else %}
     <p class="text-center text-gray-500 py-8">Nenhum item de estudo encontrado.</p>
 {% endfor %}
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', function () {
+            // Adiciona ou remove a classe 'open' do cabeçalho para girar o ícone
+            this.classList.toggle('open');
+            
+            // Pega o ID do corpo alvo a partir do atributo data-target
+            const targetId = this.getAttribute('data-target');
+            const targetBody = document.querySelector(targetId);
+
+            if (targetBody) {
+                // Adiciona ou remove a classe 'collapsed' para mostrar/ocultar o corpo
+                targetBody.classList.toggle('collapsed');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
