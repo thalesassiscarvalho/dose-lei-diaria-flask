@@ -93,11 +93,6 @@
     .law-content-container li {
         margin-bottom: 0.5em;
     }
-    /* Estilos para tags de formatação que serão salvas */
-    .law-content-container strong { font-weight: bold; }
-    .law-content-container em { font-style: italic; }
-    .law-content-container u { text-decoration: underline; }
-    .law-content-container s { text-decoration: line-through; }
     
     .completed-banner {
         background-color: #d1fae5; /* Light green */
@@ -116,14 +111,6 @@
         margin-bottom: 1.5rem;
         border: 1px solid #c7d2fe; /* Indigo 200 */
         font-size: 0.9rem;
-    }
-
-    .save-article-form {
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background-color: #f9fafb; /* Gray 50 */
-        border: 1px solid #e5e7eb; /* Gray 200 */
-        border-radius: 0.5rem;
     }
 
     /* --- INÍCIO: NOVOS ESTILOS PARA BOTÕES DE FILTRO --- */
@@ -187,23 +174,18 @@
     }
     /* Estilos para o container do player de áudio */
     .audio-player-container {
-        background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
+        background-color: #f9fafb; /* Tailwind gray-50 */
         border-radius: 0.5rem; /* Tailwind rounded-lg */
         padding: 1rem; /* Tailwind p-4 */
         border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
     }
 
     .audio-player-container audio {
         border-radius: 0.375rem; /* Tailwind rounded-md */
     }
     
-    /* Classe para ocultar conteúdo durante impressão */
-    .print-hidden {
-        display: none !important;
-    }
-
     /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
     .neural-waves-container {
         display: flex;
@@ -263,22 +245,11 @@
         animation: spin 10s linear infinite;
     }
 
-    /* Cores específicas para cada tipo de onda neural */
-    .wave-alpha {
-        background: linear-gradient(135deg, #4f46e5, #818cf8);
-    }
-    .wave-beta {
-        background: linear-gradient(135deg, #0ea5e9, #38bdf8);
-    }
-    .wave-theta {
-        background: linear-gradient(135deg, #10b981, #34d399);
-    }
-    .wave-classical {
-        background: linear-gradient(135deg, #7e22ce, #a855f7);
-    }
-    .wave-white-noise {
-        background: linear-gradient(135deg, #64748b, #94a3b8);
-    }
+    .wave-alpha { background: linear-gradient(135deg, #4f46e5, #818cf8); }
+    .wave-beta { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+    .wave-theta { background: linear-gradient(135deg, #10b981, #34d399); }
+    .wave-classical { background: linear-gradient(135deg, #7e22ce, #a855f7); }
+    .wave-white-noise { background: linear-gradient(135deg, #64748b, #94a3b8); }
 
     .neural-wave-button .tooltip {
         position: absolute;
@@ -296,7 +267,6 @@
         transition: all 0.3s ease;
         pointer-events: none;
         width: 220px;
-        max-width: 220px;
         text-align: left;
         z-index: 100;
         line-height: 1.4;
@@ -313,10 +283,7 @@
         border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
     }
 
-    .neural-wave-button:hover .tooltip {
-        opacity: 1;
-        visibility: visible;
-    }
+    .neural-wave-button:hover .tooltip { opacity: 1; visibility: visible; }
 
     @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
@@ -332,18 +299,18 @@
         .neural-waves-container { gap: 8px; }
         .neural-wave-button { width: 40px; height: 40px; }
         .neural-wave-button i { font-size: 18px; }
-        .neural-wave-button .tooltip { width: 200px; max-width: 200px; font-size: 11px; }
+        .neural-wave-button .tooltip { width: 200px; }
     }
     /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
 
     /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
     .notes-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-    .format-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .format-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; }
     .format-btn:hover { background-color: #e5e7eb; }
     .format-btn.active { background-color: #dbeafe; border-color: #93c5fd; }
     .format-btn i { font-size: 14px; }
     .notes-editor {
-        min-height: 200px; /* Altura padrão para desktop */
+        min-height: 200px;
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         padding: 12px;
@@ -362,48 +329,17 @@
     .go-to-notes-btn:hover { background-color: #7c3aed; }
     .back-to-top-btn { background-color: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; margin-left: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
     .back-to-top-btn:hover { background-color: #2563eb; }
-    .save-bookmark-btn { background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .save-bookmark-btn { background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; }
     .save-bookmark-btn:hover { background-color: #059669; }
     .bookmark-section { margin-top: 1.5rem; padding: 1rem; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; margin-bottom: 1rem; }
     .bookmark-input-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
     .bookmark-input { flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
     .bookmark-input:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
 
-    /* --- INÍCIO: AJUSTES PARA MOBILE --- */
     @media (max-width: 640px) {
         .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
         .back-to-top-btn { margin-left: 0; margin-top: 1rem; }
-
-        /* 1. Esconde botões de Negrito e Marca-Texto em celulares */
-        .mobile-hidden-format-btn {
-            display: none;
-        }
-
-        /* 2. Coloca filtros e fontes em linha única com rolagem em celulares */
-        .mobile-scroll-group {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            width: 100%;
-            justify-content: flex-start;
-            gap: 0.75rem;
-            padding-bottom: 5px;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .mobile-scroll-group::-webkit-scrollbar {
-            display: none;
-        }
-        .font-control-group {
-            flex-shrink: 0;
-            border-left: 1px solid #d1d5db; /* Garante que a borda apareça no mobile */
-            margin-left: 0; /* Remove a margem no mobile */
-        }
-        .dark-mode .font-control-group {
-             border-left-color: #4b5563;
-        }
     }
-     /* --- FIM: AJUSTES PARA MOBILE --- */
 
     @media (min-width: 641px) {
         .bookmark-section { max-width: 33.33%; }
@@ -413,12 +349,11 @@
         .notes-editor { min-height: 150px; }
     }
 
-    /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO (ANTIGOS COMENTÁRIOS) --- */
+    /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
     .paragraph-wrapper {
         position: relative;
         padding-right: 30px; /* Espaço para o ícone de anotação */
     }
-
     .comment-icon {
         position: absolute;
         top: 5px;
@@ -429,34 +364,27 @@
         transition: all 0.2s ease;
         opacity: 0.5;
     }
-
     .paragraph-wrapper:hover .comment-icon {
         opacity: 1;
         transform: scale(1.2);
     }
-
     .comment-icon.has-comment {
         color: #6366f1; /* Roxo mais forte */
         opacity: 1;
     }
-
     .comment-display {
-        background-color: #fff7ed; /* Laranja bem clarinho (Tailwind orange-50) */
-        border-left: 3px solid #f97316; /* Laranja (Tailwind orange-500) */
+        background-color: #fff7ed; /* Laranja bem clarinho */
+        border-left: 3px solid #f97316; /* Laranja */
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        font-style: italic;     /* Texto da anotação em itálico */
-        color: #f97316;         /* Cor do texto em laranja */
-        cursor: pointer;        /* Indica que o elemento é clicável para edição */
+        font-style: italic;
+        color: #f97316;
+        cursor: pointer;
     }
-    
-    .comment-display:hover {
-        background-color: #ffedd5; /* Laranja um pouco mais escuro no hover (orange-100) */
-    }
-
+    .comment-display:hover { background-color: #ffedd5; }
     .comment-delete-btn {
         position: absolute;
         top: 5px;
@@ -469,284 +397,123 @@
     }
     .comment-delete-btn:hover { color: #ef4444; }
 
-    /* Modal de Anotação (Antigo Modal de Comentário) */
+    /* Modal de Anotação */
     .comment-modal-backdrop {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        display: none; /* Começa oculto */
-        align-items: center;
-        justify-content: center;
+        display: none; align-items: center; justify-content: center;
         z-index: 1000;
     }
     .comment-modal-content {
-        background-color: white;
-        padding: 25px;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        background-color: white; padding: 25px; border-radius: 8px;
+        width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
     .comment-modal-textarea {
-        width: 100%;
-        min-height: 120px;
-        padding: 10px;
-        border: 1px solid #d1d5db;
-        border-radius: 5px;
-        margin-bottom: 15px;
+        width: 100%; min-height: 120px; padding: 10px;
+        border: 1px solid #d1d5db; border-radius: 5px; margin-bottom: 15px;
     }
     /* --- FIM: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
 
     /* --- INÍCIO: ESTILOS PARA MODO NOTURNO --- */
-    body.dark-mode {
-        background-color: #030712; /* Fundo geral da página (quase preto) */
-    }
+    body.dark-mode { background-color: #030712; }
 
     .dark-mode .law-content-container,
-    .dark-mode .completed-banner,
-    .dark-mode .last-read-info,
-    .dark-mode #sticky-action-bar,
-    .dark-mode .bookmark-section,
-    .dark-mode .notes-container,
-    .dark-mode .comment-modal-content,
-    .dark-mode .audio-player-container,
-    .dark-mode .links-container /* Adicionado para modo noturno */
-    {
+    .dark-mode .completed-banner, .dark-mode .last-read-info,
+    .dark-mode #sticky-action-bar, .dark-mode .bookmark-section,
+    .dark-mode .notes-container, .dark-mode .comment-modal-content,
+    .dark-mode .audio-player-container, .dark-mode .links-container {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
-
-    /* Conteúdo principal da lei */
     .dark-mode .law-content-container {
-        background-color: #1f2937; /* Cinza escuro para o conteúdo */
-        color: #d1d5db; /* Texto principal - cinza claro */
-        border-color: #374151; /* Borda sutil */
+        background-color: #1f2937; color: #d1d5db; border-color: #374151;
     }
-
-    /* Títulos dentro da lei */
-    .dark-mode .law-content-container h1,
-    .dark-mode .law-content-container h2,
-    .dark-mode .law-content-container h3,
-    .dark-mode .law-content-container h4,
-    .dark-mode .law-content-container h5,
-    .dark-mode .law-content-container h6 {
-        color: #93c5fd; /* Azul claro para títulos */
-    }
-
-    /* Cabeçalho da página */
-    .dark-mode h1.text-blue-700 {
+    .dark-mode .law-content-container h1, .dark-mode .law-content-container h2,
+    .dark-mode .law-content-container h3, .dark-mode .law-content-container h4,
+    .dark-mode .law-content-container h5, .dark-mode .law-content-container h6 {
         color: #93c5fd;
     }
-
-    /* Banners e seções */
-    .dark-mode .completed-banner {
-        background-color: #064e3b; /* Verde escuro */
-        color: #a7f3d0;
-        border-color: #059669;
-    }
-    .dark-mode .last-read-info {
-        background-color: #3730a3; /* Indigo escuro */
-        color: #c7d2fe;
-        border-color: #4f46e5;
-    }
-    .dark-mode .bookmark-section {
-        background-color: #1e293b; /* Azul-acinzentado escuro */
-        border-color: #374151;
-    }
-    .dark-mode .bookmark-section h3 {
-        color: #e5e7eb;
-    }
-
-    /* Barra de Ações Fixa */
-    .dark-mode #sticky-action-bar {
-        background-color: #111827; /* Fundo da barra */
-        border-color: #374151;
-    }
-    .dark-mode #sticky-action-bar label {
-        color: #d1d5db;
-    }
-    .dark-mode #sticky-action-bar input[type="text"] {
-        background-color: #374151;
-        color: #e5e7eb;
-        border-color: #4b5563;
-    }
-
-    /* Seção de Anotações */
-    .dark-mode .notes-container {
-        background-color: #1f2937;
-        border-color: #374151;
-    }
-    .dark-mode .notes-container #toggle-notes-btn {
-        background-color: #111827;
-        border-bottom-color: #374151;
-    }
-    .dark-mode .notes-container #toggle-notes-btn h3 {
-        color: #93c5fd;
-    }
-    .dark-mode .notes-container #notes-editor {
-        background-color: #374151;
-        color: #d1d5db;
-        border-color: #4b5563;
-    }
-
-    /* Player de Áudio */
-    .dark-mode .audio-player-container {
-        background-color: #1f2937;
-        border-color: #374151;
-    }
-     .dark-mode .audio-player-container h4 {
-        color: #d1d5db;
-     }
-
-    /* Modal de anotação */
-    .dark-mode .comment-modal-content {
-        background-color: #1f2937;
-    }
-     .dark-mode .comment-modal-content h3 {
-        color: #e5e7eb;
-     }
-    .dark-mode .comment-modal-textarea {
-        background-color: #374151;
-        color: #d1d5db;
-        border-color: #4b5563;
-    }
-
-    /* Botão de Toggle do Tema */
+    .dark-mode .user-text-highlight { background-color: #a16207; color: #fefce8; }
+    .dark-mode h1.text-blue-700 { color: #93c5fd; }
+    .dark-mode .completed-banner { background-color: #064e3b; color: #a7f3d0; border-color: #059669; }
+    .dark-mode .last-read-info { background-color: #3730a3; color: #c7d2fe; border-color: #4f46e5; }
+    .dark-mode .bookmark-section { background-color: #1e293b; border-color: #374151; }
+    .dark-mode .bookmark-section h3 { color: #e5e7eb; }
+    .dark-mode #sticky-action-bar { background-color: #111827; border-color: #374151; }
+    .dark-mode #sticky-action-bar label { color: #d1d5db; }
+    .dark-mode #sticky-action-bar input[type="text"] { background-color: #374151; color: #e5e7eb; border-color: #4b5563; }
+    .dark-mode .notes-container { background-color: #1f2937; border-color: #374151; }
+    .dark-mode .notes-container #toggle-notes-btn { background-color: #111827; border-bottom-color: #374151; }
+    .dark-mode .notes-container #toggle-notes-btn h3 { color: #93c5fd; }
+    .dark-mode .notes-container #notes-editor { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+    .dark-mode .audio-player-container { background-color: #1f2937; border-color: #374151; }
+    .dark-mode .audio-player-container h4 { color: #d1d5db; }
+    .dark-mode .comment-modal-content { background-color: #1f2937; }
+    .dark-mode .comment-modal-content h3 { color: #e5e7eb; }
+    .dark-mode .comment-modal-textarea { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
     .theme-toggle-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #4b5563;
-        color: #fde047; /* Amarelo para sol/lua */
-        border: none;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        cursor: pointer;
+        position: fixed; bottom: 20px; right: 20px;
+        background-color: #4b5563; color: #fde047; border: none;
+        width: 50px; height: 50px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; cursor: pointer;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1001;
-        transition: background-color 0.3s ease, transform 0.2s ease;
+        z-index: 1001; transition: background-color 0.3s ease, transform 0.2s ease;
     }
-    .theme-toggle-btn:hover {
-        transform: scale(1.1);
-    }
-    .dark-mode .theme-toggle-btn {
-        background-color: #1f2937;
-    }
+    .theme-toggle-btn:hover { transform: scale(1.1); }
+    .dark-mode .theme-toggle-btn { background-color: #1f2937; }
     /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
     /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
-    .font-control-group {
-        border-left: 1px solid #d1d5db;
-        margin-left: 0.75rem;
-        padding-left: 0.75rem;
-    }
-    .dark-mode .font-control-group {
-        border-left-color: #4b5563;
-    }
+    .font-control-group { border-left: 1px solid #d1d5db; margin-left: 0.75rem; padding-left: 0.75rem; }
+    .dark-mode .font-control-group { border-left-color: #4b5563; }
     .font-control-btn {
-        background-color: #f3f4f6;
-        color: #374151;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        width: 34px;
-        height: 34px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        font-size: 0.875rem;
+        background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.375rem;
+        width: 34px; height: 34px; font-weight: 600;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s; font-size: 0.875rem;
     }
-    .font-control-btn:hover {
-        background-color: #e5e7eb;
-        border-color: #9ca3af;
-    }
-    .dark-mode .font-control-btn {
-        background-color: #374151;
-        color: #d1d5db;
-        border-color: #4b5563;
-    }
-    .dark-mode .font-control-btn:hover {
-        background-color: #4b5563;
-    }
+    .font-control-btn:hover { background-color: #e5e7eb; border-color: #9ca3af; }
+    .dark-mode .font-control-btn { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+    .dark-mode .font-control-btn:hover { background-color: #4b5563; }
     
-    /* Classes de Tamanho de Fonte */
     #law-content.font-size-sm, #law-content.font-size-sm p { font-size: 0.85rem; line-height: 1.6; }
-    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; } /* Padrão */
+    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; }
     #law-content.font-size-lg, #law-content.font-size-lg p { font-size: 1.1rem; line-height: 1.8; }
     #law-content.font-size-xl, #law-content.font-size-xl p { font-size: 1.2rem; line-height: 1.85; }
-
-    /* Classe de Tipo de Fonte */
-    #law-content.font-serif, 
-    #law-content.font-serif p, 
-    #law-content.font-serif li {
-        font-family: Georgia, 'Times New Roman', Times, serif;
-    }
+    #law-content.font-serif, #law-content.font-serif p, #law-content.font-serif li { font-family: Georgia, 'Times New Roman', Times, serif; }
     /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
     
-    /* NOVO: Estilos para a seção de links úteis */
-    .links-container {
-        background-color: #f0f9ff; /* Azul muito claro */
-        border: 1px solid #bae6fd; /* Azul claro */
-    }
-    .links-container #toggle-links-btn {
-        background-color: #e0f2fe; /* Azul um pouco mais escuro */
-        border-bottom-color: #bae6fd;
-    }
-    .links-container #toggle-links-btn h3 {
-        color: #0c4a6e; /* Azul escuro */
-    }
-    .dark-mode .links-container {
-        background-color: #1e3a8a; /* Azul escuro para o fundo no modo noturno */
-        border-color: #3b82f6;
-    }
-    .dark-mode .links-container #toggle-links-btn {
-        background-color: #1e40af;
-        border-bottom-color: #3b82f6;
-    }
-    .dark-mode .links-container #toggle-links-btn h3 {
-        color: #dbeafe; /* Texto claro */
-    }
-    .dark-mode .links-container a {
-        color: #93c5fd; /* Links azuis claros */
-    }
-    .dark-mode .links-container a:hover {
-        color: #eff6ff;
+    /* Estilos para a seção de links úteis */
+    .links-container { background-color: #f0f9ff; border: 1px solid #bae6fd; }
+    .links-container #toggle-links-btn { background-color: #e0f2fe; border-bottom-color: #bae6fd; }
+    .links-container #toggle-links-btn h3 { color: #0c4a6e; }
+    .dark-mode .links-container { background-color: #1e3a8a; border-color: #3b82f6; }
+    .dark-mode .links-container #toggle-links-btn { background-color: #1e40af; border-bottom-color: #3b82f6; }
+    .dark-mode .links-container #toggle-links-btn h3 { color: #dbeafe; }
+    .dark-mode .links-container a { color: #93c5fd; }
+    .dark-mode .links-container a:hover { color: #eff6ff; }
+
+    /* Ajuste de rolagem horizontal para barra de ações */
+    @media (max-width: 480px) {
+        #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
+            flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+            padding: 0 10px; -ms-overflow-style: none; scrollbar-width: none;
+        }
+        #sticky-action-bar > .flex.flex-wrap.items-center.justify-center::-webkit-scrollbar { display: none; }
     }
 
-    /* --- INÍCIO: PROTEÇÃO DE IMPRESSÃO --- */
+    /* Proteção de Impressão */
     @media print {
-        /* Oculta todos os elementos da página durante a impressão */
-        body * {
-            visibility: hidden;
-        }
-        /* Remove o fundo para não gastar tinta desnecessariamente */
-        body {
-            background-color: #fff;
-        }
-        /* Cria e exibe uma mensagem de aviso no lugar do conteúdo */
+        body * { visibility: hidden; }
+        body { background-color: #fff; }
         body::after {
-            visibility: visible;
-            position: fixed;
-            top: 40%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 500px;
+            visibility: visible; position: fixed; top: 40%; left: 50%;
+            transform: translateX(-50%); width: 80%; max-width: 500px;
             content: "A impressão deste conteúdo foi desabilitada para proteger a propriedade intelectual e incentivar o uso da plataforma interativa. Obrigado pela compreensão.";
-            font-size: 14pt;
-            color: #000;
-            text-align: center;
-            line-height: 1.5;
-            font-family: sans-serif;
+            font-size: 14pt; color: #000; text-align: center;
+            line-height: 1.5; font-family: sans-serif;
         }
     }
-    /* --- FIM: PROTEÇÃO DE IMPRESSÃO --- */
-
 </style>
 {% endblock %}
 
@@ -756,14 +523,12 @@
 </div>
 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
     <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
-
     <div class="flex justify-end w-full sm:w-auto items-center space-x-3 sm:space-x-4">
         <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
                 data-law-id="{{ law.id }}"
                 title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
             <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
         </button>
-
         <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
             <i class="fas fa-arrow-left"></i>
             <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
@@ -804,13 +569,12 @@
 {% endif %}
 
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-3 mb-4">
-
     <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         <div class="flex flex-wrap gap-2 items-center">
-            <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários"><i class="fas fa-eye-slash"></i><span>Comentários</span></button>
-            <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i><span>Jurisprudência</span></button>
-            <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina"><i class="fas fa-eye-slash"></i><span>Doutrina</span></button>
-            <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i><span>Minhas Anotações</span></button>
+            <button id="toggle-comments-btn" class="toggle-button toggle-btn-comments" title="Ocultar/Mostrar Comentários"><i class="fas fa-eye-slash"></i></button>
+            <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i></button>
+            <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina"><i class="fas fa-eye-slash"></i></button>
+            <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i></button>
         </div>
         <div class="font-control-group flex items-center space-x-2">
             <button id="format-bold-btn" class="font-control-btn" title="Negrito (selecione o texto)"><b>B</b></button>
@@ -820,7 +584,6 @@
             <button id="toggle-font-family-btn" class="font-control-btn" title="Alternar tipo de fonte">Aa</button>
        </div>
     </div>
-
     <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2">
         <div class="flex items-center space-x-1">
             <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
@@ -837,16 +600,10 @@
     </div>
 </div>
 
-
 <div class="law-content-container" id="law-content">
-    {% if law.description %}
-        <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
-    {% endif %}
-
-    {# Esta linha agora usa a variável 'display_content' que é preparada de forma segura no backend #}
+    {# Esta linha agora usa a variável 'display_content' que é o HTML original da lei. O JS aplicará as marcações. #}
     {{ display_content | safe }}
 </div>
-
 
 <div class="bookmark-section">
     <h3 class="text-lg font-medium text-gray-800 mb-2">Marcar onde parei:</h3>
@@ -938,177 +695,226 @@
 
 {% block scripts %}
 {{ super() }}
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const lawId = '{{ law.id }}';
-    const lawContent = document.getElementById('law-content');
-    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
+    const lawContentEl = document.getElementById('law-content');
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    const originalContentHTML = lawContentEl.innerHTML;
+
+    // =======================================================
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO OTIMIZADA
+    // =======================================================
+    
+    // As marcações são recebidas do backend e inseridas aqui.
+    let currentMarkups = {{ markups_json | safe }};
+    let saveMarkupTimeout;
+
+    /**
+     * Retorna todos os nós de texto dentro de um elemento.
+     */
+    function getTextNodes(node) {
+        const textNodes = [];
+        if (node.nodeType === Node.TEXT_NODE) {
+            textNodes.push(node);
+        } else {
+            for (const childNode of node.childNodes) {
+                textNodes.push(...getTextNodes(childNode));
+            }
+        }
+        return textNodes;
+    }
+
+    /**
+     * Calcula o offset (posição) inicial e final de uma seleção
+     * dentro de um elemento container, relativo ao texto puro.
+     */
+    function getSelectionOffsets(container) {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return null;
+
+        const range = selection.getRangeAt(0);
+        const allTextNodes = getTextNodes(container);
+        let startOffset = 0;
+        let endOffset = 0;
+        let charCount = 0;
+
+        const preRange = document.createRange();
+        preRange.selectNodeContents(container);
+        preRange.setEnd(range.startContainer, range.startOffset);
+        startOffset = preRange.toString().length;
+
+        preRange.setEnd(range.endContainer, range.endOffset);
+        endOffset = preRange.toString().length;
+
+        if (startOffset > endOffset) {
+            [startOffset, endOffset] = [endOffset, startOffset]; // Swap if selection is backwards
+        }
+
+        return { start: startOffset, end: endOffset };
+    }
 
 
+    /**
+     * Aplica uma lista de marcações a um container.
+     * Esta é a função principal que "desenha" os highlights e negritos.
+     */
+    function applyAllMarkups(container, markups) {
+        // Restaura o HTML original para garantir um estado limpo
+        container.innerHTML = originalContentHTML;
+        
+        // Ignora aninhamento para simplificar, apenas pega o nó de texto e aplica
+        const textNodes = getTextNodes(container);
+        
+        // Ordena as marcações do final para o começo para não bagunçar os offsets
+        markups.sort((a, b) => b.start - a.start);
+
+        let cumulativeLength = 0;
+        const processedRanges = [];
+
+        for (const markup of markups) {
+            for (const textNode of textNodes) {
+                const nodeStart = cumulativeLength;
+                const nodeEnd = nodeStart + textNode.length;
+                cumulativeLength = nodeEnd;
+
+                if (markup.end > nodeStart && markup.start < nodeEnd) {
+                    const range = document.createRange();
+                    const start = Math.max(markup.start, nodeStart);
+                    const end = Math.min(markup.end, nodeEnd);
+
+                    if (start < end) { // Garante que há algo a ser marcado
+                        range.setStart(textNode, start - nodeStart);
+                        range.setEnd(textNode, end - nodeStart);
+                        
+                        // Evita aplicar a mesma marcação duas vezes no mesmo lugar
+                        const isProcessed = processedRanges.some(r => r.intersectsNode(range.startContainer));
+                        if(isProcessed) continue;
+
+                        const wrapper = document.createElement(markup.type === 'bold' ? 'strong' : 'span');
+                        if (markup.type === 'highlight') {
+                            wrapper.className = 'user-text-highlight';
+                        }
+                        
+                        try {
+                            range.surroundContents(wrapper);
+                            processedRanges.push(range);
+                        } catch (e) {
+                            console.warn("Não foi possível aplicar a marcação:", markup, e);
+                        }
+                    }
+                }
+            }
+            cumulativeLength = 0; // Reset for next markup
+        }
+    }
+
+
+    /**
+     * Adiciona ou remove uma marcação da lista e agenda o salvamento.
+     */
+    function toggleMarkup(type) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount || selection.isCollapsed) return;
+        if (!lawContentEl.contains(selection.anchorNode)) return;
+
+        const offsets = getSelectionOffsets(lawContentEl);
+        if (!offsets || offsets.start === offsets.end) return;
+
+        const selectedText = selection.toString().trim();
+        if (!selectedText) return;
+
+        let markupExists = false;
+        let indexToRemove = -1;
+
+        // Verifica se a nova seleção se sobrepõe ou é idêntica a uma existente
+        currentMarkups.forEach((m, index) => {
+            if (m.type === type && m.start === offsets.start && m.end === offsets.end) {
+                markupExists = true;
+                indexToRemove = index;
+            }
+        });
+        
+        if (markupExists) {
+            currentMarkups.splice(indexToRemove, 1); // Remove a marcação existente
+        } else {
+            // Adiciona a nova marcação
+            currentMarkups.push({ type: type, start: offsets.start, end: offsets.end, text: selectedText });
+        }
+
+        applyAllMarkups(lawContentEl, currentMarkups);
+        window.getSelection().removeAllRanges();
+        debounceSaveMarkup();
+    }
+    
+    /**
+     * Agenda o salvamento para evitar chamadas excessivas à API.
+     */
+    function debounceSaveMarkup() {
+        clearTimeout(saveMarkupTimeout);
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
+    }
+    
+    /**
+     * Envia a lista de marcações para o backend para persistência.
+     */
+    async function saveLawMarkup() {
+        console.log("Salvando marcações (abordagem otimizada)...");
+        try {
+            const response = await fetch(`/student/law/${lawId}/save_markup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ markups: currentMarkups })
+            });
+            const data = await response.json();
+            if (data.success) {
+                console.log("Marcações salvas com sucesso!");
+            } else {
+                console.error("Falha ao salvar marcações:", data.error);
+                alert("Ocorreu um erro ao salvar suas marcações. Tente novamente.");
+            }
+        } catch (error) {
+            console.error("Erro de rede ao salvar marcações:", error);
+            alert("Ocorreu um erro de comunicação ao salvar suas marcações.");
+        }
+    }
+
+    document.getElementById('format-bold-btn').addEventListener('click', () => toggleMarkup('bold'));
+    document.getElementById('format-highlight-btn').addEventListener('click', () => toggleMarkup('highlight'));
+
+    if (currentMarkups.length > 0) {
+        // Atraso mínimo para garantir que o DOM está pronto para manipulação
+        setTimeout(() => applyAllMarkups(lawContentEl, currentMarkups), 100);
+    }
+    // =======================================================
+    // FIM: LÓGICA DE MARCAÇÕES DE TEXTO OTIMIZADA
+    // =======================================================
+
+
+    // =======================================================
+    // INÍCIO: OUTRAS FUNCIONALIDADES DA PÁGINA
+    // =======================================================
+    
+    // --- Barra de Progresso ---
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
         const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-        if (scrollableHeight > 0) {
-            const progressPercentage = (scrollTop / scrollableHeight) * 100;
-            progressBar.style.width = progressPercentage + '%';
-        } else {
-            progressBar.style.width = '0%';
-        }
+        progressBar.style.width = scrollableHeight > 0 ? (scrollTop / scrollableHeight) * 100 + '%' : '0%';
     }
     window.addEventListener('scroll', updateProgressBar);
     updateProgressBar();
 
+    // --- Navegação e Bookmarks ---
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
     const backToTopBtn = document.getElementById("back-to-top-btn");
     const pageTop = document.getElementById("page-top");
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
-    
-    const articleSearchInput = document.getElementById('article-search-input');
-    const goToArticleBtn = document.getElementById('go-to-article-btn');
-    const stickyActionBar = document.getElementById('sticky-action-bar');
-
-    function indexArticles() {
-        const articleElements = lawContent.querySelectorAll('p, strong, b');
-        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
-        articleElements.forEach(el => {
-            const match = el.textContent.trim().match(articleRegex);
-            if (match) {
-                const articleNumber = match[3];
-                if (!el.id) {
-                    el.id = `art-${articleNumber}`;
-                }
-            }
-        });
-    }
-
-    function findAndGoToArticle() {
-        const articleNumber = articleSearchInput.value.trim();
-        if (/^\d+$/.test(articleNumber)) {
-            const targetElement = document.getElementById(`art-${articleNumber}`);
-            if (targetElement) {
-                scrollToElement(targetElement);
-            } else {
-                alert(`Artigo ${articleNumber} não encontrado.`);
-            }
-        } else {
-            const searchText = articleSearchInput.value.trim();
-            if (searchText) {
-                findAndGoToText(searchText);
-            }
-        }
-    }
-
-    function findAndGoToText(text) {
-        if (!text || text.length < 3) return;
-        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
-        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        let firstMatch = null;
-        while (node = walker.nextNode()) {
-            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
-            if (index > -1) {
-                const parentElement = node.parentElement;
-                const originalText = node.nodeValue;
-                const beforeText = originalText.substring(0, index);
-                const foundText = originalText.substring(index, index + text.length);
-                const afterText = originalText.substring(index + text.length);
-                const span = document.createElement('span');
-                span.className = 'highlight-article-search';
-                span.style.backgroundColor = '#fef08a';
-                span.textContent = foundText;
-                const fragment = document.createDocumentFragment();
-                fragment.appendChild(document.createTextNode(beforeText));
-                fragment.appendChild(span);
-                fragment.appendChild(document.createTextNode(afterText));
-                parentElement.replaceChild(fragment, node);
-                if (!firstMatch) {
-                    firstMatch = parentElement;
-                }
-            }
-        }
-        if (firstMatch) {
-            scrollToElement(firstMatch, false);
-        } else {
-            alert(`Texto "${text}" não encontrado.`);
-        }
-    }
-
-    function scrollToElement(element, useAnimationClass = true) {
-        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
-        const extraPadding = 16;
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-        });
-        if (useAnimationClass) {
-            element.classList.add('highlight-article');
-            setTimeout(() => {
-                element.classList.remove('highlight-article');
-            }, 2000);
-        }
-    }
-
-    goToArticleBtn.addEventListener('click', findAndGoToArticle);
-    articleSearchInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            findAndGoToArticle();
-        }
-    });
-    indexArticles();
-
-    function setupToggleButton(buttonId, contentSelector) {
-        const button = document.getElementById(buttonId);
-        if (!button) return;
-        
-        const elementsToToggleOnLoad = buttonId === 'toggle-my-comments-btn' 
-            ? document.querySelectorAll(contentSelector)
-            : lawContent.querySelectorAll(contentSelector);
-        
-        elementsToToggleOnLoad.forEach(el => {
-            el.classList.remove("conteudo-oculto");
-        });
-
-        let isVisible = true;
-        
-        button.addEventListener("click", function () {
-            isVisible = !isVisible;
-            const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
-                ? document.querySelectorAll(contentSelector)
-                : lawContent.querySelectorAll(contentSelector);
-            
-            elementsToToggle.forEach(el => {
-                el.classList.toggle("conteudo-oculto", !isVisible);
-            });
-            
-            const icon = this.querySelector('i');
-            this.classList.toggle("active", !isVisible);
-            
-            if (isVisible) {
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-                this.title = this.title.replace('Mostrar', 'Ocultar');
-            } else {
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-                this.title = this.title.replace('Ocultar', 'Mostrar');
-            }
-        });
-    }
-
-    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
-    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
-    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
-    setupToggleButton('toggle-my-comments-btn', '.comment-display');
-
     const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
+
     goToNotesBtn.addEventListener("click", function() {
         notesSection.scrollIntoView({ behavior: 'smooth' });
         const notesContentArea = document.getElementById("notes-content-area");
@@ -1116,407 +922,277 @@ document.addEventListener("DOMContentLoaded", function () {
             setTimeout(() => { document.getElementById("toggle-notes-btn").click(); }, 500);
         }
     });
-
-    backToTopBtn.addEventListener("click", function() {
-        pageTop.scrollIntoView({ behavior: 'smooth' });
-    });
+    backToTopBtn.addEventListener("click", () => pageTop.scrollIntoView({ behavior: 'smooth' }));
 
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
             const lastReadArticle = lastReadArticleInput.value.trim();
-            if (!lastReadArticle) {
-                alert("Por favor, informe onde você parou.");
-                return;
-            }
-            if (hiddenLastReadArticleInput) {
-                hiddenLastReadArticleInput.value = lastReadArticle;
-            }
+            if (!lastReadArticle) return alert("Por favor, informe onde você parou.");
+            if (hiddenLastReadArticleInput) hiddenLastReadArticleInput.value = lastReadArticle;
             
-            const originalText = saveBookmarkBtn.innerHTML;
-            saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
-            saveBookmarkBtn.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+            this.disabled = true;
             fetch(`/student/save_last_read/${lawId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
                 body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
-            }).then(response => response.json()).then(data => {
+            }).then(r => r.json()).then(data => {
                 if (data.success) {
-                    saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
-                    let messageDiv = document.querySelector('.last-read-info');
-                    if (!messageDiv) {
-                        messageDiv = document.createElement('div');
-                        messageDiv.className = 'last-read-info';
-                        messageDiv.setAttribute('role', 'alert');
-                        const toggleButtonsContainer = document.getElementById('sticky-action-bar');
-                        toggleButtonsContainer.parentNode.insertBefore(messageDiv, toggleButtonsContainer);
-                    }
-                    messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
-                    setTimeout(() => {
-                        saveBookmarkBtn.innerHTML = originalText;
-                        saveBookmarkBtn.disabled = false;
-                    }, 2000);
+                    this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                    setTimeout(() => { this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false; }, 2000);
                 } else {
                     alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
-                    saveBookmarkBtn.innerHTML = originalText;
-                    saveBookmarkBtn.disabled = false;
+                    this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false;
                 }
             }).catch(error => {
-                console.error("Erro ao salvar:", error);
                 alert("Erro de comunicação ao salvar.");
-                saveBookmarkBtn.innerHTML = originalText;
-                saveBookmarkBtn.disabled = false;
+                this.innerHTML = '<i class="fas fa-bookmark mr-2"></i> Salvar'; this.disabled = false;
             });
         });
     }
 
-    const toggleNotesBtn = document.getElementById("toggle-notes-btn");
-    const notesContentArea = document.getElementById("notes-content-area");
-    const notesChevron = document.getElementById("notes-chevron");
-    toggleNotesBtn.addEventListener("click", function() {
-        notesContentArea.classList.toggle("hidden");
-        notesChevron.style.transform = notesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-    });
+    // --- Busca de Artigo ---
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+    const stickyActionBar = document.getElementById('sticky-action-bar');
 
+    function indexArticles() {
+        lawContentEl.querySelectorAll('p, strong, b').forEach(el => {
+            const match = el.textContent.trim().match(/^(Art(igo)?\.?\s*)(\d+)/i);
+            if (match && !el.id) el.id = `art-${match[3]}`;
+        });
+    }
+
+    function scrollToElement(element, useAnimationClass = true) {
+        const offsetPosition = element.getBoundingClientRect().top + window.pageYOffset - (stickyActionBar ? stickyActionBar.offsetHeight : 0) - 16;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        if (useAnimationClass) {
+            element.classList.add('highlight-article');
+            setTimeout(() => element.classList.remove('highlight-article'), 2000);
+        }
+    }
+
+    function findAndGoToArticle() {
+        const query = articleSearchInput.value.trim();
+        if (/^\d+$/.test(query)) {
+            const target = document.getElementById(`art-${query}`);
+            if (target) scrollToElement(target); else alert(`Artigo ${query} não encontrado.`);
+        } else if (query) {
+            alert("Para buscar por texto, use a busca geral do navegador (Ctrl+F ou Cmd+F).");
+        }
+    }
+    
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    articleSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); findAndGoToArticle(); } });
+    indexArticles();
+
+    // --- Toggles de Filtro (Juris, Doutrina, etc.) ---
+    function setupToggleButton(buttonId, contentSelector) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        
+        let isVisible = true;
+        button.addEventListener("click", function () {
+            isVisible = !isVisible;
+            const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
+                ? document.querySelectorAll(contentSelector)
+                : lawContentEl.querySelectorAll(contentSelector);
+            
+            elementsToToggle.forEach(el => el.classList.toggle("conteudo-oculto", !isVisible));
+            const icon = this.querySelector('i');
+            icon.className = isVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
+            this.title = this.title.includes('Ocultar') ? this.title.replace('Ocultar', 'Mostrar') : this.title.replace('Mostrar', 'Ocultar');
+        });
+    }
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
+    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
+    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
+    setupToggleButton('toggle-my-comments-btn', '.comment-display');
+
+    // --- Player de Ondas Neurais ---
     const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
     let currentlyPlaying = null;
     neuralWaveButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const waveType = this.getAttribute('data-wave');
-            const audioElement = document.getElementById(`audio-${waveType}`);
+            const waveType = this.dataset.wave;
+            const audio = document.getElementById(`audio-${waveType}`);
             if (this.classList.contains('playing')) {
-                audioElement.pause();
-                audioElement.currentTime = 0;
+                audio.pause();
                 this.classList.remove('playing');
                 currentlyPlaying = null;
-                return;
+            } else {
+                if (currentlyPlaying) {
+                    document.querySelector('.neural-wave-button.playing')?.classList.remove('playing');
+                    document.getElementById(`audio-${currentlyPlaying}`).pause();
+                }
+                audio.play().catch(e => console.error("Erro ao tocar áudio:", e));
+                this.classList.add('playing');
+                currentlyPlaying = waveType;
             }
-            if (currentlyPlaying) {
-                const playingButton = document.querySelector(`.neural-wave-button[data-wave="${currentlyPlaying}"]`);
-                const playingAudio = document.getElementById(`audio-${currentlyPlaying}`);
-                playingButton.classList.remove('playing');
-                playingAudio.pause();
-                playingAudio.currentTime = 0;
-            }
-            audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
-            this.classList.add('playing');
-            currentlyPlaying = waveType;
         });
     });
 
+    // --- Anotações Gerais (Editor inferior) ---
     const notesEditor = document.getElementById('notes-editor');
-    const saveNotesBtn = document.getElementById('save-notes-btn');
-    document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
-    document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    document.getElementById('highlight-btn').addEventListener('click', () => {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const parent = range.commonAncestorContainer.parentElement;
-            if (parent.classList.contains('highlight')) {
-                const text = document.createTextNode(parent.textContent);
-                parent.parentNode.replaceChild(text, parent);
-            } else {
-                const span = document.createElement('span');
-                span.className = 'highlight';
-                span.appendChild(range.extractContents());
-                range.insertNode(span);
-            }
-        }
-        notesEditor.focus();
+    document.getElementById('toggle-notes-btn').addEventListener("click", function() {
+        document.getElementById("notes-content-area").classList.toggle("hidden");
+        this.querySelector("#notes-chevron").style.transform = document.getElementById("notes-content-area").classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
     });
-
-    function loadNotes() {
-        fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
-            if (d.success && d.content) notesEditor.innerHTML = d.content;
-        }).catch(e => console.error("Erro ao carregar anotações gerais:", e));
-    }
-
-    saveNotesBtn.addEventListener('click', function() {
-        const content = notesEditor.innerHTML;
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
-        this.disabled = true;
+    document.getElementById('bold-btn').addEventListener('click', () => document.execCommand('bold'));
+    document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic'));
+    document.getElementById('highlight-btn').addEventListener('click', () => document.execCommand('hiliteColor', false, '#fef08a'));
+    
+    fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
+        if (d.success && d.content) notesEditor.innerHTML = d.content;
+    });
+    document.getElementById('save-notes-btn').addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...'; this.disabled = true;
         fetch(`/student/law/${lawId}/notes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ content: content })
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content: notesEditor.innerHTML })
         }).then(r => r.json()).then(d => {
             this.innerHTML = d.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
-            this.classList.toggle('bg-green-500', d.success);
-            this.classList.toggle('bg-red-500', !d.success);
-            setTimeout(() => {
-                this.innerHTML = originalText;
-                this.disabled = false;
-                this.classList.remove('bg-green-500', 'bg-red-500');
-            }, 2000);
-        }).catch(e => {
-            console.error("Erro ao salvar anotações gerais:", e);
-            this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
-            this.disabled = false;
+            setTimeout(() => { this.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar Anotações Gerais'; this.disabled = false; }, 2000);
         });
     });
-    
-    loadNotes();
-    
-    if (lawContent) {
-        lawContent.addEventListener('copy', function(event) {
-            event.preventDefault();
-            alert('A cópia deste conteúdo está desabilitada para proteger a propriedade intelectual.');
+
+    // --- Proteção contra Cópia ---
+    lawContentEl.addEventListener('copy', e => { e.preventDefault(); alert('A cópia deste conteúdo está desabilitada.'); });
+
+    // --- Botão de Favoritar ---
+    const favoriteBtn = document.querySelector('.js-favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            this.disabled = true;
+            fetch(`/student/law/toggle_favorite/${this.dataset.lawId}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+            }).then(r => r.json()).then(data => {
+                this.classList.toggle('favorited', data.favorited);
+                this.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
+                this.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+            }).finally(() => this.disabled = false);
         });
     }
 
-    const formatBoldBtn = document.getElementById('format-bold-btn');
-    const formatHighlightBtn = document.getElementById('format-highlight-btn');
-    
-    function applyMarkup(command) {
-        const selection = window.getSelection();
-        if (!selection.rangeCount || selection.isCollapsed) return;
-
-        const range = selection.getRangeAt(0);
-        if (!lawContent.contains(range.commonAncestorContainer)) {
-            return;
-        }
-
-        let parent = range.commonAncestorContainer;
-        if (parent.nodeType !== Node.ELEMENT_NODE) {
-            parent = parent.parentNode;
-        }
-
-        const existingMarkup = parent.closest(command === 'bold' ? 'strong' : '.user-text-highlight');
-
-        if (existingMarkup && selection.toString() === existingMarkup.textContent) {
-            const markupId = existingMarkup.dataset.markupId;
-            if (markupId) {
-                deleteMarkup(markupId, existingMarkup);
-            }
-        } else {
-            const rangeData = getRangeData(range);
-            if(rangeData) {
-                saveMarkup(command, rangeData);
-            }
-        }
-    }
-    
-    formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
-    formatHighlightBtn.addEventListener('click', () => applyMarkup('highlight'));
-
-
-    // =====================================================================
-    // <<< INÍCIO: NOVO SISTEMA DE MARCAÇÃO OTIMIZADO >>>
-    // =====================================================================
-
-    // Função para obter o "caminho" de um nó dentro do container
-    function getNodePath(node, container) {
-        let path = [];
-        let current = node;
-        while (current && current !== container) {
-            let index = 0;
-            let sibling = current.previousSibling;
-            while (sibling) {
-                // Contar apenas nós de elementos para um caminho estável
-                if (sibling.nodeType === Node.ELEMENT_NODE) {
-                    index++;
-                }
-                sibling = sibling.previousSibling;
-            }
-            path.unshift(index);
-            current = current.parentNode;
-        }
-        return path.join('/');
-    }
-
-    // Função para encontrar um nó a partir de seu caminho
-    function getNodeFromPath(path, container) {
-        let current = container;
-        if (!path) return container; // Se o caminho for vazio, o container é o próprio nó.
-        const indices = path.split('/');
-        for (const indexStr of indices) {
-            const index = parseInt(indexStr, 10);
-            if (current && current.children[index]) {
-                current = current.children[index];
-            } else {
-                return null; // Caminho inválido
-            }
-        }
-        return current;
-    }
-
-    // Função para obter os dados de uma seleção (range)
-    function getRangeData(range) {
-        const commonAncestor = range.commonAncestorContainer;
-    
-        function getPath(node) {
-            let path = [];
-            while (node !== lawContent) {
-                const parent = node.parentNode;
-                const children = Array.from(parent.childNodes);
-                path.unshift(children.indexOf(node));
-                node = parent;
-            }
-            return path.join(',');
-        }
-
-        return {
-            start_container_path: getPath(range.startContainer),
-            start_offset: range.startOffset,
-            end_container_path: getPath(range.endContainer),
-            end_offset: range.endOffset,
-        };
-    }
-    
-    // Função para aplicar uma única marcação recebida do servidor
-    function applySingleMarkup(markup) {
-        function getNodeFromPath(path) {
-            const indices = path.split(',');
-            let node = lawContent;
-            for (const index of indices) {
-                node = node.childNodes[parseInt(index, 10)];
-                if (!node) return null;
-            }
-            return node;
-        }
-
-        const startNode = getNodeFromPath(markup.start_container_path);
-        const endNode = getNodeFromPath(markup.end_container_path);
-
-        if (!startNode || !endNode) {
-            console.error("Não foi possível encontrar o nó para a marcação:", markup);
-            return;
-        }
-
-        try {
-            const range = document.createRange();
-            range.setStart(startNode, markup.start_offset);
-            range.setEnd(endNode, markup.end_offset);
-
-            const tagName = markup.type === 'bold' ? 'strong' : 'span';
-            const wrapper = document.createElement(tagName);
-            
-            if (markup.type === 'highlight') {
-                wrapper.className = 'user-text-highlight';
-            }
-            
-            wrapper.dataset.markupId = markup.id; 
-            range.surroundContents(wrapper);
-        } catch(e) {
-            console.error("Erro ao aplicar marcação:", markup, e);
-        }
-    }
-
-    // Função para salvar uma nova marcação
-    async function saveMarkup(type, rangeData) {
-        try {
-            const response = await fetch(`/student/law/${lawId}/markups`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ type, ...rangeData })
-            });
-            const data = await response.json();
-            if (data.success) {
-                // Aplica a marcação na UI com o ID retornado pelo servidor
-                applySingleMarkup({id: data.markup.id, type, ...rangeData});
-            } else {
-                alert("Erro ao salvar marcação.");
-            }
-        } catch (error) {
-            console.error("Erro de rede ao salvar marcação:", error);
-        }
-    }
-
-    // Função para deletar uma marcação
-    async function deleteMarkup(markupId, element) {
-        try {
-            const response = await fetch(`/student/markups/${markupId}`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            if (response.ok) {
-                // Desfaz a marcação na UI
-                const text = document.createTextNode(element.textContent);
-                element.parentNode.replaceChild(text, element);
-                // Normaliza o nó pai para juntar nós de texto adjacentes
-                element.parentNode.normalize();
-            } else {
-                alert("Erro ao remover marcação.");
-            }
-        } catch (error) {
-            console.error("Erro de rede ao remover marcação:", error);
-        }
-    }
-
-    // Função principal que carrega e aplica todas as marcações ao iniciar
-    async function loadAndApplyMarkups() {
-        try {
-            const response = await fetch(`/student/law/${lawId}/markups`);
-            const markups = await response.json();
-            // Aplica as marcações na ordem inversa para evitar problemas com offsets
-            markups.sort((a, b) => {
-                if (a.start_container_path === b.start_container_path) {
-                    return b.start_offset - a.start_offset;
-                }
-                return b.start_container_path.localeCompare(a.start_container_path);
-            }).forEach(applySingleMarkup);
-        } catch (error) {
-            console.error("Erro ao carregar marcações:", error);
-        }
-    }
-
-    // Carrega as marcações quando a página é iniciada
-    loadAndApplyMarkups();
-
-    // =====================================================================
-    // <<< FIM: NOVO SISTEMA DE MARCAÇÃO OTIMIZADO >>>
-    // =====================================================================
-
-    const favoriteBtn = document.querySelector('.js-favorite-btn');
-    if (favoriteBtn) {
-        // ... (código inalterado) ...
-    }
-
+    // --- Sistema de Anotações por Parágrafo ---
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
-    // ... (demais variáveis e funções do modal de comentários inalteradas) ...
+    const modalTextarea = document.getElementById('comment-modal-textarea');
+    let currentAnchorId = null, currentEditingCommentId = null; 
 
-    function openCommentModalForCreate(anchorId) {
-        // ... (código inalterado) ...
+    function openCommentModal(anchorId, commentId = null, content = '') {
+        currentAnchorId = anchorId; currentEditingCommentId = commentId;
+        document.getElementById('comment-modal-title').textContent = commentId ? 'Editar Anotação' : 'Adicionar Anotação';
+        modalTextarea.value = content;
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
     }
-
-    function openCommentModalForEdit(commentId, currentContent) {
-        // ... (código inalterado) ...
-    }
-
-    function closeCommentModal() {
-        // ... (código inalterado) ...
-    }
+    function closeCommentModal() { modalBackdrop.style.display = 'none'; }
 
     function displayComment(comment) {
-        // ... (código inalterado) ...
+        const anchorEl = document.getElementById(comment.anchor_paragraph_id);
+        if (!anchorEl) return;
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment-display';
+        commentDiv.dataset.commentId = comment.id;
+        commentDiv.innerHTML = `<p>${comment.content.replace(/\n/g, '<br>')}</p><button class="comment-delete-btn" title="Excluir">&times;</button>`;
+        anchorEl.parentNode.insertBefore(commentDiv, anchorEl.nextSibling);
+        anchorEl.parentNode.querySelector('.comment-icon')?.classList.add('has-comment');
+
+        commentDiv.addEventListener('click', e => {
+            if (e.target.classList.contains('comment-delete-btn')) {
+                e.stopPropagation();
+                if (confirm('Tem certeza?')) deleteComment(comment.id, commentDiv);
+            } else {
+                openCommentModal(null, comment.id, comment.content);
+            }
+        });
     }
     
     async function saveOrUpdateComment() {
-        // ... (código inalterado) ...
+        const content = modalTextarea.value.trim();
+        if (!content) return;
+        const url = currentEditingCommentId ? `/student/comments/${currentEditingCommentId}` : `/student/law/${lawId}/comments`;
+        const method = currentEditingCommentId ? 'PUT' : 'POST';
+        const body = JSON.stringify({ content, anchor_paragraph_id: currentAnchorId });
+        const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body });
+        const data = await response.json();
+        if (data.success) {
+            if (method === 'POST') {
+                displayComment(data.comment);
+            } else {
+                document.querySelector(`.comment-display[data-comment-id='${data.comment.id}'] p`).innerHTML = data.comment.content.replace(/\n/g, '<br>');
+            }
+            closeCommentModal();
+        } else alert('Erro: ' + data.error);
     }
-    
-    async function deleteComment(commentId, commentElement) {
-        // ... (código inalterado) ...
+
+    async function deleteComment(commentId, el) {
+        const response = await fetch(`/student/comments/${commentId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
+        const data = await response.json();
+        if (data.success) el.remove(); else alert('Erro: ' + data.error);
     }
 
     async function initCommentSystem() {
-        // ... (código inalterado) ...
+        let pIndex = 0;
+        lawContentEl.querySelectorAll('p, li, blockquote').forEach(p => {
+            if (p.closest('.comment-display')) return;
+            const anchorId = `law-p-${pIndex++}`; p.id = anchorId;
+            const wrapper = document.createElement('div'); wrapper.className = 'paragraph-wrapper';
+            p.parentNode.insertBefore(wrapper, p); wrapper.appendChild(p);
+            const icon = document.createElement('i'); icon.className = 'fas fa-comment-dots comment-icon';
+            icon.title = 'Adicionar anotação';
+            icon.addEventListener('click', () => openCommentModal(anchorId));
+            wrapper.appendChild(icon);
+        });
+        const response = await fetch(`/student/law/${lawId}/comments`);
+        const data = await response.json();
+        if (data.success) data.comments.forEach(displayComment);
     }
-    
-    modalSaveBtn.addEventListener('click', saveOrUpdateComment);
-    modalCancelBtn.addEventListener('click', closeCommentModal);
-    modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBackdrop) closeCommentModal();
-    });
-
+    document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
+    document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
     initCommentSystem();
 
-    // ... (lógica de controle de fonte inalterada) ...
+    // --- Controles de Fonte e Tema ---
+    const increaseFontBtn = document.getElementById('increase-font-btn');
+    const decreaseFontBtn = document.getElementById('decrease-font-btn');
+    const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
+    const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
+    let currentSizeIndex = fontSizes.indexOf(localStorage.getItem('fontSize')) || 1;
     
-    // ... (lógica de tema noturno inalterada) ...
+    function applyFontSize(sizeClass) {
+        fontSizes.forEach(s => lawContentEl.classList.remove(s));
+        lawContentEl.classList.add(sizeClass);
+        localStorage.setItem('fontSize', sizeClass);
+    }
+    increaseFontBtn.addEventListener('click', () => { if(currentSizeIndex < fontSizes.length - 1) applyFontSize(fontSizes[++currentSizeIndex]) });
+    decreaseFontBtn.addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
+    toggleFontFamilyBtn.addEventListener('click', () => {
+        lawContentEl.classList.toggle('font-serif');
+        localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
+    });
+    applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
+    if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
-    // ... (lógica de links úteis inalterada) ...
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    function applyTheme(theme) {
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+        themeToggleBtn.querySelector('i').className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    themeToggleBtn.addEventListener('click', () => {
+        const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+    applyTheme(localStorage.getItem('theme') || 'light');
+
+    // --- Toggle de Links Úteis ---
+    const toggleLinksBtn = document.getElementById("toggle-links-btn");
+    if(toggleLinksBtn) {
+        toggleLinksBtn.addEventListener("click", function() {
+            document.getElementById("links-content-area").classList.toggle("hidden");
+            this.querySelector("#links-chevron").style.transform = document.getElementById("links-content-area").classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
+
 });
 </script>
 {% endblock %}
