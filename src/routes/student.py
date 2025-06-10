@@ -34,16 +34,61 @@ def check_and_award_achievements(user):
     
     return unlocked_achievements_names
 
+# =====================================================================
+# <<< INÍCIO DA MODIFICAÇÃO PARA FILTROS DINÂMICOS >>>
+# =====================================================================
+
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
+    """
+    Renderiza a página principal do dashboard.
+    A lista de leis agora é carregada dinamicamente via JavaScript.
+    """
+    subjects_for_filter = Subject.query.order_by(Subject.name).all()
+
+    total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
+    completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
+    global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
+    
+    last_progress = UserProgress.query.join(Law).filter(
+        UserProgress.user_id == current_user.id,
+        UserProgress.last_accessed_at.isnot(None),
+        Law.parent_id.isnot(None)
+    ).order_by(UserProgress.last_accessed_at.desc()).first()
+    last_accessed_law = last_progress.law if last_progress else None
+    
+    fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
+    seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
+    non_fixed_announcements = Announcement.query.filter(
+        Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
+    ).order_by(Announcement.created_at.desc()).all()
+    
+    # Apenas renderiza o template base. Os dados de leis serão buscados via API.
+    return render_template("student/dashboard.html",
+                           subjects=subjects_for_filter,
+                           progress_percentage=global_progress_percentage,
+                           completed_count=completed_count,
+                           total_laws=total_topics_count,
+                           user_points=current_user.points,
+                           user_achievements=current_user.achievements,
+                           fixed_announcements=fixed_announcements,
+                           non_fixed_announcements=non_fixed_announcements,
+                           last_accessed_law=last_accessed_law)
+
+
+@student_bp.route("/filter_laws")
+@login_required
+def filter_laws():
+    """
+    Endpoint da API que retorna a lista de legislações filtradas em JSON.
+    """
     search_query = request.args.get("search", "")
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
     selected_status = request.args.get("status_filter", "")
-    show_favorites = request.args.get("show_favorites") == 'on'
-    
-    subjects_for_filter = Subject.query.order_by(Subject.name).all()
+    show_favorites_str = request.args.get("show_favorites", "false")
+    show_favorites = show_favorites_str.lower() == 'true'
 
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.law_id: p.status for p in user_progress_records}
@@ -86,60 +131,49 @@ def dashboard():
             passes_favorite = not show_favorites or is_favorite
 
             if passes_status and passes_favorite:
-                children_to_display.append(topic)
+                children_to_display.append({
+                    "id": topic.id,
+                    "title": topic.title,
+                    "is_completed": is_completed,
+                    "is_in_progress": is_in_progress,
+                    "is_favorite": is_favorite
+                })
         
         is_any_filter_active = selected_status or show_favorites or search_query
         if children_to_display or not is_any_filter_active:
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
-            diploma.progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
-            diploma.filtered_children = children_to_display if is_any_filter_active else diploma.children
+            progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
             
-            if diploma.filtered_children or not is_any_filter_active:
-                 processed_diplomas.append(diploma)
+            diploma_data = {
+                "title": diploma.title,
+                "progress_percentage": progress_percentage,
+                "subject_name": diploma.subject.name if diploma.subject else "Sem Matéria",
+                "filtered_children": children_to_display if is_any_filter_active else [
+                    {
+                        "id": t.id, "title": t.title,
+                        "is_completed": t.id in completed_topic_ids,
+                        "is_in_progress": t.id in in_progress_topic_ids,
+                        "is_favorite": t.id in favorite_topic_ids
+                    } for t in diploma.children
+                ]
+            }
+
+            if diploma_data["filtered_children"] or not is_any_filter_active:
+                processed_diplomas.append(diploma_data)
 
     subjects_with_diplomas = {}
-    for diploma in processed_diplomas:
-        subject_name = diploma.subject.name if diploma.subject else "Sem Matéria"
+    for diploma_data in processed_diplomas:
+        subject_name = diploma_data["subject_name"]
         if subject_name not in subjects_with_diplomas:
             subjects_with_diplomas[subject_name] = []
-        subjects_with_diplomas[subject_name].append(diploma)
+        subjects_with_diplomas[subject_name].append(diploma_data)
 
-    total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
-    completed_count = len(completed_topic_ids)
-    global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
-    
-    last_progress = UserProgress.query.join(Law).filter(
-        UserProgress.user_id == current_user.id,
-        UserProgress.last_accessed_at.isnot(None),
-        Law.parent_id.isnot(None)
-    ).order_by(UserProgress.last_accessed_at.desc()).first()
-    last_accessed_law = last_progress.law if last_progress else None
-    
-    fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
-    seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
-    non_fixed_announcements = Announcement.query.filter(
-        Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
-    ).order_by(Announcement.created_at.desc()).all()
-    
-    return render_template("student/dashboard.html",
-                           subjects_with_diplomas=subjects_with_diplomas,
-                           subjects=subjects_for_filter,
-                           selected_subject_id=selected_subject_id,
-                           completed_law_ids=completed_topic_ids,
-                           in_progress_law_ids=in_progress_topic_ids,
-                           favorite_law_ids=favorite_topic_ids,
-                           progress_percentage=global_progress_percentage,
-                           completed_count=completed_count,
-                           total_laws=total_topics_count,
-                           search_query=search_query,
-                           selected_status=selected_status,
-                           show_favorites=show_favorites,
-                           user_points=current_user.points,
-                           user_achievements=current_user.achievements,
-                           fixed_announcements=fixed_announcements,
-                           non_fixed_announcements=non_fixed_announcements,
-                           last_accessed_law=last_accessed_law)
+    return jsonify(subjects_with_diplomas=subjects_with_diplomas)
+
+# =====================================================================
+# <<< FIM DA MODIFICAÇÃO PARA FILTROS DINÂMICOS >>>
+# =====================================================================
 
 
 @student_bp.route("/law/<int:law_id>")
@@ -187,19 +221,14 @@ def toggle_favorite(law_id):
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
 
-# =====================================================================
-# <<< INÍCIO DA MODIFICAÇÃO PARA PONTUAÇÃO ÚNICA >>>
-# =====================================================================
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
 def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     
-    # A condição para pontuar é se o progresso não existir OU se a data de conclusão for nula.
     should_award_points = not progress or not progress.completed_at
 
-    # Apenas executa a lógica se o status não for 'concluido'
     if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
@@ -207,16 +236,15 @@ def mark_complete(law_id):
         
         progress.status = 'concluido'
         
-        # A data de conclusão só é definida na PRIMEIRA vez que o tópico é completado.
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
         
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
-            flash(f"Tópico \"{law.title}\" concluído! Você ganhou {points_to_award} pontos.", "success")
+            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
         else:
-            flash(f"Tópico \"{law.title}\" concluído novamente!", "info")
+            flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
 
         unlocked = check_and_award_achievements(current_user)
         if unlocked:
@@ -228,7 +256,7 @@ def mark_complete(law_id):
             db.session.rollback()
             flash(f"Erro ao salvar progresso: {e}", "danger")
     else:
-        flash(f"Você já marcou \"{law.title}\" como concluído.", "info")
+        flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
@@ -239,19 +267,15 @@ def review_law(law_id):
     if not progress:
         return jsonify(success=False, error="Progresso não encontrado."), 404
     
-    # Apenas muda o status, mantendo a data da primeira conclusão como registro.
     progress.status = 'em_andamento'
     
     try:
         db.session.commit()
+        # MODIFICADO: Retorna o novo status para o JavaScript atualizar a UI
         return jsonify(success=True, new_status='em_andamento')
     except Exception as e:
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
-# =====================================================================
-# <<< FIM DA MODIFICAÇÃO PARA PONTUAÇÃO ÚNICA >>>
-# =====================================================================
-
 
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
@@ -274,7 +298,6 @@ def save_last_read(law_id):
     db.session.commit()
     return jsonify(success=True, message="Ponto de leitura salvo!")
 
-
 @student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
@@ -285,7 +308,7 @@ def mark_announcement_seen(announcement_id):
         db.session.commit()
     return jsonify(success=True)
 
-
+# ... (o restante do arquivo continua igual: handle_user_notes, handle_comments, etc.) ...
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET", "POST"])
 @login_required
 def handle_user_notes(law_id):
