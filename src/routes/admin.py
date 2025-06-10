@@ -2,7 +2,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
-# MODIFICADO: Importando 'joinedload' para carregamento eficiente
 from sqlalchemy.orm import joinedload
 from src.models.user import db, User, Announcement, UserSeenAnnouncement 
 from src.models.law import Law, Subject, UsefulLink 
@@ -26,12 +25,10 @@ def dashboard():
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
     
-    # --- QUERY CORRIGIDA PARA O NOVO MODELO ---
     query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
         joinedload(Law.children)
     ).order_by(Subject.name, Law.title)
 
-    # Aplica o filtro de matéria
     if subject_filter and subject_filter != "all":
         try:
             subject_id = int(subject_filter)
@@ -42,7 +39,6 @@ def dashboard():
 
     diplomas = query.all()
     
-    # Organiza os diplomas em um dicionário por matéria para o template
     subjects_with_diplomas = {}
     for diploma in diplomas:
         subject_name = diploma.subject.name if diploma.subject else "Sem Matéria"
@@ -59,8 +55,6 @@ def dashboard():
                            active_announcements_count=active_announcements_count,
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
-
-# --- O restante do seu arquivo permanece inalterado ---
 
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
@@ -246,26 +240,75 @@ def reset_user_password(user_id):
         return redirect(url_for("admin.manage_users"))
     return render_template("admin/reset_password.html", user=user)
 
+# =====================================================================
+# <<< INÍCIO DA LÓGICA CORRIGIDA E COMPLETA PARA AVISOS >>>
+# =====================================================================
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
 @admin_required
 def manage_announcements():
     if request.method == "POST":
-        # ... (código de gerenciar anúncios)
-        pass
+        title = request.form.get("title")
+        content = request.form.get("content")
+        is_active = request.form.get("is_active") == "on"
+        is_fixed = request.form.get("is_fixed") == "on"
+        announcement_id = request.form.get("announcement_id")
+
+        if not title or not content:
+            flash("Título e conteúdo são obrigatórios.", "danger")
+        else:
+            try:
+                if announcement_id:
+                    # Atualiza um aviso existente
+                    announcement = Announcement.query.get_or_404(int(announcement_id))
+                    announcement.title = title
+                    announcement.content = content
+                    announcement.is_active = is_active
+                    announcement.is_fixed = is_fixed
+                    flash("Aviso atualizado com sucesso!", "success")
+                else:
+                    # Cria um novo aviso
+                    new_announcement = Announcement(title=title, content=content, is_active=is_active, is_fixed=is_fixed)
+                    db.session.add(new_announcement)
+                    flash("Aviso adicionado com sucesso!", "success")
+                
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Erro ao salvar o aviso: {e}", "danger")
+        
+        return redirect(url_for("admin.manage_announcements"))
+        
     announcements = Announcement.query.order_by(Announcement.created_at.desc()).all()
     return render_template("admin/manage_announcements.html", announcements=announcements)
+
 
 @admin_bp.route("/announcements/toggle/<int:announcement_id>", methods=["POST"])
 @login_required
 @admin_required
 def toggle_announcement(announcement_id):
-    # ... (código de toggle)
-    pass
+    announcement = Announcement.query.get_or_404(announcement_id)
+    announcement.is_active = not announcement.is_active
+    db.session.commit()
+    status = "ativado" if announcement.is_active else "desativado"
+    flash(f"Aviso '{announcement.title}' foi {status}.", "success")
+    return redirect(url_for('admin.manage_announcements'))
+
 
 @admin_bp.route("/announcements/delete/<int:announcement_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_announcement(announcement_id):
-    # ... (código de deletar)
-    pass
+    announcement = Announcement.query.get_or_404(announcement_id)
+    try:
+        UserSeenAnnouncement.query.filter_by(announcement_id=announcement_id).delete()
+        db.session.delete(announcement)
+        db.session.commit()
+        flash("Aviso excluído com sucesso!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir o aviso: {e}", "danger")
+    return redirect(url_for('admin.manage_announcements'))
+# =====================================================================
+# <<< FIM DA LÓGICA CORRIGIDA E COMPLETA PARA AVISOS >>>
+# =====================================================================
