@@ -1164,7 +1164,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenLastReadArticleInput) {
                 hiddenLastReadArticleInput.value = lastReadArticle;
             }
-            const lawId = '{{ law.id }}';
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
@@ -1298,7 +1297,11 @@ document.addEventListener("DOMContentLoaded", function () {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
             const lawId = this.getAttribute('data-law-id');
-            const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+            // =================================================================
+            // <<< CORREÇÃO APLICADA AQUI >>>
+            // Voltando a usar o seletor do input oculto, que é o método correto para a sua aplicação.
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            // =================================================================
             const apiUrl = `/student/law/toggle_favorite/${lawId}`;
             const icon = this.querySelector('i');
 
@@ -1406,7 +1409,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const content = modalTextarea.value.trim();
         if (!content) return;
 
-        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+        // =================================================================
+        // <<< CORREÇÃO APLICADA AQUI >>>
+        // Esta era a linha que causava o erro ao salvar a anotação.
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        // =================================================================
         
         if (currentEditingCommentId) {
             try {
@@ -1455,7 +1462,11 @@ document.addEventListener("DOMContentLoaded", function () {
     async function deleteComment(commentId, commentElement) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
         
-        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+        // =================================================================
+        // <<< CORREÇÃO APLICADA AQUI >>>
+        // Corrigindo também a função de deletar, para garantir consistência.
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        // =================================================================
 
         try {
             const response = await fetch(`/student/comments/${commentId}`, {
