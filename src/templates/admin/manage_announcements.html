@@ -3,61 +3,146 @@
 {% block title %}Gerenciar Avisos - Admin{% endblock %}
 
 {% block head_extra %}
+<!-- TinyMCE v7 -->
 <script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
   tinymce.init({
-    selector: '#content',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed',
+    selector: '#content', // Seletor para o textarea do conteúdo do anúncio
+    plugins: [
+      // Recursos essenciais de edição
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      // Recursos premium (podem exigir plano pago após trial)
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed'
+    ],
     toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-    height: 300,
-    promotion: false,
-    branding: false,
-    
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO >>>
-    // A função 'setup' foi removida. O TinyMCE v5+ integra-se
-    // automaticamente com formulários e salva o conteúdo no submit.
-    // Manteremos apenas a garantia de que o triggerSave ocorra, mas de forma mais simples.
-    // O TinyMCE já lida com a sincronização na maioria dos casos.
-    // A remoção do script complexo abaixo resolverá o problema.
-    // =====================================================================
+    height: 300, // Altura do editor
+    images_upload_handler: function (blobInfo, progress) {
+      return new Promise((resolve, reject) => {
+        // Aqui você pode implementar o upload de imagens para seu servidor
+        // Por enquanto, vamos converter para base64 para demonstração
+        const reader = new FileReader();
+        reader.onload = function () {
+          const base64 = reader.result.split(',')[1];
+          resolve('data:' + blobInfo.blob().type + ';base64,' + base64);
+        };
+        reader.readAsDataURL(blobInfo.blob());
+      });
+    },
+    promotion: false, // Remove a promoção do TinyMCE
+    branding: false, // Remove a marca TinyMCE
     setup: function(editor) {
-      editor.on('change', function () {
-          // Salva o conteúdo no textarea a cada mudança, garantindo que esteja sempre atualizado.
-          tinymce.triggerSave();
+      // Adiciona um evento para garantir que o conteúdo seja atualizado antes do submit
+      editor.on('change', function() {
+        tinymce.triggerSave();
       });
     }
   });
 </script>
 <style>
-    /* Seus estilos CSS permanecem os mesmos */
-    .announcement-item { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; background-color: #ffffff; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-    .announcement-content { flex-grow: 1; }
-    .announcement-actions { flex-shrink: 0; display: flex; gap: 0.5rem; }
-    .status-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600; margin-left: 0.5rem; }
-    .status-active { background-color: #D1FAE5; color: #065F46; }
-    .status-inactive { background-color: #F3F4F6; color: #4B5563; }
-    .action-button-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 0.375rem; }
-    .toggle-button-active { background-color: #FBBF24; color: #92400E; }
-    .toggle-button-active:hover { background-color: #F59E0B; }
-    .toggle-button-inactive { background-color: #10B981; color: white; }
-    .toggle-button-inactive:hover { background-color: #059669; }
-    .delete-button { background-color: #EF4444; color: white; }
-    .delete-button:hover { background-color: #DC2626; }
-    .edit-button { background-color: #3B82F6; color: white; }
-    .edit-button:hover { background-color: #2563EB; }
-    .rich-content img { max-width: 100%; height: auto; border-radius: 0.375rem; margin: 0.5rem 0; }
-    .rich-content a { color: #2563eb; text-decoration: underline; }
-    .rich-content a:hover { color: #1d4ed8; }
-    .rich-content ul, .rich-content ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
-    .rich-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin: 0.5rem 0; color: #4b5563; }
-    .tox-tinymce { border-radius: 0.375rem !important; border-color: #e5e7eb !important; }
+    /* Additional styles for the announcements management page */
+    .announcement-item {
+        border: 1px solid #e5e7eb; /* Gray 200 */
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #ffffff; /* White */
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .announcement-content {
+        flex-grow: 1;
+    }
+    .announcement-actions {
+        flex-shrink: 0;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    .status-active {
+        background-color: #D1FAE5; /* Light green */
+        color: #065F46; /* Dark green text */
+    }
+    .status-inactive {
+        background-color: #F3F4F6; /* Gray 100 */
+        color: #4B5563; /* Gray 600 */
+    }
+    .action-button-sm {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        border-radius: 0.375rem;
+    }
+    .toggle-button-active {
+        background-color: #FBBF24; /* Amber 400 */
+        color: #92400E; /* Amber 700 */
+    }
+    .toggle-button-active:hover {
+        background-color: #F59E0B; /* Amber 500 */
+    }
+    .toggle-button-inactive {
+        background-color: #10B981; /* Emerald 500 */
+        color: white;
+    }
+    .toggle-button-inactive:hover {
+        background-color: #059669; /* Emerald 600 */
+    }
+    .delete-button {
+        background-color: #EF4444; /* Red 500 */
+        color: white;
+    }
+    .delete-button:hover {
+        background-color: #DC2626; /* Red 600 */
+    }
+    .edit-button {
+        background-color: #3B82F6; /* Blue 500 */
+        color: white;
+    }
+    .edit-button:hover {
+        background-color: #2563EB; /* Blue 600 */
+    }
+    /* Estilos para o conteúdo HTML rico nos anúncios */
+    .rich-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        margin: 0.5rem 0;
+    }
+    .rich-content a {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+    .rich-content a:hover {
+        color: #1d4ed8;
+    }
+    .rich-content ul, .rich-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .rich-content blockquote {
+        border-left: 4px solid #e5e7eb;
+        padding-left: 1rem;
+        margin: 0.5rem 0;
+        color: #4b5563;
+    }
+    /* Ajuste para o TinyMCE */
+    .tox-tinymce {
+        border-radius: 0.375rem !important;
+        border-color: #e5e7eb !important;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1 class="text-3xl font-bold text-brand-purple mb-6">Gerenciar Avisos</h1>
 
+<!-- Add/Edit Announcement Form -->
 <div class="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
     <h2 class="text-xl font-semibold text-brand-text mb-4" id="form-title">Adicionar Novo Aviso</h2>
     <form method="POST" action="{{ url_for('admin.manage_announcements') }}" id="announcement-form">
@@ -65,27 +150,36 @@
         <input type="hidden" id="announcement_id" name="announcement_id" value="">
         <div class="mb-4">
             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-            <input type="text" id="title" name="title" required class="shadow-sm border-gray-300 rounded-md w-full py-2 px-3">
+            <input type="text" id="title" name="title" required 
+                   class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent bg-white">
         </div>
         <div class="mb-4">
             <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
-            <textarea id="content" name="content" rows="4" class="shadow-sm border-gray-300 rounded-md w-full py-2 px-3"></textarea>
+            <!-- O textarea agora será transformado em editor TinyMCE -->
+            <textarea id="content" name="content" rows="4" required
+                      class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent bg-white"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Use o editor acima para formatar texto, adicionar links e imagens.</p>
         </div>
         <div class="mb-4 flex items-center">
-            <input type="checkbox" id="is_active" name="is_active" checked class="h-4 w-4 text-brand-purple rounded">
-            <label for="is_active" class="ml-2 text-sm font-medium text-gray-700">Ativo</label>
+            <input type="checkbox" id="is_active" name="is_active" checked class="h-4 w-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple mr-2">
+            <label for="is_active" class="text-sm font-medium text-gray-700">Ativo (visível para alunos)</label>
         </div>
         <div class="mb-4 flex items-center">
-            <input type="checkbox" id="is_fixed" name="is_fixed" class="h-4 w-4 text-brand-purple rounded">
-            <label for="is_fixed" class="ml-2 text-sm font-medium text-gray-700">Fixo</label>
+            <input type="checkbox" id="is_fixed" name="is_fixed" class="h-4 w-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple mr-2">
+            <label for="is_fixed" class="text-sm font-medium text-gray-700">Fixo (sempre visível, não pode ser ocultado pelo aluno)</label>
         </div>
         <div class="flex gap-3">
-            <button type="submit" id="submit-button" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">Salvar Aviso</button>
-            <button type="button" id="cancel-edit-button" class="hidden bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400">Cancelar Edição</button>
+            <button type="submit" id="submit-button" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Salvar Aviso
+            </button>
+            <button type="button" id="cancel-edit-button" class="hidden bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                Cancelar Edição
+            </button>
         </div>
     </form>
 </div>
 
+<!-- List of Existing Announcements -->
 <h2 class="text-xl font-semibold text-brand-text mb-4">Avisos Existentes</h2>
 {% if announcements %}
     <div>
@@ -94,14 +188,24 @@
             <div class="announcement-content">
                 <h3 class="text-lg font-semibold text-brand-text">
                     {{ announcement.title }}
-                    {% if announcement.is_active %}<span class="status-badge status-active">Ativo</span>{% else %}<span class="status-badge status-inactive">Inativo</span>{% endif %}
-                    {% if announcement.is_fixed %}<span class="status-badge" style="background-color: #FEF3C7; color: #92400E;">Fixo</span>{% endif %}
+                    {% if announcement.is_active %}
+                        <span class="status-badge status-active">Ativo</span>
+                    {% else %}
+                        <span class="status-badge status-inactive">Inativo</span>
+                    {% endif %}
+                    {% if announcement.is_fixed %}
+                        <span class="status-badge" style="background-color: #FEF3C7; color: #92400E;">Fixo</span>
+                    {% endif %}
                 </h3>
+                <!-- Renderização segura do conteúdo HTML rico -->
                 <div class="text-sm text-brand-text-light mt-1 rich-content">{{ announcement.content | safe }}</div>
                 <p class="text-xs text-gray-400 mt-2">Criado em: {{ announcement.created_at.strftime("%d/%m/%Y %H:%M") }}</p>
             </div>
             <div class="announcement-actions">
-                <button type="button" class="action-button-sm font-medium edit-button edit-announcement-btn" title="Editar"
+                <!-- Edit Button -->
+                <button type="button" 
+                        class="action-button-sm font-medium edit-button edit-announcement-btn" 
+                        title="Editar"
                         data-id="{{ announcement.id }}"
                         data-title="{{ announcement.title }}"
                         data-content="{{ announcement.content|e }}"
@@ -109,15 +213,23 @@
                         data-fixed="{{ announcement.is_fixed|lower }}">
                     <i class="fas fa-edit"></i>
                 </button>
+                <!-- Toggle Status Button -->
                 <form method="POST" action="{{ url_for('admin.toggle_announcement', announcement_id=announcement.id) }}" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="action-button-sm font-medium {% if announcement.is_active %}toggle-button-active{% else %}toggle-button-inactive{% endif %}" title="{% if announcement.is_active %}Desativar{% else %}Ativar{% endif %}">
+                    <button type="submit" 
+                            class="action-button-sm font-medium 
+                                   {% if announcement.is_active %}toggle-button-active{% else %}toggle-button-inactive{% endif %}"
+                            title="{% if announcement.is_active %}Desativar{% else %}Ativar{% endif %}">
                         <i class="fas {% if announcement.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                     </button>
                 </form>
-                <form method="POST" action="{{ url_for('admin.delete_announcement', announcement_id=announcement.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');" class="inline-block">
+                <!-- Delete Button -->
+                <form method="POST" action="{{ url_for('admin.delete_announcement', announcement_id=announcement.id) }}" 
+                      onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="action-button-sm font-medium delete-button" title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                    <button type="submit" class="action-button-sm font-medium delete-button" title="Excluir">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </form>
             </div>
         </div>
@@ -126,11 +238,13 @@
 {% else %}
     <p class="text-brand-text-light italic">Nenhum aviso cadastrado ainda.</p>
 {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Garantir que o formulário sincronize o conteúdo do TinyMCE antes do envio
     const form = document.getElementById('announcement-form');
     const formTitle = document.getElementById('form-title');
     const submitButton = document.getElementById('submit-button');
@@ -139,65 +253,104 @@ document.addEventListener('DOMContentLoaded', function() {
     const titleInput = document.getElementById('title');
     const isActiveCheckbox = document.getElementById('is_active');
     const isFixedCheckbox = document.getElementById('is_fixed');
-
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO >>>
-    // O event listener de submit manual foi removido.
-    // O TinyMCE moderno e o setup que adicionei cuidarão da sincronização.
-    // Deixar o navegador fazer o envio padrão é mais confiável.
-    // =====================================================================
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Apenas uma chamada final de segurança para garantir a sincronização.
-            if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
-                tinymce.triggerSave();
-            }
-        });
-    }
-
-    // Função para resetar o formulário
+    
+    // Função para resetar o formulário para o modo de adição
     function resetForm() {
         form.reset();
         announcementIdInput.value = '';
         formTitle.textContent = 'Adicionar Novo Aviso';
         submitButton.textContent = 'Salvar Aviso';
         cancelEditButton.classList.add('hidden');
-        if (tinymce.get('content')) {
+        
+        // Resetar o editor TinyMCE
+        if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
             tinymce.get('content').setContent('');
         }
+        
+        // Resetar checkboxes para valores padrão
         isActiveCheckbox.checked = true;
         isFixedCheckbox.checked = false;
     }
-
-    // Adicionar evento aos botões de edição (seu código original, está correto)
-    document.querySelectorAll('.edit-announcement-btn').forEach(button => {
+    
+    // Adicionar evento de submit ao formulário
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Prevenir o envio padrão para garantir que o TinyMCE seja atualizado
+            e.preventDefault();
+            
+            // Forçar a atualização do conteúdo do editor para o textarea
+            if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
+                tinymce.triggerSave();
+            }
+            
+            // Verificar se o conteúdo foi transferido corretamente
+            console.log("Conteúdo do textarea:", document.getElementById('content').value);
+            console.log("ID do anúncio:", announcementIdInput.value);
+            
+            // Enviar o formulário manualmente
+            this.submit();
+        });
+    }
+    
+    // Adicionar evento de clique aos botões de edição
+    const editButtons = document.querySelectorAll('.edit-announcement-btn');
+    editButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const title = this.dataset.title;
-            const content = this.dataset.content;
-            const isActive = this.dataset.active === 'true';
-            const isFixed = this.dataset.fixed === 'true';
-
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            const content = this.getAttribute('data-content');
+            const isActive = this.getAttribute('data-active') === 'true';
+            const isFixed = this.getAttribute('data-fixed') === 'true';
+            
+            console.log("Editando anúncio:", id, title);
+            console.log("Conteúdo HTML:", content);
+            
+            // Preencher o formulário com os dados do anúncio
             announcementIdInput.value = id;
             titleInput.value = title;
+            
+            // Atualizar o conteúdo no editor TinyMCE
+            if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
+                tinymce.get('content').setContent(content);
+                // Forçar a sincronização imediata
+                tinymce.triggerSave();
+            } else {
+                console.error("Editor TinyMCE não encontrado!");
+                // Fallback para o textarea diretamente
+                document.getElementById('content').value = content;
+            }
+            
+            // Atualizar checkboxes
             isActiveCheckbox.checked = isActive;
             isFixedCheckbox.checked = isFixed;
-
-            if (tinymce.get('content')) {
-                tinymce.get('content').setContent(content);
-            }
-
+            
+            // Atualizar título do formulário e texto do botão
             formTitle.textContent = 'Editar Aviso';
             submitButton.textContent = 'Atualizar Aviso';
+            
+            // Mostrar botão de cancelar
             cancelEditButton.classList.remove('hidden');
+            
+            // Rolar para o formulário
             form.scrollIntoView({ behavior: 'smooth' });
         });
     });
-
-    // Evento para o botão de cancelar edição
+    
+    // Adicionar evento de clique ao botão de cancelar edição
     if (cancelEditButton) {
-        cancelEditButton.addEventListener('click', resetForm);
+        cancelEditButton.addEventListener('click', function() {
+            resetForm();
+        });
     }
+    
+    // Verificar se o TinyMCE está inicializado corretamente
+    window.setTimeout(function() {
+        if (typeof tinymce !== 'undefined') {
+            console.log("TinyMCE inicializado:", tinymce.get('content') ? "Sim" : "Não");
+        } else {
+            console.error("TinyMCE não está disponível!");
+        }
+    }, 1000);
 });
 </script>
 {% endblock %}
