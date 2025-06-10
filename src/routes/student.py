@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
-from src.models.notes import UserNotes
+from src.models.notes import UserNotes, UserLawMarkup # <<< IMPORTANTE: Importe o novo modelo aqui
 from src.models.comment import UserComment
 import datetime
 import logging
@@ -235,12 +235,19 @@ def view_law(law_id):
     db.session.commit()
     is_favorited = law in current_user.favorite_laws
 
+    # --- INÍCIO: CARREGAMENTO DAS MARCAÇÕES DO USUÁRIO ---
+    # Busca o conteúdo personalizado que o usuário salvou
+    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    user_law_markup_content = user_markup.content if user_markup else None
+    # --- FIM: CARREGAMENTO DAS MARCAÇÕES DO USUÁRIO ---
+
     return render_template("student/view_law.html", 
                            law=law, 
                            is_completed=(progress.status == 'concluido' if progress else False), 
                            last_read_article=(progress.last_read_article if progress else None),
                            current_status=(progress.status if progress else 'nao_iniciado'),
-                           is_favorited=is_favorited)
+                           is_favorited=is_favorited,
+                           user_law_markup=user_law_markup_content) # <<< Variável passada para o template
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -363,6 +370,43 @@ def handle_user_notes(law_id):
             db.session.add(notes)
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
+
+# --- INÍCIO: NOVA ROTA PARA SALVAR MARCAÇÕES DE TEXTO ---
+@student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
+@login_required
+def save_law_markup(law_id):
+    """
+    Recebe o conteúdo HTML de uma lei com as marcações do usuário e salva no banco de dados.
+    """
+    # Garante que a lei para a qual estamos salvando existe.
+    Law.query.get_or_404(law_id)
+    
+    try:
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
+
+        content = data.get('content')
+
+        # Procura por uma marcação existente para este usuário e lei
+        user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+        if user_markup:
+            # Se já existe, apenas atualiza o conteúdo
+            user_markup.content = content
+        else:
+            # Se não existe, cria um novo registro
+            new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
+            db.session.add(new_markup)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
+        return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
+# --- FIM: NOVA ROTA PARA SALVAR MARCAÇÕES DE TEXTO ---
 
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
