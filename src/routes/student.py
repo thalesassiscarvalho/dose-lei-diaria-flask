@@ -51,15 +51,9 @@ def dashboard():
     in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
-    # =====================================================================
-    # <<< INÍCIO DA QUERY HIERÁRQUICA CORRIGIDA >>>
-    # =====================================================================
     diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
         joinedload(Law.children)
     )
-    # =====================================================================
-    # <<< FIM DA QUERY HIERÁRQUICA CORRIGIDA >>>
-    # =====================================================================
 
     if selected_subject_id:
         diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
@@ -73,13 +67,11 @@ def dashboard():
             )
         )
     
-    # A ordenação é feita após todos os filtros serem aplicados
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
     
     processed_diplomas = []
     for diploma in all_diplomas:
         children_to_display = []
-        # No modelo corrigido, diploma.children já é uma lista, não precisa de .all()
         for topic in diploma.children:
             is_completed = topic.id in completed_topic_ids
             is_in_progress = topic.id in in_progress_topic_ids
@@ -98,7 +90,6 @@ def dashboard():
         
         is_any_filter_active = selected_status or show_favorites or search_query
         if children_to_display or not is_any_filter_active:
-            # Usamos len() em vez de .count() porque agora é uma lista
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
             diploma.progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
@@ -173,9 +164,9 @@ def view_law(law_id):
 
     return render_template("student/view_law.html", 
                            law=law, 
-                           is_completed=(progress.status == 'concluido'), 
-                           last_read_article=progress.last_read_article,
-                           current_status=progress.status,
+                           is_completed=(progress.status == 'concluido' if progress else False), 
+                           last_read_article=(progress.last_read_article if progress else None),
+                           current_status=(progress.status if progress else 'nao_iniciado'),
                            is_favorited=is_favorited)
 
 
@@ -196,32 +187,43 @@ def toggle_favorite(law_id):
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
 
-
+# =====================================================================
+# <<< INÍCIO DA MODIFICAÇÃO PARA PONTUAÇÃO ÚNICA >>>
+# =====================================================================
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
 def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-    was_already_completed = progress and progress.status == 'concluido'
+    
+    # Verifica se deve pontuar: apenas se não houver progresso ou se nunca foi concluído antes
+    should_award_points = not progress or not progress.completed_at
 
-    if not was_already_completed:
-        points_to_award = 10
-        current_user.points += points_to_award
-        
+    # Sempre marca o status como concluído se não estiver
+    if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
             db.session.add(progress)
         
         progress.status = 'concluido'
-        progress.completed_at = datetime.datetime.utcnow()
         
+        # A data de conclusão só é definida na PRIMEIRA vez
+        if not progress.completed_at:
+            progress.completed_at = datetime.datetime.utcnow()
+        
+        if should_award_points:
+            points_to_award = 10
+            current_user.points += points_to_award
+            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
+        else:
+            flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
+
         unlocked = check_and_award_achievements(current_user)
+        if unlocked:
+             flash(f"Conquistas desbloqueadas: {', '.join(unlocked)}!", "success")
+
         try:
             db.session.commit()
-            flash_message = f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos."
-            if unlocked:
-                flash_message += f" Conquistas desbloqueadas: {', '.join(unlocked)}!"
-            flash(flash_message, "success")
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao salvar progresso: {e}", "danger")
@@ -229,7 +231,6 @@ def mark_complete(law_id):
         flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
 
     return redirect(url_for("student.view_law", law_id=law_id))
-
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
 @login_required
@@ -239,13 +240,19 @@ def review_law(law_id):
         return jsonify(success=False, error="Progresso não encontrado."), 404
     
     progress.status = 'em_andamento'
-    progress.completed_at = None
+    # MODIFICAÇÃO: Não apagar a data de conclusão. Ela agora é um registro histórico.
+    # A linha abaixo foi REMOVIDA:
+    # progress.completed_at = None 
+    
     try:
         db.session.commit()
         return jsonify(success=True, new_status='em_andamento')
     except Exception as e:
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
+# =====================================================================
+# <<< FIM DA MODIFICAÇÃO PARA PONTUAÇÃO ÚNICA >>>
+# =====================================================================
 
 
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
