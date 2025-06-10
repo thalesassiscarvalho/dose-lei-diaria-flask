@@ -736,20 +736,14 @@ document.addEventListener("DOMContentLoaded", function () {
     // INÍCIO: PROTEÇÃO DE CÓPIA (AJUSTADA)
     // =======================================================
     lawContentEl.addEventListener('copy', function(e) {
-        // Permite a seleção de texto, mas bloqueia a ação de copiar (Ctrl+C).
-        // Isso é necessário para que as ferramentas de formatação funcionem.
         e.preventDefault();
         console.log('Ação de copiar bloqueada para proteger o conteúdo.');
     });
 
     // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (NOVA ABORDAGEM ROBUSTA)
+    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO
     // =======================================================
     
-    /**
-     * Função que encontra um Range no container baseado em offsets de caracteres.
-     * Essencial para aplicar as marcações salvas quando a página é carregada.
-     */
     function findRangeByOffsets(container, startOffset, endOffset) {
         const range = document.createRange();
         const walker = document.createTreeWalker(container, Node.TEXT_NODE);
@@ -758,6 +752,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let node;
 
         while ((node = walker.nextNode())) {
+            // Ignora texto que pertence a um comentário de parágrafo
+            if (node.parentElement.closest('.comment-display')) {
+                continue;
+            }
             const nodeLength = node.nodeValue.length;
             if (!foundStart && charCount + nodeLength >= startOffset) {
                 range.setStart(node, startOffset - charCount);
@@ -772,19 +770,18 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
-    /**
-     * Aplica TODAS as marcações da lista `markups` no container.
-     * Chamada apenas uma vez no carregamento da página para restaurar o estado salvo.
-     */
     function applyAllMarkups(container, markups) {
-        // Limpa marcações existentes para evitar duplicatas ao carregar
+        // Limpa marcações existentes de forma mais robusta
         container.querySelectorAll('strong, b, span.user-text-highlight').forEach(el => {
             el.replaceWith(...el.childNodes);
         });
-        container.normalize(); // Junta nós de texto adjacentes
+        container.normalize();
 
-        // Ordena do fim para o começo. Isso é crucial para que os offsets
-        // das marcações iniciais não sejam invalidados pela inserção de tags HTML.
+        if (!markups || markups.length === 0) {
+            console.log("Nenhuma marcação para aplicar.");
+            return;
+        }
+
         const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
 
         sortedMarkups.forEach(markup => {
@@ -803,10 +800,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /**
-     * Após uma formatação visual, esta função varre todo o conteúdo,
-     * reconstrói a lista de marcações do zero e aciona o salvamento.
-     */
     function rebuildAndSave() {
         const newMarkups = [];
         let runningOffset = 0;
@@ -814,7 +807,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const walker = document.createTreeWalker(lawContentEl, Node.TEXT_NODE);
         let node;
         while ((node = walker.nextNode())) {
-            // Ignora texto que pertence a um comentário de parágrafo
             if (node.parentElement.closest('.comment-display')) {
                 continue;
             }
@@ -822,25 +814,24 @@ document.addEventListener("DOMContentLoaded", function () {
             const parent = node.parentNode;
             let type = null;
 
-            // ***** INÍCIO DA CORREÇÃO DEFINITIVA *****
+            // ***** CORREÇÃO DEFINITIVA *****
             // Verifica se o elemento pai é <STRONG> ou <B> para o negrito.
             if (parent.tagName === 'STRONG' || parent.tagName === 'B') {
                 type = 'bold';
-            } 
-            // ***** FIM DA CORREÇÃO DEFINITIVA *****
-            
-            else if (parent.classList.contains('user-text-highlight')) {
+            } else if (parent.classList && parent.classList.contains('user-text-highlight')) {
                 type = 'highlight';
             }
 
             if (type) {
                 const text = node.textContent;
-                newMarkups.push({
-                    type: type,
-                    start: runningOffset,
-                    end: runningOffset + text.length,
-                    text: text
-                });
+                if (text) { 
+                    newMarkups.push({
+                        type: type,
+                        start: runningOffset,
+                        end: runningOffset + text.length,
+                        text: text
+                    });
+                }
             }
             runningOffset += node.textContent.length;
         }
@@ -849,15 +840,10 @@ document.addEventListener("DOMContentLoaded", function () {
         debounceSaveMarkup();
     }
 
-    /**
-     * Aplica a formatação visual (Negrito ou Marca-texto) no texto selecionado pelo usuário.
-     * Usa o método nativo e robusto do navegador `document.execCommand`.
-     */
     function applyFormat(type) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
-        // Evita formatação em áreas não permitidas
         let container = selection.getRangeAt(0).commonAncestorContainer;
         container = container.nodeType === 1 ? container : container.parentNode;
         if (container.closest('.comment-display, p[style*="background-color"]')) {
@@ -865,7 +851,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Usa um comando nativo do navegador para aplicar o estilo. É seguro e funciona.
         document.execCommand('styleWithCSS', false, true);
         if (type === 'highlight') {
             document.execCommand('hiliteColor', false, '#fef9c3');
@@ -875,7 +860,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     el.style.backgroundColor = '';
                 }
             });
-        } else { // 'bold'
+        } else {
             document.execCommand('bold', false, null);
         }
         
@@ -883,17 +868,11 @@ document.addEventListener("DOMContentLoaded", function () {
         selection.removeAllRanges();
     }
     
-    /**
-     * Adia a chamada para salvar as marcações, evitando chamadas excessivas à API.
-     */
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
-    /**
-     * Envia a lista de marcações atualizada para o backend via API.
-     */
     async function saveLawMarkup() {
         try {
             const response = await fetch(`/student/law/${lawId}/save_markup`, {
@@ -920,7 +899,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // =======================================================
 
     // =======================================================
-    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO (COM ÍCONE "OLHO")
+    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
     // =======================================================
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTextarea = document.getElementById('comment-modal-textarea');
@@ -1223,24 +1202,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =======================================================
-    // INICIALIZAÇÃO DA PÁGINA (ORDEM CORRIGIDA)
+    // INICIALIZAÇÃO DA PÁGINA
     // =======================================================
     async function initializePage() {
-        // Aplica preferências do usuário salvas localmente
         applyTheme(localStorage.getItem('theme') || 'light');
         applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
         if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
-        // Inicia o sistema de anotações por parágrafo
         await initCommentSystem();
         
-        // Aplica as marcações de texto (negrito/highlight) salvas no banco de dados
         applyAllMarkups(lawContentEl, currentMarkups);
         
-        // Indexa os artigos para a função "Ir para Artigo"
         indexArticles();
 
-        // Atualiza a barra de progresso inicial
         updateProgressBar();
     }
 
