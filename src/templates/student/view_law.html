@@ -797,6 +797,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /**
      * CORRIGIDO: Aplica marcações de forma inteligente, sem destruir o DOM.
+     * A versão anterior tinha um bug. Esta versão ordena as marcações
+     * do final para o início antes de aplicar, evitando problemas de offset.
      */
     function applyAllMarkups(container, markups) {
         // 1. Remove marcações antigas (negrito e marca-texto) de forma segura.
@@ -808,8 +810,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         container.normalize(); // Junta nós de texto adjacentes, crucial para a precisão dos offsets.
 
-        // 2. Re-aplica todas as marcações da lista `currentMarkups`.
-        markups.forEach(markup => {
+        // 2. **CORREÇÃO PRINCIPAL**: Ordena as marcações em ordem decrescente (do fim para o começo).
+        // Isso evita que a aplicação de uma marcação invalide os offsets das próximas.
+        const sortedMarkups = [...markups].sort((a, b) => b.start - a.start);
+
+        // 3. Re-aplica todas as marcações da lista `currentMarkups`.
+        sortedMarkups.forEach(markup => {
             const range = findRangeByOffsets(container, markup.start, markup.end);
             if (range) {
                 try {
@@ -819,7 +825,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     range.surroundContents(wrapper);
                 } catch (e) {
-                    console.error("Erro ao aplicar marcação:", e);
+                    console.error("Erro ao aplicar marcação:", e, markup);
                 }
             }
         });
