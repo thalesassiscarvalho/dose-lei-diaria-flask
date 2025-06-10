@@ -13,6 +13,22 @@ import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
+# =====================================================================
+# <<< NOVO ENDPOINT DE API PARA FILTRO EM CASCATA >>>
+# =====================================================================
+@student_bp.route("/api/laws_for_subject/<int:subject_id>")
+@login_required
+def get_laws_for_subject(subject_id):
+    """
+    Endpoint de API para retornar os diplomas (leis principais) de uma matéria.
+    """
+    laws = Law.query.filter(
+        Law.subject_id == subject_id,
+        Law.parent_id.is_(None)
+    ).order_by(Law.title).all()
+    return jsonify([{"id": law.id, "title": law.title} for law in laws])
+# =====================================================================
+
 def check_and_award_achievements(user):
     """Verifica e concede conquistas ao usuário."""
     unlocked_achievements_names = []
@@ -33,10 +49,6 @@ def check_and_award_achievements(user):
                 unlocked_achievements_names.append(achievement.name)
     
     return unlocked_achievements_names
-
-# =====================================================================
-# <<< INÍCIO DA MODIFICAÇÃO PARA FILTROS DINÂMICOS >>>
-# =====================================================================
 
 @student_bp.route("/dashboard")
 @login_required
@@ -77,16 +89,24 @@ def dashboard():
                            last_accessed_law=last_accessed_law)
 
 
+# =====================================================================
+# <<< INÍCIO DA MODIFICAÇÃO PARA FILTROS HIERÁRQUICOS >>>
+# =====================================================================
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
     """
     Endpoint da API que retorna a lista de legislações filtradas em JSON.
+    Modificado para aceitar filtros hierárquicos e busca independente.
     """
     search_query = request.args.get("search", "")
+    
+    # Filtros hierárquicos
     selected_subject_id_str = request.args.get("subject_id", "")
-    selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
+    selected_diploma_id_str = request.args.get("diploma_id", "") # Novo filtro para a Lei/Diploma
     selected_status = request.args.get("status_filter", "")
+
+    # Filtros adicionais
     show_favorites_str = request.args.get("show_favorites", "false")
     show_favorites = show_favorites_str.lower() == 'true'
 
@@ -96,22 +116,32 @@ def filter_laws():
     in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
+    # Inicia a query base buscando os Diplomas (leis principais)
     diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
         joinedload(Law.children)
     )
 
-    if selected_subject_id:
-        diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
-    
+    # Lógica de filtragem: Busca por texto tem prioridade
     if search_query:
         search_term = f"%{search_query}%"
+        # Busca no título do diploma, no nome da matéria ou nos títulos dos tópicos filhos
         diplomas_query = diplomas_query.filter(
             or_(
                 Law.title.ilike(search_term),
+                Subject.name.ilike(search_term),
                 Law.children.any(Law.title.ilike(search_term))
             )
         )
-    
+    else:
+        # Lógica de filtro hierárquico
+        selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
+        if selected_subject_id:
+            diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
+        
+        selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
+        if selected_diploma_id:
+            diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
+
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
     
     processed_diplomas = []
@@ -130,6 +160,10 @@ def filter_laws():
             
             passes_favorite = not show_favorites or is_favorite
 
+            # A busca por texto não deve ser filtrada por status ou favoritos nos tópicos,
+            # mas sim mostrar o diploma se algum tópico corresponder.
+            # A lógica atual já faz isso bem. Apenas aplicamos o filtro se o filho passar
+            # nos critérios de status e favorito.
             if passes_status and passes_favorite:
                 children_to_display.append({
                     "id": topic.id,
@@ -139,8 +173,23 @@ def filter_laws():
                     "is_favorite": is_favorite
                 })
         
-        is_any_filter_active = selected_status or show_favorites or search_query
-        if children_to_display or not is_any_filter_active:
+        # Determina se algum filtro está ativo para decidir se renderiza todos os filhos ou só os filtrados
+        is_hierarchical_filter_active = selected_subject_id_str or selected_diploma_id_str or selected_status or show_favorites
+        
+        children_final = children_to_display
+        
+        # Na busca por texto, queremos exibir todos os filhos do diploma correspondente
+        if search_query:
+            children_final = [
+                {
+                    "id": t.id, "title": t.title,
+                    "is_completed": t.id in completed_topic_ids,
+                    "is_in_progress": t.id in in_progress_topic_ids,
+                    "is_favorite": t.id in favorite_topic_ids
+                } for t in diploma.children
+            ]
+
+        if children_final:
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
             progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
@@ -149,18 +198,9 @@ def filter_laws():
                 "title": diploma.title,
                 "progress_percentage": progress_percentage,
                 "subject_name": diploma.subject.name if diploma.subject else "Sem Matéria",
-                "filtered_children": children_to_display if is_any_filter_active else [
-                    {
-                        "id": t.id, "title": t.title,
-                        "is_completed": t.id in completed_topic_ids,
-                        "is_in_progress": t.id in in_progress_topic_ids,
-                        "is_favorite": t.id in favorite_topic_ids
-                    } for t in diploma.children
-                ]
+                "filtered_children": children_final
             }
-
-            if diploma_data["filtered_children"] or not is_any_filter_active:
-                processed_diplomas.append(diploma_data)
+            processed_diplomas.append(diploma_data)
 
     subjects_with_diplomas = {}
     for diploma_data in processed_diplomas:
@@ -170,9 +210,8 @@ def filter_laws():
         subjects_with_diplomas[subject_name].append(diploma_data)
 
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
-
 # =====================================================================
-# <<< FIM DA MODIFICAÇÃO PARA FILTROS DINÂMICOS >>>
+# <<< FIM DA MODIFICAÇÃO >>>
 # =====================================================================
 
 
@@ -271,7 +310,6 @@ def review_law(law_id):
     
     try:
         db.session.commit()
-        # MODIFICADO: Retorna o novo status para o JavaScript atualizar a UI
         return jsonify(success=True, new_status='em_andamento')
     except Exception as e:
         db.session.rollback()
@@ -308,7 +346,6 @@ def mark_announcement_seen(announcement_id):
         db.session.commit()
     return jsonify(success=True)
 
-# ... (o restante do arquivo continua igual: handle_user_notes, handle_comments, etc.) ...
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET", "POST"])
 @login_required
 def handle_user_notes(law_id):
