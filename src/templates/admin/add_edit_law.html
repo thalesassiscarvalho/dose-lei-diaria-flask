@@ -50,15 +50,15 @@
             Item Pai (Diploma Normativo):
         </label>
         <select id="parent_id" name="parent_id" class="shadow border rounded w-full py-2 px-3 text-gray-700">
-            <option value="">-- Nenhum (Este é um item principal, ex: 'CF/88') --</option>
-            {% for diploma in normative_acts %} 
-            <option value="{{ diploma.id }}" {% if law and law.parent_id == diploma.id %}selected{% endif %}>
+            <option value="">-- Nenhum (Este é um item principal) --</option>
+            {% for diploma in normative_acts %}
+            <option value="{{ diploma.id }}" {% if (law and law.parent_id == diploma.id) or (pre_selected_parent_id and pre_selected_parent_id == diploma.id) %}selected{% endif %}>
                 {{ diploma.title }} (Matéria: {{ diploma.subject.name or 'N/A' }})
             </option>
             {% endfor %}
         </select>
         <p class="text-xs text-gray-600 mt-1">
-          Selecione um pai se este for um tópico dentro de uma lei maior. Deixe em branco para criar um novo item principal.
+          Selecione um pai se este for um tópico dentro de uma lei maior.
         </p>
     </div>
 
@@ -81,7 +81,7 @@
         <label class="block text-gray-700 text-sm font-bold mb-2">Links Úteis (Opcional):</label>
         <div id="useful-links-container">
             {% if law and law.useful_links %}
-                {% for link in law.useful_links.all() %}
+                {% for link in law.useful_links %}
                 <div class="link-group">
                     <input name="link-{{ loop.index0 }}-title" type="text" value="{{ link.title }}" required>
                     <input name="link-{{ loop.index0 }}-url" type="url" value="{{ link.url }}" required>
