@@ -725,6 +725,34 @@
 document.addEventListener("DOMContentLoaded", function () {
     const lawId = '{{ law.id }}';
     const lawContentEl = document.getElementById('law-content');
+
+    // === Seleção persistente para botões de formatação ===
+let savedRange = null;
+
+// Salva a última seleção feita dentro do texto da lei
+lawContentEl.addEventListener('mouseup', () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && !sel.isCollapsed) {
+        savedRange = sel.getRangeAt(0).cloneRange();
+    }
+});
+
+function restoreSelection() {
+    if (savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+    }
+}
+
+// Listeners dos botões de negrito e marca‑texto
+document.getElementById('format-bold-btn')
+        ?.addEventListener('click', () => { restoreSelection(); applyFormat('bold'); });
+
+document.getElementById('format-highlight-btn')
+        ?.addEventListener('click', () => { restoreSelection(); applyFormat('highlight'); });
+
+
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
     // --- Variáveis globais ---
@@ -1172,21 +1200,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('decrease-font-btn').addEventListener('click', () => { if(currentSizeIndex > 0) applyFontSize(fontSizes[--currentSizeIndex]) });
     document.getElementById('toggle-font-family-btn').addEventListener('click', () => {
         lawContentEl.classList.toggle('font-serif');
-    // === Adicionado: botões de formatação de seleção (mousedown para manter seleção) ===
-['format-bold-btn', 'format-highlight-btn'].forEach(id => {
-    const cmd = id === 'format-bold-btn' ? 'bold' : 'highlight';
-    const btn = document.getElementById(id);
-    btn?.addEventListener('mousedown', e => {
-        e.preventDefault();              // impede perda do foco/seleção
-        applyFormat(cmd);
-    });
-});
         
-    // === Adicionado: botões de formatação de seleção ===
-document.getElementById('format-bold-btn')
-        .addEventListener('click', () => applyFormat('bold'));
-document.getElementById('format-highlight-btn')
-        .addEventListener('click', () => applyFormat('highlight'));localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
+    localStorage.setItem('fontFamily', lawContentEl.classList.contains('font-serif') ? 'serif' : 'sans');
     });
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
