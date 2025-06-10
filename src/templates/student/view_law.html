@@ -65,9 +65,9 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* INÍCIO: PROTEÇÃO DE CÓPIA (RESTAURADA) */
-        user-select: none; /* Bloqueia a seleção/cópia por padrão */
-        /* FIM: PROTEÇÃO DE CÓPIA */
+        /* CORREÇÃO: Permite a seleção do texto para a ferramenta de marcação funcionar. */
+        /* A proteção de cópia (Ctrl+C) será feita via JavaScript. */
+        user-select: text;
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
 
@@ -731,7 +731,29 @@ document.addEventListener("DOMContentLoaded", function () {
     let saveMarkupTimeout;
 
     // =======================================================
-    // INÍCIO: LÓGICA DE MARCAÇÕES DE TEXTO (CORRIGIDA E OTIMIZADA)
+    // INÍCIO: BLOQUEIO DE CÓPIA (CORREÇÃO)
+    // =======================================================
+    lawContentEl.addEventListener('copy', function(event) {
+        // Verifica se a cópia está ocorrendo dentro de uma área permitida (anotações, etc)
+        const selection = document.getSelection();
+        if (!selection.rangeCount) return;
+
+        let container = selection.getRangeAt(0).commonAncestorContainer;
+        if (container.nodeType !== Node.ELEMENT_NODE) {
+            container = container.parentNode;
+        }
+
+        // Se o elemento mais próximo for uma área de anotação, permite a cópia.
+        if (container.closest('.comment-display, .notes-editor')) {
+            return; // Não faz nada, permite a cópia.
+        }
+
+        // Se não for uma área permitida, bloqueia a cópia.
+        event.preventDefault();
+    });
+
+    // =======================================================
+    // LÓGICA DE MARCAÇÕES DE TEXTO
     // =======================================================
     
     function getTextNodes(node) {
@@ -783,20 +805,14 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
-    /**
-     * CORRIGIDO: Aplica marcações de forma inteligente, sem destruir o DOM.
-     */
     function applyAllMarkups(container, markups) {
-        // 1. Remove marcações antigas (negrito e marca-texto) de forma segura.
         container.querySelectorAll('strong, span.user-text-highlight').forEach(el => {
-            // Apenas remove os wrappers que foram criados por esta funcionalidade.
             if (el.tagName === 'STRONG' || el.classList.contains('user-text-highlight')) {
                 el.replaceWith(...el.childNodes);
             }
         });
-        container.normalize(); // Junta nós de texto adjacentes, crucial para a precisão dos offsets.
+        container.normalize();
 
-        // 2. Re-aplica todas as marcações da lista `currentMarkups`.
         markups.forEach(markup => {
             const range = findRangeByOffsets(container, markup.start, markup.end);
             if (range) {
@@ -817,18 +833,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed || !lawContentEl.contains(selection.anchorNode)) return;
 
-        // INÍCIO: RESTRIÇÃO DE MARCAÇÃO
         const range = selection.getRangeAt(0);
         let container = range.commonAncestorContainer;
         if (container.nodeType !== Node.ELEMENT_NODE) {
             container = container.parentNode;
         }
-        // Bloqueia se a seleção estiver dentro de uma anotação, comentário, doutrina, etc.
         if (container.closest('.comment-display, p[style*="background-color"]')) {
-            window.getSelection().removeAllRanges(); // Limpa a seleção para evitar confusão do usuário.
+            window.getSelection().removeAllRanges();
             return;
         }
-        // FIM: RESTRIÇÃO DE MARCAÇÃO
 
         const offsets = getSelectionOffsets(lawContentEl);
         if (!offsets || offsets.start === offsets.end || !selection.toString().trim()) return;
@@ -867,11 +880,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({ markups: currentMarkups })
             });
             const data = await response.json();
-            if (data.success) {
-                console.log("Marcações salvas com sucesso!");
-            } else {
+            if (!data.success) {
                 console.error("Falha ao salvar marcações:", data.error);
-                alert("Ocorreu um erro ao salvar suas marcações.");
             }
         } catch (error) {
             console.error("Erro de rede ao salvar marcações:", error);
@@ -882,11 +892,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('format-highlight-btn').addEventListener('click', () => toggleMarkup('highlight'));
     
     // =======================================================
-    // FIM: LÓGICA DE MARCAÇÕES DE TEXTO
-    // =======================================================
-
-    // =======================================================
-    // INÍCIO: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO (COM ÍCONE "OLHO")
+    // SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
     // =======================================================
     const modalBackdrop = document.getElementById('comment-modal-backdrop');
     const modalTextarea = document.getElementById('comment-modal-textarea');
@@ -926,9 +932,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /**
-     * CORRIGIDO: Função que desenha a UI de anotações, com o primeiro ícone sendo um "olho".
-     */
     function renderCommentUI() {
         let pIndex = 0;
         lawContentEl.querySelectorAll('p, li, blockquote').forEach(p => {
@@ -943,7 +946,6 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const icon = document.createElement('i');
             
-            // O primeiro ícone (pIndex 0) vira o controlador de visibilidade
             if (pIndex === 0) {
                 icon.className = 'fas fa-eye-slash comment-icon comment-icon-toggle';
                 icon.title = 'Ocultar/Mostrar ícones de anotação';
@@ -952,7 +954,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     icon.className = `fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'} comment-icon comment-icon-toggle`;
                 });
             } else {
-                // Os outros ícones são para adicionar comentários
                 icon.className = 'fas fa-comment-dots comment-icon';
                 icon.title = 'Adicionar anotação';
                 icon.addEventListener('click', () => openCommentModal(anchorId));
@@ -1009,18 +1010,14 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch(e) {
             console.error("Falha ao buscar anotações por parágrafo.", e);
         }
-        renderCommentUI(); // Desenha os ícones e comentários existentes
+        renderCommentUI();
     }
 
     document.getElementById('comment-modal-save').addEventListener('click', saveOrUpdateComment);
     document.getElementById('comment-modal-cancel').addEventListener('click', closeCommentModal);
 
     // =======================================================
-    // FIM: SISTEMA DE ANOTAÇÕES POR PARÁGRAFO
-    // =======================================================
-
-    // =======================================================
-    // INÍCIO: BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
+    // BUSCA DE ARTIGO E OUTRAS FUNCIONALIDADES
     // =======================================================
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
@@ -1187,21 +1184,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =======================================================
-    // INICIALIZAÇÃO DA PÁGINA
+    // INICIALIZAÇÃO DA PÁGINA (ORDEM CORRIGIDA)
     // =======================================================
     async function initializePage() {
         applyTheme(localStorage.getItem('theme') || 'light');
         applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
         if (localStorage.getItem('fontFamily') === 'serif') lawContentEl.classList.add('font-serif');
 
-        // Etapa 1: Indexa os artigos para a busca "Ir para"
-        indexArticles();
-
-        // Etapa 2: Busca os comentários e desenha a UI (ícones e balões)
+        // Etapa 1: Busca os comentários e desenha a UI (ícones e balões)
         await initCommentSystem();
 
-        // Etapa 3: Aplica as marcações de texto (negrito/highlight) sobre o DOM já montado
+        // Etapa 2: Aplica as marcações de texto (negrito/highlight) salvas.
         applyAllMarkups(lawContentEl, currentMarkups);
+        
+        // Etapa 3 (ORDEM CORRIGIDA): Indexa os artigos para a busca DEPOIS que as marcações foram aplicadas.
+        indexArticles();
 
         // Etapa 4: Atualiza a barra de progresso
         updateProgressBar();
