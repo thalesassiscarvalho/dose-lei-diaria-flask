@@ -393,7 +393,7 @@ def save_law_markup(law_id):
 
         # Estratégia "Delete-and-Replace": Simples e eficaz.
         # 1. Deleta todas as marcações antigas para esta lei e usuário.
-        UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
+        UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete(synchronize_session='fetch')
 
         # 2. Cria as novas marcações a partir da lista recebida.
         new_markups = []
