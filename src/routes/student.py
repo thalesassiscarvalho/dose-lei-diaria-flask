@@ -241,6 +241,11 @@ def filter_laws():
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
+    # =====================================================================
+    # <<< NENHUMA ALTERAÇÃO NECESSÁRIA >>>
+    # A variável 'law' já contém o campo 'juridiques_explanation' e será
+    # passada automaticamente para o template `view_law.html`.
+    # =====================================================================
     law = Law.query.get_or_404(law_id)
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
