@@ -31,6 +31,7 @@ class Law(db.Model):
     
     # --- Funcionalidade: Aviso de Atualização de Lei ---
     last_updated_at = db.Column(db.DateTime, nullable=True, comment="Data da última atualização da lei que gerou um aviso.")
+    #                                                                           <<< AQUI ESTÁ A CORREÇÃO
     active_update_notice = db.Column(db.Boolean, default=False, nullable=False, server_default='false', comment="Indica se há um aviso de atualização ativo para esta lei.")
 
 
