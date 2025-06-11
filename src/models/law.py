@@ -19,14 +19,19 @@ class Law(db.Model):
     audio_url = db.Column(db.String(500), nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
 
+    # =====================================================================
+    # <<< INÍCIO DA CORREÇÃO DEFINITIVA >>>
+    # O parâmetro 'lazy="dynamic"' foi REMOVIDO da relação abaixo.
+    # Esta é a principal correção que resolve o conflito.
+    # =====================================================================
     children = db.relationship('Law', 
                                backref=backref('parent', remote_side=[id]),
                                cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO DEFINITIVA >>>
+    # =====================================================================
 
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
-    
-    # Funcionalidade: Entendendo o Juridiquês
-    juridiques_terms = db.relationship('JuridiquesTerm', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
         audio_indicator = " (Audio)" if self.audio_url else ""
@@ -42,14 +47,3 @@ class UsefulLink(db.Model):
 
     def __repr__(self):
         return f'<UsefulLink {self.title}>'
-
-class JuridiquesTerm(db.Model):
-    __tablename__ = 'juridiques_term'
-    id = db.Column(db.Integer, primary_key=True)
-    term = db.Column(db.String(200), nullable=False)
-    definition = db.Column(db.Text, nullable=False)
-    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
-    law = db.relationship('Law', back_populates='juridiques_terms')
-
-    def __repr__(self):
-        return f'<JuridiquesTerm {self.term}>'
