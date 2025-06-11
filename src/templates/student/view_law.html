@@ -897,11 +897,9 @@
             <div class="notes-toolbar">
                 <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
                 <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
-                <button id="underline-btn" class="format-btn" title="Sublinhado"><i class="fas fa-underline"></i></button>
                 <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
-                <button id="notes-clear-format-btn" class="format-btn" title="Limpar toda a formatação"><i class="fas fa-eraser"></i></button>
             </div>
-            <div id="notes-editor" class="notes-editor" contenteditable="true" spellcheck="false"></div>
+            <div id="notes-editor" class="notes-editor" contenteditable="true"></div>
             <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
                 <i class="fas fa-save mr-2"></i> Salvar Anotações Gerais
             </button>
@@ -1236,18 +1234,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // ▼▼▼ JAVASCRIPT ATUALIZADO ▼▼▼
     const notesEditor = document.getElementById('notes-editor');
     const saveNotesBtn = document.getElementById('save-notes-btn');
-    
-    // Botões existentes
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    
-    // NOVO: Botão de Sublinhado
-    document.getElementById('underline-btn').addEventListener('click', () => { document.execCommand('underline'); notesEditor.focus(); });
-
-    // Botão de marca-texto
     document.getElementById('highlight-btn').addEventListener('click', () => {
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
@@ -1263,16 +1253,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 range.insertNode(span);
             }
         }
-        notesEditor.focus();
-    });
-
-    // NOVO: Botão de Limpar Formatação
-    document.getElementById('notes-clear-format-btn').addEventListener('click', () => {
-        if (!confirm('Você tem certeza que deseja remover TODA a formatação das suas anotações? Esta ação é irreversível.')) {
-            return;
-        }
-        const plainText = notesEditor.textContent;
-        notesEditor.innerHTML = plainText;
         notesEditor.focus();
     });
 
@@ -1308,7 +1288,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     loadNotes();
-    // ▲▲▲ FIM DA ATUALIZAÇÃO ▲▲▲
     
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
