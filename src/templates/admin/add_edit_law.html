@@ -13,19 +13,6 @@
     toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
     height: 400,
   });
-
-  // =====================================================================
-  // <<< INÍCIO DA IMPLEMENTAÇÃO: INICIALIZADOR DO NOVO EDITOR DE TEXTO >>>
-  // =====================================================================
-  tinymce.init({
-    selector: '#juridiques_content',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-    height: 300,
-  });
-  // =====================================================================
-  // <<< FIM DA IMPLEMENTAÇÃO >>>
-  // =====================================================================
 </script>
 <style>
     .link-group { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; padding: 0.75rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
@@ -90,10 +77,6 @@
         <textarea id="content" name="content">{{ law.content | safe if law else '' }}</textarea>
     </div>
 
-    <div class="mb-6">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="juridiques_content">Entendendo o Juridiquês (Opcional):</label>
-        <textarea id="juridiques_content" name="juridiques_explanation">{{ law.juridiques_explanation | safe if law and law.juridiques_explanation else '' }}</textarea>
-    </div>
     <div class="mb-6 border-t pt-6 mt-6">
         <label class="block text-gray-700 text-sm font-bold mb-2">Links Úteis (Opcional):</label>
         <div id="useful-links-container">
