@@ -214,10 +214,11 @@ def filter_laws():
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
+    # --- PASSO 1: LER TODOS OS DADOS DO BANCO PRIMEIRO ---
     law = Law.query.get_or_404(law_id)
-    markups = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).all()
-    return render_template("student/view_law.html", law=law, markups=markups)
-
+    if law.parent_id is None:
+        flash("Selecione um tópico de estudo específico para visualizar.", "info")
+        return redirect(url_for('student.dashboard'))
 
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -380,6 +381,36 @@ def handle_user_notes(law_id):
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
 
+@student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
+@login_required
+def save_law_markup(law_id):
+    """
+    Recebe o conteúdo HTML de uma lei com as marcações do usuário e salva no banco de dados.
+    """
+    Law.query.get_or_404(law_id)
+
+    try:
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
+
+        content = data.get('content')
+        user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+        if user_markup:
+            user_markup.content = content
+        else:
+            new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
+            db.session.add(new_markup)
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
+        return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
+
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
 @login_required
 def handle_comments(law_id):
@@ -414,38 +445,3 @@ def handle_single_comment(comment_id):
         db.session.delete(comment)
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída!")
-
-
-# ---------- API de marcações (diff) ----------
-@student_bp.route("/law/<int:law_id>/markups", methods=["GET"])
-@login_required
-def list_markups(law_id):
-    markups = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).all()
-    return jsonify(success=True, markups=[{
-        "id": m.id,
-        "type": m.type,
-        "start_offset": m.start_offset,
-        "end_offset": m.end_offset
-    } for m in markups])
-
-@student_bp.route("/law/<int:law_id>/markups", methods=["POST"])
-@login_required
-def save_markup(law_id):
-    data = request.get_json(force=True) or {}
-    required = {"type", "start_offset", "end_offset"}
-    if not required.issubset(data):
-        return jsonify(success=False, error="Campos obrigatórios ausentes"), 400
-    m = UserLawMarkup(user_id=current_user.id, law_id=law_id,
-                      type=data["type"], start_offset=data["start_offset"], end_offset=data["end_offset"])
-    db.session.add(m)
-    db.session.commit()
-    return jsonify(success=True, id=m.id)
-
-@student_bp.route("/markups/<int:markup_id>", methods=["DELETE"])
-@login_required
-def delete_markup(markup_id):
-    m = UserLawMarkup.query.filter_by(id=markup_id, user_id=current_user.id).first_or_404()
-    db.session.delete(m)
-    db.session.commit()
-    return jsonify(success=True)
-
