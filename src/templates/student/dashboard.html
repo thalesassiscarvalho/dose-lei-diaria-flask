@@ -4,7 +4,6 @@
 
 {% block head_extra %}
 <style>
-    /* ... (Estilos existentes permanecem os mesmos) ... */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
@@ -91,65 +90,17 @@
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
     .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
     .review-button:hover { background-color: #4b5563; }
+    .search-wrapper { position: relative; }
+    .search-icon { position: absolute; top: 55%; left: 1rem; color: #94a3b8; transition: color 0.2s ease; }
+    .search-input-with-icon { padding-left: 2.75rem !important; }
+    .search-wrapper .search-input-with-icon:focus + .search-icon { color: #2563eb; }
+    .search-wrapper .search-input-with-icon:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .autocomplete-container { position: absolute; background-color: white; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
+    .autocomplete-item { padding: 0.75rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+    .autocomplete-item:hover { background-color: #f8fafc; }
+    .autocomplete-item-title { font-weight: 500; color: #1e293b; }
+    .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
     
-    /* INÍCIO: NOVOS ESTILOS PARA A BUSCA INTELIGENTE */
-    .search-wrapper {
-        position: relative;
-    }
-    .search-icon {
-        position: absolute;
-        top: 55%;
-        left: 1rem;
-        color: #94a3b8;
-        transition: color 0.2s ease;
-    }
-    .search-input-with-icon {
-        padding-left: 2.75rem !important;
-    }
-    .search-wrapper .search-input-with-icon:focus + .search-icon {
-        color: #2563eb;
-    }
-    .search-wrapper .search-input-with-icon:focus {
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-    .autocomplete-container {
-        position: absolute;
-        background-color: white;
-        border: 1px solid #e2e8f0;
-        border-top: none;
-        border-radius: 0 0 0.75rem 0.75rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        z-index: 1000;
-        width: 100%;
-        max-height: 400px;
-        overflow-y: auto;
-        display: none;
-    }
-    .autocomplete-item {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background-color 0.2s ease;
-    }
-    .autocomplete-item:hover {
-        background-color: #f8fafc;
-    }
-    .autocomplete-item-title {
-        font-weight: 500;
-        color: #1e293b;
-    }
-    .autocomplete-item-category {
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        color: #1e40af;
-        background-color: #dbeafe;
-    }
-    /* FIM: NOVOS ESTILOS */
-
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
         .non-fixed-announcement-item { gap: 0.75rem; }
@@ -160,153 +111,161 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-8" style="color: #2563eb;">Meu Painel</h1>
+<div class="space-y-8">
+    <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
 
-{% if last_accessed_law %}
-<div class="continue-block">
-    <h3><i class="fas fa-history"></i> Continuar de onde parou:</h3>
-    <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">{{ last_accessed_law.parent.title + ' - ' if last_accessed_law.parent else '' }}{{ last_accessed_law.title }}</a>
-</div>
-{% endif %}
-
-{% if fixed_announcements %}
-<div class="announcement-container">
-    <div class="fixed-announcement-box">
-        {% for announcement in fixed_announcements %}
-        <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
-            <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
-            <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
-        </div>
-        {% endfor %}
+    {% if last_accessed_law %}
+    <div class="continue-block">
+        <h3><i class="fas fa-history"></i> Continuar de onde parou:</h3>
+        <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">{{ last_accessed_law.parent.title + ' - ' if last_accessed_law.parent else '' }}{{ last_accessed_law.title }}</a>
     </div>
-</div>
-{% endif %}
-{% if non_fixed_announcements %}
-<div class="announcement-container" id="non-fixed-announcements-container">
-    <div class="announcement-box">
-        <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
-        {% for announcement in non_fixed_announcements %}
-        <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-            <div class="mark-seen-checkbox-container">
-                <input type="checkbox" class="mark-seen-checkbox">
-                <span class="checkmark"></span>
-                <span class="tooltip">Marcar como visto</span>
-            </div>
-            <div class="announcement-content">
-                <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="md:col-span-2 stat-card progress-card">
-        <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
-            <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-        </div>
-        <div class="progress-bar-container w-full">
-            <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-        </div>
-    </div>
-    <div class="stat-card points-card">
-        <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
-        <div class="points-display">{{ user_points }}</div>
-    </div>
-</div>
-
-<div class="stat-card achievements-card mb-8">
-    <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
-    {% if user_achievements %}
-        <div class="achievements-list">
-            {% for achievement in user_achievements %}
-                <span class="achievement-badge" title="{{ achievement.description }}">
-                    <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                </span>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
     {% endif %}
-</div>
 
-
-<div class="filter-container mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
-        <div class="md:col-span-2 relative">
-            <div class="relative search-wrapper">
-                <label for="search" class="filter-label">Busca Rápida e Inteligente</label>
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="search" name="search" placeholder="Buscar por matéria, lei ou artigo..." class="custom-input search-input-with-icon">
+    {% if fixed_announcements or non_fixed_announcements %}
+    <div class="announcement-section">
+        {% if fixed_announcements %}
+        <div class="announcement-container">
+            <div class="fixed-announcement-box">
+                {% for announcement in fixed_announcements %}
+                <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
+                    <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
+                    <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
+                </div>
+                {% endfor %}
             </div>
-            <div id="autocomplete-results" class="autocomplete-container"></div>
         </div>
-        <div class="flex items-end pb-2">
-            <label class="flex items-center cursor-pointer">
-                <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
-                <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
-            </label>
+        {% endif %}
+        {% if non_fixed_announcements %}
+        <div class="announcement-container" id="non-fixed-announcements-container">
+            <div class="announcement-box">
+                <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+                {% for announcement in non_fixed_announcements %}
+                <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+                    <div class="mark-seen-checkbox-container">
+                        <input type="checkbox" class="mark-seen-checkbox">
+                        <span class="checkmark"></span>
+                        <span class="tooltip">Marcar como visto</span>
+                    </div>
+                    <div class="announcement-content">
+                        <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                        <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 stat-card progress-card">
+            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
+                <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            </div>
+            <div class="progress-bar-container w-full">
+                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
+            </div>
+        </div>
+        <div class="stat-card points-card">
+            <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
+            <div class="points-display">{{ user_points }}</div>
         </div>
     </div>
-
-    <hr class="my-6 border-t border-gray-200">
-
-    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
-        <div>
-            <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
-            <select id="subject_id" name="subject_id" class="custom-input">
-                <option value="">-- Todas as Matérias --</option>
-                {% for subject in subjects %}
-                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+    <div class="stat-card achievements-card">
+        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
+        {% if user_achievements %}
+            <div class="achievements-list">
+                {% for achievement in user_achievements %}
+                    <span class="achievement-badge" title="{{ achievement.description }}">
+                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                    </span>
                 {% endfor %}
-            </select>
-        </div>
-        <div>
-            <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
-            <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
-                <option value="">-- Selecione uma Matéria --</option>
-            </select>
-        </div>
-        
-        <div id="refinement-wrapper" class="lg:col-span-1" style="visibility: hidden;">
-            <label class="filter-label"><i class="fas fa-filter"></i>3. Refinar por</label>
-            <div class="flex items-center space-x-4 mb-2">
-                <label class="flex items-center text-sm cursor-pointer">
-                    <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
-                    <span class="ml-1.5">Status</span>
-                </label>
-                <label class="flex items-center text-sm cursor-pointer">
-                    <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
-                    <span class="ml-1.5">Trecho</span>
+            </div>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+        {% endif %}
+    </div>
+
+    <div class="filter-container">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+            <div class="md:col-span-2 relative">
+                <div class="relative search-wrapper">
+                    <label for="search" class="filter-label">Busca Rápida e Inteligente</label>
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search" name="search" placeholder="Buscar por matéria, lei ou artigo..." class="custom-input search-input-with-icon">
+                </div>
+                <div id="autocomplete-results" class="autocomplete-container"></div>
+            </div>
+            <div class="flex items-end pb-2">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
+                    <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
                 </label>
             </div>
-            
-            <div id="status-filter-wrapper">
-                <select id="status_filter" name="status_filter" class="custom-input">
-                    <option value="">-- Todos os Status --</option>
-                    <option value="not_read">Não Lidas</option>
-                    <option value="in_progress">Em Andamento</option>
-                    <option value="completed">Concluídas</option>
+        </div>
+        <hr class="my-6 border-t border-gray-200">
+        <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+            <div>
+                <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
+                <select id="subject_id" name="subject_id" class="custom-input">
+                    <option value="">-- Todas as Matérias --</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
-            <div id="topic-filter-wrapper" style="display: none;">
-                 <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
-                    <option value="">-- Selecione um Trecho --</option>
-                 </select>
+            <div>
+                <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
+                <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
+                    <option value="">-- Selecione uma Matéria --</option>
+                </select>
+            </div>
+            <div id="refinement-wrapper" class="lg:col-span-1" style="visibility: hidden;">
+                <label class="filter-label"><i class="fas fa-filter"></i>3. Refinar por</label>
+                <div class="flex items-center space-x-4 mb-2">
+                    <label class="flex items-center text-sm cursor-pointer">
+                        <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
+                        <span class="ml-1.5">Status</span>
+                    </label>
+                    <label class="flex items-center text-sm cursor-pointer">
+                        <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
+                        <span class="ml-1.5">Trecho</span>
+                    </label>
+                </div>
+                <div id="status-filter-wrapper">
+                    <select id="status_filter" name="status_filter" class="custom-input">
+                        <option value="">-- Todos os Status --</option>
+                        <option value="not_read">Não Lidas</option>
+                        <option value="in_progress">Em Andamento</option>
+                        <option value="completed">Concluídas</option>
+                    </select>
+                </div>
+                <div id="topic-filter-wrapper" style="display: none;">
+                     <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
+                        <option value="">-- Selecione um Trecho --</option>
+                     </select>
+                </div>
+            </div>
+            <div>
+                <label class="filter-label">&nbsp;</label>
+                <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
             </div>
         </div>
-
-        <div>
-            <label class="filter-label">&nbsp;</label>
-            <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
-        </div>
     </div>
-</div>
-<h2 class="text-2xl font-semibold mb-6" style="color: #2563eb;">Legislações Disponíveis</h2>
-<div id="laws-accordion-container">
+
+    <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Legislações Disponíveis</h2>
+        <div id="laws-accordion-container"></div>
+    </div>
+
+    <div id="initial-prompt" class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
+        <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
+        <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
+    </div>
 </div>
 {% endblock %}
 
@@ -320,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         diploma: document.getElementById('diploma_id'),
         favorites: document.getElementById('show_favorites'),
         clearButton: document.getElementById('clear-filters-btn'),
-        
         refinementWrapper: document.getElementById('refinement-wrapper'),
         refineTypeRadios: document.querySelectorAll('input[name="refine_type"]'),
         statusFilterWrapper: document.getElementById('status-filter-wrapper'),
@@ -328,41 +286,37 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter: document.getElementById('status_filter'),
         topicFilter: document.getElementById('topic_filter'),
     };
-    const accordionContainer = document.getElementById('laws-accordion-container');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let debounceTimer;
 
-    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
+    const lawsSection = document.getElementById('laws-section');
+    const initialPrompt = document.getElementById('initial-prompt');
+    const accordionContainer = document.getElementById('laws-accordion-container');
 
+    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
-        const search = filterControls.search.value;
         const subjectId = filterControls.subject.value;
         const diplomaId = filterControls.diploma.value;
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        // Se a busca principal está ativa, não mostra nada no accordion principal
-        if (search.length > 2) {
-             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Use a busca rápida acima para encontrar o que precisa.</p></div>';
-             return;
+        // Não faz nada se nenhum filtro principal estiver ativo
+        if (!subjectId) {
+            accordionContainer.innerHTML = '';
+            return;
         }
 
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
 
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', showFavorites);
-
-        // A busca principal agora é tratada pelo autocomplete, então não a enviamos aqui.
-        // if (search) {
-        //     params.append('search', search);
-        // }
         
         if (subjectId) params.append('subject_id', subjectId);
         if (diplomaId) {
             params.append('diploma_id', diplomaId);
             if (refineType === 'status') {
                 if (filterControls.statusFilter.value) {
-                        params.append('status_filter', filterControls.statusFilter.value);
+                    params.append('status_filter', filterControls.statusFilter.value);
                 }
             } else { // refineType === 'topic'
                 if (filterControls.topicFilter.value) {
@@ -389,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         filterControls.refinementWrapper.style.visibility = 'hidden';
         filterControls.statusFilter.value = '';
-        await updateTopicFilter(null); // Limpa e desativa o filtro de trechos
+        await updateTopicFilter(null);
 
         if (!subjectId) {
             fetchAndRenderLaws();
@@ -411,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Erro ao buscar leis:", error);
             filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
         }
-
         fetchAndRenderLaws();
     }
 
@@ -442,8 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-    // --- FUNÇÕES DE RENDERIZAÇÃO (Inalteradas) ---
+    // --- FUNÇÕES DE RENDERIZAÇÃO ---
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -514,7 +466,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- EVENT LISTENERS ---
-
     function attachEventListeners() {
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', function() {
@@ -535,8 +486,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
     
-    // Filtros principais (não usam mais a busca principal)
     filterControls.subject.addEventListener('change', () => {
+        if (lawsSection.style.display === 'none') {
+            initialPrompt.style.display = 'none';
+            lawsSection.style.display = 'block';
+            setTimeout(() => lawsSection.style.opacity = '1', 50);
+        }
         filterControls.search.value = '';
         updateDiplomaFilter(filterControls.subject.value);
     });
@@ -596,15 +551,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (query.length < 3) {
             resultsContainer.style.display = 'none';
-            fetchAndRenderLaws(); // Volta a mostrar os filtros normais
+            // Se o usuário apagar a busca, não fazemos nada, deixamos os filtros hierárquicos mandarem
             return;
         }
 
-        // Limpa os filtros hierárquicos quando a busca principal é usada
+        // Limpa os filtros hierárquicos para dar prioridade à busca
         filterControls.subject.value = '';
-        filterControls.diploma.value = '';
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.refinementWrapper.style.visibility = 'hidden';
+        
+        // Esconde a lista de leis e o prompt inicial
+        initialPrompt.style.display = 'none';
+        lawsSection.style.display = 'none';
 
         searchDebounceTimer = setTimeout(() => {
             fetch(`/student/api/autocomplete_search?q=${query}`)
@@ -661,12 +620,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setupDynamicPlaceholder();
 
-
-    // --- OUTRAS FUNCIONALIDADES (INALTERADAS) ---
-
+    // --- OUTRAS FUNCIONALIDADES (avisos, favoritos, etc.) ---
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() { 
+        checkbox.addEventListener('change', function() {
             this.disabled = true;
             const announcementItem = this.closest('.non-fixed-announcement-item');
             const announcementId = announcementItem.getAttribute('data-announcement-id');
@@ -734,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- CARGA INICIAL ---
-    fetchAndRenderLaws();
+    // A chamada fetchAndRenderLaws() foi removida para implementar o carregamento sob demanda.
 });
 </script>
 {% endblock %}
