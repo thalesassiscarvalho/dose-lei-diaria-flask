@@ -1326,7 +1326,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); 
     let saveMarkupTimeout;
 
     /**
@@ -1431,7 +1431,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
-    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
+    
     if (clearFormattingBtn) {
         clearFormattingBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
@@ -1449,7 +1449,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Formatação removida com sucesso!');
         });
     }
-    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
+    
 
     // =================================================================
     // <<< FIM DA ATUALIZAÇÃO >>>
@@ -1652,9 +1652,12 @@ document.addEventListener("DOMContentLoaded", function () {
             if (p.style.backgroundColor) return; 
             
             const anchorId = `law-p-${index}`;
+            
+            // ▼▼▼ LINHA CORRIGIDA ▼▼▼
             if (!p.id) {
-            p.id = anchorId;
+                p.id = anchorId;
             }
+            // ▲▲▲ FIM DA CORREÇÃO ▲▲▲
 
             const wrapper = document.createElement('div');
             wrapper.className = 'paragraph-wrapper';
@@ -1680,7 +1683,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar anotação privada';
                 icon.style.display = 'none'; 
-                icon.addEventListener('click', () => openCommentModalForCreate(anchorId));
+                icon.addEventListener('click', () => openCommentModalForCreate(p.id)); // Usar p.id que agora está correto
             }
 
             wrapper.appendChild(icon);
