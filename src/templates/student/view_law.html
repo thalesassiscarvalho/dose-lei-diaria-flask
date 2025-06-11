@@ -1025,7 +1025,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =================================================================
-    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA INTELIGENTES >>>
+    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA E ROLAGEM CORRIGIDAS >>>
     // =================================================================
     
     /**
@@ -1034,17 +1034,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function clearPreviousSearchHighlights() {
         const highlights = lawContent.querySelectorAll('span.highlight-article-search');
         highlights.forEach(span => {
-            // Substitui o span pelo seu conteúdo de texto, efetivamente removendo o destaque.
             span.replaceWith(...span.childNodes);
         });
-        // Junta nós de texto adjacentes que podem ter sido criados ao remover os spans.
-        // Isso é importante para que futuras buscas no texto funcionem corretamente.
         lawContent.normalize();
     }
 
     /**
-     * Procura por um texto no conteúdo, destaca todas as ocorrências
-     * e rola a tela para a primeira. Retorna true se encontrou, false se não.
+     * Procura por um texto, destaca todas as ocorrências e rola para a primeira.
      * @param {string} text - O texto a ser procurado.
      * @param {boolean} suppressAlert - Se true, não mostra alerta de "não encontrado".
      * @returns {boolean} - True se o texto foi encontrado, senão false.
@@ -1057,11 +1053,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
         const ranges = [];
         let node;
-        // Percorre todos os nós de texto para encontrar as correspondências.
         while (node = walker.nextNode()) {
             const lowerNodeValue = node.nodeValue.toLowerCase();
             let index = -1;
-            // Encontra todas as ocorrências do texto dentro do mesmo nó.
             while ((index = lowerNodeValue.indexOf(text.toLowerCase(), index + 1)) > -1) {
                 const range = document.createRange();
                 range.setStart(node, index);
@@ -1071,11 +1065,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (ranges.length > 0) {
-            // Envolve cada correspondência encontrada com um span de destaque.
             ranges.forEach(range => {
                 const highlightSpan = document.createElement('span');
                 highlightSpan.className = 'highlight-article-search';
-                highlightSpan.style.backgroundColor = '#fef9c3'; // Amarelo claro
+                highlightSpan.style.backgroundColor = '#fef9c3';
                 try {
                     range.surroundContents(highlightSpan);
                 } catch (e) {
@@ -1083,10 +1076,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
             
-            // Rola a tela para o primeiro elemento destacado.
             const firstMatchElement = lawContent.querySelector('span.highlight-article-search');
             if (firstMatchElement) {
-                scrollToElement(firstMatchElement, false);
+                // *** CORREÇÃO: Achar o 'pai' do bloco para rolagem precisa ***
+                const scrollTarget = firstMatchElement.closest('p, li, div, h1, h2, h3, h4');
+                // Rola para o parágrafo pai, ou para o próprio destaque se não encontrar um pai de bloco.
+                scrollToElement(scrollTarget || firstMatchElement, false);
             }
             return true; // Sucesso
         }
@@ -1098,57 +1093,51 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     /**
-     * Função principal de busca, agora com lógica de fallback.
+     * Função principal de busca, com lógica de fallback.
      */
     function findAndGoToArticle() {
         const searchInput = articleSearchInput.value.trim();
-        // Se o usuário digitou apenas um número (ex: "5")
         if (/^\d+$/.test(searchInput)) {
             const articleNumber = searchInput;
             const targetElement = document.getElementById(`art-${articleNumber}`);
             
-            // 1. Tenta a busca rápida por ID.
             if (targetElement) {
-                scrollToElement(targetElement);
+                scrollToElement(targetElement, true); // Usa animação para busca por ID
             } else {
-                // 2. Se a busca por ID falhar, usa o PLANO B: busca por texto.
-                // Tenta "Art. 5" e, se não achar, tenta "Artigo 5".
                 const found = findAndGoToText(`Art. ${articleNumber}`, true) || findAndGoToText(`Artigo ${articleNumber}`, true);
-                
-                // 3. Se nem o plano B funcionar, mostra o alerta.
                 if (!found) {
                     alert(`Artigo ${articleNumber} não encontrado.`);
                 }
             }
         } else {
-            // Se o usuário digitou um texto, faz a busca por texto normalmente.
             if (searchInput) {
                 findAndGoToText(searchInput, false);
             }
         }
     }
-    // =================================================================
-    // <<< FIM DA ATUALIZAÇÃO >>>
-    // =================================================================
-
+    
     function scrollToElement(element, useAnimationClass = true) {
         const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
         const extraPadding = 16;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        
         window.scrollTo({
             top: offsetPosition,
             behavior: 'smooth'
         });
+
         if (useAnimationClass) {
             element.classList.add('highlight-article');
             setTimeout(() => {
                 element.classList.remove('highlight-article');
-                // Remove o destaque da busca por texto se a animação for usada.
-                clearPreviousSearchHighlights();
             }, 2000);
         }
     }
+
+    // =================================================================
+    // <<< FIM DA ATUALIZAÇÃO >>>
+    // =================================================================
 
     goToArticleBtn.addEventListener('click', findAndGoToArticle);
     articleSearchInput.addEventListener('keydown', function(event) {
@@ -1158,7 +1147,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // A indexação ainda é chamada para tentar otimizar a busca, mas não é mais crítica.
     indexArticles();
 
     function setupToggleButton(buttonId, contentSelector) {
