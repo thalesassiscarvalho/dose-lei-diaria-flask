@@ -840,8 +840,8 @@
                  <button id="format-highlight-green-btn" class="font-control-btn" title="Marca-texto Verde"><i class="fas fa-highlighter" style="color: #4ade80;"></i></button>
                  <button id="format-highlight-blue-btn" class="font-control-btn" title="Marca-texto Azul"><i class="fas fa-highlighter" style="color: #60a5fa;"></i></button>
                  <button id="format-highlight-pink-btn" class="font-control-btn" title="Marca-texto Rosa"><i class="fas fa-highlighter" style="color: #f472b6;"></i></button>
+                 <button id="clear-formatting-btn" class="font-control-btn" title="Limpar toda a formatação (ação irreversível)"><i class="fas fa-eraser" style="color: #ef4444;"></i></button>
             </div>
-            
             <div class="flex items-center space-x-2 border-l border-gray-300 pl-2 ml-1">
                 <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
                 <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
@@ -1305,6 +1305,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
     let saveMarkupTimeout;
 
     /**
@@ -1408,6 +1409,26 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
+
+    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
+    if (clearFormattingBtn) {
+        clearFormattingBtn.addEventListener('click', () => {
+            if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            const contentClone = lawContent.cloneNode(true);
+            const formattingTags = contentClone.querySelectorAll('strong, b, em, i, u, s, span[class*="user-highlight-"]');
+            
+            formattingTags.forEach(tag => {
+                tag.replaceWith(...tag.childNodes);
+            });
+            
+            lawContent.innerHTML = contentClone.innerHTML;
+            saveLawMarkup();
+            alert('Formatação removida com sucesso!');
+        });
+    }
+    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
 
     // =================================================================
     // <<< FIM DA ATUALIZAÇÃO >>>
