@@ -31,7 +31,7 @@ class Law(db.Model):
     
     # --- Funcionalidade: Aviso de Atualização de Lei ---
     last_updated_at = db.Column(db.DateTime, nullable=True, comment="Data da última atualização da lei que gerou um aviso.")
-    active_update_notice = db.Column(db.Boolean, default=False, nullable=False, comment="Indica se há um aviso de atualização ativo para esta lei.")
+    active_update_notice = db.Column(db.Boolean, default=False, nullable=False, server_default='false', comment="Indica se há um aviso de atualização ativo para esta lei.")
 
 
     def __repr__(self):
