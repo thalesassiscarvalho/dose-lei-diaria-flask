@@ -1,6 +1,25 @@
 # -*- coding: utf-8 -*-
 from src.models.user import db 
 from sqlalchemy.orm import backref
+import datetime # Adicionado para os novos campos de data e hora
+
+# =====================================================================
+# <<< INÍCIO DA ATUALIZAÇÃO (ETAPA 1) >>>
+# Novo modelo para rastrear quem viu o aviso de atualização de uma lei
+# =====================================================================
+class UserSeenLawNotice(db.Model):
+    __tablename__ = 'user_seen_law_notice'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
+    # Armazena a data da última atualização da lei que o usuário viu.
+    seen_update_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'law_id'),)
+# =====================================================================
+# <<< FIM DA ATUALIZAÇÃO >>>
+# =====================================================================
+
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,11 +39,13 @@ class Law(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
 
     # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
+    # <<< INÍCIO DA ATUALIZAÇÃO (ETAPA 1) >>>
+    # Novos campos para rastrear e descrever as atualizações.
     # =====================================================================
-    juridiques_explanation = db.Column(db.Text, nullable=True)
+    last_updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    active_update_notice = db.Column(db.Text, nullable=True) # Campo para o seu aviso
     # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
+    # <<< FIM DA ATUALIZAÇÃO >>>
     # =====================================================================
 
     # =====================================================================
