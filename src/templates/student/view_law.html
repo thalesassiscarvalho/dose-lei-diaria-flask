@@ -1000,85 +1000,136 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
-        /* ╔════════════════════════════════════════╗
-       ║  indexArticles REFORÇADO              ║
-       ╚════════════════════════════════════════╝ */
-    
-    /* ╔════════════════════════════════════════╗
-       ║  NOVA FUNÇÃO AUXILIAR                 ║
-       ╚════════════════════════════════════════╝ */
-    function extractArticleNumber(str) {
-        const m = str.match(/(\d+)/);
-        return m ? m[1] : null;
-    }
-function indexArticles() {
-        const articleRegex = /\bArt(?:igo)?\.?\s*(\d+)\s*[ºª]?\b/i;
-        lawContent.querySelectorAll('p, strong, b, span').forEach(el => {
-            const txt = el.textContent.trim();
-            const match = txt.match(articleRegex);
-            if (match) {
-                const num = match[1];
-                if (num && !document.getElementById(`art-${num}`)) {
-                    el.id = `art-${num}`;
-                }
-            }
-        });
-    }
-
-        /* ╔════════════════════════════════════════╗
-       ║  findAndGoToArticle REESCRITO         ║
-       ╚════════════════════════════════════════╝ */
-    function findAndGoToArticle() {
-        const rawInput = articleSearchInput.value.trim();
-        const num = extractArticleNumber(rawInput);
-
-        if (num) {
-            const target = document.getElementById(`art-${num}`);
-            if (target) {
-                scrollToElement(target);
-            } else {
-                alert(`Artigo ${rawInput} não encontrado.`);
-            }
-        } else if (rawInput) {
-            findAndGoToText(rawInput);
-        }
-    }
-
-    function findAndGoToText(text) {
-        if (!text || text.length < 3) return;
-        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
-        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+    // A função de indexação original é mantida mas sua falha não impede mais a busca.
+    function indexArticles() {
+        const articleRegex = /\bArt(igo)?\.?\s+(\d+)/gi;
+        const taggedArticles = new Set();
         const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
         let node;
-        let firstMatch = null;
-        while (node = walker.nextNode()) {
-            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
-            if (index > -1) {
-                const parentElement = node.parentElement;
-                const originalText = node.nodeValue;
-                const beforeText = originalText.substring(0, index);
-                const foundText = originalText.substring(index, index + text.length);
-                const afterText = originalText.substring(index + text.length);
-                const span = document.createElement('span');
-                span.className = 'highlight-article-search';
-                span.style.backgroundColor = '#fef08a';
-                span.textContent = foundText;
-                const fragment = document.createDocumentFragment();
-                fragment.appendChild(document.createTextNode(beforeText));
-                fragment.appendChild(span);
-                fragment.appendChild(document.createTextNode(afterText));
-                parentElement.replaceChild(fragment, node);
-                if (!firstMatch) {
-                    firstMatch = parentElement;
+        while(node = walker.nextNode()) {
+            let match;
+            while ((match = articleRegex.exec(node.nodeValue)) !== null) {
+                const articleNumber = match[2];
+                if (taggedArticles.has(articleNumber)) {
+                    continue;
+                }
+                const targetElement = node.parentElement.closest('p, li, div');
+                if (targetElement) {
+                    if (!targetElement.id) {
+                        targetElement.id = `art-${articleNumber}`;
+                        taggedArticles.add(articleNumber);
+                    }
                 }
             }
         }
-        if (firstMatch) {
-            scrollToElement(firstMatch, false);
-        } else {
+    }
+
+    // =================================================================
+    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA INTELIGENTES >>>
+    // =================================================================
+    
+    /**
+     * Limpa destaques de buscas anteriores e normaliza o container do texto.
+     */
+    function clearPreviousSearchHighlights() {
+        const highlights = lawContent.querySelectorAll('span.highlight-article-search');
+        highlights.forEach(span => {
+            // Substitui o span pelo seu conteúdo de texto, efetivamente removendo o destaque.
+            span.replaceWith(...span.childNodes);
+        });
+        // Junta nós de texto adjacentes que podem ter sido criados ao remover os spans.
+        // Isso é importante para que futuras buscas no texto funcionem corretamente.
+        lawContent.normalize();
+    }
+
+    /**
+     * Procura por um texto no conteúdo, destaca todas as ocorrências
+     * e rola a tela para a primeira. Retorna true se encontrou, false se não.
+     * @param {string} text - O texto a ser procurado.
+     * @param {boolean} suppressAlert - Se true, não mostra alerta de "não encontrado".
+     * @returns {boolean} - True se o texto foi encontrado, senão false.
+     */
+    function findAndGoToText(text, suppressAlert = false) {
+        if (!text || text.length < 1) return false;
+        
+        clearPreviousSearchHighlights();
+
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        const ranges = [];
+        let node;
+        // Percorre todos os nós de texto para encontrar as correspondências.
+        while (node = walker.nextNode()) {
+            const lowerNodeValue = node.nodeValue.toLowerCase();
+            let index = -1;
+            // Encontra todas as ocorrências do texto dentro do mesmo nó.
+            while ((index = lowerNodeValue.indexOf(text.toLowerCase(), index + 1)) > -1) {
+                const range = document.createRange();
+                range.setStart(node, index);
+                range.setEnd(node, index + text.length);
+                ranges.push(range);
+            }
+        }
+
+        if (ranges.length > 0) {
+            // Envolve cada correspondência encontrada com um span de destaque.
+            ranges.forEach(range => {
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'highlight-article-search';
+                highlightSpan.style.backgroundColor = '#fef9c3'; // Amarelo claro
+                try {
+                    range.surroundContents(highlightSpan);
+                } catch (e) {
+                    console.error("Erro ao aplicar destaque:", e);
+                }
+            });
+            
+            // Rola a tela para o primeiro elemento destacado.
+            const firstMatchElement = lawContent.querySelector('span.highlight-article-search');
+            if (firstMatchElement) {
+                scrollToElement(firstMatchElement, false);
+            }
+            return true; // Sucesso
+        }
+
+        if (!suppressAlert) {
             alert(`Texto "${text}" não encontrado.`);
         }
+        return false; // Falha
     }
+    
+    /**
+     * Função principal de busca, agora com lógica de fallback.
+     */
+    function findAndGoToArticle() {
+        const searchInput = articleSearchInput.value.trim();
+        // Se o usuário digitou apenas um número (ex: "5")
+        if (/^\d+$/.test(searchInput)) {
+            const articleNumber = searchInput;
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            
+            // 1. Tenta a busca rápida por ID.
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                // 2. Se a busca por ID falhar, usa o PLANO B: busca por texto.
+                // Tenta "Art. 5" e, se não achar, tenta "Artigo 5".
+                const found = findAndGoToText(`Art. ${articleNumber}`, true) || findAndGoToText(`Artigo ${articleNumber}`, true);
+                
+                // 3. Se nem o plano B funcionar, mostra o alerta.
+                if (!found) {
+                    alert(`Artigo ${articleNumber} não encontrado.`);
+                }
+            }
+        } else {
+            // Se o usuário digitou um texto, faz a busca por texto normalmente.
+            if (searchInput) {
+                findAndGoToText(searchInput, false);
+            }
+        }
+    }
+    // =================================================================
+    // <<< FIM DA ATUALIZAÇÃO >>>
+    // =================================================================
 
     function scrollToElement(element, useAnimationClass = true) {
         const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
@@ -1093,6 +1144,8 @@ function indexArticles() {
             element.classList.add('highlight-article');
             setTimeout(() => {
                 element.classList.remove('highlight-article');
+                // Remove o destaque da busca por texto se a animação for usada.
+                clearPreviousSearchHighlights();
             }, 2000);
         }
     }
@@ -1104,6 +1157,8 @@ function indexArticles() {
             findAndGoToArticle();
         }
     });
+    
+    // A indexação ainda é chamada para tentar otimizar a busca, mas não é mais crítica.
     indexArticles();
 
     function setupToggleButton(buttonId, contentSelector) {
@@ -1789,17 +1844,6 @@ function indexArticles() {
             linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-    /* ╔════════════════════════════════════════╗
-       ║  REINDEXAÇÃO APÓS SISTEMA DE COMENT.  ║
-       ╚════════════════════════════════════════╝ */
-    if (typeof initCommentSystem === 'function') {
-        const _oldInit = initCommentSystem;
-        initCommentSystem = async function () {
-            await _oldInit.apply(this, arguments);
-            indexArticles();
-        };
-    }
-
 });
 </script>
 {% endblock %}
