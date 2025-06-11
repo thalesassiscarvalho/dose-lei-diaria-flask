@@ -300,7 +300,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        // Não faz nada se nenhum filtro principal estiver ativo
         if (!subjectId) {
             accordionContainer.innerHTML = '';
             return;
@@ -487,13 +486,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     filterControls.subject.addEventListener('change', () => {
-        if (lawsSection.style.display === 'none') {
-            initialPrompt.style.display = 'none';
-            lawsSection.style.display = 'block';
-            setTimeout(() => lawsSection.style.opacity = '1', 50);
+        const subjectId = filterControls.subject.value;
+
+        if (subjectId) {
+            // A subject is selected
+            if (lawsSection.style.display === 'none') {
+                initialPrompt.style.display = 'none';
+                lawsSection.style.display = 'block';
+                setTimeout(() => lawsSection.style.opacity = '1', 50);
+            }
+        } else {
+            // "-- Todas as Matérias --" is selected, go back to initial state
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
         }
+
         filterControls.search.value = '';
-        updateDiplomaFilter(filterControls.subject.value);
+        updateDiplomaFilter(subjectId);
     });
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -537,7 +547,11 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
 
-        fetchAndRenderLaws();
+        // Restore initial screen state
+        initialPrompt.style.display = 'block';
+        lawsSection.style.display = 'none';
+        lawsSection.style.opacity = '0';
+        accordionContainer.innerHTML = '';
     });
 
     // --- LÓGICA DA BUSCA INTELIGENTE (AUTOCOMPLETE) ---
@@ -551,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (query.length < 3) {
             resultsContainer.style.display = 'none';
-            // Se o usuário apagar a busca, não fazemos nada, deixamos os filtros hierárquicos mandarem
+            // Se o usuário apaga a busca, não fazemos nada, deixamos os filtros hierárquicos mandarem
             return;
         }
 
