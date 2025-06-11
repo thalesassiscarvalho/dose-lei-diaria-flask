@@ -1652,7 +1652,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (p.style.backgroundColor) return; 
             
             const anchorId = `law-p-${index}`;
+            if (!p.id) {
             p.id = anchorId;
+            }
 
             const wrapper = document.createElement('div');
             wrapper.className = 'paragraph-wrapper';
