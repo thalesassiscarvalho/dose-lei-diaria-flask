@@ -356,7 +356,7 @@
     .notes-editor:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
     .notes-editor strong { font-weight: bold; }
     .notes-editor em { font-style: italic; }
-    .notes-editor u { text-decoration: underline; }
+    .notes-editor .highlight { background-color: #fef08a; padding: 0 2px; }
     /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
 
     .go-to-notes-btn { background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #7c3aed; display: flex; align-items: center; }
@@ -851,6 +851,13 @@
        </div>
 
     <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 sticky-bar-right-side">
+        <div class="flex items-center space-x-1">
+            <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
+            <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
+            <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
+                <i class="fas fa-search"></i> Ir
+            </button>
+        </div>
         <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
             <i class="fas fa-pencil-alt mr-2"></i>
             <span class="hidden md:inline">Anotações Gerais</span>
@@ -890,7 +897,7 @@
             <div class="notes-toolbar">
                 <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
                 <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
-                <button id="underline-btn" class="format-btn" title="Sublinhado"><i class="fas fa-underline"></i></button>
+                <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
             </div>
             <div id="notes-editor" class="notes-editor" contenteditable="true" spellcheck="false"></div>
             <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
@@ -989,7 +996,102 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
     
-    // As variáveis e funções para busca de artigos foram removidas daqui.
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+    const stickyActionBar = document.getElementById('sticky-action-bar');
+
+    function indexArticles() {
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
+                }
+            }
+        });
+    }
+
+    function findAndGoToArticle() {
+        const articleNumber = articleSearchInput.value.trim();
+        if (/^\d+$/.test(articleNumber)) {
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                alert(`Artigo ${articleNumber} não encontrado.`);
+            }
+        } else {
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
+            }
+        }
+    }
+
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return;
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let firstMatch = null;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                const parentElement = node.parentElement;
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+                const span = document.createElement('span');
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
+                span.textContent = foundText;
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                parentElement.replaceChild(fragment, node);
+                if (!firstMatch) {
+                    firstMatch = parentElement;
+                }
+            }
+        }
+        if (firstMatch) {
+            scrollToElement(firstMatch, false);
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
+    }
+
+    function scrollToElement(element, useAnimationClass = true) {
+        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+        const extraPadding = 16;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+        if (useAnimationClass) {
+            element.classList.add('highlight-article');
+            setTimeout(() => {
+                element.classList.remove('highlight-article');
+            }, 2000);
+        }
+    }
+
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    articleSearchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            findAndGoToArticle();
+        }
+    });
+    indexArticles();
 
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
@@ -1136,8 +1238,23 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    document.getElementById('underline-btn').addEventListener('click', () => { document.execCommand('underline'); notesEditor.focus(); });
-    
+    document.getElementById('highlight-btn').addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const parent = range.commonAncestorContainer.parentElement;
+            if (parent.classList.contains('highlight')) {
+                const text = document.createTextNode(parent.textContent);
+                parent.parentNode.replaceChild(text, parent);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            }
+        }
+        notesEditor.focus();
+    });
 
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
