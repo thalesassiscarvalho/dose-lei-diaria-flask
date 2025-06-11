@@ -840,6 +840,7 @@
                  <button id="format-highlight-green-btn" class="font-control-btn" title="Marca-texto Verde"><i class="fas fa-highlighter" style="color: #4ade80;"></i></button>
                  <button id="format-highlight-blue-btn" class="font-control-btn" title="Marca-texto Azul"><i class="fas fa-highlighter" style="color: #60a5fa;"></i></button>
                  <button id="format-highlight-pink-btn" class="font-control-btn" title="Marca-texto Rosa"><i class="fas fa-highlighter" style="color: #f472b6;"></i></button>
+                 <button id="restore-original-btn" class="font-control-btn" title="Restaurar texto original (remove todas as suas marcações e formatações permanentemente)"><i class="fas fa-undo" style="color: #f97316;"></i></button>
                  <button id="clear-formatting-btn" class="font-control-btn" title="Limpar toda a formatação (ação irreversível)"><i class="fas fa-eraser" style="color: #ef4444;"></i></button>
             </div>
             <div class="flex items-center space-x-2 border-l border-gray-300 pl-2 ml-1">
@@ -866,12 +867,12 @@
     </div>
 </div>
 
+{% if law.description %}
+    <p class="text-gray-600 italic mb-6 bg-gray-100 p-4 rounded-md border-l-4 border-gray-300">{{ law.description }}</p>
+{% endif %}
 
 <div class="law-content-container" id="law-content">
-    {% if law.description %}
-        <p class="text-gray-600 italic mb-6">{{ law.description }}</p>
-    {% endif %}
-
+    {# A descrição foi removida daqui para corrigir o bug de duplicação #}
     {# Esta linha agora usa a variável 'display_content' que é preparada de forma segura no backend #}
     {{ display_content | safe }}
 </div>
@@ -1306,6 +1307,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
     const clearFormattingBtn = document.getElementById('clear-formatting-btn');
+    const restoreOriginalBtn = document.getElementById('restore-original-btn'); // NOVO BOTÃO
     let saveMarkupTimeout;
 
     /**
@@ -1452,6 +1454,33 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Formatação removida com sucesso!');
         });
     }
+
+    // --- INÍCIO: NOVA FUNCIONALIDADE DE RESTAURAR TEXTO ORIGINAL ---
+    if (restoreOriginalBtn) {
+        restoreOriginalBtn.addEventListener('click', () => {
+            if (!confirm('Tem certeza de que deseja restaurar o texto original? TODAS as suas marcações e formatações para este item de estudo serão PERDIDAS permanentemente. Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            fetch(`/student/law/${lawId}/restore_markup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Texto original restaurado com sucesso! A página será recarregada.');
+                    location.reload();
+                } else {
+                    alert('Ocorreu um erro ao restaurar o texto: ' + (data.error || 'Erro desconhecido.'));
+                }
+            })
+            .catch(error => {
+                console.error('Erro de rede ao restaurar:', error);
+                alert('Ocorreu um erro de comunicação ao tentar restaurar o texto.');
+            });
+        });
+    }
+    // --- FIM: NOVA FUNCIONALIDADE DE RESTAURAR TEXTO ORIGINAL ---
 
     // =================================================================
     // <<< FIM DA ATUALIZAÇÃO >>>
