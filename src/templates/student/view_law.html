@@ -1027,7 +1027,59 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
 
-    // ... (todo o resto do seu JavaScript permanece o mesmo) ...
+    // =================================================================
+    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
+    // =================================================================
+    function fixDuplicateDescription() {
+        if (!lawContent) return;
+
+        const templateDescriptionP = lawContent.querySelector('p.text-gray-600.italic.mb-6');
+        if (!templateDescriptionP) return;
+
+        const descriptionText = templateDescriptionP.textContent.trim();
+        if (!descriptionText) return;
+
+        // Procura pelo parágrafo duplicado que pode ter sido injetado com o conteúdo
+        let potentialDuplicate = templateDescriptionP.nextElementSibling;
+        while (potentialDuplicate) {
+            // Remove parágrafos vazios que o editor pode ter deixado
+            if (potentialDuplicate.tagName === 'P' && potentialDuplicate.innerHTML.trim().toLowerCase() === '&nbsp;') {
+                 let elementToRemove = potentialDuplicate;
+                 potentialDuplicate = potentialDuplicate.nextElementSibling;
+                 elementToRemove.remove();
+                 continue;
+            }
+            // Se encontrar o parágrafo duplicado, remove e para a busca
+            if (potentialDuplicate.tagName === 'P' && potentialDuplicate.textContent.trim() === descriptionText) {
+                potentialDuplicate.remove();
+                break; 
+            }
+             // Se encontrar qualquer outro conteúdo real, para a busca para evitar apagar algo importante
+            if (potentialDuplicate.textContent.trim() !== '') {
+                break;
+            }
+            potentialDuplicate = potentialDuplicate.nextElementSibling;
+        }
+    }
+    fixDuplicateDescription();
+    // =================================================================
+    // <<< FIM: CORREÇÃO DO BUG >>>
+    // =================================================================
+
+
+    const progressBar = document.getElementById('reading-progress-bar');
+    function updateProgressBar() {
+        const scrollableHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollableHeight > 0) {
+            const progressPercentage = (scrollTop / scrollableHeight) * 100;
+            progressBar.style.width = progressPercentage + '%';
+        } else {
+            progressBar.style.width = '0%';
+        }
+    }
+    window.addEventListener('scroll', updateProgressBar);
+    updateProgressBar();
 
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
@@ -1035,8 +1087,162 @@ document.addEventListener("DOMContentLoaded", function () {
     const pageTop = document.getElementById("page-top");
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
+    
+    const articleSearchInput = document.getElementById('article-search-input');
+    const goToArticleBtn = document.getElementById('go-to-article-btn');
+    const stickyActionBar = document.getElementById('sticky-action-bar');
 
-    // ... (todo o resto do seu JavaScript permanece o mesmo até a parte de salvar o bookmark) ...
+    function indexArticles() {
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
+                }
+            }
+        });
+    }
+
+    function findAndGoToArticle() {
+        const articleNumber = articleSearchInput.value.trim();
+        if (/^\d+$/.test(articleNumber)) {
+            const targetElement = document.getElementById(`art-${articleNumber}`);
+            if (targetElement) {
+                scrollToElement(targetElement);
+            } else {
+                alert(`Artigo ${articleNumber} não encontrado.`);
+            }
+        } else {
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
+            }
+        }
+    }
+
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return;
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let firstMatch = null;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                const parentElement = node.parentElement;
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+                const span = document.createElement('span');
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
+                span.textContent = foundText;
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                parentElement.replaceChild(fragment, node);
+                if (!firstMatch) {
+                    firstMatch = parentElement;
+                }
+            }
+        }
+        if (firstMatch) {
+            scrollToElement(firstMatch, false);
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
+    }
+
+    function scrollToElement(element, useAnimationClass = true) {
+        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
+        const extraPadding = 16;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+        if (useAnimationClass) {
+            element.classList.add('highlight-article');
+            setTimeout(() => {
+                element.classList.remove('highlight-article');
+            }, 2000);
+        }
+    }
+
+    goToArticleBtn.addEventListener('click', findAndGoToArticle);
+    articleSearchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            findAndGoToArticle();
+        }
+    });
+    indexArticles();
+
+    function setupToggleButton(buttonId, contentSelector) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        
+        const elementsToToggleOnLoad = buttonId === 'toggle-my-comments-btn' 
+            ? document.querySelectorAll(contentSelector)
+            : lawContent.querySelectorAll(contentSelector);
+        
+        elementsToToggleOnLoad.forEach(el => {
+            el.classList.remove("conteudo-oculto");
+        });
+
+        let isVisible = true;
+        
+        button.addEventListener("click", function () {
+            isVisible = !isVisible;
+            const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
+                ? document.querySelectorAll(contentSelector)
+                : lawContent.querySelectorAll(contentSelector);
+            
+            elementsToToggle.forEach(el => {
+                el.classList.toggle("conteudo-oculto", !isVisible);
+            });
+            
+            const icon = this.querySelector('i');
+            this.classList.toggle("active", !isVisible);
+            
+            if (isVisible) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.title = this.title.replace('Mostrar', 'Ocultar');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.title = this.title.replace('Ocultar', 'Mostrar');
+            }
+        });
+    }
+
+    setupToggleButton('toggle-comments-btn', 'p[style*="background-color: #f0fdf4"]');
+    setupToggleButton('toggle-jurisprudence-btn', 'p[style*="background-color: #fef2f2"]');
+    setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
+    setupToggleButton('toggle-my-comments-btn', '.comment-display');
+
+    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
+    if(goToNotesBtn) {
+        goToNotesBtn.addEventListener("click", function() {
+            notesSection.scrollIntoView({ behavior: 'smooth' });
+            const notesContentArea = document.getElementById("notes-content-area");
+            if (notesContentArea.classList.contains("hidden")) {
+                setTimeout(() => { document.getElementById("toggle-notes-btn").click(); }, 500);
+            }
+        });
+    }
+
+    backToTopBtn.addEventListener("click", function() {
+        pageTop.scrollIntoView({ behavior: 'smooth' });
+    });
 
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
@@ -1052,34 +1258,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
-
-            // =====================================================================
-            // <<< INÍCIO DA CORREÇÃO >>>
-            // Alteramos a forma de enviar os dados para ser mais robusta,
-            // usando URLSearchParams para garantir que o Flask receba o formulário corretamente.
-            // =====================================================================
-            const formData = new URLSearchParams();
-            formData.append('last_read_article', lastReadArticle);
-            formData.append('csrf_token', csrfToken);
-
             fetch(`/student/save_last_read/${lawId}`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded', 
-                    'X-CSRFToken': csrfToken 
-                },
-                body: formData
-            // =====================================================================
-            // <<< FIM DA CORREÇÃO >>>
-            // =====================================================================
-            }).then(response => {
-                // A verificação de 'response.ok' é mais segura que apenas 'response.json()'
-                if (!response.ok) {
-                    // Isso vai capturar erros como 400, 404, 500 e nos dar mais detalhes
-                    throw new Error(`Erro de rede: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            }).then(data => {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                body: `last_read_article=<span class="math-inline">\{encodeURIComponent\(lastReadArticle\)\}&csrf\_token\=</span>{encodeURIComponent(csrfToken)}`
+            }).then(response => response.json()).then(data => {
                 if (data.success) {
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
