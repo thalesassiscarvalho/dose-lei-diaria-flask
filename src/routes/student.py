@@ -14,7 +14,7 @@ import logging
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
 # =====================================================================
-# <<< NOVO ENDPOINT DE API PARA FILTRO EM CASCATA >>>
+# <<< ENDPOINTS DE API PARA FILTROS EM CASCATA >>>
 # =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
@@ -27,6 +27,22 @@ def get_laws_for_subject(subject_id):
         Law.parent_id.is_(None)
     ).order_by(Law.title).all()
     return jsonify([{"id": law.id, "title": law.title} for law in laws])
+
+# =====================================================================
+# <<< NOVO ENDPOINT DE API PARA BUSCAR TRECHOS (TÓPICOS) >>>
+# =====================================================================
+@student_bp.route("/api/topics_for_law/<int:law_id>")
+@login_required
+def get_topics_for_law(law_id):
+    """
+    Endpoint de API para retornar os tópicos (trechos/filhos) de uma lei (diploma).
+    """
+    # Garante que estamos buscando filhos de um diploma real (uma lei pai)
+    parent_law = Law.query.filter_by(id=law_id, parent_id=None).first_or_404("Diploma não encontrado.")
+    
+    # Ordenar por ID geralmente mantém a ordem correta dos artigos (ex: Art. 1, Art. 2)
+    topics = Law.query.filter_by(parent_id=law_id).order_by(Law.id).all()
+    return jsonify([{"id": topic.id, "title": topic.title} for topic in topics])
 # =====================================================================
 
 def check_and_award_achievements(user):
@@ -76,7 +92,6 @@ def dashboard():
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
 
-    # Apenas renderiza o template base. Os dados de leis serão buscados via API.
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            progress_percentage=global_progress_percentage,
@@ -90,23 +105,22 @@ def dashboard():
 
 
 # =====================================================================
-# <<< INÍCIO DA MODIFICAÇÃO PARA FILTROS HIERÁRQUICOS >>>
+# <<< FUNÇÃO filter_laws MODIFICADA PARA ACEITAR topic_id >>>
 # =====================================================================
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
     """
     Endpoint da API que retorna a lista de legislações filtradas em JSON.
-    Modificado para aceitar filtros hierárquicos e busca independente.
+    Modificado para aceitar filtros hierárquicos, incluindo o filtro por trecho (topic_id).
     """
     search_query = request.args.get("search", "")
 
-    # Filtros hierárquicos
     selected_subject_id_str = request.args.get("subject_id", "")
-    selected_diploma_id_str = request.args.get("diploma_id", "") # Novo filtro para a Lei/Diploma
+    selected_diploma_id_str = request.args.get("diploma_id", "")
     selected_status = request.args.get("status_filter", "")
+    selected_topic_id_str = request.args.get("topic_id", "") # NOVO PARÂMETRO
 
-    # Filtros adicionais
     show_favorites_str = request.args.get("show_favorites", "false")
     show_favorites = show_favorites_str.lower() == 'true'
 
@@ -116,15 +130,12 @@ def filter_laws():
     in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
-    # Inicia a query base buscando os Diplomas (leis principais)
     diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
         joinedload(Law.children)
     )
 
-    # Lógica de filtragem: Busca por texto tem prioridade
     if search_query:
         search_term = f"%{search_query}%"
-        # Busca no título do diploma, no nome da matéria ou nos títulos dos tópicos filhos
         diplomas_query = diplomas_query.filter(
             or_(
                 Law.title.ilike(search_term),
@@ -133,7 +144,6 @@ def filter_laws():
             )
         )
     else:
-        # Lógica de filtro hierárquico
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
             diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
@@ -144,6 +154,9 @@ def filter_laws():
 
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
 
+    # Converte o ID do trecho para int, se existir
+    selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
+
     processed_diplomas = []
     for diploma in all_diplomas:
         children_to_display = []
@@ -153,14 +166,18 @@ def filter_laws():
             is_not_read = not is_completed and not is_in_progress
             is_favorite = topic.id in favorite_topic_ids
 
+            # Lógica de validação dos filtros
             passes_status = (not selected_status or
                              (selected_status == 'completed' and is_completed) or
                              (selected_status == 'in_progress' and is_in_progress) or
                              (selected_status == 'not_read' and is_not_read))
+            
+            passes_topic = (not selected_topic_id or topic.id == selected_topic_id) # NOVO VALIDADOR
 
             passes_favorite = not show_favorites or is_favorite
 
-            if passes_status and passes_favorite:
+            # Um tópico é exibido se passar em todos os filtros aplicáveis
+            if passes_status and passes_topic and passes_favorite:
                 children_to_display.append({
                     "id": topic.id,
                     "title": topic.title,
@@ -169,9 +186,9 @@ def filter_laws():
                     "is_favorite": is_favorite
                 })
 
-        # Removido: is_hierarchical_filter_active não era usado
         children_final = children_to_display
 
+        # Se a busca principal está ativa, ignora os filtros de filho e mostra todos
         if search_query:
             children_final = [
                 {
@@ -204,17 +221,11 @@ def filter_laws():
 
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
 # =====================================================================
-# <<< FIM DA MODIFICAÇÃO >>>
-# =====================================================================
 
 
-# =====================================================================
-# <<< INÍCIO: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
-    # --- PASSO 1: LER TODOS OS DADOS DO BANCO PRIMEIRO ---
     law = Law.query.get_or_404(law_id)
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
@@ -224,27 +235,16 @@ def view_law(law_id):
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     is_favorited = law in current_user.favorite_laws
 
-    # --- PASSO 2: MODIFICAR OS DADOS E SALVAR NO BANCO (COMMIT) UMA ÚNICA VEZ ---
     now = datetime.datetime.utcnow()
     if progress:
         progress.last_accessed_at = now
     else:
-        # Se não há progresso, cria um novo registro
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
 
-    # O commit agora acontece aqui, depois de todas as leituras e modificações.
     db.session.commit()
 
-    # --- PASSO 3: PREPARAR OS DADOS PARA ENVIAR AO TEMPLATE ---
-    if user_markup:
-        # Se encontrou marcação salva, usa o conteúdo dela
-        content_to_display = user_markup.content
-    else:
-        # Senão, usa o conteúdo original da lei
-        content_to_display = law.content
-
-    # Garante que o conteúdo nunca seja None
+    content_to_display = user_markup.content if user_markup else law.content
     if content_to_display is None:
         content_to_display = ""
 
@@ -255,9 +255,6 @@ def view_law(law_id):
                            current_status=progress.status,
                            is_favorited=is_favorited,
                            display_content=content_to_display)
-# =====================================================================
-# <<< FIM: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
-# =====================================================================
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -291,7 +288,6 @@ def mark_complete(law_id):
             db.session.add(progress)
 
         progress.status = 'concluido'
-
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
 
@@ -324,7 +320,6 @@ def review_law(law_id):
         return jsonify(success=False, error="Progresso não encontrado."), 404
 
     progress.status = 'em_andamento'
-
     try:
         db.session.commit()
         return jsonify(success=True, new_status='em_andamento')
@@ -384,11 +379,7 @@ def handle_user_notes(law_id):
 @student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
 @login_required
 def save_law_markup(law_id):
-    """
-    Recebe o conteúdo HTML de uma lei com as marcações do usuário e salva no banco de dados.
-    """
     Law.query.get_or_404(law_id)
-
     try:
         data = request.get_json()
         if not data or 'content' not in data:
