@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "20250610_diff_markups"
-down_revision = None   # substitua pelo número da sua última revision real
+down_revision = "bcd73b762318"   # substitua pelo número da sua última revision real
 branch_labels = None
 depends_on = None
 
