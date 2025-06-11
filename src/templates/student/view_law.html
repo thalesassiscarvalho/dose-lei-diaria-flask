@@ -356,7 +356,7 @@
     .notes-editor:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3); }
     .notes-editor strong { font-weight: bold; }
     .notes-editor em { font-style: italic; }
-    .notes-editor .highlight { background-color: #fef08a; padding: 0 2px; }
+    .notes-editor u { text-decoration: underline; }
     /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
 
     .go-to-notes-btn { background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #7c3aed; display: flex; align-items: center; }
@@ -851,13 +851,6 @@
        </div>
 
     <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 sticky-bar-right-side">
-        <div class="flex items-center space-x-1">
-            <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
-            <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
-            <button id="go-to-article-btn" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
-                <i class="fas fa-search"></i> Ir
-            </button>
-        </div>
         <button id="go-to-notes-btn" class="go-to-notes-btn text-xs md:text-sm">
             <i class="fas fa-pencil-alt mr-2"></i>
             <span class="hidden md:inline">Anotações Gerais</span>
@@ -897,7 +890,7 @@
             <div class="notes-toolbar">
                 <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
                 <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
-                <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
+                <button id="underline-btn" class="format-btn" title="Sublinhado"><i class="fas fa-underline"></i></button>
             </div>
             <div id="notes-editor" class="notes-editor" contenteditable="true" spellcheck="false"></div>
             <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
@@ -996,171 +989,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
     
-    const articleSearchInput = document.getElementById('article-search-input');
-    const goToArticleBtn = document.getElementById('go-to-article-btn');
-    const stickyActionBar = document.getElementById('sticky-action-bar');
-
-    function indexArticles() {
-        const articleRegex = /\bArt(igo)?\.?\s+(\d+)/gi;
-        const taggedArticles = new Set();
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        while(node = walker.nextNode()) {
-            let match;
-            while ((match = articleRegex.exec(node.nodeValue)) !== null) {
-                const articleNumber = match[2];
-                if (taggedArticles.has(articleNumber)) {
-                    continue;
-                }
-                const targetElement = node.parentElement.closest('p, li, div');
-                if (targetElement) {
-                    if (!targetElement.id) {
-                        targetElement.id = `art-${articleNumber}`;
-                        taggedArticles.add(articleNumber);
-                    }
-                }
-            }
-        }
-    }
-
-    // =================================================================
-    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA E ROLAGEM CORRIGIDAS >>>
-    // =================================================================
-    
-    function clearPreviousSearchHighlights() {
-        const highlights = lawContent.querySelectorAll('span.highlight-article-search');
-        highlights.forEach(span => {
-            span.replaceWith(...span.childNodes);
-        });
-        lawContent.normalize();
-    }
-
-    function findAndGoToText(text, suppressAlert = false) {
-        if (!text || text.length < 1) return false;
-        
-        clearPreviousSearchHighlights();
-
-        const vault = [];
-        // Seletores para todos os tipos de comentários e anotações a serem excluídos da busca.
-        const commentarySelectors = [
-            'p[style*="background-color"]', // Parágrafos de Doutrina, Jurisprudência, etc.
-            '.comment-display'              // Anotações privadas do usuário
-        ];
-        const elementsToExclude = lawContent.querySelectorAll(commentarySelectors.join(', '));
-        
-        // 1. Guarda e remove os elementos de comentário temporariamente.
-        elementsToExclude.forEach(el => {
-            vault.push({
-                node: el,
-                parent: el.parentNode,
-                nextSibling: el.nextSibling
-            });
-            el.remove();
-        });
-
-        let found = false;
-        try {
-            // 2. Executa a busca no DOM "limpo", contendo apenas a lei seca.
-            const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
-            const ranges = [];
-            let node;
-            while (node = walker.nextNode()) {
-                const lowerNodeValue = node.nodeValue.toLowerCase();
-                let index = -1;
-                while ((index = lowerNodeValue.indexOf(text.toLowerCase(), index + 1)) > -1) {
-                    const range = document.createRange();
-                    range.setStart(node, index);
-                    range.setEnd(node, index + text.length);
-                    ranges.push(range);
-                }
-            }
-
-            if (ranges.length > 0) {
-                found = true;
-                ranges.forEach(range => {
-                    const highlightSpan = document.createElement('span');
-                    highlightSpan.className = 'highlight-article-search';
-                    highlightSpan.style.backgroundColor = '#fef9c3';
-                    try {
-                        range.surroundContents(highlightSpan);
-                    } catch (e) {
-                        console.error("Erro ao aplicar destaque:", e);
-                    }
-                });
-            }
-        } finally {
-            // 3. Restaura os elementos de comentário, independentemente do resultado da busca.
-            vault.forEach(item => {
-                item.parent.insertBefore(item.node, item.nextSibling);
-            });
-        }
-        
-        if (found) {
-            const firstMatchElement = lawContent.querySelector('span.highlight-article-search');
-            if (firstMatchElement) {
-                const scrollTarget = firstMatchElement.closest('p, li, div, h1, h2, h3, h4');
-                scrollToElement(scrollTarget || firstMatchElement, false);
-            }
-        } else {
-            if (!suppressAlert) {
-                alert(`Texto "${text}" não encontrado.`);
-            }
-        }
-        return found;
-    }
-    
-    function findAndGoToArticle() {
-        const searchInput = articleSearchInput.value.trim();
-        if (/^\d+$/.test(searchInput)) {
-            const articleNumber = searchInput;
-            const targetElement = document.getElementById(`art-${articleNumber}`);
-            
-            if (targetElement && !targetElement.style.backgroundColor) { // Garante que não é um comentário
-                scrollToElement(targetElement, true);
-            } else {
-                const found = findAndGoToText(`Art. ${articleNumber}`, true) || findAndGoToText(`Artigo ${articleNumber}`, true);
-                if (!found) {
-                    alert(`Artigo ${articleNumber} não encontrado.`);
-                }
-            }
-        } else {
-            if (searchInput) {
-                findAndGoToText(searchInput, false);
-            }
-        }
-    }
-    
-    function scrollToElement(element, useAnimationClass = true) {
-        const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
-        const extraPadding = 16;
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
-        
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-        });
-
-        if (useAnimationClass) {
-            element.classList.add('highlight-article');
-            setTimeout(() => {
-                element.classList.remove('highlight-article');
-            }, 2000);
-        }
-    }
-    // =================================================================
-    // <<< FIM DA ATUALIZAÇÃO >>>
-    // =================================================================
-
-    goToArticleBtn.addEventListener('click', findAndGoToArticle);
-    articleSearchInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            findAndGoToArticle();
-        }
-    });
-    
-    indexArticles();
+    // As variáveis e funções para busca de artigos foram removidas daqui.
 
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
@@ -1307,23 +1136,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    document.getElementById('highlight-btn').addEventListener('click', () => {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const parent = range.commonAncestorContainer.parentElement;
-            if (parent.classList.contains('highlight')) {
-                const text = document.createTextNode(parent.textContent);
-                parent.parentNode.replaceChild(text, parent);
-            } else {
-                const span = document.createElement('span');
-                span.className = 'highlight';
-                span.appendChild(range.extractContents());
-                range.insertNode(span);
-            }
-        }
-        notesEditor.focus();
-    });
+    document.getElementById('underline-btn').addEventListener('click', () => { document.execCommand('underline'); notesEditor.focus(); });
+    
 
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
@@ -1365,29 +1179,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =================================================================
+    // <<< INÍCIO DA ATUALIZAÇÃO: LÓGICA DE FORMATAÇÃO E MARCA-TEXTO >>>
+    // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatItalicBtn = document.getElementById('format-italic-btn');
     const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    const clearFormattingBtn = document.getElementById('clear-formatting-btn');
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
     let saveMarkupTimeout;
 
+    /**
+     * Aplica formatação de texto (bold, italic) ou marca-texto colorido.
+     * @param {string} command - O comando a ser executado. Ex: 'bold', 'italic', 'highlight-yellow'.
+     */
     function applyMarkup(command) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
         const range = selection.getRangeAt(0);
         if (!lawContent.contains(range.commonAncestorContainer)) {
+            // Não faz nada se a seleção estiver fora do conteúdo da lei.
             return;
         }
         
+        // Habilita a edição para aplicar o comando
         lawContent.setAttribute('contenteditable', 'true');
         
+        // Comandos de formatação padrão (negrito, itálico, etc.)
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } 
+        // Lógica para marca-texto
         else if (command.startsWith('highlight-')) {
             const color = command.split('-')[1];
             const className = `user-highlight-${color}`;
@@ -1397,12 +1222,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 parent = parent.parentNode;
             }
 
+            // Verifica se o texto já está dentro de um span de marca-texto de qualquer cor
             const existingHighlight = parent.closest('[class*="user-highlight-"]');
 
             if (existingHighlight && selection.containsNode(existingHighlight, true)) {
+                 // Se o texto selecionado já está totalmente contido em um highlight
                 const text = document.createTextNode(existingHighlight.textContent);
                 existingHighlight.parentNode.replaceChild(text, existingHighlight);
             } else {
+                // Se não, aplica o novo span de marca-texto
                 const span = document.createElement('span');
                 span.className = className;
                 span.appendChild(range.extractContents());
@@ -1410,8 +1238,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
+        // Desabilita a edição e foca no conteúdo para salvar as alterações
         lawContent.setAttribute('contenteditable', 'false');
-        lawContent.focus();
+        lawContent.focus(); // Devolve o foco para o container
         debounceSaveMarkup();
     }
     
@@ -1421,8 +1250,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     async function saveLawMarkup() {
+        // Clona o conteúdo para limpar elementos não persistentes antes de salvar
         const clonedContent = lawContent.cloneNode(true);
+        // Remove ícones e divs de comentários que são gerados dinamicamente
         clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+        // Desembrulha os parágrafos dos wrappers, que também são dinâmicos
         clonedContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
             wrapper.replaceWith(...wrapper.childNodes);
         });
@@ -1451,13 +1283,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Adiciona os event listeners para os botões de formatação
     if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     if(formatItalicBtn) formatItalicBtn.addEventListener('click', () => applyMarkup('italic'));
+    
+    // Adiciona os event listeners para os botões de marca-texto
     if(formatHighlightYellowBtn) formatHighlightYellowBtn.addEventListener('click', () => applyMarkup('highlight-yellow'));
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
+    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
     if (clearFormattingBtn) {
         clearFormattingBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
@@ -1475,6 +1311,12 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Formatação removida com sucesso!');
         });
     }
+    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
+
+    // =================================================================
+    // <<< FIM DA ATUALIZAÇÃO >>>
+    // =================================================================
+
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
