@@ -20,6 +20,14 @@ class Law(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
 
     # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
+    # =====================================================================
+    juridiques_explanation = db.Column(db.Text, nullable=True)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
+    # =====================================================================
+
+    # =====================================================================
     # <<< INÍCIO DA CORREÇÃO DEFINITIVA >>>
     # O parâmetro 'lazy="dynamic"' foi REMOVIDO da relação abaixo.
     # Esta é a principal correção que resolve o conflito.
