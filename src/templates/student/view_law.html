@@ -1000,69 +1000,47 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
-    // =================================================================
-    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÃO DE BUSCA DE ARTIGO CORRIGIDA >>>
-    // =================================================================
-    function indexArticles() {
-        // Regex para encontrar "Art." ou "Artigo", com ponto opcional, seguido por espaço e dígitos.
-        const articleRegex = /(Art(igo)?\.?\s*)(\d+)/;
-        // Um Set para rastrear artigos já etiquetados e evitar IDs duplicados.
-        const taggedArticles = new Set();
-        // Usa um TreeWalker para inspecionar de forma eficiente todos os nós de texto.
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-
-        // Itera sobre cada nó de texto.
-        while (node = walker.nextNode()) {
-            const text = node.nodeValue.trim();
-            
-            // Verifica se o texto do nó começa com "Art".
-            // Isso é mais preciso do que verificar o .textContent de um elemento pai grande.
-            if (text.toLowerCase().startsWith('art')) {
-                const match = text.match(articleRegex);
-
-                if (match) {
-                    // O número do artigo está no terceiro grupo de captura da regex.
-                    const articleNumber = match[3];
-
-                    // Se já criamos um ID para este artigo, pula para o próximo.
-                    if (taggedArticles.has(articleNumber)) {
-                        continue;
-                    }
-
-                    // Encontra o elemento pai de bloco mais próximo para anexar o ID.
-                    // Isso melhora a rolagem para o artigo.
-                    let targetElement = node.parentElement.closest('p, li, div, h1, h2, h3, h4');
-                    
-                    if (targetElement) {
-                        // Adiciona o ID apenas se o elemento de destino ainda não tiver um.
-                        if (!targetElement.id) {
-                            targetElement.id = `art-${articleNumber}`;
-                            taggedArticles.add(articleNumber); // Marca este número de artigo como processado.
-                        }
-                    }
+        /* ╔════════════════════════════════════════╗
+       ║  indexArticles REFORÇADO              ║
+       ╚════════════════════════════════════════╝ */
+    
+    /* ╔════════════════════════════════════════╗
+       ║  NOVA FUNÇÃO AUXILIAR                 ║
+       ╚════════════════════════════════════════╝ */
+    function extractArticleNumber(str) {
+        const m = str.match(/(\d+)/);
+        return m ? m[1] : null;
+    }
+function indexArticles() {
+        const articleRegex = /\bArt(?:igo)?\.?\s*(\d+)\s*[ºª]?\b/i;
+        lawContent.querySelectorAll('p, strong, b, span').forEach(el => {
+            const txt = el.textContent.trim();
+            const match = txt.match(articleRegex);
+            if (match) {
+                const num = match[1];
+                if (num && !document.getElementById(`art-${num}`)) {
+                    el.id = `art-${num}`;
                 }
             }
-        }
+        });
     }
-    // =================================================================
-    // <<< FIM DA ATUALIZAÇÃO >>>
-    // =================================================================
 
+        /* ╔════════════════════════════════════════╗
+       ║  findAndGoToArticle REESCRITO         ║
+       ╚════════════════════════════════════════╝ */
     function findAndGoToArticle() {
-        const articleNumber = articleSearchInput.value.trim();
-        if (/^\d+$/.test(articleNumber)) {
-            const targetElement = document.getElementById(`art-${articleNumber}`);
-            if (targetElement) {
-                scrollToElement(targetElement);
+        const rawInput = articleSearchInput.value.trim();
+        const num = extractArticleNumber(rawInput);
+
+        if (num) {
+            const target = document.getElementById(`art-${num}`);
+            if (target) {
+                scrollToElement(target);
             } else {
-                alert(`Artigo ${articleNumber} não encontrado.`);
+                alert(`Artigo ${rawInput} não encontrado.`);
             }
-        } else {
-            const searchText = articleSearchInput.value.trim();
-            if (searchText) {
-                findAndGoToText(searchText);
-            }
+        } else if (rawInput) {
+            findAndGoToText(rawInput);
         }
     }
 
@@ -1811,6 +1789,17 @@ document.addEventListener("DOMContentLoaded", function () {
             linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
+    /* ╔════════════════════════════════════════╗
+       ║  REINDEXAÇÃO APÓS SISTEMA DE COMENT.  ║
+       ╚════════════════════════════════════════╝ */
+    if (typeof initCommentSystem === 'function') {
+        const _oldInit = initCommentSystem;
+        initCommentSystem = async function () {
+            await _oldInit.apply(this, arguments);
+            indexArticles();
+        };
+    }
+
 });
 </script>
 {% endblock %}
