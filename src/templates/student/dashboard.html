@@ -69,8 +69,8 @@
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
-    .filter-label { display: flex; align-items: center; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
-    .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; }
+    .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
+    .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
     .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     .custom-input::placeholder { color: #94a3b8; }
     .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
@@ -178,7 +178,7 @@
 <div class="filter-container mb-8">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
         <div>
-             <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação (Independente)</label>
+             <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação (Ignora filtros)</label>
              <input type="text" id="search" name="search" placeholder="Buscar por matéria ou título..." class="custom-input">
         </div>
         <div class="flex items-end pb-2">
@@ -191,7 +191,7 @@
 
     <hr class="my-6 border-t border-gray-200">
 
-    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+    <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
         <div>
             <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
             <select id="subject_id" name="subject_id" class="custom-input">
@@ -207,16 +207,35 @@
                 <option value="">-- Selecione uma Matéria --</option>
             </select>
         </div>
-        <div>
-            <label for="status_filter" class="filter-label"><i class="fas fa-tasks"></i>3. Filtrar por Status</label>
-            <select id="status_filter" name="status_filter" class="custom-input" disabled>
-                <option value="">-- Todos os Status --</option>
-                <option value="not_read">Não Lidas</option>
-                <option value="in_progress">Em Andamento</option>
-                <option value="completed">Concluídas</option>
-            </select>
+        
+        <div id="refinement-wrapper" class="lg:col-span-1" style="visibility: hidden;">
+            <label class="filter-label"><i class="fas fa-filter"></i>3. Refinar por</label>
+            <div class="flex items-center space-x-4 mb-2">
+                <label class="flex items-center text-sm cursor-pointer">
+                    <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
+                    <span class="ml-1.5">Status</span>
+                </label>
+                <label class="flex items-center text-sm cursor-pointer">
+                    <input type="radio" name="refine_type" value="section" class="h-4 w-4">
+                    <span class="ml-1.5">Trecho</span>
+                </label>
+            </div>
+            
+            <div id="status-filter-wrapper">
+                <select id="status_filter" name="status_filter" class="custom-input">
+                    <option value="">-- Todos os Status --</option>
+                    <option value="not_read">Não Lidas</option>
+                    <option value="in_progress">Em Andamento</option>
+                    <option value="completed">Concluídas</option>
+                </select>
+            </div>
+            <div id="section-filter-wrapper" style="display: none;">
+                 <input type="text" id="section_filter" name="section_filter" placeholder="Buscar no texto da lei..." class="custom-input">
+            </div>
         </div>
+
         <div>
+            <label class="filter-label">&nbsp;</label>
             <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
         </div>
     </div>
@@ -229,16 +248,25 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
         subject: document.getElementById('subject_id'),
         diploma: document.getElementById('diploma_id'),
-        status: document.getElementById('status_filter'),
         favorites: document.getElementById('show_favorites'),
-        clearButton: document.getElementById('clear-filters-btn')
+        clearButton: document.getElementById('clear-filters-btn'),
+        
+        // Novos elementos para o refinamento
+        refinementWrapper: document.getElementById('refinement-wrapper'),
+        refineTypeRadios: document.querySelectorAll('input[name="refine_type"]'),
+        statusFilterWrapper: document.getElementById('status-filter-wrapper'),
+        sectionFilterWrapper: document.getElementById('section-filter-wrapper'),
+        statusFilter: document.getElementById('status_filter'),
+        sectionFilter: document.getElementById('section_filter'),
     };
     const accordionContainer = document.getElementById('laws-accordion-container');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    let debounceTimer;
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
 
@@ -246,21 +274,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const search = filterControls.search.value;
         const subjectId = filterControls.subject.value;
         const diplomaId = filterControls.diploma.value;
-        const status = filterControls.status.value;
         const showFavorites = filterControls.favorites.checked;
-
+        const refineType = document.querySelector('input[name="refine_type"]:checked').value;
+        
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
 
         const params = new URLSearchParams();
+        if (showFavorites) params.append('show_favorites', showFavorites);
+
         if (search) {
             params.append('search', search);
         } else {
             if (subjectId) params.append('subject_id', subjectId);
-            if (diplomaId) params.append('diploma_id', diplomaId);
-            if (status) params.append('status_filter', status);
+            if (diplomaId) {
+                params.append('diploma_id', diplomaId);
+                // Adiciona o filtro de refinamento apenas se uma lei estiver selecionada
+                if (refineType === 'status') {
+                    if (filterControls.statusFilter.value) {
+                         params.append('status_filter', filterControls.statusFilter.value);
+                    }
+                } else { // refineType === 'section'
+                    if (filterControls.sectionFilter.value) {
+                        params.append('section_query', filterControls.sectionFilter.value);
+                    }
+                }
+            }
         }
-        if (showFavorites) params.append('show_favorites', showFavorites);
-
+        
         try {
             const response = await fetch(`/student/filter_laws?${params.toString()}`);
             if (!response.ok) throw new Error('Falha na resposta do servidor.');
@@ -276,8 +316,11 @@ document.addEventListener('DOMContentLoaded', function() {
     async function updateDiplomaFilter(subjectId) {
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
-        filterControls.status.value = '';
-        filterControls.status.disabled = true;
+        
+        // Oculta e reseta o bloco de refinamento
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        filterControls.statusFilter.value = '';
+        filterControls.sectionFilter.value = '';
 
         if (!subjectId) {
             fetchAndRenderLaws();
@@ -303,8 +346,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderLaws();
     }
 
-    // --- FUNÇÕES DE RENDERIZAÇÃO ---
-
+    // --- FUNÇÕES DE RENDERIZAÇÃO (Inalteradas) ---
+    // ... (As funções renderLaws e renderTopicItem permanecem exatamente as mesmas) ...
     function renderLaws(subjects, isSearchActive) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -315,7 +358,6 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const subjectName in subjects) {
             html += `<div class="mb-6"><h3 class="text-lg font-bold text-gray-700 mb-3">${subjectName}</h3>`;
             subjects[subjectName].forEach(diploma => {
-                // Se a busca estiver ativa, o acordeão já vem aberto
                 const isOpen = isSearchActive || filterControls.diploma.value;
                 const openClass = isOpen ? 'open' : '';
                 const displayStyle = isOpen ? 'block' : 'none';
@@ -396,48 +438,85 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
-
-    let debounceTimer;
+    
+    // Listener da busca principal
     filterControls.search.addEventListener('input', () => {
         clearTimeout(debounceTimer);
+        // Limpa e desativa os outros filtros
         filterControls.subject.value = '';
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
-        filterControls.status.value = '';
-        filterControls.status.disabled = true;
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        filterControls.statusFilter.value = '';
+        filterControls.sectionFilter.value = '';
+
         debounceTimer = setTimeout(fetchAndRenderLaws, 300);
     });
 
+    // Listener da Matéria
     filterControls.subject.addEventListener('change', () => {
         filterControls.search.value = '';
         updateDiplomaFilter(filterControls.subject.value);
     });
 
+    // Listener da Lei
     filterControls.diploma.addEventListener('change', () => {
         filterControls.search.value = '';
         const diplomaId = filterControls.diploma.value;
-        filterControls.status.disabled = !diplomaId;
-        if (!diplomaId) {
-            filterControls.status.value = '';
-        }
+        // Mostra ou oculta o bloco de refinamento
+        filterControls.refinementWrapper.style.visibility = diplomaId ? 'visible' : 'hidden';
         fetchAndRenderLaws();
     });
 
-    filterControls.status.addEventListener('change', () => {
+    // Listener para os botões de rádio (Status/Trecho)
+    filterControls.refineTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            const isStatus = radio.value === 'status';
+            filterControls.statusFilterWrapper.style.display = isStatus ? 'block' : 'none';
+            filterControls.sectionFilterWrapper.style.display = isStatus ? 'none' : 'block';
+            
+            // Limpa o valor do filtro que foi ocultado e busca novamente
+            if (isStatus) {
+                filterControls.sectionFilter.value = '';
+            } else {
+                filterControls.statusFilter.value = '';
+            }
+            fetchAndRenderLaws();
+        });
+    });
+    
+    // Listener para o filtro de Status
+    filterControls.statusFilter.addEventListener('change', () => {
         filterControls.search.value = '';
         fetchAndRenderLaws();
     });
+    
+    // Listener para o filtro de Trecho (com debounce)
+    filterControls.sectionFilter.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        filterControls.search.value = '';
+        debounceTimer = setTimeout(fetchAndRenderLaws, 300);
+    });
 
+    // Listener para Apenas Favoritas
     filterControls.favorites.addEventListener('change', fetchAndRenderLaws);
 
+    // Listener para Limpar Filtros
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         filterControls.subject.value = '';
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
-        filterControls.status.value = '';
-        filterControls.status.disabled = true;
         filterControls.favorites.checked = false;
+        
+        // Reseta e oculta o bloco de refinamento
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        document.querySelector('input[name="refine_type"][value="status"]').checked = true;
+        filterControls.statusFilterWrapper.style.display = 'block';
+        filterControls.sectionFilterWrapper.style.display = 'none';
+        filterControls.statusFilter.value = '';
+        filterControls.sectionFilter.value = '';
+
         fetchAndRenderLaws();
     });
 
@@ -512,8 +591,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                // Ao invés de recarregar tudo, apenas refaz a busca com os filtros atuais
-                // para garantir que a UI fique consistente.
                 fetchAndRenderLaws();
             } else {
                 alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
