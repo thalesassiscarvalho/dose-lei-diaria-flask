@@ -4,7 +4,7 @@
 
 {% block head_extra %}
 <style>
-    /* ... (Todos os seus estilos CSS permanecem exatamente os mesmos) ... */
+    /* ... (Estilos existentes permanecem os mesmos) ... */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
@@ -91,6 +91,65 @@
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
     .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
     .review-button:hover { background-color: #4b5563; }
+    
+    /* INÍCIO: NOVOS ESTILOS PARA A BUSCA INTELIGENTE */
+    .search-wrapper {
+        position: relative;
+    }
+    .search-icon {
+        position: absolute;
+        top: 55%;
+        left: 1rem;
+        color: #94a3b8;
+        transition: color 0.2s ease;
+    }
+    .search-input-with-icon {
+        padding-left: 2.75rem !important;
+    }
+    .search-wrapper .search-input-with-icon:focus + .search-icon {
+        color: #2563eb;
+    }
+    .search-wrapper .search-input-with-icon:focus {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    .autocomplete-container {
+        position: absolute;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 0.75rem 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        z-index: 1000;
+        width: 100%;
+        max-height: 400px;
+        overflow-y: auto;
+        display: none;
+    }
+    .autocomplete-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease;
+    }
+    .autocomplete-item:hover {
+        background-color: #f8fafc;
+    }
+    .autocomplete-item-title {
+        font-weight: 500;
+        color: #1e293b;
+    }
+    .autocomplete-item-category {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        color: #1e40af;
+        background-color: #dbeafe;
+    }
+    /* FIM: NOVOS ESTILOS */
+
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
         .non-fixed-announcement-item { gap: 0.75rem; }
@@ -176,10 +235,14 @@
 
 
 <div class="filter-container mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-        <div>
-             <label for="search" class="filter-label"><i class="fas fa-search"></i>Buscar Legislação (Ignora filtros)</label>
-             <input type="text" id="search" name="search" placeholder="Buscar por matéria ou título..." class="custom-input">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+        <div class="md:col-span-2 relative">
+            <div class="relative search-wrapper">
+                <label for="search" class="filter-label">Busca Rápida e Inteligente</label>
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search" name="search" placeholder="Buscar por matéria, lei ou artigo..." class="custom-input search-input-with-icon">
+            </div>
+            <div id="autocomplete-results" class="autocomplete-container"></div>
         </div>
         <div class="flex items-end pb-2">
             <label class="flex items-center cursor-pointer">
@@ -278,26 +341,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
+        // Se a busca principal está ativa, não mostra nada no accordion principal
+        if (search.length > 2) {
+             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Use a busca rápida acima para encontrar o que precisa.</p></div>';
+             return;
+        }
+
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
 
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', showFavorites);
 
-        if (search) {
-            params.append('search', search);
-        } else {
-            if (subjectId) params.append('subject_id', subjectId);
-            if (diplomaId) {
-                params.append('diploma_id', diplomaId);
-                if (refineType === 'status') {
-                    if (filterControls.statusFilter.value) {
-                         params.append('status_filter', filterControls.statusFilter.value);
-                    }
-                } else { // refineType === 'topic'
-                    if (filterControls.topicFilter.value) {
-                        // O backend deve ser capaz de filtrar por um topic_id específico
-                        params.append('topic_id', filterControls.topicFilter.value);
-                    }
+        // A busca principal agora é tratada pelo autocomplete, então não a enviamos aqui.
+        // if (search) {
+        //     params.append('search', search);
+        // }
+        
+        if (subjectId) params.append('subject_id', subjectId);
+        if (diplomaId) {
+            params.append('diploma_id', diplomaId);
+            if (refineType === 'status') {
+                if (filterControls.statusFilter.value) {
+                        params.append('status_filter', filterControls.statusFilter.value);
+                }
+            } else { // refineType === 'topic'
+                if (filterControls.topicFilter.value) {
+                    params.append('topic_id', filterControls.topicFilter.value);
                 }
             }
         }
@@ -307,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Falha na resposta do servidor.');
             
             const data = await response.json();
-            renderLaws(data.subjects_with_diplomas, !!search);
+            renderLaws(data.subjects_with_diplomas);
         } catch (error) {
             console.error('Erro ao buscar leis:', error);
             accordionContainer.innerHTML = '<p class="text-center py-8 text-red-500">Ocorreu um erro ao carregar as legislações. Tente novamente.</p>';
@@ -355,9 +424,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // **NOTA:** Você precisará criar este endpoint no seu backend.
-        // Ele deve retornar uma lista de tópicos (trechos) para a lei (diploma) especificada.
-        // Ex: [{"id": 1, "title": "Art. 1º"}, {"id": 2, "title": "Art. 2º"}]
         topicSelect.innerHTML = '<option value="">Carregando trechos...</option>';
         try {
             const response = await fetch(`/student/api/topics_for_law/${lawId}`);
@@ -378,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- FUNÇÕES DE RENDERIZAÇÃO (Inalteradas) ---
-    function renderLaws(subjects, isSearchActive) {
+    function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
             return;
@@ -388,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const subjectName in subjects) {
             html += `<div class="mb-6"><h3 class="text-lg font-bold text-gray-700 mb-3">${subjectName}</h3>`;
             subjects[subjectName].forEach(diploma => {
-                const isOpen = isSearchActive || filterControls.diploma.value;
+                const isOpen = filterControls.diploma.value;
                 const openClass = isOpen ? 'open' : '';
                 const displayStyle = isOpen ? 'block' : 'none';
                 const iconRotation = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
@@ -469,18 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
     
-    filterControls.search.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        filterControls.subject.value = '';
-        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
-        filterControls.diploma.disabled = true;
-        filterControls.refinementWrapper.style.visibility = 'hidden';
-        filterControls.statusFilter.value = '';
-        updateTopicFilter(null);
-
-        debounceTimer = setTimeout(fetchAndRenderLaws, 300);
-    });
-
+    // Filtros principais (não usam mais a busca principal)
     filterControls.subject.addEventListener('change', () => {
         filterControls.search.value = '';
         updateDiplomaFilter(filterControls.subject.value);
@@ -530,15 +585,153 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderLaws();
     });
 
+    // --- LÓGICA DA BUSCA INTELIGENTE (AUTOCOMPLETE) ---
+    const searchInput = document.getElementById('search');
+    const resultsContainer = document.getElementById('autocomplete-results');
+    let searchDebounceTimer;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        const query = searchInput.value;
+
+        if (query.length < 3) {
+            resultsContainer.style.display = 'none';
+            fetchAndRenderLaws(); // Volta a mostrar os filtros normais
+            return;
+        }
+
+        // Limpa os filtros hierárquicos quando a busca principal é usada
+        filterControls.subject.value = '';
+        filterControls.diploma.value = '';
+        filterControls.diploma.disabled = true;
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+
+        searchDebounceTimer = setTimeout(() => {
+            fetch(`/student/api/autocomplete_search?q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderAutocompleteResults(data.results);
+                });
+        }, 300);
+    });
+
+    function renderAutocompleteResults(results) {
+        if (!results || results.length === 0) {
+            resultsContainer.innerHTML = '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>';
+            resultsContainer.style.display = 'block';
+            return;
+        }
+
+        resultsContainer.innerHTML = '';
+        results.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerHTML = `
+                <span class="autocomplete-item-title">${item.title}</span>
+                <span class="autocomplete-item-category">${item.category}</span>
+            `;
+            div.onclick = () => {
+                window.location.href = item.url;
+            };
+            resultsContainer.appendChild(div);
+        });
+        resultsContainer.style.display = 'block';
+    }
+
+    document.addEventListener('click', function(event) {
+        const searchWrapper = document.querySelector('.search-wrapper');
+        if (searchWrapper && !searchWrapper.contains(event.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    // --- PLACEHOLDER DINÂMICO ---
+    function setupDynamicPlaceholder() {
+        if (!searchInput) return;
+        const placeholders = [
+            "Busque por 'Código Penal'...", "Tente 'Direito Administrativo'...",
+            "Digite 'Art. 5º da Constituição'...", "Qual legislação você procura hoje?",
+            "Busque por Súmulas ou Tópicos..."
+        ];
+        let currentIndex = 0;
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % placeholders.length;
+            searchInput.placeholder = placeholders[currentIndex];
+        }, 3000);
+    }
+    setupDynamicPlaceholder();
+
+
     // --- OUTRAS FUNCIONALIDADES (INALTERADAS) ---
 
     const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
     markSeenCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() { /* ...código inalterado... */ });
+        checkbox.addEventListener('change', function() { 
+            this.disabled = true;
+            const announcementItem = this.closest('.non-fixed-announcement-item');
+            const announcementId = announcementItem.getAttribute('data-announcement-id');
+            const apiUrl = `/student/announcement/${announcementId}/mark_seen`;
+            fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    announcementItem.classList.add('fade-out');
+                    setTimeout(() => {
+                        announcementItem.remove();
+                        if (document.querySelectorAll('.non-fixed-announcement-item').length === 0) {
+                            document.getElementById('non-fixed-announcements-container')?.remove();
+                        }
+                    }, 500);
+                } else { this.checked = false; this.disabled = false; }
+            })
+            .catch(error => { console.error('Erro:', error); this.checked = false; this.disabled = false; });
+        });
     });
 
-    function handleFavoriteClick() { /* ...código inalterado... */ }
-    function handleMarkIncompleteClick() { /* ...código inalterado... */ }
+    function handleFavoriteClick() {
+        const button = this;
+        button.disabled = true;
+        const lawId = button.dataset.lawId;
+        const icon = button.querySelector('i');
+        fetch(`/student/law/toggle_favorite/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+        .then(response => response.json())
+        .then(data => {
+            if (data.favorited) {
+                button.classList.add('favorited');
+                icon.className = 'fas fa-star';
+                button.title = 'Remover dos Favoritos';
+            } else {
+                button.classList.remove('favorited');
+                icon.className = 'far fa-star';
+                button.title = 'Adicionar aos Favoritos';
+                if (filterControls.favorites.checked) {
+                    button.closest('.topic-item').remove();
+                }
+            }
+        })
+        .catch(error => console.error('Erro:', error))
+        .finally(() => { button.disabled = false; });
+    }
+    function handleMarkIncompleteClick() {
+        const buttonEl = this;
+        buttonEl.disabled = true;
+        const lawId = buttonEl.dataset.lawId;
+        fetch(`/student/law/review/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.new_status === 'em_andamento') {
+                fetchAndRenderLaws();
+            } else {
+                alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
+                buttonEl.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Ocorreu um erro de comunicação.');
+            buttonEl.disabled = false;
+        });
+    }
 
     // --- CARGA INICIAL ---
     fetchAndRenderLaws();
