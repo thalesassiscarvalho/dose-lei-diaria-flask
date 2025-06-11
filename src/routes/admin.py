@@ -95,10 +95,6 @@ def delete_subject(subject_id):
 @login_required
 @admin_required
 def add_law():
-    # =====================================================================
-    # <<< INÍCIO DA MODIFICAÇÃO >>>
-    # Pega o ID do pai da URL (ex: /laws/add?parent_id=123)
-    # =====================================================================
     pre_selected_parent_id = request.args.get('parent_id', type=int)
     
     subjects = Subject.query.order_by(Subject.name).all()
@@ -111,17 +107,31 @@ def add_law():
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         audio_url = request.form.get("audio_url")
+        
+        # =====================================================================
+        # <<< INÍCIO DA IMPLEMENTAÇÃO: CAPTURA DO NOVO CAMPO DO FORMULÁRIO >>>
+        # =====================================================================
+        juridiques_explanation = request.form.get("juridiques_explanation")
+        # =====================================================================
+        # <<< FIM DA IMPLEMENTAÇÃO >>>
+        # =====================================================================
 
         if not title:
             flash("O Título é obrigatório.", "danger")
-            # Passa a variável de pré-seleção de volta em caso de erro no formulário
             return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts, pre_selected_parent_id=pre_selected_parent_id)
 
         new_law = Law(
             title=title, 
             description=description, 
             content=content,
-            audio_url=audio_url if audio_url else None
+            audio_url=audio_url if audio_url else None,
+            # =====================================================================
+            # <<< INÍCIO DA IMPLEMENTAÇÃO: SALVANDO O NOVO CAMPO NO BANCO >>>
+            # =====================================================================
+            juridiques_explanation=juridiques_explanation if juridiques_explanation else None
+            # =====================================================================
+            # <<< FIM DA IMPLEMENTAÇÃO >>>
+            # =====================================================================
         )
         
         new_law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
@@ -143,10 +153,6 @@ def add_law():
         flash("Item de estudo adicionado com sucesso!", "success")
         return redirect(url_for("admin.dashboard"))
 
-    # =====================================================================
-    # <<< MODIFICAÇÃO CORRESPONDENTE >>>
-    # Passa a variável `pre_selected_parent_id` para o template
-    # =====================================================================
     return render_template("admin/add_edit_law.html", 
                            law=None, 
                            subjects=subjects, 
@@ -169,6 +175,14 @@ def edit_law(law_id):
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         audio_url = request.form.get("audio_url")
+        
+        # =====================================================================
+        # <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO NOVO CAMPO >>>
+        # =====================================================================
+        law.juridiques_explanation = request.form.get("juridiques_explanation")
+        # =====================================================================
+        # <<< FIM DA IMPLEMENTAÇÃO >>>
+        # =====================================================================
 
         if not law.title:
             flash("O Título é obrigatório.", "danger")
