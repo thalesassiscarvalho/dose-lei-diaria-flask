@@ -1000,135 +1000,82 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
-    // A indexação tenta criar IDs para busca rápida, mas o sistema de busca agora tem um fallback robusto.
     function indexArticles() {
-        const articleRegex = /\bArt(igo)?\.?\s+(\d+)/gi;
-        const taggedArticles = new Set();
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        while(node = walker.nextNode()) {
-            let match;
-            while ((match = articleRegex.exec(node.nodeValue)) !== null) {
-                const articleNumber = match[2];
-                if (taggedArticles.has(articleNumber)) {
-                    continue;
-                }
-                const targetElement = node.parentElement.closest('p, li, div');
-                if (targetElement) {
-                    if (!targetElement.id) {
-                        targetElement.id = `art-${articleNumber}`;
-                        taggedArticles.add(articleNumber);
-                    }
+        const articleElements = lawContent.querySelectorAll('p, strong, b');
+        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
+        articleElements.forEach(el => {
+            const match = el.textContent.trim().match(articleRegex);
+            if (match) {
+                const articleNumber = match[3];
+                if (!el.id) {
+                    el.id = `art-${articleNumber}`;
                 }
             }
-        }
-    }
-
-    // =================================================================
-    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA E ROLAGEM CORRIGIDAS >>>
-    // =================================================================
-    
-    function clearPreviousSearchHighlights() {
-        const highlights = lawContent.querySelectorAll('span.highlight-article-search');
-        highlights.forEach(span => {
-            span.replaceWith(...span.childNodes);
         });
-        lawContent.normalize();
     }
 
-    function findAndGoToText(text, suppressAlert = false) {
-        if (!text || text.length < 1) return false;
-        
-        clearPreviousSearchHighlights();
-
-        // *** CORREÇÃO: Filtro para ignorar comentários de doutrina, etc. ***
-        const commentFilter = {
-            acceptNode: function(node) {
-                let parent = node.parentElement;
-                while (parent && parent !== lawContent) {
-                    // Verifica se o elemento pai tem um dos BGs de comentário.
-                    // A busca por string é mais flexível que a comparação exata de rgb().
-                    if (parent.style.backgroundColor && parent.style.backgroundColor !== '') {
-                        return NodeFilter.FILTER_REJECT; // Rejeita o nó se estiver dentro de um bloco colorido
-                    }
-                    parent = parent.parentElement;
-                }
-                return NodeFilter.FILTER_ACCEPT; // Aceita o nó se não for um comentário
-            }
-        };
-
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, commentFilter, false);
-        const ranges = [];
-        let node;
-        while (node = walker.nextNode()) {
-            const lowerNodeValue = node.nodeValue.toLowerCase();
-            let index = -1;
-            while ((index = lowerNodeValue.indexOf(text.toLowerCase(), index + 1)) > -1) {
-                const range = document.createRange();
-                range.setStart(node, index);
-                range.setEnd(node, index + text.length);
-                ranges.push(range);
-            }
-        }
-
-        if (ranges.length > 0) {
-            ranges.forEach(range => {
-                const highlightSpan = document.createElement('span');
-                highlightSpan.className = 'highlight-article-search';
-                highlightSpan.style.backgroundColor = '#fef9c3';
-                try {
-                    range.surroundContents(highlightSpan);
-                } catch (e) {
-                    console.error("Erro ao aplicar destaque:", e);
-                }
-            });
-            
-            const firstMatchElement = lawContent.querySelector('span.highlight-article-search');
-            if (firstMatchElement) {
-                const scrollTarget = firstMatchElement.closest('p, li, div, h1, h2, h3, h4');
-                scrollToElement(scrollTarget || firstMatchElement, false);
-            }
-            return true;
-        }
-
-        if (!suppressAlert) {
-            alert(`Texto "${text}" não encontrado.`);
-        }
-        return false;
-    }
-    
     function findAndGoToArticle() {
-        const searchInput = articleSearchInput.value.trim();
-        if (/^\d+$/.test(searchInput)) {
-            const articleNumber = searchInput;
+        const articleNumber = articleSearchInput.value.trim();
+        if (/^\d+$/.test(articleNumber)) {
             const targetElement = document.getElementById(`art-${articleNumber}`);
-            
             if (targetElement) {
-                scrollToElement(targetElement, true);
+                scrollToElement(targetElement);
             } else {
-                const found = findAndGoToText(`Art. ${articleNumber}`, true) || findAndGoToText(`Artigo ${articleNumber}`, true);
-                if (!found) {
-                    alert(`Artigo ${articleNumber} não encontrado.`);
-                }
+                alert(`Artigo ${articleNumber} não encontrado.`);
             }
         } else {
-            if (searchInput) {
-                findAndGoToText(searchInput, false);
+            const searchText = articleSearchInput.value.trim();
+            if (searchText) {
+                findAndGoToText(searchText);
             }
         }
     }
-    
+
+    function findAndGoToText(text) {
+        if (!text || text.length < 3) return;
+        const highlighted = lawContent.querySelectorAll('span.highlight-article-search');
+        highlighted.forEach(el => { el.outerHTML = el.innerHTML; });
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let firstMatch = null;
+        while (node = walker.nextNode()) {
+            const index = node.nodeValue.toLowerCase().indexOf(text.toLowerCase());
+            if (index > -1) {
+                const parentElement = node.parentElement;
+                const originalText = node.nodeValue;
+                const beforeText = originalText.substring(0, index);
+                const foundText = originalText.substring(index, index + text.length);
+                const afterText = originalText.substring(index + text.length);
+                const span = document.createElement('span');
+                span.className = 'highlight-article-search';
+                span.style.backgroundColor = '#fef08a';
+                span.textContent = foundText;
+                const fragment = document.createDocumentFragment();
+                fragment.appendChild(document.createTextNode(beforeText));
+                fragment.appendChild(span);
+                fragment.appendChild(document.createTextNode(afterText));
+                parentElement.replaceChild(fragment, node);
+                if (!firstMatch) {
+                    firstMatch = parentElement;
+                }
+            }
+        }
+        if (firstMatch) {
+            scrollToElement(firstMatch, false);
+        } else {
+            alert(`Texto "${text}" não encontrado.`);
+        }
+    }
+
     function scrollToElement(element, useAnimationClass = true) {
         const stickyBarHeight = stickyActionBar ? stickyActionBar.offsetHeight : 0;
         const extraPadding = 16;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - stickyBarHeight - extraPadding;
-        
         window.scrollTo({
             top: offsetPosition,
             behavior: 'smooth'
         });
-
         if (useAnimationClass) {
             element.classList.add('highlight-article');
             setTimeout(() => {
@@ -1136,9 +1083,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 2000);
         }
     }
-    // =================================================================
-    // <<< FIM DA ATUALIZAÇÃO >>>
-    // =================================================================
 
     goToArticleBtn.addEventListener('click', findAndGoToArticle);
     articleSearchInput.addEventListener('keydown', function(event) {
@@ -1147,7 +1091,6 @@ document.addEventListener("DOMContentLoaded", function () {
             findAndGoToArticle();
         }
     });
-    
     indexArticles();
 
     function setupToggleButton(buttonId, contentSelector) {
@@ -1353,29 +1296,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =================================================================
+    // <<< INÍCIO DA ATUALIZAÇÃO: LÓGICA DE FORMATAÇÃO E MARCA-TEXTO >>>
+    // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatItalicBtn = document.getElementById('format-italic-btn');
     const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    const clearFormattingBtn = document.getElementById('clear-formatting-btn');
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
     let saveMarkupTimeout;
 
+    /**
+     * Aplica formatação de texto (bold, italic) ou marca-texto colorido.
+     * @param {string} command - O comando a ser executado. Ex: 'bold', 'italic', 'highlight-yellow'.
+     */
     function applyMarkup(command) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
         const range = selection.getRangeAt(0);
         if (!lawContent.contains(range.commonAncestorContainer)) {
+            // Não faz nada se a seleção estiver fora do conteúdo da lei.
             return;
         }
         
+        // Habilita a edição para aplicar o comando
         lawContent.setAttribute('contenteditable', 'true');
         
+        // Comandos de formatação padrão (negrito, itálico, etc.)
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } 
+        // Lógica para marca-texto
         else if (command.startsWith('highlight-')) {
             const color = command.split('-')[1];
             const className = `user-highlight-${color}`;
@@ -1385,12 +1339,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 parent = parent.parentNode;
             }
 
+            // Verifica se o texto já está dentro de um span de marca-texto de qualquer cor
             const existingHighlight = parent.closest('[class*="user-highlight-"]');
 
             if (existingHighlight && selection.containsNode(existingHighlight, true)) {
+                 // Se o texto selecionado já está totalmente contido em um highlight
                 const text = document.createTextNode(existingHighlight.textContent);
                 existingHighlight.parentNode.replaceChild(text, existingHighlight);
             } else {
+                // Se não, aplica o novo span de marca-texto
                 const span = document.createElement('span');
                 span.className = className;
                 span.appendChild(range.extractContents());
@@ -1398,8 +1355,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
+        // Desabilita a edição e foca no conteúdo para salvar as alterações
         lawContent.setAttribute('contenteditable', 'false');
-        lawContent.focus();
+        lawContent.focus(); // Devolve o foco para o container
         debounceSaveMarkup();
     }
     
@@ -1409,8 +1367,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     async function saveLawMarkup() {
+        // Clona o conteúdo para limpar elementos não persistentes antes de salvar
         const clonedContent = lawContent.cloneNode(true);
+        // Remove ícones e divs de comentários que são gerados dinamicamente
         clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+        // Desembrulha os parágrafos dos wrappers, que também são dinâmicos
         clonedContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
             wrapper.replaceWith(...wrapper.childNodes);
         });
@@ -1439,13 +1400,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Adiciona os event listeners para os botões de formatação
     if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     if(formatItalicBtn) formatItalicBtn.addEventListener('click', () => applyMarkup('italic'));
+    
+    // Adiciona os event listeners para os botões de marca-texto
     if(formatHighlightYellowBtn) formatHighlightYellowBtn.addEventListener('click', () => applyMarkup('highlight-yellow'));
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
+    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
     if (clearFormattingBtn) {
         clearFormattingBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
@@ -1463,6 +1428,12 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Formatação removida com sucesso!');
         });
     }
+    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
+
+    // =================================================================
+    // <<< FIM DA ATUALIZAÇÃO >>>
+    // =================================================================
+
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
