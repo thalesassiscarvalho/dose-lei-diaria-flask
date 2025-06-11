@@ -14,7 +14,7 @@ import logging
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
 # =====================================================================
-# <<< ENDPOINTS DE API PARA FILTROS EM CASCATA >>>
+# <<< ENDPOINTS DE API PARA FILTROS E BUSCA >>>
 # =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
@@ -28,22 +28,76 @@ def get_laws_for_subject(subject_id):
     ).order_by(Law.title).all()
     return jsonify([{"id": law.id, "title": law.title} for law in laws])
 
-# =====================================================================
-# <<< NOVO ENDPOINT DE API PARA BUSCAR TRECHOS (TÓPICOS) >>>
-# =====================================================================
 @student_bp.route("/api/topics_for_law/<int:law_id>")
 @login_required
 def get_topics_for_law(law_id):
     """
     Endpoint de API para retornar os tópicos (trechos/filhos) de uma lei (diploma).
     """
-    # Garante que estamos buscando filhos de um diploma real (uma lei pai)
     parent_law = Law.query.filter_by(id=law_id, parent_id=None).first_or_404("Diploma não encontrado.")
-    
-    # Ordenar por ID geralmente mantém a ordem correta dos artigos (ex: Art. 1, Art. 2)
     topics = Law.query.filter_by(parent_id=law_id).order_by(Law.id).all()
     return jsonify([{"id": topic.id, "title": topic.title} for topic in topics])
+
 # =====================================================================
+# <<< NOVO ENDPOINT DE API PARA BUSCA COM AUTOCOMPLETE >>>
+# =====================================================================
+@student_bp.route("/api/autocomplete_search")
+@login_required
+def autocomplete_search():
+    query = request.args.get('q', '').strip()
+    if len(query) < 3:
+        return jsonify(results=[])
+
+    search_term = f"%{query}%"
+    results = []
+    limit = 5 # Limite de resultados por categoria
+
+    # Buscar em Tópicos/Artigos
+    topics = Law.query.filter(
+        Law.parent_id.isnot(None),
+        Law.title.ilike(search_term)
+    ).limit(limit).all()
+    for topic in topics:
+        results.append({
+            "title": topic.title,
+            "category": "Artigo/Tópico",
+            "url": url_for('student.view_law', law_id=topic.id)
+        })
+
+    # Buscar em Leis/Diplomas
+    laws = Law.query.filter(
+        Law.parent_id.is_(None),
+        Law.title.ilike(search_term)
+    ).limit(limit).all()
+    for law in laws:
+        # Para uma lei, levamos ao dashboard com o filtro aplicado
+        results.append({
+            "title": law.title,
+            "category": "Lei",
+            "url": url_for('student.dashboard', diploma_id=law.id, subject_id=law.subject_id)
+        })
+
+    # Buscar em Matérias
+    subjects = Subject.query.filter(Subject.name.ilike(search_term)).limit(limit).all()
+    for subject in subjects:
+        results.append({
+            "title": subject.name,
+            "category": "Matéria",
+            "url": url_for('student.dashboard', subject_id=subject.id)
+        })
+
+    # Remove duplicados com base no título e categoria, mantendo a ordem
+    unique_results = []
+    seen = set()
+    for r in results:
+        identifier = (r['title'], r['category'])
+        if identifier not in seen:
+            unique_results.append(r)
+            seen.add(identifier)
+
+    return jsonify(results=unique_results[:7]) # Retorna no máximo 7 resultados únicos
+# =====================================================================
+
 
 def check_and_award_achievements(user):
     """Verifica e concede conquistas ao usuário."""
@@ -71,10 +125,8 @@ def check_and_award_achievements(user):
 def dashboard():
     """
     Renderiza a página principal do dashboard.
-    A lista de leis agora é carregada dinamicamente via JavaScript.
     """
     subjects_for_filter = Subject.query.order_by(Subject.name).all()
-
     total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
     completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
     global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
@@ -104,22 +156,16 @@ def dashboard():
                            last_accessed_law=last_accessed_law)
 
 
-# =====================================================================
-# <<< FUNÇÃO filter_laws MODIFICADA PARA ACEITAR topic_id >>>
-# =====================================================================
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
     """
     Endpoint da API que retorna a lista de legislações filtradas em JSON.
-    Modificado para aceitar filtros hierárquicos, incluindo o filtro por trecho (topic_id).
     """
-    search_query = request.args.get("search", "")
-
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
     selected_status = request.args.get("status_filter", "")
-    selected_topic_id_str = request.args.get("topic_id", "") # NOVO PARÂMETRO
+    selected_topic_id_str = request.args.get("topic_id", "")
 
     show_favorites_str = request.args.get("show_favorites", "false")
     show_favorites = show_favorites_str.lower() == 'true'
@@ -134,27 +180,15 @@ def filter_laws():
         joinedload(Law.children)
     )
 
-    if search_query:
-        search_term = f"%{search_query}%"
-        diplomas_query = diplomas_query.filter(
-            or_(
-                Law.title.ilike(search_term),
-                Subject.name.ilike(search_term),
-                Law.children.any(Law.title.ilike(search_term))
-            )
-        )
-    else:
-        selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
-        if selected_subject_id:
-            diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
+    selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
+    if selected_subject_id:
+        diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
 
-        selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
-        if selected_diploma_id:
-            diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
+    selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
+    if selected_diploma_id:
+        diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
 
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
-
-    # Converte o ID do trecho para int, se existir
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
 
     processed_diplomas = []
@@ -166,40 +200,22 @@ def filter_laws():
             is_not_read = not is_completed and not is_in_progress
             is_favorite = topic.id in favorite_topic_ids
 
-            # Lógica de validação dos filtros
             passes_status = (not selected_status or
                              (selected_status == 'completed' and is_completed) or
                              (selected_status == 'in_progress' and is_in_progress) or
                              (selected_status == 'not_read' and is_not_read))
             
-            passes_topic = (not selected_topic_id or topic.id == selected_topic_id) # NOVO VALIDADOR
-
+            passes_topic = (not selected_topic_id or topic.id == selected_topic_id)
             passes_favorite = not show_favorites or is_favorite
 
-            # Um tópico é exibido se passar em todos os filtros aplicáveis
             if passes_status and passes_topic and passes_favorite:
                 children_to_display.append({
-                    "id": topic.id,
-                    "title": topic.title,
-                    "is_completed": is_completed,
-                    "is_in_progress": is_in_progress,
+                    "id": topic.id, "title": topic.title,
+                    "is_completed": is_completed, "is_in_progress": is_in_progress,
                     "is_favorite": is_favorite
                 })
 
-        children_final = children_to_display
-
-        # Se a busca principal está ativa, ignora os filtros de filho e mostra todos
-        if search_query:
-            children_final = [
-                {
-                    "id": t.id, "title": t.title,
-                    "is_completed": t.id in completed_topic_ids,
-                    "is_in_progress": t.id in in_progress_topic_ids,
-                    "is_favorite": t.id in favorite_topic_ids
-                } for t in diploma.children
-            ]
-
-        if children_final:
+        if children_to_display:
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
             progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
@@ -208,7 +224,7 @@ def filter_laws():
                 "title": diploma.title,
                 "progress_percentage": progress_percentage,
                 "subject_name": diploma.subject.name if diploma.subject else "Sem Matéria",
-                "filtered_children": children_final
+                "filtered_children": children_to_display
             }
             processed_diplomas.append(diploma_data)
 
@@ -220,7 +236,6 @@ def filter_laws():
         subjects_with_diplomas[subject_name].append(diploma_data)
 
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
-# =====================================================================
 
 
 @student_bp.route("/law/<int:law_id>")
@@ -241,20 +256,15 @@ def view_law(law_id):
     else:
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
-
     db.session.commit()
 
     content_to_display = user_markup.content if user_markup else law.content
-    if content_to_display is None:
-        content_to_display = ""
+    if content_to_display is None: content_to_display = ""
 
     return render_template("student/view_law.html",
-                           law=law,
-                           is_completed=(progress.status == 'concluido'),
-                           last_read_article=progress.last_read_article,
-                           current_status=progress.status,
-                           is_favorited=is_favorited,
-                           display_content=content_to_display)
+                           law=law, is_completed=(progress.status == 'concluido'),
+                           last_read_article=progress.last_read_article, current_status=progress.status,
+                           is_favorited=is_favorited, display_content=content_to_display)
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -279,29 +289,24 @@ def toggle_favorite(law_id):
 def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-
     should_award_points = not progress or not progress.completed_at
 
     if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
             db.session.add(progress)
-
         progress.status = 'concluido'
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
-
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
             flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
-
         unlocked = check_and_award_achievements(current_user)
         if unlocked:
              flash(f"Conquistas desbloqueadas: {', '.join(unlocked)}!", "success")
-
         try:
             db.session.commit()
         except Exception as e:
@@ -309,7 +314,6 @@ def mark_complete(law_id):
             flash(f"Erro ao salvar progresso: {e}", "danger")
     else:
         flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
-
     return redirect(url_for("student.view_law", law_id=law_id))
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
@@ -318,7 +322,6 @@ def review_law(law_id):
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     if not progress:
         return jsonify(success=False, error="Progresso não encontrado."), 404
-
     progress.status = 'em_andamento'
     try:
         db.session.commit()
@@ -333,18 +336,14 @@ def save_last_read(law_id):
     last_read_article = request.form.get("last_read_article", "").strip()
     if not last_read_article:
         return jsonify(success=False, error="Campo obrigatório"), 400
-
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-
     if not progress:
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento')
         db.session.add(progress)
-
     progress.last_read_article = last_read_article
     progress.last_accessed_at = datetime.datetime.utcnow()
     if progress.status != 'concluido':
         progress.status = 'em_andamento'
-
     db.session.commit()
     return jsonify(success=True, message="Ponto de leitura salvo!")
 
@@ -364,7 +363,6 @@ def handle_user_notes(law_id):
     if request.method == "GET":
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
-
     if request.method == "POST":
         content = request.json.get("content", "")
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -384,19 +382,15 @@ def save_law_markup(law_id):
         data = request.get_json()
         if not data or 'content' not in data:
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
-
         content = data.get('content')
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-
         if user_markup:
             user_markup.content = content
         else:
             new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
             db.session.add(new_markup)
-
         db.session.commit()
         return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
-
     except Exception as e:
         db.session.rollback()
         logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
@@ -408,7 +402,6 @@ def handle_comments(law_id):
     if request.method == "GET":
         comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).all()
         return jsonify(success=True, comments=[{"id": c.id, "content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} for c in comments])
-
     if request.method == "POST":
         data = request.json
         new_comment = UserComment(
@@ -421,17 +414,14 @@ def handle_comments(law_id):
         db.session.commit()
         return jsonify(success=True, comment={"id": new_comment.id, "content": new_comment.content, "anchor_paragraph_id": new_comment.anchor_paragraph_id}), 201
 
-
 @student_bp.route("/comments/<int:comment_id>", methods=["PUT", "DELETE"])
 @login_required
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
-
     if request.method == "PUT":
         comment.content = request.json.get("content", "")
         db.session.commit()
         return jsonify(success=True, message="Anotação atualizada!", comment={"id": comment.id, "content": comment.content})
-
     if request.method == "DELETE":
         db.session.delete(comment)
         db.session.commit()
