@@ -1321,7 +1321,12 @@ document.addEventListener("DOMContentLoaded", function () {
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
-    async );
+    async function saveLawMarkup() {
+        const clonedContent = lawContent.cloneNode(true);
+        clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+        clonedContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
+            wrapper.replaceWith(...wrapper.childNodes);
+        });
         const contentToSave = clonedContent.innerHTML;
 
         console.log("Salvando marcações (conteúdo limpo)...");
@@ -1686,62 +1691,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
-
-// ---------- Código de marcação usando diff ---------- 
-const INITIAL_MARKUPS = {{ markups|tojson }};
-const lawContent = document.getElementById("law-content");
-
-function escapeHtml(str){
-  return str.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-}
-
-function applyMarkups(markups){
-  const txt = lawContent.innerText;
-  markups.sort((a,b)=>a.start_offset - b.start_offset);
-  let html='', pos=0;
-  for(const m of markups){
-    html += escapeHtml(txt.slice(pos, m.start_offset));
-    const seg = escapeHtml(txt.slice(m.start_offset, m.end_offset));
-    html += m.type==='bold' ? `<strong>${seg}</strong>` : `<span class="user-text-highlight">${seg}</span>`;
-    pos = m.end_offset;
-  }
-  html += escapeHtml(txt.slice(pos));
-  lawContent.innerHTML = html;
-}
-applyMarkups(INITIAL_MARKUPS);
-
-function selectionOffsets(){
-  const sel = window.getSelection();
-  if(!sel.rangeCount || sel.isCollapsed) return null;
-  const range = sel.getRangeAt(0);
-  if(!lawContent.contains(range.commonAncestorContainer)) return null;
-  const pre = range.cloneRange();
-  pre.selectNodeContents(lawContent);
-  pre.setEnd(range.startContainer, range.startOffset);
-  const start = pre.toString().length;
-  const end = start + range.toString().length;
-  return {start,end};
-}
-
-async function addMarkup(type){
-  const off = selectionOffsets();
-  if(!off) return;
-  const body = {type, start_offset: off.start, end_offset: off.end};
-  const res = await fetch(`/student/law/${lawId}/markups`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},
-    body:JSON.stringify(body)
-  });
-  if(res.ok){
-    INITIAL_MARKUPS.push(body);
-    applyMarkups(INITIAL_MARKUPS);
-  }else{
-    console.error('Falha ao salvar marcação', await res.text());
-  }
-}
-
-document.getElementById('format-bold').addEventListener('click', ()=>addMarkup('bold'));
-document.getElementById('format-highlight').addEventListener('click', ()=>addMarkup('highlight'));
-
 </script>
 {% endblock %}
