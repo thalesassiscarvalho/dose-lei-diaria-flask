@@ -427,23 +427,31 @@ def handle_single_comment(comment_id):
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída!")
 
-# --- INÍCIO: NOVA ROTA PARA RESTAURAR O CONTEÚDO ORIGINAL ---
-@student_bp.route("/law/<int:law_id>/restore_markup", methods=['POST'])
+# =====================================================================
+# <<< NOVA ROTA PARA RESTAURAR A LEI >>>
+# =====================================================================
+@student_bp.route("/law/<int:law_id>/restore", methods=['POST'])
 @login_required
-def restore_law_markup(law_id):
+def restore_law_to_original(law_id):
     """
-    Deleta as marcações personalizadas do usuário para uma lei,
-    revertendo-a para o texto original.
+    Restaura a lei para seu estado original para o usuário,
+    removendo marcações e comentários.
     """
-    Law.query.get_or_404(law_id) # Garante que a lei existe
+    Law.query.get_or_404(law_id)
+    
     try:
-        user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
-        if user_markup:
-            db.session.delete(user_markup)
-            db.session.commit()
-        return jsonify({'success': True, 'message': 'Marcações restauradas para o original.'})
+        # Deleta as marcações (highlights, bold, etc.) do usuário para esta lei
+        UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
+
+        # Deleta os comentários de parágrafo do usuário para esta lei
+        UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
+        
+        # Confirma as alterações no banco de dados
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Lei restaurada com sucesso.'})
+
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao restaurar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
-        return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao restaurar as marcações.'}), 500
-# --- FIM: NOVA ROTA PARA RESTAURAR O CONTEÚDO ORIGINAL ---
+        logging.error(f"Erro ao restaurar a lei {law_id} para o usuário {current_user.id}: {e}")
+        return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao restaurar a lei.'}), 500
