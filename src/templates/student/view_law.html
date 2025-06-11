@@ -1000,19 +1000,54 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
+    // =================================================================
+    // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÃO DE BUSCA DE ARTIGO CORRIGIDA >>>
+    // =================================================================
     function indexArticles() {
-        const articleElements = lawContent.querySelectorAll('p, strong, b');
-        const articleRegex = /^(Art(igo)?\.?\s*)(\d+)/i;
-        articleElements.forEach(el => {
-            const match = el.textContent.trim().match(articleRegex);
-            if (match) {
-                const articleNumber = match[3];
-                if (!el.id) {
-                    el.id = `art-${articleNumber}`;
+        // Regex para encontrar "Art." ou "Artigo", com ponto opcional, seguido por espaço e dígitos.
+        const articleRegex = /(Art(igo)?\.?\s*)(\d+)/;
+        // Um Set para rastrear artigos já etiquetados e evitar IDs duplicados.
+        const taggedArticles = new Set();
+        // Usa um TreeWalker para inspecionar de forma eficiente todos os nós de texto.
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+
+        // Itera sobre cada nó de texto.
+        while (node = walker.nextNode()) {
+            const text = node.nodeValue.trim();
+            
+            // Verifica se o texto do nó começa com "Art".
+            // Isso é mais preciso do que verificar o .textContent de um elemento pai grande.
+            if (text.toLowerCase().startsWith('art')) {
+                const match = text.match(articleRegex);
+
+                if (match) {
+                    // O número do artigo está no terceiro grupo de captura da regex.
+                    const articleNumber = match[3];
+
+                    // Se já criamos um ID para este artigo, pula para o próximo.
+                    if (taggedArticles.has(articleNumber)) {
+                        continue;
+                    }
+
+                    // Encontra o elemento pai de bloco mais próximo para anexar o ID.
+                    // Isso melhora a rolagem para o artigo.
+                    let targetElement = node.parentElement.closest('p, li, div, h1, h2, h3, h4');
+                    
+                    if (targetElement) {
+                        // Adiciona o ID apenas se o elemento de destino ainda não tiver um.
+                        if (!targetElement.id) {
+                            targetElement.id = `art-${articleNumber}`;
+                            taggedArticles.add(articleNumber); // Marca este número de artigo como processado.
+                        }
+                    }
                 }
             }
-        });
+        }
     }
+    // =================================================================
+    // <<< FIM DA ATUALIZAÇÃO >>>
+    // =================================================================
 
     function findAndGoToArticle() {
         const articleNumber = articleSearchInput.value.trim();
