@@ -504,7 +504,7 @@
     .dark-mode .comment-modal-content,
     .dark-mode .audio-player-container,
     /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: CSS MODO NOTURNO >>> */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: CSS MODO NOTURNO PARA JURIDIQUÊS >>> */
     /* ===================================================================== */
     .dark-mode .juridiques-container,
     /* ===================================================================== */
@@ -693,7 +693,32 @@
     }
     /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
     
-    /* Estilos para a seção de links úteis */
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: ESTILOS CSS >>> */
+    /* ===================================================================== */
+    .juridiques-container {
+        background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
+        border: 1px solid #ddd6fe; /* Roxo claro (violet-200) */
+    }
+    .juridiques-container #toggle-juridiques-btn {
+        background-color: #ede9fe; /* Roxo um pouco mais escuro (violet-100) */
+        border-bottom-color: #ddd6fe; /* violet-200 */
+    }
+    .juridiques-container #toggle-juridiques-btn h3 {
+        color: #5b21b6; /* Roxo escuro (violet-700) */
+    }
+    .dark-mode .juridiques-container {
+        background-color: #4c1d95; /* Roxo escuro para o fundo no modo noturno (violet-900) */
+        border-color: #7c3aed; /* violet-600 */
+    }
+    .dark-mode .juridiques-container #toggle-juridiques-btn {
+        background-color: #5b21b6; /* violet-700 */
+        border-bottom-color: #7c3aed;
+    }
+    .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
+        color: #ddd6fe; /* Texto claro (violet-200) */
+    }
+    
     .links-container {
         background-color: #f0fdf4; /* Verde muito claro */
         border: 1px solid #bbf7d0; /* Verde claro */
@@ -721,32 +746,6 @@
     }
     .dark-mode .links-container a:hover {
         color: #f0fdf4;
-    }
-
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: NOVOS ESTILOS CSS >>> */
-    /* ===================================================================== */
-    .juridiques-container {
-        background-color: #eef2ff; /* Roxo muito claro (indigo-50) */
-        border: 1px solid #c7d2fe; /* Roxo claro (indigo-200) */
-    }
-    .juridiques-container #toggle-juridiques-btn {
-        background-color: #e0e7ff; /* Roxo um pouco mais escuro (indigo-100) */
-        border-bottom-color: #c7d2fe;
-    }
-    .juridiques-container #toggle-juridiques-btn h3 {
-        color: #4338ca; /* Roxo escuro (indigo-700) */
-    }
-    .dark-mode .juridiques-container {
-        background-color: #3730a3; /* Roxo escuro para o fundo no modo noturno */
-        border-color: #6366f1;
-    }
-    .dark-mode .juridiques-container #toggle-juridiques-btn {
-        background-color: #4338ca;
-        border-bottom-color: #6366f1;
-    }
-    .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
-        color: #e0e7ff; /* Texto claro */
     }
     /* ===================================================================== */
     /* <<< FIM DA IMPLEMENTAÇÃO 1/3 >>> */
@@ -923,7 +922,7 @@
 </div>
 
 <div class="mt-8" id="notes-section">
-    <div class="notes-container bg-white border-blue-200 rounded-lg shadow-sm">
+    <div class="notes-container bg-white border border-blue-200 rounded-lg shadow-sm">
         <div class="p-4 bg-blue-50 border-b border-blue-200 flex justify-between items-center cursor-pointer" id="toggle-notes-btn">
             <h3 class="text-lg font-medium text-blue-800"><i class="fas fa-pencil-alt mr-2"></i> Anotações Gerais</h3>
             <i class="fas fa-chevron-down transition-transform duration-300" id="notes-chevron"></i>
@@ -950,8 +949,6 @@
             <i class="fas fa-chevron-down transition-transform duration-300" id="juridiques-chevron"></i>
         </div>
         <div class="p-4 hidden" id="juridiques-content-area">
-            {# A classe 'law-content-container' é usada aqui para herdar estilos de parágrafos, etc. #}
-            {# mas sem o fundo branco, borda e sombra. #}
             <div class="law-content-container" style="background: none; border: none; box-shadow: none; padding: 0;">
                 {{ law.juridiques_explanation | safe }}
             </div>
@@ -963,7 +960,7 @@
 <div class="mt-8" id="links-section">
     <div class="links-container rounded-lg shadow-sm">
         <div class="p-4 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
-            <h3 class="text-lg font-medium text-green-800"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
+            <h3 class="text-lg font-medium"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
             <i class="fas fa-chevron-down transition-transform duration-300" id="links-chevron"></i>
         </div>
         <div class="p-4 hidden" id="links-content-area">
@@ -980,7 +977,6 @@
     </div>
 </div>
 {% endif %}
-
 {% if not is_completed %}
 <form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1258,11 +1254,30 @@ document.addEventListener("DOMContentLoaded", function () {
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
+
+            // =====================================================================
+            // <<< INÍCIO DA CORREÇÃO: "Marcar Onde Parei" >>>
+            // =====================================================================
+            const formData = new URLSearchParams();
+            formData.append('last_read_article', lastReadArticle);
+            formData.append('csrf_token', csrfToken);
+
             fetch(`/student/save_last_read/${lawId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
-                body: `last_read_article=<span class="math-inline">\{encodeURIComponent\(lastReadArticle\)\}&csrf\_token\=</span>{encodeURIComponent(csrfToken)}`
-            }).then(response => response.json()).then(data => {
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded', 
+                    'X-CSRFToken': csrfToken 
+                },
+                body: formData
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro de rede: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            // =====================================================================
+            // <<< FIM DA CORREÇÃO >>>
+            // =====================================================================
+            }).then(data => {
                 if (data.success) {
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
@@ -1790,7 +1805,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: NOVA LÓGICA JAVASCRIPT >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: JAVASCRIPT >>>
     // =====================================================================
     const toggleJuridiquesBtn = document.getElementById("toggle-juridiques-btn");
     const juridiquesContentArea = document.getElementById("juridiques-content-area");
@@ -1807,6 +1822,3 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endblock %}
-
-}
-Finalmente, vamos concluir a implementação, peço que faça o mesmo para este último arquivo.
