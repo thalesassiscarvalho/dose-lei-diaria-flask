@@ -1305,11 +1305,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn');
     let saveMarkupTimeout;
 
     /**
      * Aplica formatação de texto (bold, italic) ou marca-texto colorido.
+     * Garante que a formatação seja aplicada apenas na "letra da lei" e
+     * que não quebre o layout da página.
      * @param {string} command - O comando a ser executado. Ex: 'bold', 'italic', 'highlight-yellow'.
      */
     function applyMarkup(command) {
@@ -1317,19 +1319,40 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!selection.rangeCount || selection.isCollapsed) return;
 
         const range = selection.getRangeAt(0);
+
+        // --- INÍCIO: NOVAS VERIFICAÇÕES DE SEGURANÇA ---
+
+        // 1. Garante que a seleção está dentro do container principal da lei.
         if (!lawContent.contains(range.commonAncestorContainer)) {
-            // Não faz nada se a seleção estiver fora do conteúdo da lei.
+            // A seleção está fora da área de conteúdo da lei (ex: anotações gerais), então não faz nada.
             return;
         }
+
+        // 2. Impede a formatação em conteúdos especiais (comentários, jurisprudência, etc.).
+        const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+        const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE ? range.endContainer : range.endContainer.parentElement;
+
+        if (startElement.closest('p[style*="background-color"], .comment-display') || endElement.closest('p[style*="background-color"], .comment-display')) {
+            alert("A formatação só pode ser aplicada no texto principal da lei, e não em comentários, jurisprudência, doutrina ou em suas anotações de parágrafo.");
+            return;
+        }
+
+        // 3. Impede a formatação que abrange múltiplos parágrafos/blocos para não quebrar o layout.
+        const selectedContent = range.cloneContents();
+        if (selectedContent.querySelector('p, li, blockquote, h1, h2, h3, div')) {
+            alert("Para garantir a estabilidade do layout, por favor, aplique a formatação dentro de um único parágrafo ou elemento de cada vez.");
+            return;
+        }
+        // --- FIM: NOVAS VERIFICAÇÕES DE SEGURANÇA ---
         
         // Habilita a edição para aplicar o comando
         lawContent.setAttribute('contenteditable', 'true');
         
-        // Comandos de formatação padrão (negrito, itálico, etc.)
+        // Comandos de formatação padrão (negrito, itálico)
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } 
-        // Lógica para marca-texto
+        // Lógica para marca-texto (mantida do original, mas agora mais segura com as verificações acima)
         else if (command.startsWith('highlight-')) {
             const color = command.split('-')[1];
             const className = `user-highlight-${color}`;
@@ -1343,7 +1366,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const existingHighlight = parent.closest('[class*="user-highlight-"]');
 
             if (existingHighlight && selection.containsNode(existingHighlight, true)) {
-                 // Se o texto selecionado já está totalmente contido em um highlight
+                 // Se o texto selecionado já está totalmente contido em um highlight, remove a formatação
                 const text = document.createTextNode(existingHighlight.textContent);
                 existingHighlight.parentNode.replaceChild(text, existingHighlight);
             } else {
@@ -1410,7 +1433,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
-    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
+    // Lógica do botão de limpar formatação
     if (clearFormattingBtn) {
         clearFormattingBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
@@ -1424,11 +1447,11 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             
             lawContent.innerHTML = contentClone.innerHTML;
-            saveLawMarkup();
+            initCommentSystem(); // Reinicia o sistema de comentários para não perder os ícones.
+            saveLawMarkup(); // Salva o conteúdo limpo.
             alert('Formatação removida com sucesso!');
         });
     }
-    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
 
     // =================================================================
     // <<< FIM DA ATUALIZAÇÃO >>>
