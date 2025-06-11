@@ -1,5 +1,3 @@
-# src/routes/student.py
-
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
@@ -8,16 +6,16 @@ from sqlalchemy.orm import joinedload
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
-from src.models.notes import UserNotes, UserLawMarkup # UserLawMarkup importado
+from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
 import datetime
 import logging
-import json # Importado para usar no template
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
-# ... (outros endpoints como get_laws_for_subject, dashboard, filter_laws, etc., permanecem os mesmos) ...
-
+# =====================================================================
+# <<< NOVO ENDPOINT DE API PARA FILTRO EM CASCATA >>>
+# =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
 def get_laws_for_subject(subject_id):
@@ -29,7 +27,7 @@ def get_laws_for_subject(subject_id):
         Law.parent_id.is_(None)
     ).order_by(Law.title).all()
     return jsonify([{"id": law.id, "title": law.title} for law in laws])
-
+# =====================================================================
 
 def check_and_award_achievements(user):
     """Verifica e concede conquistas ao usuário."""
@@ -78,6 +76,7 @@ def dashboard():
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
 
+    # Apenas renderiza o template base. Os dados de leis serão buscados via API.
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            progress_percentage=global_progress_percentage,
@@ -90,6 +89,9 @@ def dashboard():
                            last_accessed_law=last_accessed_law)
 
 
+# =====================================================================
+# <<< INÍCIO DA MODIFICAÇÃO PARA FILTROS HIERÁRQUICOS >>>
+# =====================================================================
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
@@ -98,9 +100,13 @@ def filter_laws():
     Modificado para aceitar filtros hierárquicos e busca independente.
     """
     search_query = request.args.get("search", "")
+
+    # Filtros hierárquicos
     selected_subject_id_str = request.args.get("subject_id", "")
-    selected_diploma_id_str = request.args.get("diploma_id", "")
+    selected_diploma_id_str = request.args.get("diploma_id", "") # Novo filtro para a Lei/Diploma
     selected_status = request.args.get("status_filter", "")
+
+    # Filtros adicionais
     show_favorites_str = request.args.get("show_favorites", "false")
     show_favorites = show_favorites_str.lower() == 'true'
 
@@ -110,12 +116,15 @@ def filter_laws():
     in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
+    # Inicia a query base buscando os Diplomas (leis principais)
     diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
         joinedload(Law.children)
     )
 
+    # Lógica de filtragem: Busca por texto tem prioridade
     if search_query:
         search_term = f"%{search_query}%"
+        # Busca no título do diploma, no nome da matéria ou nos títulos dos tópicos filhos
         diplomas_query = diplomas_query.filter(
             or_(
                 Law.title.ilike(search_term),
@@ -124,6 +133,7 @@ def filter_laws():
             )
         )
     else:
+        # Lógica de filtro hierárquico
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
             diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
@@ -159,6 +169,7 @@ def filter_laws():
                     "is_favorite": is_favorite
                 })
 
+        # Removido: is_hierarchical_filter_active não era usado
         children_final = children_to_display
 
         if search_query:
@@ -192,43 +203,49 @@ def filter_laws():
         subjects_with_diplomas[subject_name].append(diploma_data)
 
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
+# =====================================================================
+# <<< FIM DA MODIFICAÇÃO >>>
+# =====================================================================
 
 
+# =====================================================================
+# <<< INÍCIO: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
+# =====================================================================
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
-    # --- PASSO 1: LER TODOS OS DADOS DO BANCO ---
     law = Law.query.get_or_404(law_id)
-    if law.parent_id is None:
-        flash("Selecione um tópico de estudo específico para visualizar.", "info")
-        return redirect(url_for('student.dashboard'))
+    markups = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).all()
+    return render_template("student/view_law.html", law=law, markups=markups)
 
-    # Busca todas as marcações do usuário para esta lei de uma só vez
-    user_markups = UserLawMarkup.query.filter_by(
-        user_id=current_user.id,
-        law_id=law_id
-    ).all()
 
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     is_favorited = law in current_user.favorite_laws
 
-    # --- PASSO 2: ATUALIZAR STATUS DE ACESSO ---
+    # --- PASSO 2: MODIFICAR OS DADOS E SALVAR NO BANCO (COMMIT) UMA ÚNICA VEZ ---
     now = datetime.datetime.utcnow()
     if progress:
         progress.last_accessed_at = now
     else:
+        # Se não há progresso, cria um novo registro
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
+
+    # O commit agora acontece aqui, depois de todas as leituras e modificações.
     db.session.commit()
 
-    # --- PASSO 3: PREPARAR OS DADOS PARA O TEMPLATE ---
-    # Converte as marcações em um formato JSON para ser usado pelo JavaScript
-    markups_for_js = [markup.to_dict() for markup in user_markups]
-    markups_json = json.dumps(markups_for_js)
+    # --- PASSO 3: PREPARAR OS DADOS PARA ENVIAR AO TEMPLATE ---
+    if user_markup:
+        # Se encontrou marcação salva, usa o conteúdo dela
+        content_to_display = user_markup.content
+    else:
+        # Senão, usa o conteúdo original da lei
+        content_to_display = law.content
 
-    # O conteúdo enviado para o template é sempre o original da lei.
-    # O JavaScript aplicará as marcações do usuário por cima.
-    content_to_display = law.content or ""
+    # Garante que o conteúdo nunca seja None
+    if content_to_display is None:
+        content_to_display = ""
 
     return render_template("student/view_law.html",
                            law=law,
@@ -236,8 +253,10 @@ def view_law(law_id):
                            last_read_article=progress.last_read_article,
                            current_status=progress.status,
                            is_favorited=is_favorited,
-                           display_content=content_to_display,
-                           markups_json=markups_json) # Envia as marcações para o template
+                           display_content=content_to_display)
+# =====================================================================
+# <<< FIM: FUNÇÃO view_law CORRIGIDA E REESTRUTURADA >>>
+# =====================================================================
 
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
@@ -256,7 +275,6 @@ def toggle_favorite(law_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
-
 
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
@@ -279,7 +297,7 @@ def mark_complete(law_id):
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
-            flash(f"ATUALIZACAO FUNCIONOU! Lei {law.title} concluída!", "success")
+            flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
 
@@ -297,7 +315,6 @@ def mark_complete(law_id):
 
     return redirect(url_for("student.view_law", law_id=law_id))
 
-
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
 @login_required
 def review_law(law_id):
@@ -313,7 +330,6 @@ def review_law(law_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
-
 
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
@@ -336,7 +352,6 @@ def save_last_read(law_id):
     db.session.commit()
     return jsonify(success=True, message="Ponto de leitura salvo!")
 
-
 @student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
@@ -346,7 +361,6 @@ def mark_announcement_seen(announcement_id):
         db.session.add(seen)
         db.session.commit()
     return jsonify(success=True)
-
 
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET", "POST"])
 @login_required
@@ -365,59 +379,6 @@ def handle_user_notes(law_id):
             db.session.add(notes)
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
-
-
-@student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
-@login_required
-def save_law_markup(law_id):
-    """
-    Recebe uma LISTA de marcações (offsets) do cliente e as salva.
-    Esta versão usa um método de salvamento mais robusto (db.session.add)
-    para garantir a consistência da transação.
-    """
-    Law.query.get_or_404(law_id)
-    try:
-        data = request.get_json()
-        if not data or 'markups' not in data or not isinstance(data['markups'], list):
-            return jsonify({'success': False, 'error': 'Payload de marcações inválido.'}), 400
-
-        markups_data = data['markups']
-
-        # Estratégia "Delete-and-Replace" com a máxima segurança de sessão.
-        UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete(synchronize_session='fetch')
-
-        # Cria as novas marcações a partir da lista recebida.
-        new_markups = []
-        for markup_info in markups_data:
-            # Validação básica
-            if not all(k in markup_info for k in ['type', 'start', 'end', 'text']):
-                continue
-
-            new_markup = UserLawMarkup(
-                user_id=current_user.id,
-                law_id=law_id,
-                markup_type=markup_info['type'],
-                start_offset=markup_info['start'],
-                end_offset=markup_info['end'],
-                selected_text=markup_info['text']
-            )
-            new_markups.append(new_markup)
-
-        # --- ALTERAÇÃO PRINCIPAL ---
-        # Em vez de usar 'bulk_save_objects', adicionamos cada objeto
-        # individualmente. Isso é mais explícito e confiável.
-        if new_markups:
-            for markup in new_markups:
-                db.session.add(markup)
-
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
-
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
-        return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
-
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
 @login_required
@@ -453,3 +414,38 @@ def handle_single_comment(comment_id):
         db.session.delete(comment)
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída!")
+
+
+# ---------- API de marcações (diff) ----------
+@student_bp.route("/law/<int:law_id>/markups", methods=["GET"])
+@login_required
+def list_markups(law_id):
+    markups = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).all()
+    return jsonify(success=True, markups=[{
+        "id": m.id,
+        "type": m.type,
+        "start_offset": m.start_offset,
+        "end_offset": m.end_offset
+    } for m in markups])
+
+@student_bp.route("/law/<int:law_id>/markups", methods=["POST"])
+@login_required
+def save_markup(law_id):
+    data = request.get_json(force=True) or {}
+    required = {"type", "start_offset", "end_offset"}
+    if not required.issubset(data):
+        return jsonify(success=False, error="Campos obrigatórios ausentes"), 400
+    m = UserLawMarkup(user_id=current_user.id, law_id=law_id,
+                      type=data["type"], start_offset=data["start_offset"], end_offset=data["end_offset"])
+    db.session.add(m)
+    db.session.commit()
+    return jsonify(success=True, id=m.id)
+
+@student_bp.route("/markups/<int:markup_id>", methods=["DELETE"])
+@login_required
+def delete_markup(markup_id):
+    m = UserLawMarkup.query.filter_by(id=markup_id, user_id=current_user.id).first_or_404()
+    db.session.delete(m)
+    db.session.commit()
+    return jsonify(success=True)
+
