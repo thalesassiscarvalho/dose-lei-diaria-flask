@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 from src.models.user import db 
 from sqlalchemy.orm import backref
 
@@ -26,14 +25,8 @@ class Law(db.Model):
 
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
     
-    # --- Funcionalidade: Entendendo o Juridiquês ---
+    # Funcionalidade: Entendendo o Juridiquês
     juridiques_terms = db.relationship('JuridiquesTerm', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
-    
-    # --- Funcionalidade: Aviso de Atualização de Lei ---
-    last_updated_at = db.Column(db.DateTime, nullable=True, comment="Data da última atualização da lei que gerou um aviso.")
-    #                                                                           <<< AQUI ESTÁ A CORREÇÃO
-    active_update_notice = db.Column(db.Boolean, default=False, nullable=False, server_default='false', comment="Indica se há um aviso de atualização ativo para esta lei.")
-
 
     def __repr__(self):
         audio_indicator = " (Audio)" if self.audio_url else ""
@@ -60,19 +53,3 @@ class JuridiquesTerm(db.Model):
 
     def __repr__(self):
         return f'<JuridiquesTerm {self.term}>'
-
-# --- Funcionalidade: Aviso de Atualização de Lei ---
-class UserSeenLawNotice(db.Model):
-    __tablename__ = 'user_seen_law_notice'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
-    seen_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
-
-    user = db.relationship('User')
-    law = db.relationship('Law')
-
-    __table_args__ = (db.UniqueConstraint('user_id', 'law_id', name='_user_law_notice_uc'),)
-
-    def __repr__(self):
-        return f'<UserSeenLawNotice user_id={self.user_id} law_id={self.law_id}>'
