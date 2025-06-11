@@ -1000,7 +1000,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
 
-    // A função de indexação original é mantida mas sua falha não impede mais a busca.
+    // A indexação tenta criar IDs para busca rápida, mas o sistema de busca agora tem um fallback robusto.
     function indexArticles() {
         const articleRegex = /\bArt(igo)?\.?\s+(\d+)/gi;
         const taggedArticles = new Set();
@@ -1028,9 +1028,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // <<< INÍCIO DA ATUALIZAÇÃO: FUNÇÕES DE BUSCA E ROLAGEM CORRIGIDAS >>>
     // =================================================================
     
-    /**
-     * Limpa destaques de buscas anteriores e normaliza o container do texto.
-     */
     function clearPreviousSearchHighlights() {
         const highlights = lawContent.querySelectorAll('span.highlight-article-search');
         highlights.forEach(span => {
@@ -1039,18 +1036,28 @@ document.addEventListener("DOMContentLoaded", function () {
         lawContent.normalize();
     }
 
-    /**
-     * Procura por um texto, destaca todas as ocorrências e rola para a primeira.
-     * @param {string} text - O texto a ser procurado.
-     * @param {boolean} suppressAlert - Se true, não mostra alerta de "não encontrado".
-     * @returns {boolean} - True se o texto foi encontrado, senão false.
-     */
     function findAndGoToText(text, suppressAlert = false) {
         if (!text || text.length < 1) return false;
         
         clearPreviousSearchHighlights();
 
-        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, null, false);
+        // *** CORREÇÃO: Filtro para ignorar comentários de doutrina, etc. ***
+        const commentFilter = {
+            acceptNode: function(node) {
+                let parent = node.parentElement;
+                while (parent && parent !== lawContent) {
+                    // Verifica se o elemento pai tem um dos BGs de comentário.
+                    // A busca por string é mais flexível que a comparação exata de rgb().
+                    if (parent.style.backgroundColor && parent.style.backgroundColor !== '') {
+                        return NodeFilter.FILTER_REJECT; // Rejeita o nó se estiver dentro de um bloco colorido
+                    }
+                    parent = parent.parentElement;
+                }
+                return NodeFilter.FILTER_ACCEPT; // Aceita o nó se não for um comentário
+            }
+        };
+
+        const walker = document.createTreeWalker(lawContent, NodeFilter.SHOW_TEXT, commentFilter, false);
         const ranges = [];
         let node;
         while (node = walker.nextNode()) {
@@ -1078,23 +1085,18 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const firstMatchElement = lawContent.querySelector('span.highlight-article-search');
             if (firstMatchElement) {
-                // *** CORREÇÃO: Achar o 'pai' do bloco para rolagem precisa ***
                 const scrollTarget = firstMatchElement.closest('p, li, div, h1, h2, h3, h4');
-                // Rola para o parágrafo pai, ou para o próprio destaque se não encontrar um pai de bloco.
                 scrollToElement(scrollTarget || firstMatchElement, false);
             }
-            return true; // Sucesso
+            return true;
         }
 
         if (!suppressAlert) {
             alert(`Texto "${text}" não encontrado.`);
         }
-        return false; // Falha
+        return false;
     }
     
-    /**
-     * Função principal de busca, com lógica de fallback.
-     */
     function findAndGoToArticle() {
         const searchInput = articleSearchInput.value.trim();
         if (/^\d+$/.test(searchInput)) {
@@ -1102,7 +1104,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const targetElement = document.getElementById(`art-${articleNumber}`);
             
             if (targetElement) {
-                scrollToElement(targetElement, true); // Usa animação para busca por ID
+                scrollToElement(targetElement, true);
             } else {
                 const found = findAndGoToText(`Art. ${articleNumber}`, true) || findAndGoToText(`Artigo ${articleNumber}`, true);
                 if (!found) {
@@ -1134,7 +1136,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 2000);
         }
     }
-
     // =================================================================
     // <<< FIM DA ATUALIZAÇÃO >>>
     // =================================================================
@@ -1352,40 +1353,29 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =================================================================
-    // <<< INÍCIO DA ATUALIZAÇÃO: LÓGICA DE FORMATAÇÃO E MARCA-TEXTO >>>
-    // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatItalicBtn = document.getElementById('format-italic-btn');
     const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    const clearFormattingBtn = document.getElementById('clear-formatting-btn'); // NOVO BOTÃO
+    const clearFormattingBtn = document.getElementById('clear-formatting-btn');
     let saveMarkupTimeout;
 
-    /**
-     * Aplica formatação de texto (bold, italic) ou marca-texto colorido.
-     * @param {string} command - O comando a ser executado. Ex: 'bold', 'italic', 'highlight-yellow'.
-     */
     function applyMarkup(command) {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
         const range = selection.getRangeAt(0);
         if (!lawContent.contains(range.commonAncestorContainer)) {
-            // Não faz nada se a seleção estiver fora do conteúdo da lei.
             return;
         }
         
-        // Habilita a edição para aplicar o comando
         lawContent.setAttribute('contenteditable', 'true');
         
-        // Comandos de formatação padrão (negrito, itálico, etc.)
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } 
-        // Lógica para marca-texto
         else if (command.startsWith('highlight-')) {
             const color = command.split('-')[1];
             const className = `user-highlight-${color}`;
@@ -1395,15 +1385,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 parent = parent.parentNode;
             }
 
-            // Verifica se o texto já está dentro de um span de marca-texto de qualquer cor
             const existingHighlight = parent.closest('[class*="user-highlight-"]');
 
             if (existingHighlight && selection.containsNode(existingHighlight, true)) {
-                 // Se o texto selecionado já está totalmente contido em um highlight
                 const text = document.createTextNode(existingHighlight.textContent);
                 existingHighlight.parentNode.replaceChild(text, existingHighlight);
             } else {
-                // Se não, aplica o novo span de marca-texto
                 const span = document.createElement('span');
                 span.className = className;
                 span.appendChild(range.extractContents());
@@ -1411,9 +1398,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
-        // Desabilita a edição e foca no conteúdo para salvar as alterações
         lawContent.setAttribute('contenteditable', 'false');
-        lawContent.focus(); // Devolve o foco para o container
+        lawContent.focus();
         debounceSaveMarkup();
     }
     
@@ -1423,11 +1409,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     async function saveLawMarkup() {
-        // Clona o conteúdo para limpar elementos não persistentes antes de salvar
         const clonedContent = lawContent.cloneNode(true);
-        // Remove ícones e divs de comentários que são gerados dinamicamente
         clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
-        // Desembrulha os parágrafos dos wrappers, que também são dinâmicos
         clonedContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
             wrapper.replaceWith(...wrapper.childNodes);
         });
@@ -1456,17 +1439,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Adiciona os event listeners para os botões de formatação
     if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     if(formatItalicBtn) formatItalicBtn.addEventListener('click', () => applyMarkup('italic'));
-    
-    // Adiciona os event listeners para os botões de marca-texto
     if(formatHighlightYellowBtn) formatHighlightYellowBtn.addEventListener('click', () => applyMarkup('highlight-yellow'));
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
-    // ▼▼▼ LÓGICA DO NOVO BOTÃO ▼▼▼
     if (clearFormattingBtn) {
         clearFormattingBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja remover TODAS as marcações (negritos, itálicos, marca-textos) deste texto? Esta ação não pode ser desfeita.')) {
@@ -1484,12 +1463,6 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Formatação removida com sucesso!');
         });
     }
-    // ▲▲▲ FIM DA LÓGICA DO NOVO BOTÃO ▲▲▲
-
-    // =================================================================
-    // <<< FIM DA ATUALIZAÇÃO >>>
-    // =================================================================
-
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
