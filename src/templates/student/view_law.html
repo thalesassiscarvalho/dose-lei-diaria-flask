@@ -503,11 +503,6 @@
     .dark-mode .notes-container,
     .dark-mode .comment-modal-content,
     .dark-mode .audio-player-container,
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: CSS MODO NOTURNO PARA JURIDIQUÊS >>> */
-    /* ===================================================================== */
-    .dark-mode .juridiques-container,
-    /* ===================================================================== */
     .dark-mode .links-container /* Adicionado para modo noturno */
     {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -693,63 +688,35 @@
     }
     /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
     
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: ESTILOS CSS >>> */
-    /* ===================================================================== */
-    .juridiques-container {
-        background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
-        border: 1px solid #ddd6fe; /* Roxo claro (violet-200) */
-    }
-    .juridiques-container #toggle-juridiques-btn {
-        background-color: #ede9fe; /* Roxo um pouco mais escuro (violet-100) */
-        border-bottom-color: #ddd6fe; /* violet-200 */
-    }
-    .juridiques-container #toggle-juridiques-btn h3 {
-        color: #5b21b6; /* Roxo escuro (violet-700) */
-    }
-    .dark-mode .juridiques-container {
-        background-color: #4c1d95; /* Roxo escuro para o fundo no modo noturno (violet-900) */
-        border-color: #7c3aed; /* violet-600 */
-    }
-    .dark-mode .juridiques-container #toggle-juridiques-btn {
-        background-color: #5b21b6; /* violet-700 */
-        border-bottom-color: #7c3aed;
-    }
-    .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
-        color: #ddd6fe; /* Texto claro (violet-200) */
-    }
-    
+    /* NOVO: Estilos para a seção de links úteis */
     .links-container {
-        background-color: #f0fdf4; /* Verde muito claro */
-        border: 1px solid #bbf7d0; /* Verde claro */
+        background-color: #f0f9ff; /* Azul muito claro */
+        border: 1px solid #bae6fd; /* Azul claro */
     }
     .links-container #toggle-links-btn {
-        background-color: #dcfce7; /* Verde um pouco mais escuro */
-        border-bottom-color: #bbf7d0;
+        background-color: #e0f2fe; /* Azul um pouco mais escuro */
+        border-bottom-color: #bae6fd;
     }
     .links-container #toggle-links-btn h3 {
-        color: #166534; /* Verde escuro */
+        color: #0c4a6e; /* Azul escuro */
     }
     .dark-mode .links-container {
-        background-color: #14532d; /* Verde escuro para o fundo no modo noturno */
-        border-color: #22c55e;
+        background-color: #1e3a8a; /* Azul escuro para o fundo no modo noturno */
+        border-color: #3b82f6;
     }
     .dark-mode .links-container #toggle-links-btn {
-        background-color: #166534;
-        border-bottom-color: #22c55e;
+        background-color: #1e40af;
+        border-bottom-color: #3b82f6;
     }
     .dark-mode .links-container #toggle-links-btn h3 {
-        color: #dcfce7; /* Texto claro */
+        color: #dbeafe; /* Texto claro */
     }
     .dark-mode .links-container a {
-        color: #86efac; /* Links verdes claros */
+        color: #93c5fd; /* Links azuis claros */
     }
     .dark-mode .links-container a:hover {
-        color: #f0fdf4;
+        color: #eff6ff;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 1/3 >>> */
-    /* ===================================================================== */
 
     /* --- CÓDIGO ATUALIZADO: AJUSTE DE ROLAGEM HORIZONTAL PARA BARRA DE AÇÕES EM TELAS PEQUENAS --- */
     @media (max-width: 480px) {
@@ -941,26 +908,11 @@
     </div>
 </div>
 
-{% if law.juridiques_explanation and law.juridiques_explanation|striptags|trim != "" %}
-<div class="mt-8" id="juridiques-section">
-    <div class="juridiques-container rounded-lg shadow-sm">
-        <div class="p-4 flex justify-between items-center cursor-pointer" id="toggle-juridiques-btn">
-            <h3 class="text-lg font-medium"><i class="fas fa-gavel mr-2"></i> Entendendo o Juridiquês</h3>
-            <i class="fas fa-chevron-down transition-transform duration-300" id="juridiques-chevron"></i>
-        </div>
-        <div class="p-4 hidden" id="juridiques-content-area">
-            <div class="law-content-container" style="background: none; border: none; box-shadow: none; padding: 0;">
-                {{ law.juridiques_explanation | safe }}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% if law.useful_links and law.useful_links.count() > 0 %}
 <div class="mt-8" id="links-section">
-    <div class="links-container rounded-lg shadow-sm">
-        <div class="p-4 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
-            <h3 class="text-lg font-medium"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
+    <div class="links-container bg-white border border-green-200 rounded-lg shadow-sm">
+        <div class="p-4 bg-green-50 border-b border-green-200 flex justify-between items-center cursor-pointer" id="toggle-links-btn">
+            <h3 class="text-lg font-medium text-green-800"><i class="fas fa-link mr-2"></i> Links Úteis</h3>
             <i class="fas fa-chevron-down transition-transform duration-300" id="links-chevron"></i>
         </div>
         <div class="p-4 hidden" id="links-content-area">
@@ -1254,30 +1206,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
-
-            // =====================================================================
-            // <<< INÍCIO DA CORREÇÃO: "Marcar Onde Parei" >>>
-            // =====================================================================
-            const formData = new URLSearchParams();
-            formData.append('last_read_article', lastReadArticle);
-            formData.append('csrf_token', csrfToken);
-
             fetch(`/student/save_last_read/${lawId}`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded', 
-                    'X-CSRFToken': csrfToken 
-                },
-                body: formData
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error(`Erro de rede: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            // =====================================================================
-            // <<< FIM DA CORREÇÃO >>>
-            // =====================================================================
-            }).then(data => {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                body: `last_read_article=${encodeURIComponent(lastReadArticle)}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(response => response.json()).then(data => {
                 if (data.success) {
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
@@ -1803,22 +1736,6 @@ document.addEventListener("DOMContentLoaded", function () {
             linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: JAVASCRIPT >>>
-    // =====================================================================
-    const toggleJuridiquesBtn = document.getElementById("toggle-juridiques-btn");
-    const juridiquesContentArea = document.getElementById("juridiques-content-area");
-    const juridiquesChevron = document.getElementById("juridiques-chevron");
-    if (toggleJuridiquesBtn) {
-        toggleJuridiquesBtn.addEventListener("click", function() {
-            juridiquesContentArea.classList.toggle("hidden");
-            juridiquesChevron.style.transform = juridiquesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-        });
-    }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO 3/3 >>>
-    // =====================================================================
 });
 </script>
 {% endblock %}
