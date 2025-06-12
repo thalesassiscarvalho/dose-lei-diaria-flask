@@ -3,7 +3,14 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
-from src.models.user import db, User, Announcement, UserSeenAnnouncement 
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVOS IMPORTS >>>
+# =====================================================================
+import datetime
+from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
@@ -18,6 +25,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ... (dashboard e manage_subjects sem alterações) ...
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -107,11 +115,12 @@ def add_law():
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         audio_url = request.form.get("audio_url")
+        juridiques_explanation = request.form.get("juridiques_explanation")
         
         # =====================================================================
-        # <<< INÍCIO DA IMPLEMENTAÇÃO: CAPTURA DO NOVO CAMPO DO FORMULÁRIO >>>
+        # <<< INÍCIO DA IMPLEMENTAÇÃO: CAPTURA DO CONTEÚDO DO BANNER >>>
         # =====================================================================
-        juridiques_explanation = request.form.get("juridiques_explanation")
+        banner_content = request.form.get("banner_content", "").strip()
         # =====================================================================
         # <<< FIM DA IMPLEMENTAÇÃO >>>
         # =====================================================================
@@ -125,20 +134,27 @@ def add_law():
             description=description, 
             content=content,
             audio_url=audio_url if audio_url else None,
-            # =====================================================================
-            # <<< INÍCIO DA IMPLEMENTAÇÃO: SALVANDO O NOVO CAMPO NO BANCO >>>
-            # =====================================================================
             juridiques_explanation=juridiques_explanation if juridiques_explanation else None
-            # =====================================================================
-            # <<< FIM DA IMPLEMENTAÇÃO >>>
-            # =====================================================================
         )
         
         new_law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
         new_law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
             
         db.session.add(new_law)
-        db.session.flush()
+        db.session.flush() # Garante que new_law.id esteja disponível
+
+        # =====================================================================
+        # <<< INÍCIO DA IMPLEMENTAÇÃO: SALVANDO O BANNER SE EXISTIR >>>
+        # =====================================================================
+        if banner_content:
+            new_banner = LawBanner(
+                content=banner_content,
+                law_id=new_law.id
+            )
+            db.session.add(new_banner)
+        # =====================================================================
+        # <<< FIM DA IMPLEMENTAÇÃO >>>
+        # =====================================================================
 
         index = 0
         while f'link-{index}-title' in request.form:
@@ -164,7 +180,13 @@ def add_law():
 @login_required
 @admin_required
 def edit_law(law_id):
-    law = Law.query.get_or_404(law_id)
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: OTIMIZAR CONSULTA CARREGANDO O BANNER >>>
+    # =====================================================================
+    law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
     subjects = Subject.query.order_by(Subject.name).all()
     normative_acts = Law.query.filter(Law.parent_id.is_(None), Law.id != law_id).order_by(Law.title).all()
 
@@ -175,11 +197,27 @@ def edit_law(law_id):
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         audio_url = request.form.get("audio_url")
+        law.juridiques_explanation = request.form.get("juridiques_explanation")
         
         # =====================================================================
-        # <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO NOVO CAMPO >>>
+        # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE ATUALIZAÇÃO DO BANNER >>>
         # =====================================================================
-        law.juridiques_explanation = request.form.get("juridiques_explanation")
+        banner_content = request.form.get("banner_content", "").strip()
+        law_banner = law.banner
+
+        if banner_content:
+            # Se já existe um banner, atualiza o conteúdo se for diferente
+            if law_banner:
+                if law_banner.content != banner_content:
+                    law_banner.content = banner_content
+                    law_banner.last_updated = datetime.datetime.utcnow() # Força a atualização do timestamp
+            # Se não existe um banner, cria um novo
+            else:
+                new_banner = LawBanner(content=banner_content, law_id=law.id)
+                db.session.add(new_banner)
+        # Se o campo veio vazio e existia um banner, remove-o
+        elif law_banner:
+            db.session.delete(law_banner)
         # =====================================================================
         # <<< FIM DA IMPLEMENTAÇÃO >>>
         # =====================================================================
@@ -208,7 +246,7 @@ def edit_law(law_id):
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
 
-
+# ... (resto do arquivo: delete_law, manage_users, etc. sem alterações) ...
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
