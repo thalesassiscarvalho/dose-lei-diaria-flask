@@ -252,7 +252,7 @@
             <div>
                 <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
-                    <option value="">-- Todas as Matérias --</option>
+                    <option value="">-- Favoritas --</option>
                     {% for subject in subjects %}
                         <option value="{{ subject.id }}">{{ subject.name }}</option>
                     {% endfor %}
