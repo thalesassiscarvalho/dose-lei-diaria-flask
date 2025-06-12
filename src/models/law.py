@@ -41,6 +41,17 @@ class Law(db.Model):
 
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
 
+    # =====================================================================
+    # <<< INÍCIO DA NOVA FUNCIONALIDADE: RELAÇÃO COM O BANNER >>>
+    # =====================================================================
+    # 'uselist=False' cria uma relação um-para-um (cada lei só pode ter um banner).
+    # 'cascade="all, delete-orphan"' garante que se a lei for deletada, o banner associado também será.
+    banner = db.relationship('LawBanner', backref='law', uselist=False, cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA NOVA FUNCIONALIDADE >>>
+    # =====================================================================
+
+
     def __repr__(self):
         audio_indicator = " (Audio)" if self.audio_url else ""
         return f"<Law {self.title}{audio_indicator}>"
