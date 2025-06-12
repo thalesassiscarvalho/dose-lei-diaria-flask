@@ -252,11 +252,16 @@
             <div>
                 <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
-                    <option value="">-- Favoritas --</option>
-                    {% for subject in subjects %}
-                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                {% if structured_favorites %}
+                    <option value="" selected>-- Favoritas --</option>
+                    <option value="all">-- Todas as Matérias --</option>
+                {% else %}
+                    <option value="" selected>-- Todas as Matérias --</option>
+                {% endif %}
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.name }}</option>
                     {% endfor %}
-                </select>
+        </select>
             </div>
             <div>
                 <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
