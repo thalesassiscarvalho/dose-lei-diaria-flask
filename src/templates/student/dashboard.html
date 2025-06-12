@@ -67,14 +67,14 @@
     .achievements-card .stat-card-title i { color: #8b5cf6; background-color: #f5f3ff; }
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-
+    
     /* ESTILOS PARA O NOVO CARD DE STREAK */
     .streak-card { text-align: center; justify-content: center; background: linear-gradient(145deg, #fff2e6, #fff9f2); border-color: #ffc085; }
     .streak-card .stat-card-title { justify-content: center; }
     .streak-card .stat-card-title i { color: #f97316; background-color: #ffffff; }
     .streak-display { font-size: 2.75rem; font-weight: 800; color: #ea580c; line-height: 1; }
     .streak-text { font-size: 0.875rem; font-weight: 600; color: #f97316; margin-top: -0.25rem; }
-    
+
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
     .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
@@ -193,7 +193,7 @@
             <div class="points-display">{{ user_points }}</div>
         </div>
     </div>
-
+    
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
         {% if user_achievements %}
