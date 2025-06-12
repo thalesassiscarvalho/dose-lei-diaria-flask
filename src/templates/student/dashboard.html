@@ -68,17 +68,11 @@
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS DO CARD DE STREAK >>> */
-    /* ===================================================================== */
     .streak-card { text-align: center; justify-content: center; background: linear-gradient(145deg, #fff2e6, #fff9f2); border-color: #ffc085; }
     .streak-card .stat-card-title { justify-content: center; }
     .streak-card .stat-card-title i { color: #f97316; background-color: #ffffff; }
     .streak-display { font-size: 2.75rem; font-weight: 800; color: #ea580c; line-height: 1; }
     .streak-text { font-size: 0.875rem; font-weight: 600; color: #f97316; margin-top: -0.25rem; }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
-    /* ===================================================================== */
 
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
@@ -172,7 +166,7 @@
     {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="stat-card progress-card">
+        <div class="md:col-span-1 stat-card progress-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
@@ -182,6 +176,7 @@
                 <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
             </div>
         </div>
+
         <div class="stat-card streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             {% if user_streak > 0 %}
@@ -191,6 +186,7 @@
                 <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
             {% endif %}
         </div>
+
         <div class="stat-card points-card">
             <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
             <div class="points-display">{{ user_points }}</div>
