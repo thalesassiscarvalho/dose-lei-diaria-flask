@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ADIÇÃO 2/2: Função de Favoritar com Notificação
+  // ADIÇÃO 2/2: Função de Favoritar com Notificação (Substituição da antiga)
     function handleFavoriteClick() {
         const button = this;
         button.disabled = true;
@@ -738,6 +738,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     if(itemToRemove) itemToRemove.remove();
                 }
             }
+            
+            // Exibe a notificação na tela
+            Toastify({
+                text: notificationText,
+                duration: 3000,
+                close: true,
+                gravity: "bottom",
+                position: "right",
+                stopOnFocus: true,
+                style: {
+                    background: "linear-gradient(to right, #1f2937, #374151)",
+                    borderRadius: "0.5rem"
+                }
+            }).showToast();
+
+        })
+        .catch(error => console.error('Erro:', error))
+        .finally(() => { button.disabled = false; });
+    }
             
             // Exibe a notificação
             Toastify({
