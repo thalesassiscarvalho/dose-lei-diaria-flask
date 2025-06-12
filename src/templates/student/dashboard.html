@@ -356,27 +356,16 @@
                 </h3>
                 
                 {% for parent, favorite_topics in structured_favorites.items() %}
-                <ul class="space-y-1">
-                    {% for topic in favorite_topics %}
-                        <li class="ml-4 flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
-                            
-                            {# Link para o tópico à esquerda #}
-                            <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
-                                <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
-                                <span>{{ topic.title }}</span>
-                            </a>
-                            
-                            {# Indicador de Status à direita #}
-                            <span>
-                                {% if topic.is_completed %}
-                                    <span class="completed-badge">Concluída</span>
-                                {% elif topic.is_in_progress %}
-                                    <span class="in-progress-badge">Em Andamento</span>
-                                {% endif %}
-                            </span>
-                            </li>
-                    {% endfor %}
-                </ul>
+                <ul class="space-y-2">
+    {% for topic in favorite_topics %}
+        <li class="ml-4">
+            <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
+                <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
+                <span>{{ topic.title }}</span>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
                     </div>
                 {% endfor %}
             </div>
