@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
-from datetime import datetime
+from datetime import datetime, date # Adicionado 'date' para o novo modelo
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -51,6 +51,14 @@ class User(UserMixin, db.Model):
     favorite_laws = db.relationship("Law", secondary=favorites_association, lazy="dynamic", # Usar lazy='dynamic' pode ser útil para contagens
                                   backref=db.backref("favorited_by_users", lazy=True))
     # --- FIM NOVO ---
+    
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: STREAK DE ESTUDOS >>>
+    # =====================================================================
+    study_activities = db.relationship("StudyActivity", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO: STREAK DE ESTUDOS >>>
+    # =====================================================================
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -109,6 +117,30 @@ class UserSeenAnnouncement(db.Model):
 
     def __repr__(self):
         return f'<UserSeenAnnouncement user={self.user_id} announcement={self.announcement_id}>'
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: STREAK DE ESTUDOS >>>
+# =====================================================================
+
+class StudyActivity(db.Model):
+    """Registra a atividade de estudo diária de um usuário para a funcionalidade de streak."""
+    __tablename__ = 'study_activity'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    study_date = db.Column(db.Date, nullable=False, default=date.today)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Garante que só haverá um registro por usuário por dia
+    __table_args__ = (db.UniqueConstraint('user_id', 'study_date', name='_user_study_date_uc'),)
+
+    def __repr__(self):
+        return f'<StudyActivity User {self.user_id} on {self.study_date}>'
+
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO: STREAK DE ESTUDOS >>>
+# =====================================================================
+
 
 # =====================================================================
 # <<< INÍCIO DA NOVA FUNCIONALIDADE: MODELOS PARA BANNERS DE LEI >>>
