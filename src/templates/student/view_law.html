@@ -1041,7 +1041,7 @@
 </div>
 {% endif %}
 {% if not is_completed %}
-<form action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
+<form id="mark-complete-form" action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
     <div class="action-buttons flex justify-center items-center">
@@ -1079,8 +1079,86 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
+    const completeForm = document.getElementById('mark-complete-form');
+    if (completeForm) {
+        completeForm.addEventListener('submit', function(event) {
+            // Previne o envio padrão do formulário, que recarrega a página
+            event.preventDefault(); 
+            
+            const url = this.action;
+            const csrfTokenInput = this.querySelector('input[name="csrf_token"]');
+            if (!csrfTokenInput) {
+                console.error("Token CSRF não encontrado no formulário!");
+                return;
+            }
+            const csrfToken = csrfTokenInput.value;
+
+            // Mostra um indicador de carregamento no botão
+            const button = this.querySelector('button[type="submit"]');
+            const originalButtonText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando...';
+            button.disabled = true;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken // Importante para segurança
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Verifica se há conquistas desbloqueadas na resposta do servidor
+                    if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
+                        
+                        // Pega a primeira conquista para exibir
+                        const ach = data.unlocked_achievements[0];
+
+                        // Dispara a animação do SweetAlert2!
+                        Swal.fire({
+                            title: 'Conquista Desbloqueada!',
+                            html: `
+                                <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
+                                <h3 class="text-xl font-bold">${ach.name}</h3>
+                                <p class="text-gray-600 mt-2">${ach.description}</p>
+                            `,
+                            icon: 'success',
+                            confirmButtonText: 'Que legal!'
+                        }).then(() => {
+                            // Após o usuário fechar o alerta, recarrega a página para ver o novo status
+                            window.location.reload();
+                        });
+
+                    } else {
+                        // Se não houver conquista, apenas recarrega a página para ver a mensagem flash de sucesso
+                        window.location.reload();
+                    }
+                } else {
+                    // Em caso de erro vindo do servidor
+                    Swal.fire({
+                        title: 'Erro!',
+                        text: data.error || 'Ocorreu um erro ao processar sua solicitação.',
+                        icon: 'error'
+                    });
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Erro no fetch:', error);
+                Swal.fire('Erro de comunicação', 'Não foi possível se conectar ao servidor.', 'error');
+                button.innerHTML = originalButtonText;
+                button.disabled = false;
+            });
+        });
+    }
+    // --- FIM DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
+
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
