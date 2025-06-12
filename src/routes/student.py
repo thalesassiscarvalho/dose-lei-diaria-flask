@@ -207,13 +207,21 @@ def dashboard():
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
     
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: CÁLCULO DO STREAK >>>
-    # =====================================================================
     user_streak = _calculate_user_streak(current_user)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
+
+    # --- INÍCIO DA IMPLEMENTAÇÃO: FAVORITOS NA TELA INICIAL ---
+    # 1. Busca os tópicos favoritos do usuário, já carregando os pais para otimizar.
+    favorite_topics = current_user.favorite_laws.options(joinedload(Law.parent)).filter(Law.parent_id.isnot(None)).all()
+
+    # 2. Estrutura os favoritos em um dicionário: { 'Pai': [lista de filhos favoritos] }
+    structured_favorites = {}
+    if favorite_topics:
+        for topic in favorite_topics:
+            if topic.parent: # Garante que o tópico tem um pai
+                if topic.parent not in structured_favorites:
+                    structured_favorites[topic.parent] = []
+                structured_favorites[topic.parent].append(topic)
+    # --- FIM DA IMPLEMENTAÇÃO: FAVORITOS NA TELA INICIAL ---
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -225,13 +233,9 @@ def dashboard():
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
                            last_accessed_law=last_accessed_law,
-                           # ================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR STREAK PARA O TEMPLATE >>>
-                           # ================================================
-                           user_streak=user_streak
-                           # ================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # ================================================
+                           user_streak=user_streak,
+                           # Passa a nova estrutura de favoritos para o template
+                           structured_favorites=structured_favorites
                            )
 
 
