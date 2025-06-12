@@ -358,16 +358,30 @@
                 {% for parent, favorite_topics in structured_favorites.items() %}
                     <div class="mb-5">
                         <h4 class="text-lg font-bold text-gray-800 mb-2">{{ parent.title }}</h4>
-                        <ul class="space-y-2">
+                        
+                        <ul class="space-y-1">
                             {% for topic in favorite_topics %}
-                                <li class="ml-4">
+                                <li class="ml-4 flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
+                                    
+                                    {# Link para o tópico à esquerda #}
                                     <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
                                         <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
                                         <span>{{ topic.title }}</span>
                                     </a>
+                                    
+                                    {# Indicador de Status à direita #}
+                                    <span>
+                                        {% if topic.is_completed %}
+                                            <span class="completed-badge">Concluída</span>
+                                        {% elif topic.is_in_progress %}
+                                            <span class="in-progress-badge">Em Andamento</span>
+                                        {% endif %}
+                                    </span>
+                        
                                 </li>
                             {% endfor %}
                         </ul>
+
                     </div>
                 {% endfor %}
             </div>
@@ -415,9 +429,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        if (!subjectId) {
-            accordionContainer.innerHTML = '';
-            return;
+        // Correção para o valor 'all' no dropdown de matéria
+        const effectiveSubjectId = subjectId === 'all' ? '' : subjectId;
+
+        if (!effectiveSubjectId && subjectId !== 'all') {
+             accordionContainer.innerHTML = '';
+             return;
         }
 
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
@@ -425,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', showFavorites);
         
-        if (subjectId) params.append('subject_id', subjectId);
+        if (effectiveSubjectId) params.append('subject_id', effectiveSubjectId);
         if (diplomaId) {
             params.append('diploma_id', diplomaId);
             if (refineType === 'status') {
@@ -452,6 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function updateDiplomaFilter(subjectId) {
+        const effectiveSubjectId = subjectId === 'all' ? '' : subjectId;
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         
@@ -459,14 +477,14 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        if (!subjectId) {
-            fetchAndRenderLaws();
+        if (!effectiveSubjectId) {
+            fetchAndRenderLaws(); // Chama para renderizar todas as matérias se "all" for selecionado
             return;
         }
 
         filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
         try {
-            const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
+            const response = await fetch(`/student/api/laws_for_subject/${effectiveSubjectId}`);
             const laws = await response.json();
 
             filterControls.diploma.innerHTML = '<option value="">-- Todas as Leis da Matéria --</option>';
