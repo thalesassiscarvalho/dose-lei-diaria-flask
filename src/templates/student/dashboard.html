@@ -356,34 +356,54 @@
                 </h3>
                 
                 {% for parent, favorite_topics in structured_favorites.items() %}
-                    <div class="mb-5">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">{{ parent.title }}</h4>
-                        
-                        <ul class="space-y-1">
-                            {% for topic in favorite_topics %}
-                                <li class="ml-4 flex items-center justify-between py-1.5 border-b border-gray-100 last:border-b-0">
-                                    
-                                    {# Link para o tópico à esquerda #}
-                                    <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
-                                        <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
-                                        <span>{{ topic.title }}</span>
-                                    </a>
-                                    
-                                    {# Indicador de Status à direita #}
-                                    <span>
+                <div class="mb-5">
+                    <h4 class="text-lg font-bold text-gray-800 mb-2">{{ parent.title }}</h4>
+                    
+                    {# A 'div' a seguir substitui a antiga tag 'ul' para conter os 'topic-item' #}
+                    <div class="space-y-1">
+                        {% for topic in favorite_topics %}
+                            {# Esta é a estrutura completa de um item, igual à da lista principal #}
+                            <div class="topic-item" data-law-id="{{ topic.id }}">
+                                <div class="topic-title">
+                                    <i class="fas fa-file-alt icon"></i>
+                                    <span>{{ topic.title }}</span>
+                                </div>
+                                <div class="topic-actions">
+                                    {# Etiqueta de Status #}
+                                    {% if topic.is_completed %}
+                                        <span class="completed-badge">Concluída</span>
+                                    {% elif topic.is_in_progress %}
+                                        <span class="in-progress-badge">Em Andamento</span>
+                                    {% endif %}
+            
+                                    {# Botão de Ação Principal (Começar/Continuar/Revisar) #}
+                                    <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
                                         {% if topic.is_completed %}
-                                            <span class="completed-badge">Concluída</span>
+                                            <i class="fas fa-check-circle mr-1"></i> Revisar
                                         {% elif topic.is_in_progress %}
-                                            <span class="in-progress-badge">Em Andamento</span>
+                                            <i class="fas fa-book-reader mr-1"></i> Continuar
+                                        {% else %}
+                                            <i class="fas fa-book mr-1"></i> Começar
                                         {% endif %}
-                                    </span>
-                        
-                                </li>
-                            {% endfor %}
-                        </ul>
-
+                                    </a>
+            
+                                    {# Botão para Marcar como Não Concluído (Resetar) #}
+                                    {% if topic.is_completed %}
+                                        <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                            <i class="fas fa-undo-alt"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {# Botão de Favorito #}
+                                    <button type="button" class="favorite-btn js-favorite-btn {% if topic.is_favorite %}favorited{% endif %}" data-law-id="{{ topic.id }}" title="{% if topic.is_favorite %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+                                        <i class="{% if topic.is_favorite %}fas fa-star{% else %}far fa-star{% endif %}"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
+                </div>
+            {% endfor %}
             </div>
     
         {% else %}
@@ -477,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        if (!effectiveSubjectId) {
+        if (!effectiveSubjectId && subjectId !== 'all') {
             fetchAndRenderLaws(); // Chama para renderizar todas as matérias se "all" for selecionado
             return;
         }
