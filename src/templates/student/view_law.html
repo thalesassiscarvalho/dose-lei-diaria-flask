@@ -109,6 +109,46 @@
         border: 1px solid #a7f3d0;
     }
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/4: ESTILOS PARA O BANNER DE AVISO DA LEI >>> */
+    /* ===================================================================== */
+    .law-banner {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.375rem;
+        background-color: #fefce8; /* Amarelo bem claro (yellow-50) */
+        border: 1px solid #fde047; /* Amarelo (yellow-300) */
+        color: #854d0e; /* Amarelo escuro (yellow-800) */
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .law-banner-content {
+        flex-grow: 1;
+    }
+    .law-banner-content p {
+        margin: 0;
+        line-height: 1.5;
+    }
+    .law-banner-dismiss-btn {
+        background: none;
+        border: none;
+        color: inherit;
+        opacity: 0.6;
+        cursor: pointer;
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 0.25rem;
+        margin-top: -0.25rem;
+    }
+    .law-banner-dismiss-btn:hover {
+        opacity: 1;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 1/4 >>> */
+    /* ===================================================================== */
+
     .last-read-info {
         background-color: #e0e7ff; /* Indigo 100 */
         color: #3730a3; /* Indigo 800 */
@@ -497,17 +537,20 @@
 
     .dark-mode .law-content-container,
     .dark-mode .completed-banner,
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4: ESTILO MODO NOTURNO PARA BANNER DE AVISO >>> */
+    /* ===================================================================== */
+    .dark-mode .law-banner,
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
+    /* ===================================================================== */
     .dark-mode .last-read-info,
     .dark-mode #sticky-action-bar,
     .dark-mode .bookmark-section,
     .dark-mode .notes-container,
     .dark-mode .comment-modal-content,
     .dark-mode .audio-player-container,
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/4: CSS MODO NOTURNO PARA JURIDIQUÊS >>> */
-    /* ===================================================================== */
     .dark-mode .juridiques-container,
-    /* ===================================================================== */
     .dark-mode .links-container /* Adicionado para modo noturno */
     {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -548,6 +591,17 @@
         color: #a7f3d0;
         border-color: #059669;
     }
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO PARA MANTER A LÓGICA): ESTILO MODO NOTURNO PARA BANNER >>> */
+    /* ===================================================================== */
+    .dark-mode .law-banner {
+        background-color: #422006;
+        border-color: #ca8a04;
+        color: #fef08a;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
+    /* ===================================================================== */
     .dark-mode .last-read-info {
         background-color: #3730a3; /* Indigo escuro */
         color: #c7d2fe;
@@ -724,7 +778,7 @@
     }
 
     /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4: NOVOS ESTILOS CSS PARA JURIDIQUÊS >>> */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO): NOVOS ESTILOS CSS PARA JURIDIQUÊS >>> */
     /* ===================================================================== */
     .juridiques-container {
         background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
@@ -823,6 +877,14 @@
     </div>
 </div>
 
+{% if banner_to_show %}
+<div id="law-banner-container" class="law-banner" role="alert">
+    <div class="law-banner-content">
+        <p><i class="fas fa-info-circle mr-2"></i> {{ banner_to_show.content }}</p>
+    </div>
+    <button id="dismiss-banner-btn" class="law-banner-dismiss-btn" title="Marcar como visto">&times;</button>
+</div>
+{% endif %}
 <div class="neural-waves-container">
     <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
     <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
@@ -1063,6 +1125,55 @@ document.addEventListener("DOMContentLoaded", function () {
     // <<< FIM: CORREÇÃO DO BUG >>>
     // =================================================================
 
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
+    // =====================================================================
+    const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
+    const bannerContainer = document.getElementById('law-banner-container');
+
+    if (dismissBannerBtn && bannerContainer) {
+        dismissBannerBtn.addEventListener('click', function() {
+            this.disabled = true; // Previne múltiplos cliques
+
+            fetch(`/student/law/${lawId}/mark_banner_seen`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Falha na resposta da rede.');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Animação para esconder o banner suavemente
+                    bannerContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease, margin-bottom 0.5s ease, padding 0.5s ease';
+                    bannerContainer.style.opacity = '0';
+                    bannerContainer.style.transform = 'scaleY(0)';
+                    bannerContainer.style.paddingTop = '0';
+                    bannerContainer.style.paddingBottom = '0';
+                    bannerContainer.style.marginBottom = '0';
+                    setTimeout(() => {
+                        bannerContainer.remove(); // Remove o elemento da página após a animação
+                    }, 500);
+                } else {
+                    alert('Não foi possível marcar o aviso como visto. Tente recarregar a página.');
+                    this.disabled = false; // Reabilita o botão em caso de erro
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao dispensar o banner:', error);
+                alert('Ocorreu um erro de comunicação. Tente novamente.');
+                this.disabled = false;
+            });
+        });
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
+    // =====================================================================
+
 
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
@@ -1241,9 +1352,6 @@ document.addEventListener("DOMContentLoaded", function () {
         pageTop.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO E IMPLEMENTAÇÃO 1/4: Botão "Marcar Onde Parei" >>>
-    // =====================================================================
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
             const lastReadArticle = lastReadArticleInput.value.trim();
@@ -1304,9 +1412,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA CORREÇÃO 1/4 >>>
-    // =====================================================================
 
     const toggleNotesBtn = document.getElementById("toggle-notes-btn");
     const notesContentArea = document.getElementById("notes-content-area");
@@ -1404,9 +1509,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =================================================================
-    // INÍCIO: LÓGICA DE FORMATAÇÃO E MARCA-TEXTO (ATUALIZADA)
-    // =================================================================
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatItalicBtn = document.getElementById('format-italic-btn');
     const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
@@ -1414,7 +1516,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
     const clearFormattingBtn = document.getElementById('clear-formatting-btn');
-    const restoreLawBtn = document.getElementById('restore-law-btn'); // NOVO BOTÃO RESTAURAR
+    const restoreLawBtn = document.getElementById('restore-law-btn');
     let saveMarkupTimeout;
 
     function applyMarkup(command) {
@@ -1523,9 +1625,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =================================================================
-    // <<< INÍCIO: NOVA LÓGICA PARA O BOTÃO RESTAURAR >>>
-    // =================================================================
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
             if (!confirm('Você tem certeza que deseja restaurar a lei? TODAS as suas marcações e anotações neste item serão perdidas permanentemente. Esta ação não pode ser desfeita.')) {
@@ -1554,9 +1653,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =================================================================
-    // <<< FIM: LÓGICA DO BOTÃO RESTAURAR >>>
-    // =================================================================
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
@@ -1807,9 +1903,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: JAVASCRIPT PARA JURIDIQUÊS >>>
-    // =====================================================================
     const toggleJuridiquesBtn = document.getElementById("toggle-juridiques-btn");
     const juridiquesContentArea = document.getElementById("juridiques-content-area");
     const juridiquesChevron = document.getElementById("juridiques-chevron");
@@ -1819,9 +1912,6 @@ document.addEventListener("DOMContentLoaded", function () {
             juridiquesChevron.style.transform = juridiquesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
-    // =====================================================================
 });
 </script>
 {% endblock %}
