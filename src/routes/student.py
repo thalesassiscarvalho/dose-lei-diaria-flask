@@ -6,7 +6,9 @@ from sqlalchemy.orm import joinedload
 # =====================================================================
 # <<< INÍCIO DA IMPLEMENTAÇÃO: NOVOS IMPORTS >>>
 # =====================================================================
-from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner
+# Adicionado 'date' e 'timedelta' para a lógica do Streak
+from datetime import date, timedelta
+from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
@@ -126,6 +128,58 @@ def check_and_award_achievements(user):
 
     return unlocked_achievements_names
 
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO STREAK DE ESTUDOS >>>
+# =====================================================================
+def _record_study_activity(user: User):
+    """Registra que o usuário estudou hoje. Cria um registro em StudyActivity se ainda não houver um para o dia."""
+    today = date.today()
+    # Verifica se já existe um registro para o usuário no dia de hoje
+    activity_exists = user.study_activities.filter(StudyActivity.study_date == today).first()
+
+    if not activity_exists:
+        try:
+            new_activity = StudyActivity(user_id=user.id, study_date=today)
+            db.session.add(new_activity)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Erro ao registrar atividade de estudo para o usuário {user.id}: {e}")
+
+def _calculate_user_streak(user: User) -> int:
+    """Calcula a sequência de dias de estudo consecutivos do usuário."""
+    activities = user.study_activities.order_by(StudyActivity.study_date.desc()).all()
+    
+    if not activities:
+        return 0
+
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    
+    latest_activity_date = activities[0].study_date
+    
+    # Se a última atividade não foi hoje nem ontem, a sequência foi quebrada.
+    if latest_activity_date not in [today, yesterday]:
+        return 0
+
+    streak_count = 1
+    current_date = latest_activity_date
+
+    # Itera sobre as atividades restantes para contar os dias consecutivos
+    for activity in activities[1:]:
+        expected_previous_day = current_date - timedelta(days=1)
+        if activity.study_date == expected_previous_day:
+            streak_count += 1
+            current_date = activity.study_date
+        else:
+            # A sequência foi interrompida
+            break
+            
+    return streak_count
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -149,6 +203,14 @@ def dashboard():
     non_fixed_announcements = Announcement.query.filter(
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
+    
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: CÁLCULO DO STREAK >>>
+    # =====================================================================
+    user_streak = _calculate_user_streak(current_user)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -159,7 +221,15 @@ def dashboard():
                            user_achievements=current_user.achievements,
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
-                           last_accessed_law=last_accessed_law)
+                           last_accessed_law=last_accessed_law,
+                           # ================================================
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR STREAK PARA O TEMPLATE >>>
+                           # ================================================
+                           user_streak=user_streak
+                           # ================================================
+                           # <<< FIM DA IMPLEMENTAÇÃO >>>
+                           # ================================================
+                           )
 
 
 @student_bp.route("/filter_laws")
@@ -258,6 +328,14 @@ def view_law(law_id):
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
+        
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: REGISTRO DA ATIVIDADE DE ESTUDO >>>
+    # =====================================================================
+    _record_study_activity(current_user)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
