@@ -48,7 +48,7 @@ class User(UserMixin, db.Model):
                                  backref=db.backref("users", lazy=True))
     
     # --- NOVO: Relacionamento com Leis Favoritas ---
-    favorite_laws = db.relationship("Law", secondary=favorites_association, lazy="dynamic", # Usar lazy=\'dynamic\' pode ser útil para contagens
+    favorite_laws = db.relationship("Law", secondary=favorites_association, lazy="dynamic", # Usar lazy='dynamic' pode ser útil para contagens
                                   backref=db.backref("favorited_by_users", lazy=True))
     # --- FIM NOVO ---
 
@@ -98,8 +98,6 @@ class Announcement(db.Model):
         return f"<Announcement {self.title}>"
 
 
-
-
 # Tabela para rastrear avisos vistos por usuários
 class UserSeenAnnouncement(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
@@ -112,3 +110,49 @@ class UserSeenAnnouncement(db.Model):
     def __repr__(self):
         return f'<UserSeenAnnouncement user={self.user_id} announcement={self.announcement_id}>'
 
+# =====================================================================
+# <<< INÍCIO DA NOVA FUNCIONALIDADE: MODELOS PARA BANNERS DE LEI >>>
+# =====================================================================
+
+class LawBanner(db.Model):
+    """
+    Armazena o conteúdo do banner para uma lei específica.
+    Cada lei pode ter no máximo um banner (relação um-para-um).
+    """
+    __tablename__ = 'law_banner'
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Chave estrangeira para a lei, garantindo que seja única
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='CASCADE'), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<LawBanner para Law ID {self.law_id}>'
+
+class UserSeenLawBanner(db.Model):
+    """
+    Rastreia qual usuário viu qual versão específica do banner de uma lei.
+    A 'versão' é identificada pelo timestamp 'last_updated' do banner.
+    """
+    __tablename__ = 'user_seen_law_banner'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='CASCADE'), nullable=False)
+    
+    # Armazena o timestamp exato do banner que foi visto
+    seen_at_timestamp = db.Column(db.DateTime, nullable=False)
+    
+    # Relações para facilitar consultas
+    user = db.relationship('User', backref=db.backref('seen_law_banners', lazy='dynamic'))
+    law = db.relationship('Law', backref=db.backref('seen_by_users', lazy='dynamic'))
+
+    # Garante que um usuário só pode ter um registro de 'visto' para uma versão específica do banner
+    __table_args__ = (db.UniqueConstraint('user_id', 'law_id', 'seen_at_timestamp', name='_user_law_timestamp_uc'),)
+
+    def __repr__(self):
+        return f'<UserSeenLawBanner user={self.user_id} law={self.law_id} @ {self.seen_at_timestamp}>'
+
+# =====================================================================
+# <<< FIM DA NOVA FUNCIONALIDADE >>>
+# =====================================================================
