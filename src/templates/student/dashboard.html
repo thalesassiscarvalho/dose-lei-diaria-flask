@@ -186,22 +186,35 @@
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2 stat-card progress-card">
-            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
-                <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-            </div>
-            <div class="progress-bar-container w-full">
-                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-            </div>
+   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <div class="md:col-span-1 stat-card progress-card">
+        <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
+            <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
         </div>
-        <div class="stat-card points-card">
-            <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
-            <div class="points-display">{{ user_points }}</div>
+        <div class="progress-bar-container w-full">
+            <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
+
+    <div class="stat-card streak-card">
+        <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+        {% if user_streak > 0 %}
+            <div class="streak-display">{{ user_streak }}</div>
+            <p class="streak-text">dias consecutivos!</p>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+        {% endif %}
+    </div>
+
+    <div class="stat-card points-card">
+        <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
+        <div class="points-display">{{ user_points }}</div>
+    </div>
+
+</div>
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
         {% if user_achievements %}
