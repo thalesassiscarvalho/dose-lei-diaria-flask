@@ -311,6 +311,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
@@ -700,30 +703,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // ADIÇÃO 2/2: Função de Favoritar com Notificação
     function handleFavoriteClick() {
         const button = this;
         button.disabled = true;
         const lawId = button.dataset.lawId;
         const icon = button.querySelector('i');
-        fetch(`/student/law/toggle_favorite/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+
+        // Pega o título do tópico para a mensagem
+        const topicItem = button.closest('.topic-item'); 
+        const topicTitle = topicItem ? topicItem.querySelector('.topic-title span').textContent : 'Item';
+
+        fetch(`/student/law/toggle_favorite/${lawId}`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+        })
         .then(response => response.json())
         .then(data => {
+            let notificationText = '';
+
             if (data.favorited) {
                 button.classList.add('favorited');
                 icon.className = 'fas fa-star';
                 button.title = 'Remover dos Favoritos';
+                notificationText = `'${topicTitle}' adicionado aos favoritos!`;
             } else {
                 button.classList.remove('favorited');
                 icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
+                notificationText = `'${topicTitle}' removido dos favoritos.`;
                 if (filterControls.favorites.checked) {
-                    button.closest('.topic-item').remove();
+                    // Remove o item da lista se a opção "apenas favoritas" estiver marcada
+                    const itemToRemove = button.closest('.topic-item');
+                    if(itemToRemove) itemToRemove.remove();
                 }
             }
+            
+            // Exibe a notificação
+            Toastify({
+                text: notificationText,
+                duration: 3000,
+                close: true,
+                gravity: "bottom",
+                position: "right",
+                stopOnFocus: true,
+                style: {
+                    background: "linear-gradient(to right, #1f2937, #374151)",
+                    borderRadius: "0.5rem"
+                }
+            }).showToast();
+
         })
         .catch(error => console.error('Erro:', error))
         .finally(() => { button.disabled = false; });
     }
+
     function handleMarkIncompleteClick() {
         const buttonEl = this;
         buttonEl.disabled = true;
