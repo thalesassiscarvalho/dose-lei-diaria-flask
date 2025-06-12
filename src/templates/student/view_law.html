@@ -1080,13 +1080,15 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
     const completeForm = document.getElementById('mark-complete-form');
     if (completeForm) {
         completeForm.addEventListener('submit', function(event) {
-            // Previne o envio padrão do formulário, que recarrega a página
             event.preventDefault(); 
             
             const url = this.action;
@@ -1097,7 +1099,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             const csrfToken = csrfTokenInput.value;
 
-            // Mostra um indicador de carregamento no botão
             const button = this.querySelector('button[type="submit"]');
             const originalButtonText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando...';
@@ -1107,19 +1108,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken // Importante para segurança
+                    'X-CSRFToken': csrfToken
                 },
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Verifica se há conquistas desbloqueadas na resposta do servidor
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
-                        
-                        // Pega a primeira conquista para exibir
                         const ach = data.unlocked_achievements[0];
-
-                        // Dispara a animação do SweetAlert2!
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: `
@@ -1130,16 +1126,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!'
                         }).then(() => {
-                            // Após o usuário fechar o alerta, recarrega a página para ver o novo status
                             window.location.reload();
                         });
-
                     } else {
-                        // Se não houver conquista, apenas recarrega a página para ver a mensagem flash de sucesso
                         window.location.reload();
                     }
                 } else {
-                    // Em caso de erro vindo do servidor
                     Swal.fire({
                         title: 'Erro!',
                         text: data.error || 'Ocorreu um erro ao processar sua solicitação.',
@@ -1176,22 +1168,18 @@ document.addEventListener("DOMContentLoaded", function () {
         const descriptionText = templateDescriptionP.textContent.trim();
         if (!descriptionText) return;
 
-        // Procura pelo parágrafo duplicado que pode ter sido injetado com o conteúdo
         let potentialDuplicate = templateDescriptionP.nextElementSibling;
         while (potentialDuplicate) {
-            // Remove parágrafos vazios que o editor pode ter deixado
             if (potentialDuplicate.tagName === 'P' && potentialDuplicate.innerHTML.trim().toLowerCase() === '&nbsp;') {
                  let elementToRemove = potentialDuplicate;
                  potentialDuplicate = potentialDuplicate.nextElementSibling;
                  elementToRemove.remove();
                  continue;
             }
-            // Se encontrar o parágrafo duplicado, remove e para a busca
             if (potentialDuplicate.tagName === 'P' && potentialDuplicate.textContent.trim() === descriptionText) {
                 potentialDuplicate.remove();
                 break; 
             }
-             // Se encontrar qualquer outro conteúdo real, para a busca para evitar apagar algo importante
             if (potentialDuplicate.textContent.trim() !== '') {
                 break;
             }
@@ -1211,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (dismissBannerBtn && bannerContainer) {
         dismissBannerBtn.addEventListener('click', function() {
-            this.disabled = true; // Previne múltiplos cliques
+            this.disabled = true;
 
             fetch(`/student/law/${lawId}/mark_banner_seen`, {
                 method: 'POST',
@@ -1226,7 +1214,6 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(data => {
                 if (data.success) {
-                    // Animação para esconder o banner suavemente
                     bannerContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease, margin-bottom 0.5s ease, padding 0.5s ease';
                     bannerContainer.style.opacity = '0';
                     bannerContainer.style.transform = 'scaleY(0)';
@@ -1234,11 +1221,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     bannerContainer.style.paddingBottom = '0';
                     bannerContainer.style.marginBottom = '0';
                     setTimeout(() => {
-                        bannerContainer.remove(); // Remove o elemento da página após a animação
+                        bannerContainer.remove();
                     }, 500);
                 } else {
                     alert('Não foi possível marcar o aviso como visto. Tente recarregar a página.');
-                    this.disabled = false; // Reabilita o botão em caso de erro
+                    this.disabled = false;
                 }
             })
             .catch(error => {
@@ -1732,10 +1719,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // ADIÇÃO 2/2: Função de Favoritar com Notificação
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
+            const lawTitle = '{{ law.title | e }}'; // Pega o título da lei de forma segura
+
             fetch(`/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
@@ -1745,6 +1735,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 this.classList.toggle('favorited', data.favorited);
                 this.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
                 this.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
+
+                const notificationText = data.favorited 
+                    ? `'${lawTitle}' adicionado aos favoritos!`
+                    : `'${lawTitle}' removido dos favoritos.`;
+
+                Toastify({
+                    text: notificationText,
+                    duration: 3000,
+                    close: true,
+                    gravity: "bottom",
+                    position: "right",
+                    stopOnFocus: true,
+                    style: {
+                        background: "linear-gradient(to right, #1f2937, #374151)",
+                        borderRadius: "0.5rem"
+                    }
+                }).showToast();
+
             })
             .catch(error => {
                 console.error('Erro:', error);
