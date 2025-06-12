@@ -303,9 +303,34 @@
     </div>
 
     <div id="initial-prompt" class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
-        <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
-        <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
+        {% if structured_favorites %}
+            <div class="text-left">
+                <h3 class="text-xl font-semibold text-gray-700 mb-6 flex items-center justify-center">
+                    <i class="fas fa-star text-yellow-400 mr-3"></i>Acesso Rápido aos Seus Favoritos
+                </h3>
+                
+                {% for parent, favorite_topics in structured_favorites.items() %}
+                    <div class="mb-5">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">{{ parent.title }}</h4>
+                        <ul class="space-y-2">
+                            {% for topic in favorite_topics %}
+                                <li class="ml-4">
+                                    <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
+                                        <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
+                                        <span>{{ topic.title }}</span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
+            <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -345,6 +370,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
         if (!subjectId) {
+            // Se nenhuma matéria estiver selecionada, oculta a área de leis e mostra o prompt inicial
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
             accordionContainer.innerHTML = '';
             return;
         }
@@ -389,7 +418,6 @@ document.addEventListener('DOMContentLoaded', function() {
         await updateTopicFilter(null);
 
         if (!subjectId) {
-            fetchAndRenderLaws();
             return;
         }
 
@@ -408,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Erro ao buscar leis:", error);
             filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
         }
-        fetchAndRenderLaws();
     }
 
     async function updateTopicFilter(lawId) {
@@ -456,11 +483,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 html += `
                 <div class="accordion-item">
-                    <div class="accordion-header ${openClass}">
-                        <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
+                    <div class="accordion-header <span class="math-inline">\{openClass\}"\>
+<div class\="diploma\-title"\><i class\="fas fa\-gavel icon"\></i\><span\></span>{diploma.title}</span></div>
                         <div class="diploma-progress">
-                            <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
-                            <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
+                            <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: <span class="math-inline">\{diploma\.progress\_percentage \|\| 0\}%;"\></div\></div\>
+<span class\="text\-sm font\-bold" style\="color\: \#2563eb;"\></span>{Math.round(diploma.progress_percentage || 0)}%</span>
                             <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
                         </div>
                     </div>
@@ -495,14 +522,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
-        <div class="topic-item" data-law-id="${topic.id}">
-            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
+        <div class="topic-item" data-law-id="<span class="math-inline">\{topic\.id\}"\>
+<div class\="topic\-title"\><i class\="fas fa\-file\-alt icon"\></i\><span\></span>{topic.title}</span></div>
             <div class="topic-actions">
-                ${statusBadge}
-                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
+                <span class="math-inline">\{statusBadge\}
+<a href\="/student/law/</span>{topic.id}" class="action-button">${actionButtonText}</a>
                 ${reviewButton}
-                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
-                    <i class="${favoriteIcon}"></i>
+                <button type="button" class="favorite-btn js-favorite-btn <span class="math-inline">\{favoriteClass\}" data\-law\-id\="</span>{topic.id}" title="<span class="math-inline">\{favoriteTitle\}"\>
+<i class\="</span>{favoriteIcon}"></i>
                 </button>
             </div>
         </div>`;
@@ -548,6 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId);
+        fetchAndRenderLaws();
     });
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -609,17 +637,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (query.length < 3) {
             resultsContainer.style.display = 'none';
-            // Se o usuário apaga a busca, não fazemos nada, deixamos os filtros hierárquicos mandarem
             return;
         }
 
-        // Limpa os filtros hierárquicos para dar prioridade à busca
-        filterControls.subject.value = '';
-        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
-        filterControls.diploma.disabled = true;
-        filterControls.refinementWrapper.style.visibility = 'hidden';
-        
-        // Esconde a lista de leis e o prompt inicial
         initialPrompt.style.display = 'none';
         lawsSection.style.display = 'none';
 
@@ -644,8 +664,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.innerHTML = `
-                <span class="autocomplete-item-title">${item.title}</span>
-                <span class="autocomplete-item-category">${item.category}</span>
+                <span class="autocomplete-item-title"><span class="math-inline">\{item\.title\}</span\>
+<span class\="autocomplete\-item\-category"\></span>{item.category}</span>
             `;
             div.onclick = () => {
                 window.location.href = item.url;
@@ -703,61 +723,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ADIÇÃO 2/2: Função de Favoritar com Notificação
     function handleFavoriteClick() {
         const button = this;
         button.disabled = true;
         const lawId = button.dataset.lawId;
         const icon = button.querySelector('i');
-
-        // Pega o título do tópico para a mensagem
-        const topicItem = button.closest('.topic-item'); 
-        const topicTitle = topicItem ? topicItem.querySelector('.topic-title span').textContent : 'Item';
-
-        fetch(`/student/law/toggle_favorite/${lawId}`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-        })
+        fetch(`/student/law/toggle_favorite/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
         .then(response => response.json())
         .then(data => {
-            let notificationText = '';
-
             if (data.favorited) {
                 button.classList.add('favorited');
                 icon.className = 'fas fa-star';
                 button.title = 'Remover dos Favoritos';
-                notificationText = `'${topicTitle}' adicionado aos favoritos!`;
             } else {
                 button.classList.remove('favorited');
                 icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
-                notificationText = `'${topicTitle}' removido dos favoritos.`;
                 if (filterControls.favorites.checked) {
-                    // Remove o item da lista se a opção "apenas favoritas" estiver marcada
-                    const itemToRemove = button.closest('.topic-item');
-                    if(itemToRemove) itemToRemove.remove();
+                    button.closest('.topic-item').remove();
                 }
             }
-            
-            // Exibe a notificação
-            Toastify({
-                text: notificationText,
-                duration: 3000,
-                close: true,
-                gravity: "bottom",
-                position: "right",
-                stopOnFocus: true,
-                style: {
-                    background: "linear-gradient(to right, #1f2937, #374151)",
-                    borderRadius: "0.5rem"
-                }
-            }).showToast();
-
         })
         .catch(error => console.error('Erro:', error))
         .finally(() => { button.disabled = false; });
     }
-
     function handleMarkIncompleteClick() {
         const buttonEl = this;
         buttonEl.disabled = true;
@@ -784,3 +773,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+}
+Based on the `student.py` document, the `_calculate_user_streak` function serves to compute the number of consecutive days a user has studied. The logic for maintaining or breaking a streak is as follows:
+
+A user's streak is maintained if their most recent study activity was recorded either on the current day or the preceding day.
+The streak is considered broken, and reset to zero, if the user's latest study session did not occur on the current day or the day before.
+If a user has no recorded study activities, their streak is zero.
+
+The function determines the streak by starting a count from the user's most recent study date and iterating backwards through their study history, day by day, to count all uninterrupted sessions.
