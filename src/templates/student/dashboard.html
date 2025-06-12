@@ -67,13 +67,6 @@
     .achievements-card .stat-card-title i { color: #8b5cf6; background-color: #f5f3ff; }
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-
-    .streak-card { text-align: center; justify-content: center; background: linear-gradient(145deg, #fff2e6, #fff9f2); border-color: #ffc085; }
-    .streak-card .stat-card-title { justify-content: center; }
-    .streak-card .stat-card-title i { color: #f97316; background-color: #ffffff; }
-    .streak-display { font-size: 2.75rem; font-weight: 800; color: #ea580c; line-height: 1; }
-    .streak-text { font-size: 0.875rem; font-weight: 600; color: #f97316; margin-top: -0.25rem; }
-
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
     .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
@@ -166,8 +159,8 @@
     {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-1 stat-card progress-card">
-            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
+        <div class="md:col-span-2 stat-card progress-card">
+            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu progresso</h2>
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
                 <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
@@ -176,17 +169,6 @@
                 <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
             </div>
         </div>
-
-        <div class="stat-card streak-card">
-            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            {% if user_streak > 0 %}
-                <div class="streak-display">{{ user_streak }}</div>
-                <p class="streak-text">dias consecutivos!</p>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-            {% endif %}
-        </div>
-
         <div class="stat-card points-card">
             <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
             <div class="points-display">{{ user_points }}</div>
@@ -430,11 +412,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 html += `
                 <div class="accordion-item">
-                    <div class="accordion-header <span class="math-inline">\{openClass\}"\>
-<div class\="diploma\-title"\><i class\="fas fa\-gavel icon"\></i\><span\></span>{diploma.title}</span></div>
+                    <div class="accordion-header ${openClass}">
+                        <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
                         <div class="diploma-progress">
-                            <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: <span class="math-inline">\{diploma\.progress\_percentage \|\| 0\}%;"\></div\></div\>
-<span class\="text\-sm font\-bold" style\="color\: \#2563eb;"\></span>{Math.round(diploma.progress_percentage || 0)}%</span>
+                            <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
+                            <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
                             <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
                         </div>
                     </div>
@@ -469,14 +451,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
-        <div class="topic-item" data-law-id="<span class="math-inline">\{topic\.id\}"\>
-<div class\="topic\-title"\><i class\="fas fa\-file\-alt icon"\></i\><span\></span>{topic.title}</span></div>
+        <div class="topic-item" data-law-id="${topic.id}">
+            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
             <div class="topic-actions">
-                <span class="math-inline">\{statusBadge\}
-<a href\="/student/law/</span>{topic.id}" class="action-button">${actionButtonText}</a>
+                ${statusBadge}
+                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
                 ${reviewButton}
-                <button type="button" class="favorite-btn js-favorite-btn <span class="math-inline">\{favoriteClass\}" data\-law\-id\="</span>{topic.id}" title="<span class="math-inline">\{favoriteTitle\}"\>
-<i class\="</span>{favoriteIcon}"></i>
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
+                    <i class="${favoriteIcon}"></i>
                 </button>
             </div>
         </div>`;
@@ -618,8 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.innerHTML = `
-                <span class="autocomplete-item-title"><span class="math-inline">\{item\.title\}</span\>
-<span class\="autocomplete\-item\-category"\></span>{item.category}</span>
+                <span class="autocomplete-item-title">${item.title}</span>
+                <span class="autocomplete-item-category">${item.category}</span>
             `;
             div.onclick = () => {
                 window.location.href = item.url;
