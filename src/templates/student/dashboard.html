@@ -70,20 +70,13 @@
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
     .streak-card {
+        text-align: center;
+        justify-content: center;
         background: linear-gradient(145deg, #fff7ed, #fffcf9);
         border-color: #fed7aa;
-        justify-content: space-between; /* Distribui o espaço */
-    }
-    .streak-card-header {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
     }
     .streak-card .stat-card-title {
         justify-content: center;
-        margin-bottom: 0.5rem;
     }
     .streak-card .stat-card-title i {
         color: #f97316;
@@ -94,6 +87,7 @@
         font-weight: 800;
         color: #ea580c;
         line-height: 1;
+        margin-top: 0.5rem;
     }
     .streak-text {
         font-size: 0.875rem;
@@ -101,34 +95,6 @@
         color: #f97316;
         margin-top: 0.25rem;
     }
-    #study-heatmap {
-        width: 100%;
-        margin-top: 1rem;
-        overflow: hidden;
-    }
-    .heatmap-subtitle {
-        font-size: 0.75rem;
-        color: #f97316;
-        text-align: center;
-        margin-top: 1rem;
-    }
-    .ch-day {
-        border-radius: 3px;
-    }
-    .ch-tooltip {
-        background: #2d3748 !important;
-        color: white !important;
-        border-radius: 6px !important;
-        padding: 8px 12px !important;
-        font-size: 0.8rem !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-        border: none !important;
-    }
-    .graph-label {
-        font-size: 10px !important;
-        fill: #718096 !important;
-    }
-
 
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
@@ -337,23 +303,16 @@
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
-    
-    <div class="stat-card streak-card">
-        <div class="streak-card-header">
-            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            {% if user_streak > 0 %}
-                <div class="streak-display">{{ user_streak }}</div>
-                <p class="streak-text">dias consecutivos!</p>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-            {% endif %}
-        </div>
-        <div>
-            <div id="study-heatmap"></div>
-            <p class="heatmap-subtitle">Atividade nos últimos 70 dias</p>
-        </div>
-    </div>
 
+    <div class="stat-card streak-card">
+        <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+        {% if user_streak > 0 %}
+            <div class="streak-display">{{ user_streak }}</div>
+            <p class="streak-text">dias consecutivos!</p>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+        {% endif %}
+    </div>
 
     <div class="stat-card points-card">
         <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
@@ -542,11 +501,6 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.css">
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
@@ -569,41 +523,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const lawsSection = document.getElementById('laws-section');
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
-    
-    // --- LÓGICA DO MAPA DE CALOR ("LINHA DE ATIVIDADE") ---
-    function initializeStudyHeatmap() {
-        const cal = new CalHeatmap();
-        cal.paint({
-            data: {
-                source: '/student/api/study_activity',
-                type: 'json' // CORREÇÃO APLICADA AQUI
-            },
-            date: {
-                start: new Date(new Date().setDate(new Date().getDate() - 69)),
-            },
-            range: 70,
-            scale: {
-                color: {
-                    type: 'linear',
-                    range: ['#fed7aa', '#f97316'],
-                    domain: [1, 1]
-                }
-            },
-            domain: {
-                type: 'day',
-                gutter: 2,
-                label: { text: null }
-            },
-            subDomain: { 
-                type: 'ghDay',
-                width: 10,
-                height: 10,
-                radius: 2,
-            },
-            itemSelector: '#study-heatmap',
-        });
-    }
-    initializeStudyHeatmap();
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
@@ -710,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- INÍCIO: 1ª e 2ª MELHORIA - RENDERIZAÇÃO COM ACORDEÕES FECHADOS ---
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -718,6 +638,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '';
         for (const subjectName in subjects) {
+            // O cabeçalho da matéria agora começa fechado (sem a classe 'open')
+            // e o conteúdo começa escondido ('display: none')
             html += `
             <div class="subject-accordion-item">
                 <div class="subject-accordion-header">
@@ -726,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="subject-accordion-content">
                     ${subjects[subjectName].map(diploma => {
+                        // O cabeçalho da lei também começa fechado, independentemente do filtro
                         const displayStyle = 'none';
                         const iconRotation = 'rotate(0deg)';
 
@@ -750,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
         accordionContainer.innerHTML = html;
         attachEventListeners();
     }
+    // --- FIM DA ALTERAÇÃO ---
 
     function renderTopicItem(topic) {
         let statusBadge = '';
