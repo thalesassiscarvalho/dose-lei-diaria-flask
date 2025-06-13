@@ -69,14 +69,23 @@
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
+    /* --- INÍCIO DA ALTERAÇÃO: ESTILOS DO CARD DE STREAK E MAPA DE CALOR --- */
     .streak-card {
-        text-align: center;
-        justify-content: center;
         background: linear-gradient(145deg, #fff7ed, #fffcf9);
         border-color: #fed7aa;
+        justify-content: flex-start; /* Alinha o conteúdo ao topo */
+        padding-bottom: 0.5rem; /* Menos padding inferior para o mapa de calor */
+    }
+    .streak-card-header {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 1rem;
     }
     .streak-card .stat-card-title {
         justify-content: center;
+        margin-bottom: 0.5rem; /* Menos margem no título */
     }
     .streak-card .stat-card-title i {
         color: #f97316;
@@ -87,7 +96,6 @@
         font-weight: 800;
         color: #ea580c;
         line-height: 1;
-        margin-top: 0.5rem;
     }
     .streak-text {
         font-size: 0.875rem;
@@ -95,6 +103,25 @@
         color: #f97316;
         margin-top: 0.25rem;
     }
+    #study-heatmap {
+        width: 100%;
+        margin-top: 1rem;
+        overflow: hidden;
+    }
+    /* Estilos para customizar a aparência do Cal-Heatmap */
+    .ch-day {
+        border-radius: 3px; /* Células do dia com bordas arredondadas */
+    }
+    .ch-tooltip { /* Tooltip que aparece ao passar o mouse */
+        background: #2d3748 !important;
+        color: white !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        border: none !important;
+    }
+    /* --- FIM DA ALTERAÇÃO --- */
 
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
@@ -303,17 +330,19 @@
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
-
+    
     <div class="stat-card streak-card">
-        <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-        {% if user_streak > 0 %}
-            <div class="streak-display">{{ user_streak }}</div>
-            <p class="streak-text">dias consecutivos!</p>
-        {% else %}
-            <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-        {% endif %}
+        <div class="streak-card-header">
+            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+            {% if user_streak > 0 %}
+                <div class="streak-display">{{ user_streak }}</div>
+                <p class="streak-text">dias consecutivos!</p>
+            {% else %}
+                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+            {% endif %}
+        </div>
+        <div id="study-heatmap"></div>
     </div>
-
     <div class="stat-card points-card">
         <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
         <div class="points-display">{{ user_points }}</div>
@@ -501,6 +530,9 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.css">
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
@@ -523,6 +555,49 @@ document.addEventListener('DOMContentLoaded', function() {
     const lawsSection = document.getElementById('laws-section');
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
+    
+    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR ---
+    function initializeStudyHeatmap() {
+        const cal = new CalHeatmap();
+        cal.paint({
+            data: {
+                source: '/student/api/study_activity', // Nova rota da API
+                type: 'json',
+                x: 'date',
+                y: 'value'
+            },
+            date: {
+                start: new Date(new Date().setMonth(new Date().getMonth() - 5)), // Exibir os últimos 6 meses
+                locale: { weekStart: 1, // Semana começa na segunda-feira
+                    months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    weekdays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] 
+                }
+            },
+            range: 6, // Número de meses a serem exibidos
+            scale: {
+                color: {
+                    type: 'linear',
+                    range: ['#fed7aa', '#f97316'], // Cores do tema: de laranja claro a laranja escuro
+                    domain: [1, 1] // Domínio simples: qualquer valor > 0 usa a cor
+                }
+            },
+            domain: {
+                type: 'month',
+                paddin: [10, 10, 10, 10],
+                label: { text: 'MMM', textAlign: 'start', position: 'top' }
+            },
+            subDomain: { 
+                type: 'ghDay', // Estilo similar ao do GitHub
+                width: 13, 
+                height: 13, 
+                radius: 3, 
+                gutter: 4
+            },
+            itemSelector: '#study-heatmap', // Onde o mapa será renderizado
+        });
+    }
+    initializeStudyHeatmap();
+    // --- FIM DA ALTERAÇÃO ---
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
