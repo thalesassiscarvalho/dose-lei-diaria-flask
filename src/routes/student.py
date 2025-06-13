@@ -3,8 +3,15 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVOS IMPORTS >>>
+# =====================================================================
+# Adicionado 'date' e 'timedelta' para a lógica do Streak
 from datetime import date, timedelta
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
@@ -15,7 +22,7 @@ import logging
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE NÍVEIS E PONTOS >>>
+# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE NÍVEIS E PONTOS (ADICIONADA) >>>
 # =====================================================================
 # Mapeamento de 'laws_completed_threshold' para 'min_points' (1 lei = 10 pontos)
 LEVELS = [
@@ -75,7 +82,9 @@ def get_user_level_info(points):
 # <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
 
-
+# =====================================================================
+# <<< ENDPOINTS DE API PARA FILTROS E BUSCA >>>
+# =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
 def get_laws_for_subject(subject_id):
@@ -88,7 +97,6 @@ def get_laws_for_subject(subject_id):
     ).order_by(Law.title).all()
     return jsonify([{"id": law.id, "title": law.title} for law in laws])
 
-
 @student_bp.route("/api/topics_for_law/<int:law_id>")
 @login_required
 def get_topics_for_law(law_id):
@@ -99,7 +107,9 @@ def get_topics_for_law(law_id):
     topics = Law.query.filter_by(parent_id=law_id).order_by(Law.id).all()
     return jsonify([{"id": topic.id, "title": topic.title} for topic in topics])
 
-
+# =====================================================================
+# <<< NOVO ENDPOINT DE API PARA BUSCA COM AUTOCOMPLETE >>>
+# =====================================================================
 @student_bp.route("/api/autocomplete_search")
 @login_required
 def autocomplete_search():
@@ -155,11 +165,14 @@ def autocomplete_search():
             seen.add(identifier)
 
     return jsonify(results=unique_results[:7]) # Retorna no máximo 7 resultados únicos
+# =====================================================================
 
 
+# --- INÍCIO DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (1/2) ---
+# A função agora retorna os objetos de conquista completos para que possamos usar seus detalhes na animação.
 def check_and_award_achievements(user):
     """Verifica e concede conquistas ao usuário."""
-    unlocked_achievements_objects = []
+    unlocked_achievements_objects = []  # Alterado de 'names' para 'objects'
     completed_laws_count = UserProgress.query.filter_by(user_id=user.id, status='concluido').count()
     all_achievements = Achievement.query.all()
     user_achievement_ids = {a.id for a in user.achievements}
@@ -174,14 +187,18 @@ def check_and_award_achievements(user):
 
             if unlocked:
                 user.achievements.append(achievement)
-                unlocked_achievements_objects.append(achievement)
+                unlocked_achievements_objects.append(achievement)  # Adiciona o objeto completo
 
-    return unlocked_achievements_objects
+    return unlocked_achievements_objects  # Retorna a lista de objetos
+# --- FIM DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (1/2) ---
 
-
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO STREAK DE ESTUDOS >>>
+# =====================================================================
 def _record_study_activity(user: User):
     """Registra que o usuário estudou hoje. Cria um registro em StudyActivity se ainda não houver um para o dia."""
     today = date.today()
+    # Verifica se já existe um registro para o usuário no dia de hoje
     activity_exists = user.study_activities.filter(StudyActivity.study_date == today).first()
 
     if not activity_exists:
@@ -205,22 +222,27 @@ def _calculate_user_streak(user: User) -> int:
     
     latest_activity_date = activities[0].study_date
     
+    # Se a última atividade não foi hoje nem ontem, a sequência foi quebrada.
     if latest_activity_date not in [today, yesterday]:
         return 0
 
     streak_count = 1
     current_date = latest_activity_date
 
+    # Itera sobre as atividades restantes para contar os dias consecutivos
     for activity in activities[1:]:
         expected_previous_day = current_date - timedelta(days=1)
         if activity.study_date == expected_previous_day:
             streak_count += 1
             current_date = activity.study_date
         else:
+            # A sequência foi interrompida
             break
             
     return streak_count
-
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 
 @student_bp.route("/dashboard")
 @login_required
@@ -248,15 +270,18 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
+    # --- INÍCIO: 3ª MELHORIA - LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
     favorites_by_subject = {}
     
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
+    # Garante que a relação 'parent' e 'subject' sejam carregadas para evitar múltiplas queries
     favorite_topics_query = current_user.favorite_laws.options(
         joinedload(Law.parent).joinedload(Law.subject)
     ).filter(Law.parent_id.isnot(None)).all()
 
+    # Primeiro, agrupa os tópicos por Lei (parent)
     grouped_by_law = {}
     for topic in favorite_topics_query:
         if topic.parent:
@@ -264,6 +289,7 @@ def dashboard():
                 grouped_by_law[topic.parent] = []
             grouped_by_law[topic.parent].append(topic)
     
+    # Agora, cria os cards de Lei e os agrupa por Matéria
     for law, topics in grouped_by_law.items():
         subject = law.subject
         if not subject:
@@ -292,8 +318,10 @@ def dashboard():
             "progress": progress_percentage
         })
 
+    # --- FIM DA LÓGICA ---
+
     # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: CHAMADA DA FUNÇÃO DE NÍVEL >>>
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: CHAMADA DA FUNÇÃO DE NÍVEL (ADICIONADA) >>>
     # =====================================================================
     level_info = get_user_level_info(current_user.points)
     # =====================================================================
@@ -313,7 +341,7 @@ def dashboard():
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
                            # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DE NÍVEL PARA O TEMPLATE >>>
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DE NÍVEL PARA O TEMPLATE (ADICIONADO) >>>
                            # ==================================================
                            level_info=level_info
                            # ==================================================
@@ -325,6 +353,9 @@ def dashboard():
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
+    """
+    Endpoint da API que retorna a lista de legislações filtradas em JSON.
+    """
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
     selected_status = request.args.get("status_filter", "")
@@ -404,12 +435,25 @@ def filter_laws():
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: OTIMIZAR CONSULTA E VERIFICAR BANNER >>>
+    # =====================================================================
+    # Otimiza a consulta para carregar a lei e seu banner (se existir) de uma vez
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
         
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: REGISTRO DA ATIVIDADE DE ESTUDO >>>
+    # =====================================================================
     _record_study_activity(current_user)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -426,22 +470,36 @@ def view_law(law_id):
     content_to_display = user_markup.content if user_markup else law.content
     if content_to_display is None: content_to_display = ""
 
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE EXIBIÇÃO DO BANNER >>>
+    # =====================================================================
     banner_to_show = None
     if law.banner:
+        # Verifica se já existe um registro do usuário vendo ESTA VERSÃO do banner
         seen_banner_record = UserSeenLawBanner.query.filter_by(
             user_id=current_user.id,
             law_id=law_id,
             seen_at_timestamp=law.banner.last_updated
         ).first()
 
+        # Se não houver registro, o banner deve ser mostrado
         if not seen_banner_record:
             banner_to_show = law.banner
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
     return render_template("student/view_law.html",
                            law=law, is_completed=(progress.status == 'concluido'),
                            last_read_article=progress.last_read_article, current_status=progress.status,
                            is_favorited=is_favorited, display_content=content_to_display,
+                           # ==================================================
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR BANNER PARA O TEMPLATE >>>
+                           # ==================================================
                            banner_to_show=banner_to_show
+                           # ==================================================
+                           # <<< FIM DA IMPLEMENTAÇÃO >>>
+                           # ==================================================
                            )
 
 
@@ -462,7 +520,9 @@ def toggle_favorite(law_id):
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
 
-
+# --- INÍCIO DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (2/2) ---
+# A rota foi modificada para retornar JSON em vez de redirecionar.
+# Isso permite que o frontend (JavaScript) receba os dados e dispare a animação.
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
 def mark_complete(law_id):
@@ -487,8 +547,10 @@ def mark_complete(law_id):
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
         
+        # A função 'check_and_award_achievements' agora retorna os objetos completos.
         unlocked_achievements_obj = check_and_award_achievements(current_user)
         
+        # Prepara os dados das conquistas para serem enviados como JSON.
         if unlocked_achievements_obj:
             flash(f"Conquistas desbloqueadas: {', '.join([ach.name for ach in unlocked_achievements_obj])}!", "success")
             unlocked_achievements = [
@@ -500,16 +562,19 @@ def mark_complete(law_id):
             db.session.commit()
         except Exception as e:
             db.session.rollback()
+            # Mantemos o flash de erro para o caso de o JS falhar e a página recarregar
             flash(f"Erro ao salvar progresso: {e}", "danger")
             logging.error(f"Erro ao salvar progresso para law_id {law_id}: {e}")
             return jsonify(success=False, error=str(e)), 500
     else:
         flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
 
+    # Retorna uma resposta JSON com os dados das conquistas desbloqueadas.
     return jsonify(
         success=True,
         unlocked_achievements=unlocked_achievements
     )
+# --- FIM DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (2/2) ---
 
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
@@ -543,7 +608,6 @@ def save_last_read(law_id):
     db.session.commit()
     return jsonify(success=True, message="Ponto de leitura salvo!")
 
-
 @student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
@@ -554,10 +618,15 @@ def mark_announcement_seen(announcement_id):
         db.session.commit()
     return jsonify(success=True)
 
-
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA ROTA PARA MARCAR BANNER COMO VISTO >>>
+# =====================================================================
 @student_bp.route("/law/<int:law_id>/mark_banner_seen", methods=["POST"])
 @login_required
 def mark_banner_seen(law_id):
+    """
+    Endpoint de API para o aluno marcar o banner de uma lei como visto.
+    """
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
     
     if not law.banner:
@@ -586,7 +655,9 @@ def mark_banner_seen(law_id):
             return jsonify(success=False, error="Erro ao salvar no banco de dados."), 500
 
     return jsonify(success=True)
-
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET", "POST"])
 @login_required
@@ -604,7 +675,6 @@ def handle_user_notes(law_id):
             db.session.add(notes)
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
-
 
 @student_bp.route("/law/<int:law_id>/save_markup", methods=['POST'])
 @login_required
@@ -628,7 +698,6 @@ def save_law_markup(law_id):
         logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
 
-
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
 @login_required
 def handle_comments(law_id):
@@ -647,7 +716,6 @@ def handle_comments(law_id):
         db.session.commit()
         return jsonify(success=True, comment={"id": new_comment.id, "content": new_comment.content, "anchor_paragraph_id": new_comment.anchor_paragraph_id}), 201
 
-
 @student_bp.route("/comments/<int:comment_id>", methods=["PUT", "DELETE"])
 @login_required
 def handle_single_comment(comment_id):
@@ -661,7 +729,9 @@ def handle_single_comment(comment_id):
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída!")
 
-
+# =====================================================================
+# <<< NOVA ROTA PARA RESTAURAR A LEI >>>
+# =====================================================================
 @student_bp.route("/law/<int:law_id>/restore", methods=['POST'])
 @login_required
 def restore_law_to_original(law_id):
@@ -672,9 +742,15 @@ def restore_law_to_original(law_id):
     Law.query.get_or_404(law_id)
     
     try:
+        # Deleta as marcações (highlights, bold, etc.) do usuário para esta lei
         UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
+
+        # Deleta os comentários de parágrafo do usuário para esta lei
         UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
+        
+        # Confirma as alterações no banco de dados
         db.session.commit()
+        
         return jsonify({'success': True, 'message': 'Lei restaurada com sucesso.'})
 
     except Exception as e:
