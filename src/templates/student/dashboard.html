@@ -182,23 +182,19 @@
     }
     .favorite-card-body {
         padding: 0; 
-        display: block;
+        display: none; /* Começa fechado por padrão */
     }
 
-    /* --- INÍCIO: ESTILOS PARA GRADE DE FAVORITOS --- */
     .favorites-grid-container {
         display: grid;
-        grid-template-columns: 1fr; /* Padrão para mobile: 1 coluna */
-        gap: 1.5rem; /* Espaçamento entre os cards */
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
-
-    /* Media Query para Tablets (e telas maiores) */
     @media (min-width: 768px) {
         .favorites-grid-container {
-            grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+            grid-template-columns: repeat(2, 1fr);
         }
     }
-    /* --- FIM: ESTILOS PARA GRADE DE FAVORITOS --- */
 
     .subject-accordion-item {
         background-color: #fff;
@@ -361,7 +357,7 @@
             <div>
                 <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
-                {% if favorites_with_progress %}
+                {% if favorites_by_subject %}
                     <option value="" selected>-- Favoritas --</option>
                     <option value="all">-- Todas as Matérias --</option>
                 {% else %}
@@ -418,7 +414,7 @@
 
     <div id="initial-prompt">
     
-        {% if favorites_with_progress %}
+        {% if favorites_by_subject %}
             <div class="text-center mb-10">
                  <h2 class="text-2xl font-semibold text-gray-800 flex items-center justify-center">
                     <i class="fas fa-star text-yellow-400 mr-3"></i>Acesso Rápido aos Seus Favoritos
@@ -426,67 +422,78 @@
             </div>
 
             <div id="favorite-cards-container">
-                <div class="favorites-grid-container">
-                    {% for card in favorites_with_progress|sort(attribute='parent.title') %}
-                        <div class="favorite-card">
-                            <div class="favorite-card-header open">
-                                <div class="favorite-card-header-title">
-                                    <span>{{ card.parent.title }}</span>
-                                    <i class="fas fa-chevron-down toggle-icon"></i>
-                                </div>
-                                <div class="favorite-card-progress">
-                                    <div class="progress-bar-container">
-                                        <div class="progress-bar-fill" style="width: {{ card.progress }}%;"></div>
-                                    </div>
-                                    <span class="progress-percentage">{{ "%.0f"|format(card.progress) }}%</span>
-                                </div>
-                            </div>
-                            <div class="favorite-card-body">
-                                {% for topic in card.topics %}
-                                    <div class="topic-item" data-law-id="{{ topic.id }}">
-                                        <div class="topic-title">
-                                            <i class="fas fa-file-alt icon"></i>
-                                            <span>{{ topic.title }}</span>
+                {% for subject, cards in favorites_by_subject.items()|sort(attribute='0.name') %}
+                    <div class="subject-accordion-item">
+                        <div class="subject-accordion-header">
+                            <h3>{{ subject.name }}</h3>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </div>
+                        <div class="subject-accordion-content">
+                            <div class="favorites-grid-container">
+                                {% for card in cards|sort(attribute='parent.title') %}
+                                    <div class="favorite-card">
+                                        <div class="favorite-card-header">
+                                            <div class="favorite-card-header-title">
+                                                <span>{{ card.parent.title }}</span>
+                                                <i class="fas fa-chevron-down toggle-icon"></i>
+                                            </div>
+                                            <div class="favorite-card-progress">
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-fill" style="width: {{ card.progress }}%;"></div>
+                                                </div>
+                                                <span class="progress-percentage">{{ "%.0f"|format(card.progress) }}%</span>
+                                            </div>
                                         </div>
-                                        <div class="topic-actions">
-                                            {% if topic.is_completed %}
-                                                <span class="completed-badge">Concluída</span>
-                                            {% elif topic.is_in_progress %}
-                                                <span class="in-progress-badge">Em Andamento</span>
-                                            {% endif %}
-                                            <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
-                                                {% if topic.is_completed %}
-                                                    <i class="fas fa-check-circle mr-1"></i> Revisar
-                                                {% elif topic.is_in_progress %}
-                                                    <i class="fas fa-book-reader mr-1"></i> Continuar
-                                                {% else %}
-                                                    <i class="fas fa-book mr-1"></i> Começar
-                                                {% endif %}
-                                            </a>
-                                            {% if topic.is_completed %}
-                                            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
-                                                <i class="fas fa-undo-alt"></i>
-                                            </button>
-                                            {% endif %}
-                                            <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
-                                                <i class="fas fa-star"></i>
-                                            </button>
+                                        <div class="favorite-card-body">
+                                            {% for topic in card.topics %}
+                                                <div class="topic-item" data-law-id="{{ topic.id }}">
+                                                    <div class="topic-title">
+                                                        <i class="fas fa-file-alt icon"></i>
+                                                        <span>{{ topic.title }}</span>
+                                                    </div>
+                                                    <div class="topic-actions">
+                                                        {% if topic.is_completed %}
+                                                            <span class="completed-badge">Concluída</span>
+                                                        {% elif topic.is_in_progress %}
+                                                            <span class="in-progress-badge">Em Andamento</span>
+                                                        {% endif %}
+                                                        <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                                            {% if topic.is_completed %}
+                                                                <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                            {% elif topic.is_in_progress %}
+                                                                <i class="fas fa-book-reader mr-1"></i> Continuar
+                                                            {% else %}
+                                                                <i class="fas fa-book mr-1"></i> Começar
+                                                            {% endif %}
+                                                        </a>
+                                                        {% if topic.is_completed %}
+                                                        <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                                            <i class="fas fa-undo-alt"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
+                                                            <i class="fas fa-star"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
                                         </div>
                                     </div>
                                 {% endfor %}
                             </div>
                         </div>
-                    {% endfor %}
-                </div>
+                    </div>
+                {% endfor %}
             </div>
-            {% else %}
+
+        {% else %}
             <div class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
                 <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
                 <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
             </div>
         {% endif %}
-    </div>
+        </div>
 </div>
 {% endblock %}
 
@@ -622,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- INÍCIO: 1ª e 2ª MELHORIA - RENDERIZAÇÃO COM ACORDEÕES FECHADOS ---
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -630,22 +638,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '';
         for (const subjectName in subjects) {
+            // O cabeçalho da matéria agora começa fechado (sem a classe 'open')
+            // e o conteúdo começa escondido ('display: none')
             html += `
             <div class="subject-accordion-item">
-                <div class="subject-accordion-header open">
+                <div class="subject-accordion-header">
                     <h3>${subjectName}</h3>
-                    <i class="fas fa-chevron-down toggle-icon" style="transform: rotate(180deg);"></i>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
-                <div class="subject-accordion-content" style="display: block;">
+                <div class="subject-accordion-content">
                     ${subjects[subjectName].map(diploma => {
-                        const isOpen = filterControls.diploma.value || Object.keys(subjects).length === 1;
-                        const openClass = isOpen ? 'open' : '';
-                        const displayStyle = isOpen ? 'block' : 'none';
-                        const iconRotation = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+                        // O cabeçalho da lei também começa fechado, independentemente do filtro
+                        const displayStyle = 'none';
+                        const iconRotation = 'rotate(0deg)';
 
                         return `
                         <div class="accordion-item mt-3 first:mt-0">
-                            <div class="accordion-header ${openClass}">
+                            <div class="accordion-header">
                                 <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
                                 <div class="diploma-progress">
                                     <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
@@ -664,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
         accordionContainer.innerHTML = html;
         attachEventListeners();
     }
+    // --- FIM DA ALTERAÇÃO ---
 
     function renderTopicItem(topic) {
         let statusBadge = '';
@@ -968,8 +978,12 @@ document.addEventListener('DOMContentLoaded', function() {
                          const card = topicToRemove.closest('.favorite-card');
                          topicToRemove.remove();
                          if (!card.querySelector('.topic-item')) {
+                            const subjectContainer = card.closest('.subject-accordion-item');
                             card.remove();
-                            if (!document.querySelector('#favorite-cards-container .favorite-card')) {
+                            if (!subjectContainer.querySelector('.favorite-card')) {
+                                subjectContainer.remove();
+                            }
+                            if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
                                 window.location.reload();
                             }
                          }
