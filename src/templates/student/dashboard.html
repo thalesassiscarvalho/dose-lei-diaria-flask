@@ -296,7 +296,7 @@
                     <option value="" selected>-- Favoritas --</option>
                     <option value="all">-- Todas as Matérias --</option>
                 {% else %}
-                    <option value="" selected>-- Todas as Matérias --</option>
+                    <option value="all" selected>-- Todas as Matérias --</option>
                 {% endif %}
                 {% for subject in subjects %}
                     <option value="{{ subject.id }}">{{ subject.name }}</option>
@@ -357,10 +357,12 @@
 
                 {% for parent, favorite_topics in structured_favorites.items() %}
                     <div class="subject-accordion-item mb-4">
-                        <div class="subject-accordion-header open" style="background-color: #f9fafb;"> <h3>{{ parent.title }}</h3>
+                        <div class="subject-accordion-header open" style="background-color: #f9fafb;">
+                            <h3>{{ parent.title }}</h3>
                             <i class="fas fa-chevron-down toggle-icon" style="transform: rotate(180deg);"></i>
                         </div>
-                        <div class="subject-accordion-content" style="display: block;"> <div class="accordion-item">
+                        <div class="subject-accordion-content" style="display: block;">
+                            <div class="accordion-item">
                                  <div class="accordion-content" style="display: block; padding-left: 0; padding-right: 0;">
                                     {% for topic in favorite_topics %}
                                         <div class="topic-item" data-law-id="{{ topic.id }}">
@@ -409,7 +411,7 @@
             <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
             <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
         {% endif %}
-        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -447,20 +449,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        // Se a opção "Todas as Matérias" ou "Favoritas" for selecionada e não for uma matéria específica
-        const isInitialState = !subjectId || subjectId === 'all';
-        if (isInitialState && !showFavorites && !filterControls.search.value) {
-            accordionContainer.innerHTML = ''; // Limpa o conteúdo se voltarmos ao estado inicial
-            return;
+        const isInitialState = !subjectId;
+        if (isInitialState && !showFavorites) {
+             accordionContainer.innerHTML = '';
+             return;
         }
 
         accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
 
         const params = new URLSearchParams();
-        if (showFavorites) params.append('show_favorites', showFavorites);
+        if (showFavorites) params.append('show_favorites', 'true');
         
-        if (subjectId && subjectId !== 'all') params.append('subject_id', subjectId);
-
+        // Apenas adiciona o subject_id se não for 'all' (para buscar tudo) ou vazio (para favoritos)
+        if (subjectId && subjectId !== 'all') {
+             params.append('subject_id', subjectId);
+        }
+        
         if (diplomaId) {
             params.append('diploma_id', diplomaId);
             if (refineType === 'status') {
@@ -494,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        // Se o valor for 'all' ou vazio, apenas renderiza (que vai limpar o conteúdo)
+        // Se o valor for 'all' ou vazio (Favoritas), chama a busca geral e retorna
         if (!subjectId || subjectId === 'all') {
             fetchAndRenderLaws();
             return;
@@ -545,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- FUNÇÕES DE RENDERIZAÇÃO ---
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -605,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>` : '';
         
         const favoriteClass = topic.is_favorite ? 'favorited' : '';
-        const favoriteIcon = topic.is_favorite ? 'fas fa-star' : 'fas fa-star';
+        const favoriteIcon = 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
@@ -622,7 +625,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    // --- EVENT LISTENERS ---
     function attachEventListeners() {
         document.querySelectorAll('.subject-accordion-header').forEach(header => {
             header.addEventListener('click', function() {
@@ -660,26 +662,29 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
     
+    // --- INÍCIO DA CORREÇÃO: LÓGICA DE EXIBIÇÃO ---
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
 
-        // Se selecionou uma matéria real (não "todas" ou "favoritas"), mostra a seção de leis
-        if (subjectId && subjectId !== 'all') {
+        // Caso 1: A opção "Favoritas" está selecionada (valor é vazio '')
+        if (subjectId === '') {
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
+        } 
+        // Caso 2: Qualquer outra opção está selecionada ('all' para todas ou um ID de matéria)
+        else {
             if (lawsSection.style.display === 'none') {
                 initialPrompt.style.display = 'none';
                 lawsSection.style.display = 'block';
                 setTimeout(() => lawsSection.style.opacity = '1', 50);
             }
-        } else {
-            // Se voltou para "Favoritas" (valor vazio) ou "Todas as Matérias", esconde a seção de leis e mostra a tela inicial
-            initialPrompt.style.display = 'block';
-            lawsSection.style.display = 'none';
-            lawsSection.style.opacity = '0';
         }
 
-        filterControls.search.value = '';
-        updateDiplomaFilter(subjectId);
+        filterControls.search.value = ''; // Limpa a busca
+        updateDiplomaFilter(subjectId); // Atualiza os filtros seguintes
     });
+    // --- FIM DA CORREÇÃO ---
 
     filterControls.diploma.addEventListener('change', async () => {
         filterControls.search.value = '';
@@ -706,12 +711,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     filterControls.statusFilter.addEventListener('change', fetchAndRenderLaws);
     filterControls.topicFilter.addEventListener('change', fetchAndRenderLaws);
+    
     filterControls.favorites.addEventListener('change', () => {
-        if(filterControls.favorites.checked) {
-            initialPrompt.style.display = 'none';
-            lawsSection.style.display = 'block';
-            setTimeout(() => lawsSection.style.opacity = '1', 50);
-        } else if (!filterControls.subject.value || filterControls.subject.value === 'all') {
+        const isChecked = filterControls.favorites.checked;
+        // Se "Apenas favoritas" for marcado, sempre mostra a seção de leis
+        if (isChecked) {
+             if (lawsSection.style.display === 'none') {
+                initialPrompt.style.display = 'none';
+                lawsSection.style.display = 'block';
+                setTimeout(() => lawsSection.style.opacity = '1', 50);
+            }
+        } 
+        // Se for desmarcado, verifica o select de matéria para decidir o que fazer
+        else if (filterControls.subject.value === '') { // Se estava em favoritas
              initialPrompt.style.display = 'block';
              lawsSection.style.display = 'none';
              lawsSection.style.opacity = '0';
@@ -721,10 +733,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
-        // Verifica se há favoritos para decidir o estado inicial do select
-        const hasFavorites = initialPrompt.querySelector('.subject-accordion-item') !== null;
+        const hasFavorites = document.querySelector('#initial-prompt .subject-accordion-item') !== null;
         filterControls.subject.value = hasFavorites ? '' : 'all';
-
+        
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.favorites.checked = false;
@@ -736,13 +747,19 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
 
-        initialPrompt.style.display = 'block';
-        lawsSection.style.display = 'none';
-        lawsSection.style.opacity = '0';
-        accordionContainer.innerHTML = '';
+        // Se tiver favoritos, volta para a tela de favoritos, senão, mostra a mensagem de "Comece seus estudos"
+        if (hasFavorites) {
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
+            accordionContainer.innerHTML = '';
+        } else {
+            // Caso não tenha favoritos, a tela inicial já é o prompt correto
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+        }
     });
 
-    // --- LÓGICA DA BUSCA INTELIGENTE (AUTOCOMPLETE) ---
     const searchInput = document.getElementById('search');
     const resultsContainer = document.getElementById('autocomplete-results');
     let searchDebounceTimer;
@@ -756,7 +773,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        filterControls.subject.value = 'all'; // Muda para "Todas as matérias"
+        filterControls.subject.value = 'all';
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.refinementWrapper.style.visibility = 'hidden';
@@ -803,7 +820,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- PLACEHOLDER DINÂMICO ---
     function setupDynamicPlaceholder() {
         if (!searchInput) return;
         const placeholders = [
@@ -819,7 +835,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setupDynamicPlaceholder();
 
-    // --- OUTRAS FUNCIONALIDADES (avisos, favoritos, etc.) ---
     document.querySelectorAll('.mark-seen-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             this.disabled = true;
@@ -865,29 +880,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 notificationText = `'${topicTitle}' adicionado aos favoritos!`;
             } else {
                 button.classList.remove('favorited');
-                icon.className = 'far fa-star';
+                icon.className = 'far fa-star'; // Usar 'far' para estrela vazia
                 button.title = 'Adicionar aos Favoritos';
                 notificationText = `'${topicTitle}' removido dos favoritos.`;
                 
-                // Se o clique veio da seção de favoritos, remove o item da tela
                 if (button.closest('#initial-prompt')) {
                     const itemToRemove = button.closest('.topic-item');
                     if (itemToRemove) {
                         itemToRemove.remove();
-                        // Verifica se era o último tópico daquela lei
                         const topicList = itemToRemove.parentElement;
                         if (!topicList.querySelector('.topic-item')) {
-                            // Se era o último, remove o container da lei pai
                             topicList.closest('.subject-accordion-item').remove();
                         }
-                        // Verifica se não há mais nenhum favorito
                         if (!document.querySelector('#initial-prompt .topic-item')) {
-                             window.location.reload(); // Recarrega a página para mostrar a mensagem de "Comece seus estudos"
+                             window.location.reload();
                         }
                     }
                 } else if (filterControls.favorites.checked) {
-                    const itemToRemove = button.closest('.topic-item');
-                    if(itemToRemove) itemToRemove.remove();
+                    fetchAndRenderLaws(); // Recarrega a lista de favoritos
                 }
             }
             Toastify({
@@ -907,7 +917,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                // Se o clique veio da seção de favoritos, recarrega a página para atualizar o estado
                  if (buttonEl.closest('#initial-prompt')) {
                     window.location.reload();
                 } else {
@@ -925,9 +934,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- CARGA INICIAL ---
-    // Adiciona os event listeners aos itens já presentes na página (seção de favoritos)
+    // --- CARGA INICIAL e ESTADO INICIAL DOS FILTROS ---
     attachEventListeners();
+    
+    // Verifica o estado inicial do select de matéria ao carregar a página
+    if (filterControls.subject.value === 'all') {
+         if (lawsSection.style.display === 'none') {
+            initialPrompt.style.display = 'none';
+            lawsSection.style.display = 'block';
+            setTimeout(() => lawsSection.style.opacity = '1', 50);
+        }
+        fetchAndRenderLaws();
+    }
 });
 </script>
 {% endblock %}
