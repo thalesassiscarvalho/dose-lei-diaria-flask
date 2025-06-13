@@ -96,6 +96,67 @@
         margin-top: 0.25rem;
     }
 
+    /* ================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS DO NOVO CARD DE NÍVEL >>> */
+    /* ================================================== */
+    .level-card {
+        background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
+        border: 1px solid #bae6fd;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .level-card .stat-card-title i {
+        color: #0369a1;
+        background-color: #ffffff;
+    }
+    .level-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .level-icon {
+        font-size: 2rem;
+        color: #0369a1;
+    }
+    .level-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0c4a6e;
+    }
+    .level-points {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #075985;
+        margin-top: -4px;
+    }
+    .xp-bar-container {
+        height: 12px;
+        width: 100%;
+        background-color: rgba(3, 105, 161, 0.1);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid rgba(3, 105, 161, 0.2);
+    }
+    .xp-bar-fill {
+        height: 100%;
+        background: linear-gradient(to right, #38bdf8, #0ea5e9);
+        border-radius: 6px;
+        transition: width 0.5s ease-in-out;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+    }
+    .next-level-info {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #075985;
+        text-align: right;
+        margin-top: 0.5rem;
+    }
+    /* ================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
+    /* ================================================== */
+
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
     .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
@@ -314,14 +375,29 @@
         {% endif %}
     </div>
 
-    <div class="stat-card points-card">
-        <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
-        <div class="points-display">{{ user_points }}</div>
+    <div class="stat-card level-card">
+        <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
+        <div class="level-info">
+            <i class="{{ level_info.current_level.icon }} level-icon"></i>
+            <div>
+                <div class="level-name">{{ level_info.current_level.name }}</div>
+                <div class="level-points">{{ user_points }} pontos</div>
+            </div>
+        </div>
+        <div class="xp-bar-container">
+            <div class="xp-bar-fill" style="width: {{ '%.2f'|format(level_info.progress_percent) }}%;"></div>
+        </div>
+        {% if level_info.next_level %}
+            <p class="next-level-info">
+                Faltam <strong>{{ level_info.points_to_next }}</strong> pontos para <i class="{{ level_info.next_level.icon }}"></i> <strong>{{ level_info.next_level.name }}</strong>
+            </p>
+        {% else %}
+            <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
+        {% endif %}
     </div>
-
-</div>
+    </div>
     <div class="stat-card achievements-card">
-        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Minhas Conquistas</h2>
+        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
         {% if user_achievements %}
             <div class="achievements-list">
                 {% for achievement in user_achievements %}
@@ -331,7 +407,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma conquista. Continue estudando!</p>
+            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
         {% endif %}
     </div>
 
