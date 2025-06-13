@@ -104,6 +104,33 @@ def autocomplete_search():
             seen.add(identifier)
 
     return jsonify(results=unique_results[:7]) # Retorna no máximo 7 resultados únicos
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: API PARA O MAPA DE CALOR DE ESTUDOS >>>
+# =====================================================================
+@student_bp.route("/api/study_activity")
+@login_required
+def get_study_activity():
+    """
+    Endpoint de API para retornar os dados de atividade de estudo do usuário
+    para o mapa de calor. Retorna as datas do último ano em que houve estudo.
+    """
+    one_year_ago = date.today() - timedelta(days=365)
+    activities = StudyActivity.query.filter(
+        StudyActivity.user_id == current_user.id,
+        StudyActivity.study_date >= one_year_ago
+    ).all()
+
+    # Formata os dados no formato esperado pela biblioteca Cal-Heatmap:
+    # Um dicionário onde a chave é o timestamp Unix (em segundos) e o valor é a intensidade.
+    # Usaremos '1' para indicar que houve estudo no dia.
+    study_data = {
+        int(activity.study_date.strftime('%s')): 1
+        for activity in activities
+    }
+    return jsonify(study_data)
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
 
 
@@ -209,16 +236,18 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO DA ALTERAÇÃO: LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
+    # --- INÍCIO: 3ª MELHORIA - LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
     favorites_by_subject = {}
     
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
+    # Garante que a relação 'parent' e 'subject' sejam carregadas para evitar múltiplas queries
     favorite_topics_query = current_user.favorite_laws.options(
         joinedload(Law.parent).joinedload(Law.subject)
     ).filter(Law.parent_id.isnot(None)).all()
 
+    # Primeiro, agrupa os tópicos por Lei (parent)
     grouped_by_law = {}
     for topic in favorite_topics_query:
         if topic.parent:
@@ -226,6 +255,7 @@ def dashboard():
                 grouped_by_law[topic.parent] = []
             grouped_by_law[topic.parent].append(topic)
     
+    # Agora, cria os cards de Lei e os agrupa por Matéria
     for law, topics in grouped_by_law.items():
         subject = law.subject
         if not subject:
@@ -253,7 +283,8 @@ def dashboard():
             "topics": topic_details_list,
             "progress": progress_percentage
         })
-    # --- FIM DA ALTERAÇÃO ---
+
+    # --- FIM DA LÓGICA ---
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -266,7 +297,7 @@ def dashboard():
                            non_fixed_announcements=non_fixed_announcements,
                            last_accessed_law=last_accessed_law,
                            user_streak=user_streak,
-                           favorites_by_subject=favorites_by_subject
+                           favorites_by_subject=favorites_by_subject  # Passa a nova estrutura
                            )
 
 
