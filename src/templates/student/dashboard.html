@@ -6,8 +6,8 @@
 <style>
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
-    .progress-bar-container { height: 10px; border-radius: 5px; background-color: #dbeafe; overflow: hidden; }
-    .progress-bar-fill { height: 100%; border-radius: 5px; background-color: #2563eb; transition: width 0.5s ease; }
+    .progress-bar-container { height: 8px; border-radius: 4px; background-color: #e5e7eb; overflow: hidden; flex-grow: 1; }
+    .progress-bar-fill { height: 100%; border-radius: 4px; background-color: #2563eb; transition: width 0.5s ease; }
     .completed-badge { background-color: #D1FAE5; color: #065F46; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; }
     .in-progress-badge { background-color: #DBEAFE; color: #1E40AF; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; }
     .action-button { background-color: #2563eb; color: white; font-size: 0.875rem; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.2s ease; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
@@ -109,8 +109,9 @@
     .accordion-header .diploma-title .icon { margin-right: 0.75rem; color: #3b82f6; }
     .accordion-header .diploma-progress { display: flex; align-items: center; gap: 0.75rem; width: 30%; }
     .accordion-content { display: none; padding: 0.5rem 1.5rem 1.5rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #fdfdff; }
-    .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px dashed #e2e8f0; }
+    .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem; }
     .topic-item:last-child { border-bottom: none; }
+    .topic-item:hover { background-color: #f9fafb; }
     .topic-title { display: flex; align-items: center; color: #334155; }
     .topic-title .icon { margin-right: 0.75rem; color: #94a3b8; }
     .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
@@ -129,14 +130,65 @@
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
     .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
     
-    /* --- Estilos para o Accordion de Matérias --- */
+    /* --- INÍCIO: NOVOS ESTILOS PARA FAVORITES --- */
+    .favorite-card {
+        background-color: #ffffff;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .favorite-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: #d1d5db;
+    }
+    .favorite-card-header {
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .favorite-card-header-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .favorite-card-header-title .toggle-icon {
+        transition: transform 0.3s ease;
+        color: #6b7280;
+    }
+    .favorite-card-header.open .toggle-icon {
+        transform: rotate(180deg);
+    }
+    .favorite-card-progress {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    .favorite-card-progress .progress-percentage {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #3b82f6;
+    }
+    .favorite-card-body {
+        padding: 0.5rem 0;
+        display: block; /* Começa visível por padrão */
+    }
+    /* --- FIM: NOVOS ESTILOS PARA FAVORITES --- */
+
     .subject-accordion-item {
         background-color: #fff;
         border-radius: 0.75rem;
         margin-bottom: 1rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
         border: 1px solid #e5e7eb;
-        overflow: hidden; /* Garante que os cantos arredondados funcionem */
+        overflow: hidden;
     }
     .subject-accordion-header {
         padding: 1rem 1.5rem;
@@ -150,7 +202,7 @@
         background-color: #f9fafb;
     }
     .subject-accordion-header h3 {
-        font-size: 1.25rem; /* 20px */
+        font-size: 1.25rem;
         font-weight: 600;
         color: #1f2937;
     }
@@ -160,11 +212,10 @@
         font-size: 1.1rem;
     }
     .subject-accordion-content {
-        display: none; /* Escondido por padrão */
+        display: none;
         padding: 0.5rem 1.5rem 1.5rem 1.5rem;
         border-top: 1px solid #e5e7eb;
     }
-    /* Rotação do ícone quando o accordion está aberto */
     .subject-accordion-header.open .toggle-icon {
         transform: rotate(180deg);
     }
@@ -234,7 +285,7 @@
             <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
             <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
         </div>
-        <div class="progress-bar-container w-full">
+        <div class="progress-bar-container w-full" style="height:10px;">
             <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
         </div>
     </div>
@@ -292,7 +343,7 @@
             <div>
                 <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
-                {% if structured_favorites %}
+                {% if favorites_with_progress %}
                     <option value="" selected>-- Favoritas --</option>
                     <option value="all">-- Todas as Matérias --</option>
                 {% else %}
@@ -347,71 +398,76 @@
         <div id="laws-accordion-container"></div>
     </div>
 
-    <div id="initial-prompt" class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
+    <div id="initial-prompt">
     
-        {% if structured_favorites %}
-            <div class="text-left">
-                <h3 class="text-xl font-semibold text-gray-700 mb-6 flex items-center justify-center">
+        {% if favorites_with_progress %}
+            <div class="text-center mb-10">
+                 <h2 class="text-2xl font-semibold text-gray-800 flex items-center justify-center">
                     <i class="fas fa-star text-yellow-400 mr-3"></i>Acesso Rápido aos Seus Favoritos
-                </h3>
+                </h2>
+            </div>
 
-                {% for parent, favorite_topics in structured_favorites.items() %}
-                    <div class="subject-accordion-item mb-4">
-                        <div class="subject-accordion-header open" style="background-color: #f9fafb;">
-                            <h3>{{ parent.title }}</h3>
-                            <i class="fas fa-chevron-down toggle-icon" style="transform: rotate(180deg);"></i>
-                        </div>
-                        <div class="subject-accordion-content" style="display: block;">
-                            <div class="accordion-item">
-                                 <div class="accordion-content" style="display: block; padding-left: 0; padding-right: 0;">
-                                    {% for topic in favorite_topics %}
-                                        <div class="topic-item" data-law-id="{{ topic.id }}">
-                                            <div class="topic-title">
-                                                <i class="fas fa-file-alt icon"></i>
-                                                <span>{{ topic.title }}</span>
-                                            </div>
-                                            <div class="topic-actions">
-                                                {% if topic.is_completed %}
-                                                    <span class="completed-badge">Concluída</span>
-                                                {% elif topic.is_in_progress %}
-                                                    <span class="in-progress-badge">Em Andamento</span>
-                                                {% endif %}
-
-                                                <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
-                                                    {% if topic.is_completed %}
-                                                        <i class="fas fa-check-circle mr-1"></i> Revisar
-                                                    {% elif topic.is_in_progress %}
-                                                        <i class="fas fa-book-reader mr-1"></i> Continuar
-                                                    {% else %}
-                                                        <i class="fas fa-book mr-1"></i> Começar
-                                                    {% endif %}
-                                                </a>
-
-                                                {% if topic.is_completed %}
-                                                <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
-                                                    <i class="fas fa-undo-alt"></i>
-                                                </button>
-                                                {% endif %}
-                                                
-                                                <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
-                                                    <i class="fas fa-star"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
+            <div id="favorite-cards-container">
+                {% for card in favorites_with_progress %}
+                    <div class="favorite-card">
+                        <div class="favorite-card-header open">
+                            <div class="favorite-card-header-title">
+                                <span>{{ card.parent.title }}</span>
+                                <i class="fas fa-chevron-down toggle-icon"></i>
                             </div>
+                            <div class="favorite-card-progress">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: {{ card.progress }}%;"></div>
+                                </div>
+                                <span class="progress-percentage">{{ "%.0f"|format(card.progress) }}%</span>
+                            </div>
+                        </div>
+                        <div class="favorite-card-body">
+                            {% for topic in card.topics %}
+                                <div class="topic-item" data-law-id="{{ topic.id }}">
+                                    <div class="topic-title">
+                                        <i class="fas fa-file-alt icon"></i>
+                                        <span>{{ topic.title }}</span>
+                                    </div>
+                                    <div class="topic-actions">
+                                        {% if topic.is_completed %}
+                                            <span class="completed-badge">Concluída</span>
+                                        {% elif topic.is_in_progress %}
+                                            <span class="in-progress-badge">Em Andamento</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                            {% if topic.is_completed %}
+                                                <i class="fas fa-check-circle mr-1"></i> Revisar
+                                            {% elif topic.is_in_progress %}
+                                                <i class="fas fa-book-reader mr-1"></i> Continuar
+                                            {% else %}
+                                                <i class="fas fa-book mr-1"></i> Começar
+                                            {% endif %}
+                                        </a>
+                                        {% if topic.is_completed %}
+                                        <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                            <i class="fas fa-undo-alt"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
                 {% endfor %}
             </div>
-    
+
         {% else %}
-            <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
-            <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
+            <div class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
+                <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
+                <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
+            </div>
         {% endif %}
-    </div>
+        </div>
 </div>
 {% endblock %}
 
@@ -460,7 +516,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', 'true');
         
-        // Apenas adiciona o subject_id se não for 'all' (para buscar tudo) ou vazio (para favoritos)
         if (subjectId && subjectId !== 'all') {
              params.append('subject_id', subjectId);
         }
@@ -471,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (filterControls.statusFilter.value) {
                     params.append('status_filter', filterControls.statusFilter.value);
                 }
-            } else { // refineType === 'topic'
+            } else {
                 if (filterControls.topicFilter.value) {
                     params.append('topic_id', filterControls.topicFilter.value);
                 }
@@ -498,7 +553,6 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        // Se o valor for 'all' ou vazio (Favoritas), chama a busca geral e retorna
         if (!subjectId || subjectId === 'all') {
             fetchAndRenderLaws();
             return;
@@ -658,21 +712,34 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        // --- INÍCIO: EVENT LISTENER PARA OS NOVOS CARDS DE FAVORITOS ---
+        document.querySelectorAll('.favorite-card-header').forEach(header => {
+            header.addEventListener('click', function() {
+                this.classList.toggle('open');
+                const body = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon');
+                if (body.style.display === 'block') {
+                    body.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    body.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+        // --- FIM: EVENT LISTENER PARA OS NOVOS CARDS ---
+
         document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
     }
     
-    // --- INÍCIO DA CORREÇÃO: LÓGICA DE EXIBIÇÃO ---
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
-
-        // Caso 1: A opção "Favoritas" está selecionada (valor é vazio '')
         if (subjectId === '') {
             initialPrompt.style.display = 'block';
             lawsSection.style.display = 'none';
             lawsSection.style.opacity = '0';
         } 
-        // Caso 2: Qualquer outra opção está selecionada ('all' para todas ou um ID de matéria)
         else {
             if (lawsSection.style.display === 'none') {
                 initialPrompt.style.display = 'none';
@@ -680,11 +747,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => lawsSection.style.opacity = '1', 50);
             }
         }
-
-        filterControls.search.value = ''; // Limpa a busca
-        updateDiplomaFilter(subjectId); // Atualiza os filtros seguintes
+        filterControls.search.value = '';
+        updateDiplomaFilter(subjectId);
     });
-    // --- FIM DA CORREÇÃO ---
 
     filterControls.diploma.addEventListener('change', async () => {
         filterControls.search.value = '';
@@ -714,7 +779,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     filterControls.favorites.addEventListener('change', () => {
         const isChecked = filterControls.favorites.checked;
-        // Se "Apenas favoritas" for marcado, sempre mostra a seção de leis
         if (isChecked) {
              if (lawsSection.style.display === 'none') {
                 initialPrompt.style.display = 'none';
@@ -722,8 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => lawsSection.style.opacity = '1', 50);
             }
         } 
-        // Se for desmarcado, verifica o select de matéria para decidir o que fazer
-        else if (filterControls.subject.value === '') { // Se estava em favoritas
+        else if (filterControls.subject.value === '') {
              initialPrompt.style.display = 'block';
              lawsSection.style.display = 'none';
              lawsSection.style.opacity = '0';
@@ -733,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
-        const hasFavorites = document.querySelector('#initial-prompt .subject-accordion-item') !== null;
+        const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
         filterControls.subject.value = hasFavorites ? '' : 'all';
         
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
@@ -747,14 +810,12 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
 
-        // Se tiver favoritos, volta para a tela de favoritos, senão, mostra a mensagem de "Comece seus estudos"
         if (hasFavorites) {
             initialPrompt.style.display = 'block';
             lawsSection.style.display = 'none';
             lawsSection.style.opacity = '0';
             accordionContainer.innerHTML = '';
         } else {
-            // Caso não tenha favoritos, a tela inicial já é o prompt correto
             initialPrompt.style.display = 'block';
             lawsSection.style.display = 'none';
         }
@@ -880,24 +941,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 notificationText = `'${topicTitle}' adicionado aos favoritos!`;
             } else {
                 button.classList.remove('favorited');
-                icon.className = 'far fa-star'; // Usar 'far' para estrela vazia
+                icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
                 notificationText = `'${topicTitle}' removido dos favoritos.`;
                 
                 if (button.closest('#initial-prompt')) {
-                    const itemToRemove = button.closest('.topic-item');
-                    if (itemToRemove) {
+                    const itemToRemove = button.closest('.favorite-card');
+                    const topicToRemove = button.closest('.topic-item');
+                    if (topicToRemove) topicToRemove.remove();
+
+                    // Verifica se o card ficou vazio
+                    const cardBody = itemToRemove.querySelector('.favorite-card-body');
+                    if (!cardBody.querySelector('.topic-item')) {
                         itemToRemove.remove();
-                        const topicList = itemToRemove.parentElement;
-                        if (!topicList.querySelector('.topic-item')) {
-                            topicList.closest('.subject-accordion-item').remove();
-                        }
-                        if (!document.querySelector('#initial-prompt .topic-item')) {
-                             window.location.reload();
-                        }
+                    }
+
+                    // Se não houver mais nenhum card
+                    if (!document.querySelector('#favorite-cards-container .favorite-card')) {
+                        window.location.reload();
+                    } else {
+                        // Recalcula o progresso do card se ainda houver itens
+                        // Esta parte é mais complexa, um reload pode ser mais simples por agora
+                        window.location.reload(); 
                     }
                 } else if (filterControls.favorites.checked) {
-                    fetchAndRenderLaws(); // Recarrega a lista de favoritos
+                    fetchAndRenderLaws();
                 }
             }
             Toastify({
@@ -934,10 +1002,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- CARGA INICIAL e ESTADO INICIAL DOS FILTROS ---
     attachEventListeners();
     
-    // Verifica o estado inicial do select de matéria ao carregar a página
     if (filterControls.subject.value === 'all') {
          if (lawsSection.style.display === 'none') {
             initialPrompt.style.display = 'none';
