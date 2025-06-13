@@ -209,19 +209,34 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO DA IMPLEMENTAÇÃO: FAVORITOS NA TELA INICIAL ---
-    # 1. Busca os tópicos favoritos do usuário, já carregando os pais para otimizar.
-    favorite_topics = current_user.favorite_laws.options(joinedload(Law.parent)).filter(Law.parent_id.isnot(None)).all()
+    # --- INÍCIO DA ALTERAÇÃO: LÓGICA DE FAVORITOS MELHORADA ---
+    # 1. Busca todos os registros de progresso do usuário de uma vez para otimização
+    user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
+    progress_map = {p.law_id: p.status for p in user_progress_records}
+    completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
+    in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
 
-    # 2. Estrutura os favoritos em um dicionário: { 'Pai': [lista de filhos favoritos] }
+    # 2. Busca os tópicos favoritos do usuário, já carregando os pais para otimizar.
+    favorite_topics_query = current_user.favorite_laws.options(joinedload(Law.parent)).filter(Law.parent_id.isnot(None)).all()
+
+    # 3. Estrutura os favoritos em um dicionário, agora incluindo os detalhes de progresso
     structured_favorites = {}
-    if favorite_topics:
-        for topic in favorite_topics:
+    if favorite_topics_query:
+        for topic in favorite_topics_query:
             if topic.parent: # Garante que o tópico tem um pai
                 if topic.parent not in structured_favorites:
                     structured_favorites[topic.parent] = []
-                structured_favorites[topic.parent].append(topic)
-    # --- FIM DA IMPLEMENTAÇÃO: FAVORITOS NA TELA INICIAL ---
+                
+                # Cria um dicionário com todos os detalhes que o template vai precisar
+                topic_details = {
+                    "id": topic.id,
+                    "title": topic.title,
+                    "is_completed": topic.id in completed_topic_ids,
+                    "is_in_progress": topic.id in in_progress_topic_ids,
+                    "is_favorite": True # Já sabemos que é favorito
+                }
+                structured_favorites[topic.parent].append(topic_details)
+    # --- FIM DA ALTERAÇÃO ---
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
