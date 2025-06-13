@@ -112,7 +112,6 @@
     .accordion-header .diploma-progress { display: flex; align-items: center; gap: 0.75rem; width: 30%; }
     .accordion-content { display: none; padding: 0.5rem 1.5rem 1.5rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #fdfdff; }
     
-    /* Alteração no topic-item para hover e espaçamento */
     .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
     .topic-item:first-child { border-top: 1px solid #e5e7eb; }
     .topic-item:last-child { border-bottom: none; }
@@ -136,11 +135,9 @@
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
     .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
     
-    /* --- INÍCIO: NOVOS ESTILOS PARA FAVORITES CARDS (CORRIGIDO) --- */
     .favorite-card {
         background-color: #ffffff;
         border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         border: 1px solid #e5e7eb;
         overflow: hidden;
@@ -180,15 +177,28 @@
         font-size: 0.875rem;
         font-weight: 600;
         color: #3b82f6;
-        min-width: 40px; /* Garante alinhamento */
+        min-width: 40px;
         text-align: right;
     }
     .favorite-card-body {
-        /* O padding é removido daqui e colocado nos topic-items para o hover funcionar na largura total */
         padding: 0; 
-        display: block; /* Começa visível por padrão */
+        display: block;
     }
-     /* --- FIM: NOVOS ESTILOS PARA FAVORITES CARDS --- */
+
+    /* --- INÍCIO: ESTILOS PARA GRADE DE FAVORITOS --- */
+    .favorites-grid-container {
+        display: grid;
+        grid-template-columns: 1fr; /* Padrão para mobile: 1 coluna */
+        gap: 1.5rem; /* Espaçamento entre os cards */
+    }
+
+    /* Media Query para Tablets (e telas maiores) */
+    @media (min-width: 768px) {
+        .favorites-grid-container {
+            grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+        }
+    }
+    /* --- FIM: ESTILOS PARA GRADE DE FAVORITOS --- */
 
     .subject-accordion-item {
         background-color: #fff;
@@ -416,66 +426,67 @@
             </div>
 
             <div id="favorite-cards-container">
-                {% for card in favorites_with_progress|sort(attribute='parent.title') %}
-                    <div class="favorite-card">
-                        <div class="favorite-card-header open">
-                            <div class="favorite-card-header-title">
-                                <span>{{ card.parent.title }}</span>
-                                <i class="fas fa-chevron-down toggle-icon"></i>
-                            </div>
-                            <div class="favorite-card-progress">
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="width: {{ card.progress }}%;"></div>
+                <div class="favorites-grid-container">
+                    {% for card in favorites_with_progress|sort(attribute='parent.title') %}
+                        <div class="favorite-card">
+                            <div class="favorite-card-header open">
+                                <div class="favorite-card-header-title">
+                                    <span>{{ card.parent.title }}</span>
+                                    <i class="fas fa-chevron-down toggle-icon"></i>
                                 </div>
-                                <span class="progress-percentage">{{ "%.0f"|format(card.progress) }}%</span>
-                            </div>
-                        </div>
-                        <div class="favorite-card-body">
-                            {% for topic in card.topics %}
-                                <div class="topic-item" data-law-id="{{ topic.id }}">
-                                    <div class="topic-title">
-                                        <i class="fas fa-file-alt icon"></i>
-                                        <span>{{ topic.title }}</span>
+                                <div class="favorite-card-progress">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" style="width: {{ card.progress }}%;"></div>
                                     </div>
-                                    <div class="topic-actions">
-                                        {% if topic.is_completed %}
-                                            <span class="completed-badge">Concluída</span>
-                                        {% elif topic.is_in_progress %}
-                                            <span class="in-progress-badge">Em Andamento</span>
-                                        {% endif %}
-                                        <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                    <span class="progress-percentage">{{ "%.0f"|format(card.progress) }}%</span>
+                                </div>
+                            </div>
+                            <div class="favorite-card-body">
+                                {% for topic in card.topics %}
+                                    <div class="topic-item" data-law-id="{{ topic.id }}">
+                                        <div class="topic-title">
+                                            <i class="fas fa-file-alt icon"></i>
+                                            <span>{{ topic.title }}</span>
+                                        </div>
+                                        <div class="topic-actions">
                                             {% if topic.is_completed %}
-                                                <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                <span class="completed-badge">Concluída</span>
                                             {% elif topic.is_in_progress %}
-                                                <i class="fas fa-book-reader mr-1"></i> Continuar
-                                            {% else %}
-                                                <i class="fas fa-book mr-1"></i> Começar
+                                                <span class="in-progress-badge">Em Andamento</span>
                                             {% endif %}
-                                        </a>
-                                        {% if topic.is_completed %}
-                                        <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
-                                            <i class="fas fa-undo-alt"></i>
-                                        </button>
-                                        {% endif %}
-                                        <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
-                                            <i class="fas fa-star"></i>
-                                        </button>
+                                            <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                                {% if topic.is_completed %}
+                                                    <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                {% elif topic.is_in_progress %}
+                                                    <i class="fas fa-book-reader mr-1"></i> Continuar
+                                                {% else %}
+                                                    <i class="fas fa-book mr-1"></i> Começar
+                                                {% endif %}
+                                            </a>
+                                            {% if topic.is_completed %}
+                                            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                                <i class="fas fa-undo-alt"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
+                                                <i class="fas fa-star"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
-
-        {% else %}
+            {% else %}
             <div class="text-center py-12 px-6 bg-white rounded-lg border border-dashed">
                 <i class="fas fa-filter text-4xl text-gray-300 mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
                 <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
             </div>
         {% endif %}
-        </div>
+    </div>
 </div>
 {% endblock %}
 
