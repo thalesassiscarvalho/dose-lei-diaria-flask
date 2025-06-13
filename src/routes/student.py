@@ -209,18 +209,16 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO: 3ª MELHORIA - LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
+    # --- INÍCIO DA ALTERAÇÃO: LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
     favorites_by_subject = {}
     
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
-    # Garante que a relação 'parent' e 'subject' sejam carregadas para evitar múltiplas queries
     favorite_topics_query = current_user.favorite_laws.options(
         joinedload(Law.parent).joinedload(Law.subject)
     ).filter(Law.parent_id.isnot(None)).all()
 
-    # Primeiro, agrupa os tópicos por Lei (parent)
     grouped_by_law = {}
     for topic in favorite_topics_query:
         if topic.parent:
@@ -228,7 +226,6 @@ def dashboard():
                 grouped_by_law[topic.parent] = []
             grouped_by_law[topic.parent].append(topic)
     
-    # Agora, cria os cards de Lei e os agrupa por Matéria
     for law, topics in grouped_by_law.items():
         subject = law.subject
         if not subject:
@@ -256,8 +253,7 @@ def dashboard():
             "topics": topic_details_list,
             "progress": progress_percentage
         })
-
-    # --- FIM DA LÓGICA ---
+    # --- FIM DA ALTERAÇÃO ---
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -270,7 +266,7 @@ def dashboard():
                            non_fixed_announcements=non_fixed_announcements,
                            last_accessed_law=last_accessed_law,
                            user_streak=user_streak,
-                           favorites_by_subject=favorites_by_subject  # Passa a nova estrutura
+                           favorites_by_subject=favorites_by_subject
                            )
 
 
