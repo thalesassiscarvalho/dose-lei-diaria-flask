@@ -69,12 +69,11 @@
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
     .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
-    /* --- INÍCIO DA ALTERAÇÃO: ESTILOS DO CARD DE STREAK E MAPA DE CALOR --- */
     .streak-card {
         background: linear-gradient(145deg, #fff7ed, #fffcf9);
         border-color: #fed7aa;
-        justify-content: flex-start; /* Alinha o conteúdo ao topo */
-        padding-bottom: 0.5rem; /* Menos padding inferior para o mapa de calor */
+        justify-content: flex-start;
+        padding-bottom: 1rem; /* Ajuste no padding */
     }
     .streak-card-header {
         width: 100%;
@@ -85,7 +84,7 @@
     }
     .streak-card .stat-card-title {
         justify-content: center;
-        margin-bottom: 0.5rem; /* Menos margem no título */
+        margin-bottom: 0.5rem;
     }
     .streak-card .stat-card-title i {
         color: #f97316;
@@ -105,14 +104,13 @@
     }
     #study-heatmap {
         width: 100%;
-        margin-top: 1rem;
+        margin-top: 0.5rem;
         overflow: hidden;
     }
-    /* Estilos para customizar a aparência do Cal-Heatmap */
     .ch-day {
-        border-radius: 3px; /* Células do dia com bordas arredondadas */
+        border-radius: 3px;
     }
-    .ch-tooltip { /* Tooltip que aparece ao passar o mouse */
+    .ch-tooltip {
         background: #2d3748 !important;
         color: white !important;
         border-radius: 6px !important;
@@ -121,7 +119,11 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
         border: none !important;
     }
-    /* --- FIM DA ALTERAÇÃO --- */
+    .graph-label { /* Estilo para os nomes dos meses */
+        font-size: 10px !important;
+        fill: #718096 !important;
+    }
+
 
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
@@ -343,6 +345,8 @@
         </div>
         <div id="study-heatmap"></div>
     </div>
+
+
     <div class="stat-card points-card">
         <h2 class="stat-card-title"><i class="fas fa-star"></i> Meus Pontos</h2>
         <div class="points-display">{{ user_points }}</div>
@@ -533,6 +537,8 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.2/dist/cal-heatmap.css">
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
@@ -556,44 +562,48 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
     
-    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR ---
+    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR (LAYOUT HORIZONTAL) ---
     function initializeStudyHeatmap() {
         const cal = new CalHeatmap();
         cal.paint({
             data: {
-                source: '/student/api/study_activity', // Nova rota da API
+                source: '/student/api/study_activity',
                 type: 'json',
                 x: 'date',
                 y: 'value'
             },
+            // Define a data de início para 3 meses antes do mês atual, para mostrar 4 meses no total
             date: {
-                start: new Date(new Date().setMonth(new Date().getMonth() - 5)), // Exibir os últimos 6 meses
-                locale: { weekStart: 1, // Semana começa na segunda-feira
+                start: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+                locale: { 
+                    weekStart: 1, // Segunda-feira como início da semana
                     months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    weekdays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] 
+                    weekdays: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'] // Dias da semana abreviados
                 }
             },
-            range: 6, // Número de meses a serem exibidos
+            range: 4, // Exibe 4 meses
             scale: {
                 color: {
                     type: 'linear',
-                    range: ['#fed7aa', '#f97316'], // Cores do tema: de laranja claro a laranja escuro
-                    domain: [1, 1] // Domínio simples: qualquer valor > 0 usa a cor
+                    range: ['#fed7aa', '#f97316'],
+                    domain: [1, 1]
                 }
             },
+            // A chave da mudança: define o layout como horizontal
             domain: {
                 type: 'month',
-                paddin: [10, 10, 10, 10],
-                label: { text: 'MMM', textAlign: 'start', position: 'top' }
+                horizontal: true, // A MÁGICA ACONTECE AQUI!
+                gutter: 10, // Espaço entre os meses
+                label: { text: 'MMM', position: 'top' } // Nome do mês acima de cada bloco
             },
             subDomain: { 
-                type: 'ghDay', // Estilo similar ao do GitHub
-                width: 13, 
-                height: 13, 
+                type: 'ghDay', // Estilo GitHub
+                width: 12,    // Quadrados um pouco menores
+                height: 12,
                 radius: 3, 
-                gutter: 4
+                gutter: 3      // Espaço entre os quadrados
             },
-            itemSelector: '#study-heatmap', // Onde o mapa será renderizado
+            itemSelector: '#study-heatmap',
         });
     }
     initializeStudyHeatmap();
@@ -704,7 +714,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- INÍCIO: 1ª e 2ª MELHORIA - RENDERIZAÇÃO COM ACORDEÕES FECHADOS ---
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -713,8 +722,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '';
         for (const subjectName in subjects) {
-            // O cabeçalho da matéria agora começa fechado (sem a classe 'open')
-            // e o conteúdo começa escondido ('display: none')
             html += `
             <div class="subject-accordion-item">
                 <div class="subject-accordion-header">
@@ -723,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="subject-accordion-content">
                     ${subjects[subjectName].map(diploma => {
-                        // O cabeçalho da lei também começa fechado, independentemente do filtro
                         const displayStyle = 'none';
                         const iconRotation = 'rotate(0deg)';
 
@@ -748,7 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
         accordionContainer.innerHTML = html;
         attachEventListeners();
     }
-    // --- FIM DA ALTERAÇÃO ---
 
     function renderTopicItem(topic) {
         let statusBadge = '';
