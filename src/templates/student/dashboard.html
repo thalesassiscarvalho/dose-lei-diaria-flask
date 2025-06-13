@@ -570,19 +570,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
     
-    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR ("LINHA DE ATIVIDADE") ---
+    // --- LÓGICA DO MAPA DE CALOR ("LINHA DE ATIVIDADE") ---
     function initializeStudyHeatmap() {
         const cal = new CalHeatmap();
         cal.paint({
             data: {
                 source: '/student/api/study_activity',
-                type: 'json'
+                type: 'json' // CORREÇÃO APLICADA AQUI
             },
-            // Define o início para 69 dias atrás, para mostrar um total de 70 dias
             date: {
                 start: new Date(new Date().setDate(new Date().getDate() - 69)),
             },
-            range: 70, // Exibe os últimos 70 dias
+            range: 70,
             scale: {
                 color: {
                     type: 'linear',
@@ -590,13 +589,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     domain: [1, 1]
                 }
             },
-            // Domínio por dia, que cria a linha contínua
             domain: {
                 type: 'day',
                 gutter: 2,
-                label: { text: null } // Sem rótulos de mês/ano etc
+                label: { text: null }
             },
-            // Subdomínio (cada dia) como um quadrado
             subDomain: { 
                 type: 'ghDay',
                 width: 10,
@@ -607,7 +604,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     initializeStudyHeatmap();
-    // --- FIM DA ALTERAÇÃO ---
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
