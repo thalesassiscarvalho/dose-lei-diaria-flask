@@ -6,9 +6,7 @@
     <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Include Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- Adicionar biblioteca de animações -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         /* Custom base styles for White/Blue Theme */
@@ -226,8 +224,7 @@
         }
     </script>
     {% block head_extra %}{% endblock %}
-    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX requests -->
-</head>
+    <meta name="csrf-token" content="{{ csrf_token() }}"> </head>
 <body class="font-sans bg-brand-bg text-brand-text">
     <nav class="bg-brand-blue text-white shadow-md">
         <div class="container mx-auto flex flex-col items-center">
@@ -278,12 +275,16 @@
                 </a>
             </div>
         </div>
-        <p style="color: #000000;">&copy; 2025 Todos os direitos reservados.</p>
+        <p style="color: #000000;">
+            &copy; 2025 Estudo da Lei Seca. Todos os direitos reservados.
+            <br>
+            Estudo da Lei Seca&trade; é uma marca.
+            <br>
+            <a href="/termos-de-uso" style="color: #000000;">Termos de Uso</a> | <a href="/politica-de-privacidade" style="color: #000000;">Política de Privacidade</a>
+        </p>
     </footer>
 
-    <!-- Include Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
