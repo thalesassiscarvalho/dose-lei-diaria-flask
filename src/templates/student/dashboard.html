@@ -354,20 +354,52 @@
                 <h3 class="text-xl font-semibold text-gray-700 mb-6 flex items-center justify-center">
                     <i class="fas fa-star text-yellow-400 mr-3"></i>Acesso Rápido aos Seus Favoritos
                 </h3>
-                
+
                 {% for parent, favorite_topics in structured_favorites.items() %}
-                    <div class="mb-5">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">{{ parent.title }}</h4>
-                        <ul class="space-y-2">
-                            {% for topic in favorite_topics %}
-                                <li class="ml-4">
-                                    <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="flex items-center text-blue-600 hover:text-blue-800 hover:underline">
-                                        <i class="fas fa-file-alt text-sm mr-2 text-gray-400"></i>
-                                        <span>{{ topic.title }}</span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
+                    <div class="subject-accordion-item mb-4">
+                        <div class="subject-accordion-header open" style="background-color: #f9fafb;"> <h3>{{ parent.title }}</h3>
+                            <i class="fas fa-chevron-down toggle-icon" style="transform: rotate(180deg);"></i>
+                        </div>
+                        <div class="subject-accordion-content" style="display: block;"> <div class="accordion-item">
+                                 <div class="accordion-content" style="display: block; padding-left: 0; padding-right: 0;">
+                                    {% for topic in favorite_topics %}
+                                        <div class="topic-item" data-law-id="{{ topic.id }}">
+                                            <div class="topic-title">
+                                                <i class="fas fa-file-alt icon"></i>
+                                                <span>{{ topic.title }}</span>
+                                            </div>
+                                            <div class="topic-actions">
+                                                {% if topic.is_completed %}
+                                                    <span class="completed-badge">Concluída</span>
+                                                {% elif topic.is_in_progress %}
+                                                    <span class="in-progress-badge">Em Andamento</span>
+                                                {% endif %}
+
+                                                <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                                    {% if topic.is_completed %}
+                                                        <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                    {% elif topic.is_in_progress %}
+                                                        <i class="fas fa-book-reader mr-1"></i> Continuar
+                                                    {% else %}
+                                                        <i class="fas fa-book mr-1"></i> Começar
+                                                    {% endif %}
+                                                </a>
+
+                                                {% if topic.is_completed %}
+                                                <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                                    <i class="fas fa-undo-alt"></i>
+                                                </button>
+                                                {% endif %}
+                                                
+                                                <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -377,7 +409,7 @@
             <h3 class="text-xl font-semibold text-gray-700">Comece seus estudos!</h3>
             <p class="text-gray-500 mt-2">Selecione uma matéria nos filtros acima para ver as legislações disponíveis.</p>
         {% endif %}
-    </div>
+        </div>
 </div>
 {% endblock %}
 
@@ -415,8 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        if (!subjectId) {
-            accordionContainer.innerHTML = '';
+        // Se a opção "Todas as Matérias" ou "Favoritas" for selecionada e não for uma matéria específica
+        const isInitialState = !subjectId || subjectId === 'all';
+        if (isInitialState && !showFavorites && !filterControls.search.value) {
+            accordionContainer.innerHTML = ''; // Limpa o conteúdo se voltarmos ao estado inicial
             return;
         }
 
@@ -425,7 +459,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', showFavorites);
         
-        if (subjectId) params.append('subject_id', subjectId);
+        if (subjectId && subjectId !== 'all') params.append('subject_id', subjectId);
+
         if (diplomaId) {
             params.append('diploma_id', diplomaId);
             if (refineType === 'status') {
@@ -459,7 +494,8 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        if (!subjectId) {
+        // Se o valor for 'all' ou vazio, apenas renderiza (que vai limpar o conteúdo)
+        if (!subjectId || subjectId === 'all') {
             fetchAndRenderLaws();
             return;
         }
@@ -518,18 +554,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '';
         for (const subjectName in subjects) {
-            // Nova estrutura de Accordion para cada matéria
             html += `
             <div class="subject-accordion-item">
-                <div class="subject-accordion-header">
+                <div class="subject-accordion-header open">
                     <h3>${subjectName}</h3>
-                    <i class="fas fa-chevron-down toggle-icon"></i>
+                    <i class="fas fa-chevron-down toggle-icon" style="transform: rotate(180deg);"></i>
                 </div>
-                <div class="subject-accordion-content">
+                <div class="subject-accordion-content" style="display: block;">
                     ${subjects[subjectName].map(diploma => {
-                        // Reutiliza a lógica de renderizar o item de lei que já tínhamos
-                        // Envolvendo cada lei em sua própria estrutura.
-                        const isOpen = filterControls.diploma.value;
+                        const isOpen = filterControls.diploma.value || Object.keys(subjects).length === 1;
                         const openClass = isOpen ? 'open' : '';
                         const displayStyle = isOpen ? 'block' : 'none';
                         const iconRotation = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
@@ -553,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
         }
         accordionContainer.innerHTML = html;
-        attachEventListeners(); // Importante chamar para adicionar os listeners aos novos elementos
+        attachEventListeners();
     }
 
     function renderTopicItem(topic) {
@@ -572,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>` : '';
         
         const favoriteClass = topic.is_favorite ? 'favorited' : '';
-        const favoriteIcon = topic.is_favorite ? 'fas fa-star' : 'far fa-star';
+        const favoriteIcon = topic.is_favorite ? 'fas fa-star' : 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
@@ -591,22 +624,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- EVENT LISTENERS ---
     function attachEventListeners() {
-        // ADICIONE ESTE NOVO BLOCO DE CÓDIGO
         document.querySelectorAll('.subject-accordion-header').forEach(header => {
             header.addEventListener('click', function() {
                 this.classList.toggle('open');
                 const content = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon');
                 if (content.style.display === 'block') {
                     content.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
                 } else {
                     content.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
                 }
             });
         });
         
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', function(event) {
-                // Impede que o clique no accordion de LEI feche o accordion de MATÉRIA
                 event.stopPropagation();
                 
                 const content = this.nextElementSibling;
@@ -629,15 +663,15 @@ document.addEventListener('DOMContentLoaded', function() {
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
 
-        if (subjectId) {
-            // A subject is selected
+        // Se selecionou uma matéria real (não "todas" ou "favoritas"), mostra a seção de leis
+        if (subjectId && subjectId !== 'all') {
             if (lawsSection.style.display === 'none') {
                 initialPrompt.style.display = 'none';
                 lawsSection.style.display = 'block';
                 setTimeout(() => lawsSection.style.opacity = '1', 50);
             }
         } else {
-            // "-- Todas as Matérias --" is selected, go back to initial state
+            // Se voltou para "Favoritas" (valor vazio) ou "Todas as Matérias", esconde a seção de leis e mostra a tela inicial
             initialPrompt.style.display = 'block';
             lawsSection.style.display = 'none';
             lawsSection.style.opacity = '0';
@@ -672,11 +706,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     filterControls.statusFilter.addEventListener('change', fetchAndRenderLaws);
     filterControls.topicFilter.addEventListener('change', fetchAndRenderLaws);
-    filterControls.favorites.addEventListener('change', fetchAndRenderLaws);
+    filterControls.favorites.addEventListener('change', () => {
+        if(filterControls.favorites.checked) {
+            initialPrompt.style.display = 'none';
+            lawsSection.style.display = 'block';
+            setTimeout(() => lawsSection.style.opacity = '1', 50);
+        } else if (!filterControls.subject.value || filterControls.subject.value === 'all') {
+             initialPrompt.style.display = 'block';
+             lawsSection.style.display = 'none';
+             lawsSection.style.opacity = '0';
+        }
+       fetchAndRenderLaws();
+    });
 
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
-        filterControls.subject.value = '';
+        // Verifica se há favoritos para decidir o estado inicial do select
+        const hasFavorites = initialPrompt.querySelector('.subject-accordion-item') !== null;
+        filterControls.subject.value = hasFavorites ? '' : 'all';
+
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.favorites.checked = false;
@@ -688,7 +736,6 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
 
-        // Restore initial screen state
         initialPrompt.style.display = 'block';
         lawsSection.style.display = 'none';
         lawsSection.style.opacity = '0';
@@ -706,17 +753,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (query.length < 3) {
             resultsContainer.style.display = 'none';
-            // Se o usuário apaga a busca, não fazemos nada, deixamos os filtros hierárquicos mandarem
             return;
         }
-
-        // Limpa os filtros hierárquicos para dar prioridade à busca
-        filterControls.subject.value = '';
+        
+        filterControls.subject.value = 'all'; // Muda para "Todas as matérias"
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.refinementWrapper.style.visibility = 'hidden';
         
-        // Esconde a lista de leis e o prompt inicial
         initialPrompt.style.display = 'none';
         lawsSection.style.display = 'none';
 
@@ -776,8 +820,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupDynamicPlaceholder();
 
     // --- OUTRAS FUNCIONALIDADES (avisos, favoritos, etc.) ---
-    const markSeenCheckboxes = document.querySelectorAll('.mark-seen-checkbox');
-    markSeenCheckboxes.forEach(checkbox => {
+    document.querySelectorAll('.mark-seen-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             this.disabled = true;
             const announcementItem = this.closest('.non-fixed-announcement-item');
@@ -800,14 +843,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ADIÇÃO 2/2: Função de Favoritar com Notificação (Substituição da antiga)
-    function handleFavoriteClick() {
-        const button = this;
+    function handleFavoriteClick(event) {
+        const button = event.currentTarget;
         button.disabled = true;
         const lawId = button.dataset.lawId;
         const icon = button.querySelector('i');
-
-        // Pega o título do tópico para a mensagem da notificação
         const topicItem = button.closest('.topic-item'); 
         const topicTitle = topicItem ? topicItem.querySelector('.topic-title span').textContent : 'Item';
 
@@ -818,7 +858,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             let notificationText = '';
-
             if (data.favorited) {
                 button.classList.add('favorited');
                 icon.className = 'fas fa-star';
@@ -829,45 +868,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
                 notificationText = `'${topicTitle}' removido dos favoritos.`;
-                if (filterControls.favorites.checked) {
+                
+                // Se o clique veio da seção de favoritos, remove o item da tela
+                if (button.closest('#initial-prompt')) {
+                    const itemToRemove = button.closest('.topic-item');
+                    if (itemToRemove) {
+                        itemToRemove.remove();
+                        // Verifica se era o último tópico daquela lei
+                        const topicList = itemToRemove.parentElement;
+                        if (!topicList.querySelector('.topic-item')) {
+                            // Se era o último, remove o container da lei pai
+                            topicList.closest('.subject-accordion-item').remove();
+                        }
+                        // Verifica se não há mais nenhum favorito
+                        if (!document.querySelector('#initial-prompt .topic-item')) {
+                             window.location.reload(); // Recarrega a página para mostrar a mensagem de "Comece seus estudos"
+                        }
+                    }
+                } else if (filterControls.favorites.checked) {
                     const itemToRemove = button.closest('.topic-item');
                     if(itemToRemove) itemToRemove.remove();
                 }
             }
-            
-            // Exibe a notificação na tela
             Toastify({
-                text: notificationText,
-                duration: 3000,
-                close: true,
-                gravity: "bottom",
-                position: "right",
-                stopOnFocus: true,
-                style: {
-                    background: "linear-gradient(to right, #1f2937, #374151)",
-                    borderRadius: "0.5rem"
-                }
+                text: notificationText, duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #1f2937, #374151)", borderRadius: "0.5rem" }
             }).showToast();
-
         })
-        .catch(error => {
-            console.error('Erro:', error);
-            // Poderia adicionar uma notificação de erro aqui também, se quisesse
-        })
-        .finally(() => { 
-            button.disabled = false; 
-        });
+        .catch(error => console.error('Erro:', error))
+        .finally(() => { button.disabled = false; });
     }
 
-    function handleMarkIncompleteClick() {
-        const buttonEl = this;
+    function handleMarkIncompleteClick(event) {
+        const buttonEl = event.currentTarget;
         buttonEl.disabled = true;
         const lawId = buttonEl.dataset.lawId;
         fetch(`/student/law/review/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
         .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                fetchAndRenderLaws();
+                // Se o clique veio da seção de favoritos, recarrega a página para atualizar o estado
+                 if (buttonEl.closest('#initial-prompt')) {
+                    window.location.reload();
+                } else {
+                    fetchAndRenderLaws();
+                }
             } else {
                 alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
                 buttonEl.disabled = false;
@@ -881,7 +926,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- CARGA INICIAL ---
-    // A chamada fetchAndRenderLaws() foi removida para implementar o carregamento sob demanda.
+    // Adiciona os event listeners aos itens já presentes na página (seção de favoritos)
+    attachEventListeners();
 });
 </script>
 {% endblock %}
