@@ -168,29 +168,27 @@ def autocomplete_search():
 # =====================================================================
 
 
-# --- INÍCIO DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (1/2) ---
-# A função agora retorna os objetos de conquista completos para que possamos usar seus detalhes na animação.
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO DE CONQUISTAS CORRIGIDA >>>
+# =====================================================================
 def check_and_award_achievements(user):
-    """Verifica e concede conquistas ao usuário."""
-    unlocked_achievements_objects = []  # Alterado de 'names' para 'objects'
-    completed_laws_count = UserProgress.query.filter_by(user_id=user.id, status='concluido').count()
-    all_achievements = Achievement.query.all()
+    """Verifica e concede conquistas ao usuário com base APENAS nos pontos."""
+    unlocked_achievements_objects = []
+    all_achievements = Achievement.query.order_by(Achievement.points_threshold).all()
     user_achievement_ids = {a.id for a in user.achievements}
 
     for achievement in all_achievements:
         if achievement.id not in user_achievement_ids:
-            unlocked = False
-            if achievement.points_threshold and user.points >= achievement.points_threshold:
-                unlocked = True
-            if achievement.laws_completed_threshold and completed_laws_count >= achievement.laws_completed_threshold:
-                unlocked = True
-
-            if unlocked:
+            # A única condição agora é se o usuário tem pontos suficientes
+            # e se o 'points_threshold' não é nulo.
+            if achievement.points_threshold is not None and user.points >= achievement.points_threshold:
                 user.achievements.append(achievement)
-                unlocked_achievements_objects.append(achievement)  # Adiciona o objeto completo
+                unlocked_achievements_objects.append(achievement)
 
-    return unlocked_achievements_objects  # Retorna a lista de objetos
-# --- FIM DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (1/2) ---
+    return unlocked_achievements_objects
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 
 # =====================================================================
 # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO STREAK DE ESTUDOS >>>
