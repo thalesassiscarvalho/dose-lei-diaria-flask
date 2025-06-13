@@ -209,46 +209,55 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO DA ALTERAÇÃO: LÓGICA DE FAVORITOS COM VISUAL DE CARD ---
-    favorites_with_progress = []
+    # --- INÍCIO: 3ª MELHORIA - LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
+    favorites_by_subject = {}
     
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
-    favorite_topics_query = current_user.favorite_laws.options(joinedload(Law.parent)).filter(Law.parent_id.isnot(None)).all()
+    # Garante que a relação 'parent' e 'subject' sejam carregadas para evitar múltiplas queries
+    favorite_topics_query = current_user.favorite_laws.options(
+        joinedload(Law.parent).joinedload(Law.subject)
+    ).filter(Law.parent_id.isnot(None)).all()
 
-    # Agrupa os tópicos favoritos pelo seu pai (a Lei principal)
-    grouped_favorites = {}
+    # Primeiro, agrupa os tópicos por Lei (parent)
+    grouped_by_law = {}
     for topic in favorite_topics_query:
         if topic.parent:
-            if topic.parent not in grouped_favorites:
-                grouped_favorites[topic.parent] = []
-            grouped_favorites[topic.parent].append(topic)
+            if topic.parent not in grouped_by_law:
+                grouped_by_law[topic.parent] = []
+            grouped_by_law[topic.parent].append(topic)
+    
+    # Agora, cria os cards de Lei e os agrupa por Matéria
+    for law, topics in grouped_by_law.items():
+        subject = law.subject
+        if not subject:
+            continue
+
+        if subject not in favorites_by_subject:
+            favorites_by_subject[subject] = []
             
-    # Calcula o progresso para cada grupo e monta a estrutura final
-    for parent, topics in grouped_favorites.items():
         completed_in_group = sum(1 for topic in topics if topic.id in completed_topic_ids)
         total_in_group = len(topics)
         progress_percentage = (completed_in_group / total_in_group * 100) if total_in_group > 0 else 0
         
-        # Coleta os detalhes de cada tópico filho
-        topic_details_list = []
         in_progress_topic_ids = {p.law_id for p in user_progress_records if p.status == 'em_andamento'}
-        for topic in topics:
+        topic_details_list = []
+        for topic in sorted(topics, key=lambda t: t.id):
             topic_details_list.append({
                 "id": topic.id,
                 "title": topic.title,
                 "is_completed": topic.id in completed_topic_ids,
                 "is_in_progress": topic.id in in_progress_topic_ids,
-                "is_favorite": True
             })
 
-        favorites_with_progress.append({
-            "parent": parent,
+        favorites_by_subject[subject].append({
+            "parent": law,
             "topics": topic_details_list,
             "progress": progress_percentage
         })
-    # --- FIM DA ALTERAÇÃO ---
+
+    # --- FIM DA LÓGICA ---
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -261,8 +270,7 @@ def dashboard():
                            non_fixed_announcements=non_fixed_announcements,
                            last_accessed_law=last_accessed_law,
                            user_streak=user_streak,
-                           # Passa a nova estrutura de favoritos para o template
-                           favorites_with_progress=favorites_with_progress
+                           favorites_by_subject=favorites_by_subject  # Passa a nova estrutura
                            )
 
 
