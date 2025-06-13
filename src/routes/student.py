@@ -209,33 +209,45 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO DA ALTERAÇÃO: LÓGICA DE FAVORITOS MELHORADA ---
-    # 1. Busca todos os registros de progresso do usuário de uma vez para otimização
+    # --- INÍCIO DA ALTERAÇÃO: LÓGICA DE FAVORITOS COM VISUAL DE CARD ---
+    favorites_with_progress = []
+    
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
-    progress_map = {p.law_id: p.status for p in user_progress_records}
-    completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
-    in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
-
-    # 2. Busca os tópicos favoritos do usuário, já carregando os pais para otimizar.
+    completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
+    
     favorite_topics_query = current_user.favorite_laws.options(joinedload(Law.parent)).filter(Law.parent_id.isnot(None)).all()
 
-    # 3. Estrutura os favoritos em um dicionário, agora incluindo os detalhes de progresso
-    structured_favorites = {}
-    if favorite_topics_query:
-        for topic in favorite_topics_query:
-            if topic.parent: # Garante que o tópico tem um pai
-                if topic.parent not in structured_favorites:
-                    structured_favorites[topic.parent] = []
-                
-                # Cria um dicionário com todos os detalhes que o template vai precisar
-                topic_details = {
-                    "id": topic.id,
-                    "title": topic.title,
-                    "is_completed": topic.id in completed_topic_ids,
-                    "is_in_progress": topic.id in in_progress_topic_ids,
-                    "is_favorite": True # Já sabemos que é favorito
-                }
-                structured_favorites[topic.parent].append(topic_details)
+    # Agrupa os tópicos favoritos pelo seu pai (a Lei principal)
+    grouped_favorites = {}
+    for topic in favorite_topics_query:
+        if topic.parent:
+            if topic.parent not in grouped_favorites:
+                grouped_favorites[topic.parent] = []
+            grouped_favorites[topic.parent].append(topic)
+            
+    # Calcula o progresso para cada grupo e monta a estrutura final
+    for parent, topics in grouped_favorites.items():
+        completed_in_group = sum(1 for topic in topics if topic.id in completed_topic_ids)
+        total_in_group = len(topics)
+        progress_percentage = (completed_in_group / total_in_group * 100) if total_in_group > 0 else 0
+        
+        # Coleta os detalhes de cada tópico filho
+        topic_details_list = []
+        in_progress_topic_ids = {p.law_id for p in user_progress_records if p.status == 'em_andamento'}
+        for topic in topics:
+            topic_details_list.append({
+                "id": topic.id,
+                "title": topic.title,
+                "is_completed": topic.id in completed_topic_ids,
+                "is_in_progress": topic.id in in_progress_topic_ids,
+                "is_favorite": True
+            })
+
+        favorites_with_progress.append({
+            "parent": parent,
+            "topics": topic_details_list,
+            "progress": progress_percentage
+        })
     # --- FIM DA ALTERAÇÃO ---
 
     return render_template("student/dashboard.html",
@@ -250,7 +262,7 @@ def dashboard():
                            last_accessed_law=last_accessed_law,
                            user_streak=user_streak,
                            # Passa a nova estrutura de favoritos para o template
-                           structured_favorites=structured_favorites
+                           favorites_with_progress=favorites_with_progress
                            )
 
 
