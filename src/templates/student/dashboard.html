@@ -72,15 +72,14 @@
     .streak-card {
         background: linear-gradient(145deg, #fff7ed, #fffcf9);
         border-color: #fed7aa;
-        justify-content: flex-start;
-        padding-bottom: 1rem; /* Ajuste no padding */
+        justify-content: space-between; /* Distribui o espaço */
     }
     .streak-card-header {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 1rem;
+        text-align: center;
     }
     .streak-card .stat-card-title {
         justify-content: center;
@@ -104,8 +103,14 @@
     }
     #study-heatmap {
         width: 100%;
-        margin-top: 0.5rem;
+        margin-top: 1rem;
         overflow: hidden;
+    }
+    .heatmap-subtitle {
+        font-size: 0.75rem;
+        color: #f97316;
+        text-align: center;
+        margin-top: 1rem;
     }
     .ch-day {
         border-radius: 3px;
@@ -119,7 +124,7 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
         border: none !important;
     }
-    .graph-label { /* Estilo para os nomes dos meses */
+    .graph-label {
         font-size: 10px !important;
         fill: #718096 !important;
     }
@@ -343,7 +348,10 @@
                 <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
             {% endif %}
         </div>
-        <div id="study-heatmap"></div>
+        <div>
+            <div id="study-heatmap"></div>
+            <p class="heatmap-subtitle">Atividade nos últimos 70 dias</p>
+        </div>
     </div>
 
 
@@ -562,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
     
-    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR (LAYOUT HORIZONTAL) ---
+    // --- INÍCIO DA ALTERAÇÃO: LÓGICA DO MAPA DE CALOR ("LINHA DE ATIVIDADE") ---
     function initializeStudyHeatmap() {
         const cal = new CalHeatmap();
         cal.paint({
@@ -572,16 +580,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 x: 'date',
                 y: 'value'
             },
-            // Define a data de início para 3 meses antes do mês atual, para mostrar 4 meses no total
+            // Define o início para 69 dias atrás, para mostrar um total de 70 dias
             date: {
-                start: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-                locale: { 
-                    weekStart: 1, // Segunda-feira como início da semana
-                    months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    weekdays: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'] // Dias da semana abreviados
-                }
+                start: new Date(new Date().setDate(new Date().getDate() - 69)),
             },
-            range: 4, // Exibe 4 meses
+            range: 70, // Exibe os últimos 70 dias
             scale: {
                 color: {
                     type: 'linear',
@@ -589,19 +592,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     domain: [1, 1]
                 }
             },
-            // A chave da mudança: define o layout como horizontal
+            // Domínio por dia, que cria a linha contínua
             domain: {
-                type: 'month',
-                horizontal: true, // A MÁGICA ACONTECE AQUI!
-                gutter: 10, // Espaço entre os meses
-                label: { text: 'MMM', position: 'top' } // Nome do mês acima de cada bloco
+                type: 'day',
+                gutter: 2,
+                label: { text: null } // Sem rótulos de mês/ano etc
             },
+            // Subdomínio (cada dia) como um quadrado
             subDomain: { 
-                type: 'ghDay', // Estilo GitHub
-                width: 12,    // Quadrados um pouco menores
-                height: 12,
-                radius: 3, 
-                gutter: 3      // Espaço entre os quadrados
+                type: 'ghDay',
+                width: 10,
+                height: 10,
+                radius: 2,
             },
             itemSelector: '#study-heatmap',
         });
