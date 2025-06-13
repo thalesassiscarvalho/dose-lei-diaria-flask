@@ -104,33 +104,6 @@ def autocomplete_search():
             seen.add(identifier)
 
     return jsonify(results=unique_results[:7]) # Retorna no máximo 7 resultados únicos
-
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: API PARA O MAPA DE CALOR DE ESTUDOS >>>
-# =====================================================================
-@student_bp.route("/api/study_activity")
-@login_required
-def get_study_activity():
-    """
-    Endpoint de API para retornar os dados de atividade de estudo do usuário
-    para o mapa de calor. Retorna as datas do último ano em que houve estudo.
-    """
-    one_year_ago = date.today() - timedelta(days=365)
-    activities = StudyActivity.query.filter(
-        StudyActivity.user_id == current_user.id,
-        StudyActivity.study_date >= one_year_ago
-    ).all()
-
-    # Formata os dados no formato esperado pela biblioteca Cal-Heatmap:
-    # Um dicionário onde a chave é o timestamp Unix (em segundos) e o valor é a intensidade.
-    # Usaremos '1' para indicar que houve estudo no dia.
-    study_data = {
-        int(activity.study_date.strftime('%s')): 1
-        for activity in activities
-    }
-    return jsonify(study_data)
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
 
 
