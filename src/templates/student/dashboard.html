@@ -276,10 +276,10 @@
 
     /* Card de Motivação Diária (Novo) */
     .daily-motivation-card {
-        background: linear-gradient(145deg, #f3e5f5, #fcf8fc); /* Roxo claro para o fundo */
-        border-color: #ce93d8; /* Borda roxa clara */
-        border-left-color: #ab47bc; /* Borda esquerda roxa vibrante */
-        box-shadow: 0 4px 8px -2px rgba(171, 71, 188, 0.1), 0 2px 4px -2px rgba(171, 71, 188, 0.07);
+        background: linear-gradient(145deg, #fffde7, #fffed9); /* Tons de Dourado/Âmbar para o fundo */
+        border-color: #ffd54f; /* Borda dourada/âmbar clara */
+        border-left-color: #ffc107; /* Borda esquerda dourada/âmbar vibrante */
+        box-shadow: 0 4px 8px -2px rgba(255, 193, 7, 0.1), 0 2px 4px -2px rgba(255, 193, 7, 0.07);
         text-align: center;
         display: flex;
         flex-direction: column;
@@ -290,23 +290,23 @@
         margin-bottom: 0.5rem;
     }
     .daily-motivation-card .stat-card-title i {
-        color: #8e24aa; /* Roxo escuro para o ícone */
-        background-color: #fce4ec; /* Fundo do ícone mais claro */
+        color: #ff8f00; /* Dourado/âmbar escuro para o ícone */
+        background-color: #fff8e1; /* Fundo do ícone mais claro */
     }
     .daily-motivation-card:hover {
-        border-color: #be93d8; /* Borda ao hover */
-        box-shadow: 0 10px 20px -5px rgba(171, 71, 188, 0.15), 0 4px 6px -4px rgba(171, 71, 188, 0.1);
+        border-color: #ffb74d; /* Borda ao hover */
+        box-shadow: 0 10px 20px -5px rgba(255, 193, 7, 0.15), 0 4px 6px -4px rgba(255, 193, 7, 0.1);
     }
     .motivation-date {
         font-size: 0.9rem;
         font-weight: 500;
-        color: #8e24aa; /* Cor da data */
+        color: #ff8f00; /* Cor da data */
         margin-bottom: 0.75rem;
     }
     .motivation-text {
         font-size: 1.15rem; /* Frase um pouco maior */
         font-style: italic;
-        color: #7b1fa2; /* Roxo mais escuro para a frase */
+        color: #ffa000; /* Dourado/âmbar mais escuro para a frase */
         flex-grow: 1;
         display: flex;
         align-items: center;
@@ -611,6 +611,32 @@
         .fixed-announcement-box h2, .announcement-box h2 { font-size: 1.1rem; }
         .accordion-header .diploma-progress { display: none; }
     }
+
+    /* Estilos para o botão de ocultar/mostrar cards */
+    .hide-cards-btn {
+        margin-left: 1rem; /* Espaço entre o título e o botão */
+        background-color: #6b7280; /* Cor cinza padrão */
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.5rem;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px; /* Altura para alinhar com o título */
+    }
+
+    .hide-cards-btn:hover {
+        background-color: #4b5563;
+    }
+
+    /* Classe para ocultar os cards principais */
+    .dashboard-cards-hidden {
+        display: none !important;
+    }
     /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
@@ -619,7 +645,10 @@
 
 {% block content %}
 <div class="space-y-8">
-    <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
+    <div class="flex items-center"> {# Novo container flex para alinhar título e botão #}
+        <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
+        <button id="toggle-cards-btn" class="hide-cards-btn">Ocultar Cards</button> {# Botão adicionado #}
+    </div>
 
     {% if fixed_announcements or non_fixed_announcements %}
     <div class="announcement-section">
@@ -661,7 +690,8 @@
     {# ===================================================================== #}
     {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
+    {# Container para os cards principais, que será ocultado/mostrado #}
+    <div id="dashboard-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-6"> 
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
             <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
@@ -972,6 +1002,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationTextElement = document.getElementById('motivation-text');
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
+    // =====================================================================
+    const toggleCardsBtn = document.getElementById('toggle-cards-btn');
+    const dashboardCardsContainer = document.getElementById('dashboard-cards-container');
+    const HIDE_CARDS_STORAGE_KEY = 'hide_dashboard_cards'; // Chave para o localStorage
+
+    // Função para ocultar/mostrar os cards
+    function toggleCardsVisibility() {
+        if (dashboardCardsContainer.classList.contains('dashboard-cards-hidden')) {
+            // Se estiver oculto, mostra
+            dashboardCardsContainer.classList.remove('dashboard-cards-hidden');
+            toggleCardsBtn.textContent = 'Ocultar Cards';
+            localStorage.setItem(HIDE_CARDS_STORAGE_KEY, 'false');
+        } else {
+            // Se estiver visível, oculta
+            dashboardCardsContainer.classList.add('dashboard-cards-hidden');
+            toggleCardsBtn.textContent = 'Mostrar Cards';
+            localStorage.setItem(HIDE_CARDS_STORAGE_KEY, 'true');
+        }
+    }
+
+    // Event listener para o botão
+    toggleCardsBtn.addEventListener('click', toggleCardsVisibility);
+
+    // Verifica o estado salvo no localStorage ao carregar a página
+    const savedState = localStorage.getItem(HIDE_CARDS_STORAGE_KEY);
+    if (savedState === 'true') {
+        dashboardCardsContainer.classList.add('dashboard-cards-hidden');
+        toggleCardsBtn.textContent = 'Mostrar Cards';
+    } else {
+        // Garante que o texto do botão esteja correto se não houver estado salvo ou se for 'false'
+        toggleCardsBtn.textContent = 'Ocultar Cards';
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
     // =====================================================================
 
 
