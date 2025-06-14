@@ -60,6 +60,14 @@ class User(UserMixin, db.Model):
     # <<< FIM DA IMPLEMENTAÇÃO: STREAK DE ESTUDOS >>>
     # =====================================================================
 
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO RELACIONAMENTO PARA MEU DIÁRIO >>>
+    # =====================================================================
+    todo_items = db.relationship("TodoItem", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO: NOVO RELACIONAMENTO PARA MEU DIÁRIO >>>
+    # =====================================================================
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -187,4 +195,26 @@ class UserSeenLawBanner(db.Model):
 
 # =====================================================================
 # <<< FIM DA NOVA FUNCIONALIDADE >>>
+# =====================================================================
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA CLASSE TodoItem PARA MEU DIÁRIO >>>
+# =====================================================================
+class TodoItem(db.Model):
+    """
+    Representa um item de tarefa no diário pessoal do usuário.
+    """
+    __tablename__ = 'todo_item'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    content = db.Column(db.String(500), nullable=False)
+    is_completed = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<TodoItem {self.id} (User: {self.user_id}): {self.content[:30]}...>"
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO: NOVA CLASSE TodoItem PARA MEU DIÁRIO >>>
 # =====================================================================
