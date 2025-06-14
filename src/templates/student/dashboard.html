@@ -4,8 +4,6 @@
 
 {% block head_extra %}
 <style>
-    /* ... (seu CSS existente, incluindo os estilos do heatmap-card e cal-heatmap) ... */
-
     /* ===================================================================== */
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
@@ -270,59 +268,6 @@
         box-shadow: 0 10px 20px -5px rgba(103, 58, 183, 0.15), 0 4px 6px -4px rgba(103, 58, 183, 0.1);
     }
 
-    /* Estilo para o novo Card de Mapa de Calor */
-    .heatmap-card {
-        background: linear-gradient(145deg, #f0fdf4, #f8fffb); /* Verde claro */
-        border-color: #a7f3d0;
-        border-left-color: #10b981; /* Verde vibrante */
-        box-shadow: 0 4px 8px -2px rgba(16, 185, 129, 0.1), 0 2px 4px -2px rgba(16, 185, 129, 0.07);
-    }
-    .heatmap-card .stat-card-title i {
-        color: #047857; /* Verde escuro */
-        background-color: #d1fae5;
-    }
-    .heatmap-card:hover {
-        border-color: #6ee7b7;
-        box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.15), 0 4px 6px -4px rgba(16, 185, 129, 0.1);
-    }
-
-    /* Estilos para o Cal-Heatmap */
-    /* Cores personalizadas para o Cal-Heatmap para combinar com o verde */
-    .cal-heatmap .ch-day.ch-level-0 { background-color: #ebfbee; } /* Muito Claro */
-    .cal-heatmap .ch-day.ch-level-1 { background-color: #c6f6d5; } /* Claro */
-    .cal-heatmap .ch-day.ch-level-2 { background-color: #68d391; } /* Médio */
-    .cal-heatmap .ch-day.ch-level-3 { background-color: #38a169; } /* Escuro */
-    .cal-heatmap .ch-day.ch-level-4 { background-color: #276749; } /* Muito Escuro */
-
-    .cal-heatmap {
-        max-width: 100%;
-        overflow-x: auto; /* Permite rolagem se o mapa for muito grande */
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 12px;
-        color: #4a5568;
-    }
-
-    .cal-heatmap .ch-tooltip {
-        background-color: #333;
-        color: #fff;
-        border-radius: 4px;
-        padding: 5px 8px;
-        font-size: 11px;
-        white-space: nowrap;
-        pointer-events: none;
-        z-index: 9999;
-    }
-
-    .cal-heatmap .ch-month-name,
-    .cal-heatmap .ch-subdomain-text {
-        fill: #4a5568;
-        font-weight: 500;
-    }
-    .cal-heatmap .ch-legend-block {
-        fill: #4a5568;
-    }
-
-
     /* Efeito de elevação adicionado ao container de filtro */
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
@@ -473,10 +418,6 @@
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
 </style>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/cal-heatmap@4"></script>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4/dist/cal-heatmap.css">
-
 {% endblock %}
 
 {% block content %}
@@ -520,8 +461,8 @@
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {% if recent_activities %}
+    {% if recent_activities %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="stat-card recent-activities-card">
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
             <div class="flex flex-col space-y-2">
@@ -537,16 +478,8 @@
                 {% endfor %}
             </div>
         </div>
-        {% endif %}
-
-        {# Novo Card para o Mapa de Calor #}
-        <div class="stat-card heatmap-card">
-            <h2 class="stat-card-title"><i class="fas fa-calendar-alt"></i> Meu Calendário de Estudos</h2>
-            <div id="cal-heatmap-container" class="w-full h-full flex items-center justify-center">
-                {# O mapa de calor será renderizado aqui pelo JavaScript #}
-            </div>
-        </div>
     </div>
+    {% endif %}
 
    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -869,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
             filterControls.diploma.disabled = false;
         } catch (error) {
             console.error("Erro ao buscar leis:", error);
-            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</doption>';
+            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
         }
         fetchAndRenderLaws();
     }
@@ -1303,59 +1236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         fetchAndRenderLaws();
     }
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: INICIALIZAÇÃO DO CAL-HEATMAP >>>
-    // =====================================================================
-    var heatmapData = {{ study_heatmap_data | tojson }};
-
-    if (Object.keys(heatmapData).length > 0) {
-        var cal = new CalHeatmap();
-        cal.paint({
-            data: { source: heatmapData, type: 'json' },
-            domain: { type: 'month', gutter: 10 },
-            subDomain: { type: 'day', radius: 2 },
-            range: 6, // Mostra os últimos 6 meses
-            cellSize: 10, // Tamanho de cada dia no mapa
-            tooltip: true,
-            start: new Date(), // Começa a contar a partir da data atual
-            itemSelector: '#cal-heatmap-container',
-            legend: [1, 2, 3, 4], // Define os níveis de cor para a legenda (1+ dias)
-            legendColors: {
-                min: '#ebfbee',    // Cor para 0 dias (muito claro)
-                max: '#276749',    // Cor para 4+ dias (muito escuro)
-                empty: '#f0f4f8'   // Cor para dias sem dados
-            },
-            date: {
-                locale: {
-                    weekStart: 0, // 0 para domingo, 1 para segunda-feira
-                    months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    days: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-                }
-            },
-            onComplete: function() {
-                // Ajusta a largura do SVG para caber no container dinamicamente
-                const svgElement = document.querySelector('#cal-heatmap-container svg');
-                if (svgElement) {
-                    const containerWidth = document.getElementById('cal-heatmap-container').offsetWidth;
-                    // Calcule uma largura mais apropriada ou deixe a biblioteca gerenciar,
-                    // mas garanta que não haja overflow oculto por uma largura fixa demais
-                    // Se o overflow-x: auto estiver no CSS, ele cuidará da rolagem se o conteúdo for maior
-                    // svgElement.style.width = '100%'; 
-                }
-            }
-        });
-    } else {
-        // Mensagem caso não haja dados de estudo
-        document.getElementById('cal-heatmap-container').innerHTML = `
-            <p class="text-gray-500 italic text-center text-sm">
-                Nenhum registro de estudo ainda. Comece a estudar para ver seu progresso aqui!
-            </p>
-        `;
-    }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: INICIALIZAÇÃO DO CAL-HEATMAP >>>
-    // =====================================================================
 });
 </script>
 {% endblock %}
