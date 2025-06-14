@@ -4,6 +4,8 @@
 
 {% block head_extra %}
 <style>
+    /* ... (seu CSS existente, incluindo os estilos do heatmap-card e cal-heatmap) ... */
+
     /* ===================================================================== */
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
@@ -867,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
             filterControls.diploma.disabled = false;
         } catch (error) {
             console.error("Erro ao buscar leis:", error);
-            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
+            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</doption>';
         }
         fetchAndRenderLaws();
     }
@@ -1301,6 +1303,59 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         fetchAndRenderLaws();
     }
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: INICIALIZAÇÃO DO CAL-HEATMAP >>>
+    // =====================================================================
+    var heatmapData = {{ study_heatmap_data | tojson }};
+
+    if (Object.keys(heatmapData).length > 0) {
+        var cal = new CalHeatmap();
+        cal.paint({
+            data: { source: heatmapData, type: 'json' },
+            domain: { type: 'month', gutter: 10 },
+            subDomain: { type: 'day', radius: 2 },
+            range: 6, // Mostra os últimos 6 meses
+            cellSize: 10, // Tamanho de cada dia no mapa
+            tooltip: true,
+            start: new Date(), // Começa a contar a partir da data atual
+            itemSelector: '#cal-heatmap-container',
+            legend: [1, 2, 3, 4], // Define os níveis de cor para a legenda (1+ dias)
+            legendColors: {
+                min: '#ebfbee',    // Cor para 0 dias (muito claro)
+                max: '#276749',    // Cor para 4+ dias (muito escuro)
+                empty: '#f0f4f8'   // Cor para dias sem dados
+            },
+            date: {
+                locale: {
+                    weekStart: 0, // 0 para domingo, 1 para segunda-feira
+                    months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    days: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                }
+            },
+            onComplete: function() {
+                // Ajusta a largura do SVG para caber no container dinamicamente
+                const svgElement = document.querySelector('#cal-heatmap-container svg');
+                if (svgElement) {
+                    const containerWidth = document.getElementById('cal-heatmap-container').offsetWidth;
+                    // Calcule uma largura mais apropriada ou deixe a biblioteca gerenciar,
+                    // mas garanta que não haja overflow oculto por uma largura fixa demais
+                    // Se o overflow-x: auto estiver no CSS, ele cuidará da rolagem se o conteúdo for maior
+                    // svgElement.style.width = '100%'; 
+                }
+            }
+        });
+    } else {
+        // Mensagem caso não haja dados de estudo
+        document.getElementById('cal-heatmap-container').innerHTML = `
+            <p class="text-gray-500 italic text-center text-sm">
+                Nenhum registro de estudo ainda. Comece a estudar para ver seu progresso aqui!
+            </p>
+        `;
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: INICIALIZAÇÃO DO CAL-HEATMAP >>>
+    // =====================================================================
 });
 </script>
 {% endblock %}
