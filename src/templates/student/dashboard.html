@@ -448,6 +448,7 @@
         align-items: center;
         flex-grow: 1;
         cursor: pointer; /* Indica que o item é clicável */
+        position: relative; /* Para o tooltip */
     }
     .todo-item-content input[type="checkbox"] {
         margin-right: 0.75rem;
@@ -461,6 +462,10 @@
         font-size: 0.95rem;
         color: #374151;
         transition: color 0.3s ease;
+        white-space: nowrap; /* Garante que o texto não quebre linha */
+        overflow: hidden; /* Esconde o excesso */
+        text-overflow: ellipsis; /* Adiciona "..." */
+        max-width: calc(100% - 2.5rem); /* Ajusta largura para caber checkbox e margem */
     }
     .todo-item.completed .todo-item-text {
         text-decoration: line-through;
@@ -496,6 +501,44 @@
     .todo-input-container .action-button:hover {
         background-color: #388e3c; /* Verde mais escuro no hover */
     }
+
+    /* Estilo do tooltip para o texto completo da tarefa */
+    .todo-item-text-tooltip {
+        visibility: hidden;
+        width: max-content; /* Largura se ajusta ao conteúdo */
+        background-color: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        z-index: 10;
+        bottom: 125%; /* Posição acima do elemento */
+        left: 50%;
+        transform: translateX(-50%); /* Centraliza */
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.8rem;
+        pointer-events: none; /* Permite clicar através do tooltip */
+    }
+
+    .todo-item-text-tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%; /* No bottom do tooltip */
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+    }
+
+    .todo-item-text:hover + .todo-item-text-tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+
+
     @media (max-width: 768px) {
         .todo-input-container {
             flex-direction: column;
@@ -567,7 +610,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
-            <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Meu Diário</h2>
+            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
@@ -579,7 +622,9 @@
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                <span class="todo-item-text">{{ item.content }}</span>
+                                {# Modificação para limitar o texto e adicionar tooltip #}
+                                <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
+                                <span class="todo-item-text-tooltip">{{ item.content }}</span>
                             </label>
                             <div class="todo-actions">
                                 <button type="button" class="todo-delete-btn" title="Excluir tarefa">
@@ -1403,15 +1448,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
     // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
     // =====================================================================
+    const MAX_TODO_ITEMS = 5; // Constante para o limite de tarefas
+
     // Função para renderizar um único item do diário
     function renderTodoItem(item) {
         const listItem = document.createElement('li');
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
         listItem.dataset.itemId = item.id;
+        
+        // Limita o texto visível para 40 caracteres e adiciona reticências
+        const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
+
         listItem.innerHTML = `
             <label class="todo-item-content">
                 <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <span class="todo-item-text">${item.content}</span>
+                <span class="todo-item-text">${displayText}</span>
+                <span class="todo-item-text-tooltip">${item.content}</span>
             </label>
             <div class="todo-actions">
                 <button type="button" class="todo-delete-btn" title="Excluir tarefa">
@@ -1433,6 +1485,15 @@ document.addEventListener('DOMContentLoaded', function() {
             Toastify({
                 text: "Por favor, digite o conteúdo da tarefa.", duration: 3000, close: true, gravity: "bottom", position: "right",
                 style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
+            return;
+        }
+
+        // Verifica se o limite de tarefas foi atingido
+        if (todoListUl.children.length >= MAX_TODO_ITEMS) {
+            Toastify({
+                text: `Você atingiu o limite de ${MAX_TODO_ITEMS} tarefas. Conclua ou exclua algumas para adicionar novas.`, duration: 5000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff9900, #ffba4d)", borderRadius: "0.5rem" } // Laranja para aviso
             }).showToast();
             return;
         }
