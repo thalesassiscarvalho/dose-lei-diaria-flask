@@ -291,16 +291,16 @@ def dashboard():
     # =====================================================================
     # <<< INÍCIO DA ALTERAÇÃO: BUSCAR ATIVIDADES RECENTES >>>
     # =====================================================================
-    # A consulta anterior por 'last_progress' foi substituída por esta para buscar os 3 últimos acessos.
-    recent_progresses = UserProgress.query.join(Law).filter(
+    recent_progresses = UserProgress.query.join(UserProgress.law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
     ).options(
-        joinedload(Law.parent) # Carrega o 'pai' (diploma) para evitar queries extras no template
+        # CORREÇÃO: Especifica o caminho completo para o joinedload, resolvendo o erro.
+        joinedload(UserProgress.law).joinedload(Law.parent)
     ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
 
-    # Processa a lista para incluir o tempo formatado pela nova função _humanize_time_delta
+    # Processa a lista para incluir o tempo formatado
     recent_activities = []
     for progress in recent_progresses:
         recent_activities.append({
@@ -325,12 +325,10 @@ def dashboard():
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
-    # Garante que a relação 'parent' e 'subject' sejam carregadas para evitar múltiplas queries
     favorite_topics_query = current_user.favorite_laws.options(
         joinedload(Law.parent).joinedload(Law.subject)
     ).filter(Law.parent_id.isnot(None)).all()
 
-    # Primeiro, agrupa os tópicos por Lei (parent)
     grouped_by_law = {}
     for topic in favorite_topics_query:
         if topic.parent:
@@ -338,7 +336,6 @@ def dashboard():
                 grouped_by_law[topic.parent] = []
             grouped_by_law[topic.parent].append(topic)
     
-    # Agora, cria os cards de Lei e os agrupa por Matéria
     for law, topics in grouped_by_law.items():
         subject = law.subject
         if not subject:
@@ -366,7 +363,6 @@ def dashboard():
             "topics": topic_details_list,
             "progress": progress_percentage
         })
-
     # --- FIM DA LÓGICA ---
 
     # =====================================================================
@@ -386,22 +382,10 @@ def dashboard():
                            user_achievements=current_user.achievements,
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
-                           # ==================================================
-                           # <<< INÍCIO DA ALTERAÇÃO: PASSAR DADOS DE ATIVIDADES RECENTES PARA O TEMPLATE >>>
-                           # ==================================================
-                           recent_activities=recent_activities, # Substitui o antigo 'last_accessed_law'
-                           # ==================================================
-                           # <<< FIM DA ALTERAÇÃO >>>
-                           # ==================================================
+                           recent_activities=recent_activities,
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
-                           # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DE NÍVEL PARA O TEMPLATE (ADICIONADO) >>>
-                           # ==================================================
                            level_info=level_info
-                           # ==================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # ==================================================
                            )
 
 
