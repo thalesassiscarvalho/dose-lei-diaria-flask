@@ -457,10 +457,15 @@
         accent-color: #4caf50; /* Cor do checkmark */
         cursor: pointer;
     }
+    /* Estilo para que o texto da tarefa ocupe apenas uma linha e tenha ellipsis */
     .todo-item-text {
         font-size: 0.95rem;
         color: #374151;
         transition: color 0.3s ease;
+        white-space: nowrap; /* Impede que o texto quebre para a próxima linha */
+        overflow: hidden;     /* Esconde o conteúdo que transborda */
+        text-overflow: ellipsis; /* Adiciona "..." ao texto que transborda */
+        flex-grow: 1; /* Permite que o texto ocupe o máximo de espaço possível */
     }
     .todo-item.completed .todo-item-text {
         text-decoration: line-through;
@@ -561,13 +566,10 @@
     </div>
     {% endif %}
 
-    {# ===================================================================== #}
-    {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
-            <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Meu Diário</h2>
+            <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Post-It</h2> {# Nome alterado aqui #}
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
@@ -579,7 +581,7 @@
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                <span class="todo-item-text">{{ item.content }}</span>
+                                <span class="todo-item-text" title="{{ item.content }}">{{ item.content }}</span> {# Adicionado title aqui #}
                             </label>
                             <div class="todo-actions">
                                 <button type="button" class="todo-delete-btn" title="Excluir tarefa">
@@ -658,9 +660,6 @@
             {% endif %}
         </div>
     </div>
-    {# ===================================================================== #}
-    {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
     
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
@@ -1411,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         listItem.innerHTML = `
             <label class="todo-item-content">
                 <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <span class="todo-item-text">${item.content}</span>
+                <span class="todo-item-text" title="${item.content}">${item.content}</span>
             </label>
             <div class="todo-actions">
                 <button type="button" class="todo-delete-btn" title="Excluir tarefa">
@@ -1450,11 +1449,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success) {
                 // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
-                if (noTodoItemsMessage) {
-                    const existingNoItemsMessage = document.getElementById('no-todo-items-message');
-                    if (existingNoItemsMessage) {
-                        existingNoItemsMessage.remove();
-                    }
+                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
+                if (existingNoItemsMessage) {
+                    existingNoItemsMessage.remove();
                 }
                 
                 // Renderizar e adicionar o novo item ao topo da lista
