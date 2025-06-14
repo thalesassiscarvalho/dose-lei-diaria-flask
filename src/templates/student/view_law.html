@@ -853,39 +853,6 @@
     }
     /* --- FIM: PROTEÇÃO DE IMPRESSÃO --- */
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA BOTÕES DE COMPARTILHAMENTO >>> */
-    /* ===================================================================== */
-    .social-share-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 1rem; /* Espaçamento entre os botões */
-        margin-top: 1rem;
-    }
-    .social-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        color: white;
-        font-size: 1.25rem; /* Tamanho do ícone */
-        text-decoration: none;
-        transition: transform 0.2s ease, opacity 0.2s ease;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .social-btn:hover {
-        transform: translateY(-3px);
-        opacity: 0.9;
-    }
-    .social-x { background-color: #1DA1F2; /* Cor do Twitter/X */ }
-    .social-whatsapp { background-color: #25D366; /* Cor do WhatsApp */ }
-    .social-linkedin { background-color: #0A66C2; /* Cor do LinkedIn */ }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
-    /* ===================================================================== */
-
 </style>
 {% endblock %}
 
@@ -1118,6 +1085,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
     const completeForm = document.getElementById('mark-complete-form');
     if (completeForm) {
         completeForm.addEventListener('submit', function(event) {
@@ -1148,53 +1116,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.success) {
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
                         const ach = data.unlocked_achievements[0];
-                        
-                        // =====================================================================
-                        // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE COMPARTILHAMENTO >>>
-                        // =====================================================================
-                        // 1. Defina o texto e o link para compartilhar.
-                        //    IMPORTANTE: Altere '@seu_usuario_x' para o seu usuário real do X/Twitter.
-                        const shareText = `Acabei de desbloquear a conquista "${ach.name}" na plataforma Estudo da Lei Seca! Rumo à aprovação! @seu_usuario_x #EstudoDaLeiSeca #Concursos`;
-                        const siteUrl = window.location.origin; // Pega a URL base do site, ex: https://www.seusite.com.br
-                        const encodedText = encodeURIComponent(shareText);
-                        const encodedUrl = encodeURIComponent(siteUrl);
-
-                        // 2. Crie os links de compartilhamento
-                        const twitterLink = `https://twitter.com/intent/tweet?text=${encodedText}`;
-                        const whatsappLink = `https://api.whatsapp.com/send?text=${encodedText}`;
-                        const linkedInLink = `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodeURIComponent(`Nova Conquista: ${ach.name}`)}&summary=${encodedText}&source=${encodeURIComponent('Estudo da Lei Seca')}`;
-                        // =====================================================================
-                        // <<< FIM DA IMPLEMENTAÇÃO >>>
-                        // =====================================================================
-
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
-                            // =====================================================================
-                            // <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO HTML COM BOTÕES DE COMPARTILHAMENTO >>>
-                            // =====================================================================
                             html: `
                                 <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
                                 <h3 class="text-xl font-bold">${ach.name}</h3>
                                 <p class="text-gray-600 mt-2">${ach.description}</p>
-                                
-                                <hr class="my-4 border-gray-200">
-                                
-                                <p class="text-sm font-semibold text-gray-700">Compartilhe sua conquista!</p>
-                                <div class="social-share-buttons">
-                                    <a href="${twitterLink}" target="_blank" class="social-btn social-x" title="Compartilhar no X (Twitter)">
-                                        <i class="fab fa-twitter"></i>
-                                    </a>
-                                    <a href="${whatsappLink}" target="_blank" class="social-btn social-whatsapp" title="Compartilhar no WhatsApp">
-                                        <i class="fab fa-whatsapp"></i>
-                                    </a>
-                                    <a href="${linkedInLink}" target="_blank" class="social-btn social-linkedin" title="Compartilhar no LinkedIn">
-                                        <i class="fab fa-linkedin-in"></i>
-                                    </a>
-                                </div>
                             `,
-                            // =====================================================================
-                            // <<< FIM DA IMPLEMENTAÇÃO >>>
-                            // =====================================================================
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!'
                         }).then(() => {
@@ -1221,13 +1149,16 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    
-    // O restante do seu script permanece aqui, inalterado...
+    // --- FIM DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
+
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
 
+    // =================================================================
+    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
+    // =================================================================
     function fixDuplicateDescription() {
         if (!lawContent) return;
 
@@ -1256,7 +1187,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     fixDuplicateDescription();
-    
+    // =================================================================
+    // <<< FIM: CORREÇÃO DO BUG >>>
+    // =================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
+    // =====================================================================
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
 
@@ -1298,6 +1235,10 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
+    // =====================================================================
+
 
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
@@ -1778,11 +1719,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // ADIÇÃO 2/2: Função de Favoritar com Notificação
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
-            const lawTitle = '{{ law.title | e }}';
+            const lawTitle = '{{ law.title | e }}'; // Pega o título da lei de forma segura
 
             fetch(`/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`, {
                 method: 'POST',
