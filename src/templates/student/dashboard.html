@@ -505,7 +505,7 @@
     /* Estilo do tooltip para o texto completo da tarefa */
     .todo-item-text-tooltip {
         visibility: hidden;
-        width: max-content; /* Largura se ajusta ao conteúdo */
+        width: 250px; /* Largura fixa para quebrar a linha */
         background-color: rgba(0, 0, 0, 0.85);
         color: #fff;
         text-align: center;
@@ -520,6 +520,8 @@
         transition: opacity 0.3s;
         font-size: 0.8rem;
         pointer-events: none; /* Permite clicar através do tooltip */
+        white-space: normal; /* Permite que o texto quebre a linha */
+        word-wrap: break-word; /* Força a quebra de palavras longas */
     }
 
     .todo-item-text-tooltip::after {
