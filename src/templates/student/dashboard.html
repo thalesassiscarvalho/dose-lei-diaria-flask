@@ -50,12 +50,46 @@
     .mark-seen-checkbox-container:hover .tooltip { visibility: visible; opacity: 1; }
     @keyframes fadeOut { from { opacity: 1; height: auto; } to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border-width: 0; } }
     .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
-    .continue-block { background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #3B82F6; color: #1E40AF; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06); transition: all 0.3s ease; }
-    .continue-block:hover { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05); transform: translateY(-2px); }
-    .continue-block h3 { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; display: flex; align-items: center; color: #1E40AF; }
-    .continue-block h3 i { margin-right: 0.5rem; color: #3B82F6; }
-    .continue-block a { font-size: 1.125rem; font-weight: 600; color: #1E3A8A; text-decoration: none; transition: all 0.2s ease; display: block; }
-    .continue-block a:hover { color: #3B82F6; text-decoration: underline; }
+    
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO: ESTILOS DO CARD DE "ATIVIDADES RECENTES" (ADICIONADOS) >>> */
+    /* ===================================================================== */
+    .recent-activities-card .stat-card-title {
+        margin-bottom: 0.75rem; /* Ajuste no espaçamento do título */
+    }
+    .activity-link {
+        display: block;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+        border: 1px solid #e5e7eb;
+        text-decoration: none;
+    }
+    .activity-link:hover {
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+    }
+    .activity-title {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.875rem; /* 14px */
+        line-height: 1.25rem;
+    }
+    .activity-time {
+        font-size: 0.75rem; /* 12px */
+        color: #6b7280;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+    }
+    .activity-time i {
+        margin-right: 0.375rem; /* 6px */
+        font-size: 0.8rem;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO >>> */
+    /* ===================================================================== */
+
     .stat-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.05); transition: all 0.3s ease-in-out; display: flex; flex-direction: column; height: 100%; }
     .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.06); border-color: #60a5fa; }
     .stat-card-title { display: flex; align-items: center; font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
@@ -308,13 +342,21 @@
 <div class="space-y-8">
     <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
 
-    {% if last_accessed_law %}
-    <div class="continue-block">
-        <h3><i class="fas fa-history"></i> Continuar de onde parou:</h3>
-        <a href="{{ url_for('student.view_law', law_id=last_accessed_law.id) }}">{{ last_accessed_law.parent.title + ' - ' if last_accessed_law.parent else '' }}{{ last_accessed_law.title }}</a>
-    </div>
+    {% if recent_activities %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="stat-card recent-activities-card">
+            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+            <div class="flex flex-col space-y-3">
+                {% for activity in recent_activities %}
+                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="activity-link">
+                    <p class="activity-title">{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}</p>
+                    <p class="activity-time"><i class="far fa-clock"></i>{{ activity.time_ago }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        </div>
     {% endif %}
-
     {% if fixed_announcements or non_fixed_announcements %}
     <div class="announcement-section">
         {% if fixed_announcements %}
