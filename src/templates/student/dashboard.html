@@ -8,7 +8,7 @@
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
 
-    /* Estilos Gerais (sem alterações significativas, apenas para referência) */
+    /* Estilos Gerais (sem alterações) */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 8px; border-radius: 4px; background-color: #e5e7eb; overflow: hidden; flex-grow: 1; }
@@ -431,25 +431,12 @@
         margin-bottom: 1rem;
     }
 
-    .todo-item-container {
-        display: grid;
-        grid-template-columns: 1fr; /* Padrão para telas pequenas */
-        gap: 0.5rem 1rem; /* Espaçamento entre as colunas */
-        flex-grow: 1; /* Para ocupar o espaço disponível */
-    }
-
-    @media (min-width: 768px) { /* Em telas médias e maiores, use 2 colunas */
-        .todo-item-container {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
     .todo-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.5rem 0; /* Padding reduzido */
-        border-bottom: 1px dashed #c8e6c9; /* Linha mais suave e cor */
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e0ffe0; /* Linha mais suave */
         transition: all 0.3s ease;
     }
     .todo-item:last-child {
@@ -471,7 +458,7 @@
         cursor: pointer;
     }
     .todo-item-text {
-        font-size: 0.9rem; /* Fonte ligeiramente menor */
+        font-size: 0.95rem;
         color: #374151;
         transition: color 0.3s ease;
     }
@@ -481,16 +468,15 @@
     }
     .todo-actions {
         flex-shrink: 0;
-        margin-left: 0.5rem; /* Margem reduzida */
+        margin-left: 0.75rem;
     }
     .todo-delete-btn {
         background: none;
         border: none;
         color: #ef4444; /* Vermelho para exclusão */
         cursor: pointer;
-        font-size: 1rem; /* Ícone ligeiramente menor */
+        font-size: 1.1rem;
         transition: color 0.2s ease;
-        padding: 0.2rem; /* Adicionado padding para facilitar o clique */
     }
     .todo-delete-btn:hover {
         color: #dc2626;
@@ -509,12 +495,6 @@
     }
     .todo-input-container .action-button:hover {
         background-color: #388e3c; /* Verde mais escuro no hover */
-    }
-    .todo-max-items-message {
-        color: #ef4444; /* Vermelho para avisos */
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        text-align: center;
     }
     @media (max-width: 768px) {
         .todo-input-container {
@@ -581,22 +561,39 @@
     </div>
     {% endif %}
 
-    {# ===================================================================== #}
-    {# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO LAYOUT DO GRID SUPERIOR >>> #}
-    {# ===================================================================== #}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {# Card "Meu Diário" - Ocupa a primeira coluna, com altura adaptável #}
-        <div class="stat-card todo-list-card md:col-span-1">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {# Grid para os cards superiores #}
+        {% if recent_activities %}
+        <div class="stat-card recent-activities-card">
+            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+            <div class="flex flex-col space-y-2">
+                {% for activity in recent_activities %}
+                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
+                    <div class="compact-activity-content">
+                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
+                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
+                        </span>
+                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# ===================================================================== #}
+        {# <<< INÍCIO DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO >>> #}
+        {# ===================================================================== #}
+        <div class="stat-card todo-list-card">
             <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Meu Diário</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <p id="todo-limit-message" class="todo-max-items-message" style="display:none;">Você atingiu o limite de 6 tarefas.</p>
-            <div id="todo-item-container" class="todo-item-container">
+            <ul id="todo-list" class="space-y-1">
+                {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
                     {% for item in todo_items %}
-                        <div class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
+                        <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
                                 <span class="todo-item-text">{{ item.content }}</span>
@@ -606,49 +603,31 @@
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
-                        </div>
+                        </li>
                     {% endfor %}
                 {% else %}
-                    <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4 col-span-full">Nenhuma tarefa por enquanto. Adicione uma!</p>
+                    <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
                 {% endif %}
-            </div>
+            </ul>
         </div>
-
-        {# Coluna à direita do Diário, contendo Atividades Recentes e Meu Progresso #}
-        <div class="md:col-span-2 flex flex-col gap-6">
-            {% if recent_activities %}
-            <div class="stat-card recent-activities-card">
-                <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-                <div class="flex flex-col space-y-2">
-                    {% for activity in recent_activities %}
-                    <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                        <div class="compact-activity-content">
-                            <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                                {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                            </span>
-                            <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="stat-card progress-card">
-                <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
-                    <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-                </div>
-                <div class="progress-bar-container w-full" style="height:10px;">
-                    <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-                </div>
-            </div>
-        </div>
+        {# ===================================================================== #}
+        {# <<< FIM DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO >>> #}
+        {# ===================================================================== #}
     </div>
 
-    {# Nova linha para Sequência de Estudos e Meu Nível #}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="md:col-span-1 stat-card progress-card">
+            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
+                <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+            </div>
+            <div class="progress-bar-container w-full" style="height:10px;">
+                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
+            </div>
+        </div>
+
         <div class="stat-card streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             {% if user_streak > 0 %}
@@ -680,9 +659,6 @@
             {% endif %}
         </div>
     </div>
-    {# ===================================================================== #}
-    {# <<< FIM DA IMPLEMENTAÇÃO: NOVO LAYOUT DO GRID SUPERIOR >>> #}
-    {# ===================================================================== #}
     
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
@@ -893,10 +869,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
-    const todoListContainer = document.getElementById('todo-item-container'); // Agora é um container para os itens
+    const todoListUl = document.getElementById('todo-list');
     const noTodoItemsMessage = document.getElementById('no-todo-items-message');
-    const todoLimitMessage = document.getElementById('todo-limit-message'); // Nova mensagem de limite
-    const MAX_TODO_ITEMS = 6; // Limite de tarefas
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO >>>
     // =====================================================================
@@ -1133,21 +1107,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
 
         // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO (ATUALIZADO) >>>
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
         // =====================================================================
-        // Usa delegação de eventos para elementos adicionados dinamicamente
-        todoListContainer.addEventListener('change', function(event) {
-            if (event.target.classList.contains('todo-checkbox')) {
-                handleToggleTodoItem(event);
-            }
+        // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
+        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', handleToggleTodoItem);
         });
-        todoListContainer.addEventListener('click', function(event) {
-            if (event.target.closest('.todo-delete-btn')) {
-                handleDeleteTodoItem(event);
-            }
+        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
+            button.addEventListener('click', handleDeleteTodoItem);
         });
         // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO (ATUALIZADO) >>>
+        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
         // =====================================================================
     }
     
@@ -1433,10 +1403,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
     // Função para renderizar um único item do diário
     function renderTodoItem(item) {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
-        itemDiv.dataset.itemId = item.id;
-        itemDiv.innerHTML = `
+        const listItem = document.createElement('li');
+        listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
+        listItem.dataset.itemId = item.id;
+        listItem.innerHTML = `
             <label class="todo-item-content">
                 <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
                 <span class="todo-item-text">${item.content}</span>
@@ -1447,7 +1417,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
-        return itemDiv;
+
+        // Adicionar event listeners para o novo item
+        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
+        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
+        return listItem;
     }
 
     // Função para adicionar uma nova tarefa
@@ -1456,15 +1430,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!content) {
             Toastify({
                 text: "Por favor, digite o conteúdo da tarefa.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-            return;
-        }
-
-        // Verifica o limite antes de adicionar
-        if (todoListContainer.children.length >= MAX_TODO_ITEMS) {
-            Toastify({
-                text: `Você pode ter no máximo ${MAX_TODO_ITEMS} tarefas no seu diário.`, duration: 3000, close: true, gravity: "bottom", position: "right",
                 style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
             }).showToast();
             return;
@@ -1483,17 +1448,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success) {
                 // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
-                const existingNoMessage = document.getElementById('no-todo-items-message');
-                if (existingNoMessage) {
-                    existingNoMessage.remove();
+                if (noTodoItemsMessage) {
+                    noTodoItemsMessage.remove();
                 }
                 
-                // Renderizar e adicionar o novo item ao início do container
+                // Renderizar e adicionar o novo item ao topo da lista
                 const newItem = renderTodoItem(data.todo_item);
-                todoListContainer.prepend(newItem); // Adiciona no início
-                
+                todoListUl.prepend(newItem); // Adiciona no início da lista
+
                 newTodoItemInput.value = ''; // Limpa o input
-                checkTodoLimit(); // Verifica o limite após adicionar
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
@@ -1533,14 +1496,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Atualizar a classe CSS e o status do checkbox
                 if (data.todo_item.is_completed) {
                     listItem.classList.add('completed');
-                    todoListContainer.appendChild(listItem); // Mover para o final quando concluído
                 } else {
                     listItem.classList.remove('completed');
-                    // Para reordenar ao reabrir, vamos re-fetch e re-renderizar todos os itens
-                    await fetchAndRenderTodoItems();
                 }
                 checkbox.checked = data.todo_item.is_completed;
                 
+                // Mover o item para o final ou início da lista para manter a ordem
+                // Se a intenção é mover os concluídos para o final, você pode re-renderizar
+                // ou implementar uma lógica de DOM mais complexa.
+                // Para simplicidade, vamos apenas atualizar a classe e, se necessário, o usuário pode recarregar.
+                // Para mover na lista, precisaria de uma função que remova e insira no lugar certo.
+                // Exemplo simplificado de reordenação (move o concluído para o final)
+                if (data.todo_item.is_completed) {
+                    todoListUl.appendChild(listItem);
+                } else {
+                    // Se reaberto, tenta mover para o topo ou manter a ordem de criação
+                    // Isso é mais complexo, pode exigir re-fetching ou ordenar todos os LIs
+                    // Por enquanto, apenas atualiza o estado visual
+                    // Ou re-fetch all items to ensure correct order after toggle
+                    await fetchAndRenderTodoItems();
+                }
+
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
@@ -1583,14 +1559,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success) {
                 listItem.remove(); // Remove o item da lista
-                checkTodoLimit(); // Verifica o limite após excluir
-                if (todoListContainer.children.length === 0) {
+                if (todoListUl.children.length === 0) {
                     // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
                     const p = document.createElement('p');
                     p.id = 'no-todo-items-message';
-                    p.className = 'text-gray-500 italic text-sm text-center py-4 col-span-full';
+                    p.className = 'text-gray-500 italic text-sm text-center py-4';
                     p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
-                    todoListContainer.appendChild(p);
+                    todoListUl.appendChild(p);
                 }
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
@@ -1610,64 +1585,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }).showToast();
         }
     }
-
-    // Função para buscar e renderizar todos os itens do diário (útil para reordenação)
-    async function fetchAndRenderTodoItems() {
-        try {
-            const response = await fetch('/student/api/todo_items', {
-                method: 'GET',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                todoListContainer.innerHTML = ''; // Limpa a lista atual
-                if (data.todo_items.length === 0) {
-                    const p = document.createElement('p');
-                    p.id = 'no-todo-items-message';
-                    p.className = 'text-gray-500 italic text-sm text-center py-4 col-span-full';
-                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
-                    todoListContainer.appendChild(p);
-                } else {
-                    data.todo_items.forEach(item => {
-                        const newItem = renderTodoItem(item);
-                        todoListContainer.appendChild(newItem); // Adiciona na ordem recebida do backend
-                    });
-                }
-                checkTodoLimit(); // Verifica o limite após renderizar
-            } else {
-                console.error('Erro ao buscar tarefas:', data.error);
-                Toastify({
-                    text: "Erro ao carregar suas tarefas.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                }).showToast();
-            }
-        } catch (error) {
-            console.error('Erro de rede ao buscar tarefas:', error);
-            Toastify({
-                text: "Erro de rede ao carregar tarefas.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-        }
-    }
-
-    // Função para verificar e impor o limite de tarefas
-    function checkTodoLimit() {
-        const currentItems = todoListContainer.querySelectorAll('.todo-item').length;
-        if (currentItems >= MAX_TODO_ITEMS) {
-            addTodoBtn.disabled = true;
-            newTodoItemInput.disabled = true;
-            todoLimitMessage.style.display = 'block';
-        } else {
-            addTodoBtn.disabled = false;
-            newTodoItemInput.disabled = false;
-            todoLimitMessage.style.display = 'none';
-        }
-    }
-
-    // Chamar checkTodoLimit ao carregar a página para definir o estado inicial
-    checkTodoLimit();
-
+    
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
     // =====================================================================
