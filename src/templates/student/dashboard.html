@@ -4,8 +4,12 @@
 
 {% block head_extra %}
 <style>
+    /* ===================================================================== */
+    /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
+    /* ===================================================================== */
+
     /* Estilos Gerais (sem alterações) */
-    .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); position: relative; }
+    .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 8px; border-radius: 4px; background-color: #e5e7eb; overflow: hidden; flex-grow: 1; }
     .progress-bar-fill { height: 100%; border-radius: 4px; background-color: #2563eb; transition: width 0.5s ease; }
@@ -25,13 +29,16 @@
     .rich-content ul, .rich-content ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
     .rich-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin: 0.5rem 0; color: #4b5563; }
     .announcement-container { margin-bottom: 2rem; transition: all 0.3s ease; }
-    .fixed-announcement-box { background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #10B981; color: #064E3B; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06); position: relative; overflow: hidden; }
+
+    /* Efeito de elevação adicionado aos cards de aviso */
+    .fixed-announcement-box { background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #10B981; color: #064E3B; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 8px -2px rgba(16, 185, 129, 0.1), 0 2px 4px -2px rgba(16, 185, 129, 0.07); position: relative; overflow: hidden; }
+    .announcement-box { background-color: #FEF9C3; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; color: #92400E; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 8px -2px rgba(245, 158, 11, 0.1), 0 2px 4px -2px rgba(245, 158, 11, 0.07); position: relative; overflow: hidden; transition: all 0.3s ease; }
+
     .fixed-announcement-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; color: #065F46; }
     .fixed-announcement-box h2 i { margin-right: 0.75rem; color: #10B981; font-size: 1.25rem; }
     .fixed-announcement-item { padding: 0.75rem 0; border-top: 1px dashed rgba(167, 243, 208, 0.7); transition: all 0.3s ease; }
     .fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
     .fixed-announcement-item:last-child { padding-bottom: 0; }
-    .announcement-box { background-color: #FEF9C3; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; color: #92400E; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06); position: relative; overflow: hidden; transition: all 0.3s ease; }
     .announcement-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; color: #92400E; }
     .announcement-box h2 i { margin-right: 0.75rem; color: #F59E0B; font-size: 1.25rem; }
     .non-fixed-announcement-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-top: 1px dashed rgba(252, 211, 77, 0.7); transition: all 0.3s ease; }
@@ -51,62 +58,78 @@
     @keyframes fadeOut { from { opacity: 1; height: auto; } to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border-width: 0; } }
     .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
     
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO: ESTILOS DO CARD "ATIVIDADES RECENTES" (ATUALIZADOS) >>> */
-    /* ===================================================================== */
     .recent-activities-card .stat-card-title {
         margin-bottom: 0.75rem;
     }
     .compact-activity-link {
         display: block;
-        padding: 0.65rem 0.85rem; /* Padding vertical reduzido */
+        padding: 0.65rem 0.85rem;
         border-radius: 0.5rem;
         transition: background-color 0.2s ease, border-color 0.2s ease;
-        border: 1px solid #e5e7eb;
+        border: 1px solid #dbeafe; /* Borda sutil para combinar com o fundo */
+        background-color: #ffffff; /* Fundo branco para os links se destacarem */
         text-decoration: none;
     }
     .compact-activity-link:hover {
-        background-color: #f9fafb;
-        border-color: #d1d5db;
+        background-color: #eff6ff;
+        border-color: #bfdbfe;
     }
     .compact-activity-content {
         display: flex;
         align-items: center;
-        justify-content: space-between; /* Empurra o título e o tempo para as extremidades */
+        justify-content: space-between;
         width: 100%;
     }
     .compact-activity-title {
         font-weight: 500;
         color: #374151;
-        font-size: 0.875rem; /* 14px */
-        /* As 3 propriedades abaixo garantem que o texto longo seja cortado com '...' */
+        font-size: 0.875rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-right: 1rem; /* Espaço entre o título e o tempo */
+        margin-right: 1rem;
     }
     .compact-activity-time {
-        font-size: 0.75rem; /* 12px */
+        font-size: 0.75rem;
         color: #6b7280;
-        flex-shrink: 0; /* Impede que o texto de tempo seja comprimido */
+        flex-shrink: 0;
         white-space: nowrap;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO >>> */
-    /* ===================================================================== */
 
-    .stat-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.05); transition: all 0.3s ease-in-out; display: flex; flex-direction: column; height: 100%; }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.06); border-color: #60a5fa; }
+    /* Estilo base para todos os cards, com a nova sombra para elevação */
+    .stat-card {
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    /* Efeito de hover aprimorado para todos os cards */
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+        border-color: #93c5fd;
+    }
+
     .stat-card-title { display: flex; align-items: center; font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
     .stat-card-title i { margin-right: 0.75rem; font-size: 1.25rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
     .progress-card .stat-card-title i { color: #3b82f6; background-color: #eff6ff; }
+    
+    /* Cor de fundo específica para o card de Atividades Recentes */
+    .recent-activities-card {
+        background-color: #f7f9fc;
+    }
+    
     .points-card { text-align: center; justify-content: center; background: linear-gradient(145deg, #fffbeb, #fefce8); border-color: #fde68a; }
     .points-card .stat-card-title { justify-content: center; }
     .points-card .stat-card-title i { color: #f59e0b; background-color: #ffffff; }
     .points-display { font-size: 2.75rem; font-weight: 800; color: #d97706; line-height: 1; margin-top: 0.5rem; }
     .achievements-card .stat-card-title i { color: #8b5cf6; background-color: #f5f3ff; }
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
-    .achievements-card .achievement-badge { border: 1px solid transparent; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 
     .streak-card {
         text-align: center;
@@ -190,7 +213,8 @@
         margin-top: 0.5rem;
     }
 
-    .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
+    /* Efeito de elevação adicionado ao container de filtro */
+    .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
     .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
     .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
@@ -229,16 +253,17 @@
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
     .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
     
+    /* Efeito de elevação adicionado aos cards de favoritos */
     .favorite-card {
         background-color: #ffffff;
         border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         border: 1px solid #e5e7eb;
         overflow: hidden;
         transition: all 0.3s ease;
     }
     .favorite-card:hover {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
         border-color: #d1d5db;
     }
     .favorite-card-header {
@@ -294,7 +319,7 @@
         background-color: #fff;
         border-radius: 0.75rem;
         margin-bottom: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
         border: 1px solid #e5e7eb;
         overflow: hidden;
     }
@@ -334,32 +359,15 @@
         .fixed-announcement-box h2, .announcement-box h2 { font-size: 1.1rem; }
         .accordion-header .diploma-progress { display: none; }
     }
+    /* ===================================================================== */
+    /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
+    /* ===================================================================== */
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="space-y-8">
     <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
-
-    {% if recent_activities %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="stat-card recent-activities-card">
-            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-            <div class="flex flex-col space-y-2">
-                {% for activity in recent_activities %}
-                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                    <div class="compact-activity-content">
-                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                        </span>
-                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-            </div>
-    </div>
-    {% endif %}
 
     {% if fixed_announcements or non_fixed_announcements %}
     <div class="announcement-section">
@@ -395,6 +403,26 @@
             </div>
         </div>
         {% endif %}
+    </div>
+    {% endif %}
+
+    {% if recent_activities %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="stat-card recent-activities-card">
+            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+            <div class="flex flex-col space-y-2">
+                {% for activity in recent_activities %}
+                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
+                    <div class="compact-activity-content">
+                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
+                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
+                        </span>
+                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
     {% endif %}
 
