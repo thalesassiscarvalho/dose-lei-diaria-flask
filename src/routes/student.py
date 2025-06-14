@@ -83,6 +83,34 @@ def get_user_level_info(points):
 # =====================================================================
 
 # =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA FUNÇÃO PARA FORMATAR TEMPO >>>
+# =====================================================================
+def format_time_ago(dt):
+    """Formata um datetime em uma string de tempo relativo (ex: '2 horas atrás')."""
+    if not dt:
+        return ""
+    # Garante que estamos comparando datetimes 'aware' ou 'naive' de forma consistente.
+    # Se o seu banco de dados não armazena timezone, use datetime.utcnow()
+    now = datetime.datetime.utcnow() 
+    diff = now - dt
+
+    seconds = diff.total_seconds()
+    days = diff.days
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+
+    if days > 0:
+        return f"{days} {'dia' if days == 1 else 'dias'} atrás"
+    if hours > 0:
+        return f"{hours} {'hora' if hours == 1 else 'horas'} atrás"
+    if minutes > 0:
+        return f"{minutes} {'minuto' if minutes == 1 else 'minutos'} atrás"
+    return "agora mesmo"
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
+# =====================================================================
 # <<< ENDPOINTS DE API PARA FILTROS E BUSCA >>>
 # =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
@@ -253,12 +281,26 @@ def dashboard():
     completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
     global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
 
-    last_progress = UserProgress.query.join(Law).filter(
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: BUSCAR AS 3 ÚLTIMAS ATIVIDADES >>>
+    # =====================================================================
+    # Substitui a busca antiga por uma que pega as 3 atividades mais recentes.
+    recent_progress = UserProgress.query.join(Law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
-    ).order_by(UserProgress.last_accessed_at.desc()).first()
-    last_accessed_law = last_progress.law if last_progress else None
+    ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
+
+    # Processa a lista de atividades para uso no template
+    recent_activities = []
+    for progress_item in recent_progress:
+        recent_activities.append({
+            "law": progress_item.law,
+            "time_ago": format_time_ago(progress_item.last_accessed_at)
+        })
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
 
     fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
     seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
@@ -318,13 +360,7 @@ def dashboard():
 
     # --- FIM DA LÓGICA ---
 
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: CHAMADA DA FUNÇÃO DE NÍVEL (ADICIONADA) >>>
-    # =====================================================================
     level_info = get_user_level_info(current_user.points)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -335,15 +371,16 @@ def dashboard():
                            user_achievements=current_user.achievements,
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
-                           last_accessed_law=last_accessed_law,
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
+                           level_info=level_info,
                            # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DE NÍVEL PARA O TEMPLATE (ADICIONADO) >>>
+                           # <<< INÍCIO DA ALTERAÇÃO: PASSANDO A NOVA LISTA E REMOVENDO A ANTIGA >>>
                            # ==================================================
-                           level_info=level_info
+                           recent_activities=recent_activities
+                           # last_accessed_law foi removida
                            # ==================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
+                           # <<< FIM DA ALTERAÇÃO >>>
                            # ==================================================
                            )
 
