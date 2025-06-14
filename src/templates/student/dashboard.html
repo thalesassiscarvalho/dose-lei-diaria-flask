@@ -585,7 +585,7 @@
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            {# Renderização do JS aqui, o Jinja2 não precisa mais filtrar #}
+            {# Removido o loop.index <= 5 diretamente no Jinja2. A filtragem é agora feita no JS. #}
             <ul id="todo-list" class="space-y-1 flex-grow overflow-y-auto" style="max-height: 400px;">
                 {# Os itens serão carregados e renderizados via JavaScript #}
                 {# O bloco Jinja2 abaixo é apenas um placeholder para a primeira carga da página.
@@ -1211,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.favorites.checked = false;
         
         filterControls.refinementWrapper.style.visibility = 'hidden';
-        document.querySelector('input[name="refine_type"][value="status"]').checked = true;
+        document.querySelector('input[name="refine_type'][value="status"]').checked = true;
         filterControls.statusFilterWrapper.style.display = 'block';
         filterControls.topicFilterWrapper.style.display = 'none';
         filterControls.statusFilter.value = '';
@@ -1583,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 // Renderiza apenas as 5 primeiras tarefas
-                const itemsToRender = sortedItems.slice(0, 5);
+                const itemsToRender = sortedItems.slice(0, 5); 
                 itemsToRender.forEach(item => {
                     todoListUl.appendChild(renderTodoItem(item));
                 });
