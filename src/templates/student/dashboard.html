@@ -31,7 +31,6 @@
     .announcement-container { margin-bottom: 2rem; transition: all 0.3s ease; }
 
     /* Efeito de elevação adicionado aos cards de aviso */
-    /* ALTERAÇÃO 1: fixed-announcement-box com tons de vermelho */
     .fixed-announcement-box { 
         background-color: #fee2e2; /* Cor de fundo vermelho claro */
         border: 1px solid #fca5a5; /* Borda vermelha mais escura */
@@ -162,22 +161,6 @@
         box-shadow: 0 10px 20px -5px rgba(158, 158, 158, 0.15), 0 4px 6px -4px rgba(158, 158, 158, 0.1);
     }
 
-    /* Meu Progresso */
-    .progress-card {
-        background: linear-gradient(145deg, #e0f2fe, #f0faff); /* Azul claro */
-        border-color: #90caf9;
-        border-left-color: #2196f3; /* Azul vibrante */
-        box-shadow: 0 4px 8px -2px rgba(33, 150, 243, 0.1), 0 2px 4px -2px rgba(33, 150, 243, 0.07);
-    }
-    .progress-card .stat-card-title i {
-        color: #1976d2; /* Azul escuro */
-        background-color: #e3f2fd;
-    }
-    .progress-card:hover {
-        border-color: #64b5f6;
-        box-shadow: 0 10px 20px -5px rgba(33, 150, 243, 0.15), 0 4px 6px -4px rgba(33, 150, 243, 0.1);
-    }
-
     /* Sequência de Estudos */
     .streak-card {
         text-align: center;
@@ -213,7 +196,6 @@
     }
 
     /* Meu Nível */
-    /* ALTERAÇÃO 2: level-card com border-left mais grossa e colorida */
     .level-card {
         background: linear-gradient(145deg, #e0f7fa, #f0fcfe); /* Ciano claro */
         border: 1px solid #80deea;
@@ -291,6 +273,47 @@
         border-color: #9575cd;
         box-shadow: 0 10px 20px -5px rgba(103, 58, 183, 0.15), 0 4px 6px -4px rgba(103, 58, 183, 0.1);
     }
+
+    /* Card de Motivação Diária (Novo) */
+    .daily-motivation-card {
+        background: linear-gradient(145deg, #e6f7ff, #f2fcff); /* Azul muito claro */
+        border-color: #b3e0ff;
+        border-left-color: #0099ff; /* Azul para motivação */
+        box-shadow: 0 4px 8px -2px rgba(0, 153, 255, 0.1), 0 2px 4px -2px rgba(0, 153, 255, 0.07);
+        text-align: center; /* Centraliza o conteúdo */
+        display: flex; /* Garante que o conteúdo ocupe o espaço */
+        flex-direction: column; /* Organiza os itens em coluna */
+        justify-content: center; /* Centraliza verticalmente */
+    }
+    .daily-motivation-card .stat-card-title {
+        justify-content: center; /* Centraliza o título */
+        margin-bottom: 0.5rem; /* Ajusta margem para mais espaço com a frase */
+    }
+    .daily-motivation-card .stat-card-title i {
+        color: #007acc; /* Azul mais escuro */
+        background-color: #e6f7ff;
+    }
+    .daily-motivation-card:hover {
+        border-color: #8cd9ff;
+        box-shadow: 0 10px 20px -5px rgba(0, 153, 255, 0.15), 0 4px 6px -4px rgba(0, 153, 255, 0.1);
+    }
+    .motivation-date {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #007acc;
+        margin-bottom: 0.75rem;
+    }
+    .motivation-text {
+        font-size: 1rem;
+        font-style: italic;
+        color: #333;
+        flex-grow: 1; /* Permite que o texto ocupe o espaço disponível */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.5rem; /* Adiciona um pouco de padding lateral */
+    }
+
 
     /* Efeito de elevação adicionado ao container de filtro */
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
@@ -689,16 +712,11 @@
         </div>
         {% endif %}
 
-        {# Meu Progresso (terceira coluna, primeira linha) #}
-        <div class="stat-card progress-card">
-            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
-                <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
-            </div>
-            <div class="progress-bar-container w-full" style="height:10px;">
-                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
-            </div>
+        {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
+        <div class="stat-card daily-motivation-card">
+            <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
+            <div id="motivation-date" class="motivation-date"></div>
+            <p id="motivation-text" class="motivation-text"></p>
         </div>
 
         {# Sequência de Estudos (segunda coluna, segunda linha) #}
@@ -943,14 +961,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const accordionContainer = document.getElementById('laws-accordion-container');
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
     // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
     const noTodoItemsMessage = document.getElementById('no-todo-items-message');
+
+    const motivationDateElement = document.getElementById('motivation-date');
+    const motivationTextElement = document.getElementById('motivation-text');
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO >>>
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
     // =====================================================================
 
 
@@ -1722,6 +1743,135 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchAndRenderTodoItems();
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
+    // =====================================================================
+    function getDayOfYear(date) {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
+    }
+
+    function displayDailyMotivation() {
+        const today = new Date();
+        const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        const dayOfWeek = daysOfWeek[today.getDay()];
+        const dayOfMonth = today.getDate();
+        const month = months[today.getMonth()];
+        const year = today.getFullYear();
+
+        motivationDateElement.textContent = `${dayOfWeek}, ${dayOfMonth} de ${month} de ${year}`;
+
+        // Nova lista de frases motivacionais
+        const motivationalPhrases = [
+            "Não desista. O começo é sempre o mais difícil.",
+            "A persistência é o caminho do êxito.",
+            "O sucesso é a soma de pequenos esforços repetidos.",
+            "Caia sete vezes, levante-se oito.",
+            "Sua perseverança é a ponte entre seus sonhos e a realidade.",
+            "A força não vem da capacidade física, mas de uma vontade indomável.",
+            "Acredite no processo e na sua capacidade de superar.",
+            "Nunca subestime o poder de um pequeno passo.",
+            "Não importa a lentidão, desde que você não pare.",
+            "Seu esforço é o combustível do seu progresso.",
+            "A disciplina é a ponte entre metas e realizações.",
+            "Mantenha o foco, a força e a fé.",
+            "A determinação de hoje é a recompensa de amanhã.",
+            "O medo de falhar não pode ser maior que a vontade de crescer.",
+            "Sua disciplina nos estudos molda o seu destino.",
+            "O estudo é a chave que abre todas as portas do conhecimento.",
+            "Cada hora de estudo é um investimento no seu futuro.",
+            "Aprender é o único tesouro que a traça não rói e o ladrão não rouba.",
+            "Dedique-se aos estudos e veja a sua mente florescer.",
+            "O conhecimento é o superpoder que você adquire a cada página lida.",
+            "Estudar não é um sacrifício, é um privilégio que te levará longe.",
+            "A persistência nos estudos transforma sonhos em realidade.",
+            "Sua jornada de aprendizado é a sua maior aventura.",
+            "O estudo de hoje é a vitória de amanhã.",
+            "A cada nova lei compreendida, um novo horizonte se abre.",
+            "Permita que o conhecimento seja a sua bússola.",
+            "Não pare até se orgulhar do seu progresso.",
+            "O caminho do sucesso é pavimentado com estudo e dedicação.",
+            "A melhoria contínua começa com a vontade de aprender.",
+            "O que você aprende hoje, usa para sempre.",
+            "Estude como se fosse viver para sempre.",
+            "As leis são o alicerce da sociedade; seu estudo, o seu poder.",
+            "A mente que se abre a uma nova ideia jamais voltará ao seu tamanho original.",
+            "O estudo liberta, empodera e transforma.",
+            "Acredite que você pode, e você estará no meio do caminho.",
+            "Onde o foco vai, a energia flui.",
+            "Menos distrações, mais resultados.",
+            "Sua disciplina é a semente do seu sucesso.",
+            "Defina suas prioridades e foque nelas.",
+            "O foco transforma o comum em extraordinário.",
+            "A disciplina é a liberdade de ser quem você quer ser.",
+            "Organize-se para conquistar.",
+            "Seu foco determina sua realidade.",
+            "Não desvie do seu objetivo; ele te espera.",
+            "A disciplina é o caminho para a maestria.",
+            "Um passo de cada vez, com foco total.",
+            "Concentre-se no que importa e o resto se alinha.",
+            "O tempo é seu maior ativo; use-o com sabedoria.",
+            "Sua capacidade de focar define seus resultados.",
+            "A disciplina é o segredo dos grandes realizadores.",
+            "Mantenha os olhos no prêmio.",
+            "Acredite no seu potencial ilimitado de crescimento.",
+            "Cada desafio é uma oportunidade para evoluir.",
+            "Seu crescimento é um processo contínuo e maravilhoso.",
+            "Não tenha medo de recomeçar; tenha medo de não evoluir.",
+            "O único limite para o seu crescimento é a sua imaginação.",
+            "Evoluir é se tornar a melhor versão de si mesmo.",
+            "Sua jornada de crescimento é única e valiosa.",
+            "Pequenas mudanças diárias levam a grandes resultados.",
+            "Crescer dói, mas compensa.",
+            "A cada passo, você se aproxima de quem você quer ser.",
+            "O sucesso não é um destino, é uma jornada de crescimento constante.",
+            "Seu esforço de hoje é o seu triunfo de amanhã.",
+            "A cada dia, uma nova chance de ser melhor.",
+            "Aprenda com o passado, viva o presente e construa o futuro.",
+            "Sua resiliência define sua capacidade de crescer.",
+            "Abrace a imperfeição e celebre o progresso.",
+            "Sua mente é um jardim; cultive-a com bons pensamentos e muito aprendizado.",
+            "Você está crescendo, mesmo quando não percebe.",
+            "A resiliência é a arte de transformar a dor em poder.",
+            "A diferença entre o impossível e o possível reside na determinação.",
+            "Sua persistência é a sua maior aliada.",
+            "O futuro pertence àqueles que acreditam na beleza de seus sonhos.",
+            "Comece onde você está, use o que você tem, faça o que você pode.",
+            "Sua atitude determina sua altitude.",
+            "Grandes coisas nunca vêm de zonas de conforto.",
+            "A vida é sobre criar-se.",
+            "Abrace a jornada, celebre cada conquista.",
+            "Seja a luz que ilumina o seu próprio caminho.",
+            "Inspire-se e inspire os outros.",
+            "Sua história está sendo escrita a cada dia.",
+            "A felicidade está na jornada, não no destino.",
+            "Deixe sua paixão te guiar.",
+            "Viva o presente, planeje o futuro, aprenda com o passado.",
+            "Cada novo dia é uma nova chance de mudar.",
+            "A vida é um aprendizado contínuo.",
+            "Seja grato pelas pequenas vitórias.",
+            "O otimismo é a fé que leva à conquista.",
+            "Você é mais forte do que pensa.",
+            "A beleza do amanhã depende do que você faz hoje.",
+            "Faça do seu propósito a sua força.",
+            "Seja a mudança que você quer ver no mundo, começando por você.",
+            "O valor de uma pessoa não está na sua beleza, mas na sua coragem para lutar."
+        ];
+
+        const dayIndex = getDayOfYear(today) % motivationalPhrases.length;
+        motivationTextElement.textContent = motivationalPhrases[dayIndex];
+    }
+
+    // Chama a função para exibir a motivação diária ao carregar a página
+    displayDailyMotivation();
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
     // =====================================================================
 });
 </script>
