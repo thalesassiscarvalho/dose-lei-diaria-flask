@@ -605,8 +605,8 @@
 
     /* Fim dos estilos do Meu Diário */
 
-    /* Estilo para ocultar os cards (adicionado para a nova funcionalidade) */
-    .hidden-cards-group {
+    /* Estilos para ocultar/mostrar cards */
+    .hidden-card-section {
         display: none;
     }
 
@@ -624,166 +624,163 @@
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex justify-between items-center"> {# Adicionado um flex container para o título e o botão #}
+    <div class="flex items-center justify-between"> {# Adiciona um contêiner flex para o título e o botão #}
         <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
-        {# Botão de mostrar/ocultar cards (adicionado para a nova funcionalidade) #}
-        <button id="toggle-cards-btn" class="action-button flex items-center">
-            <i class="fas fa-eye mr-2"></i> Ocultar Cards
+        {# Botão de Ocultar Cards - Adicionado aqui #}
+        <button id="toggle-cards-btn" class="action-button">
+            <i class="fas fa-eye-slash mr-2"></i> Ocultar Cards
         </button>
     </div>
 
-    {# Grupo de cards que podem ser ocultados (adicionado para a nova funcionalidade) #}
-    <div id="hidden-cards-group" class="transition-all duration-500 ease-in-out">
-        {% if fixed_announcements or non_fixed_announcements %}
-        <div class="announcement-section">
-            {% if fixed_announcements %}
-            <div class="announcement-container">
-                <div class="fixed-announcement-box">
-                    {% for announcement in fixed_announcements %}
-                    <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
-                        <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
-                        <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
-                    </div>
-                    {% endfor %}
+    {% if fixed_announcements or non_fixed_announcements %}
+    <div class="announcement-section" id="announcement-cards-section"> {# Adicionado ID para a seção de avisos #}
+        {% if fixed_announcements %}
+        <div class="announcement-container">
+            <div class="fixed-announcement-box">
+                {% for announcement in fixed_announcements %}
+                <div class="fixed-announcement-item {% if not loop.first %}mt-3{% endif %}">
+                    <h2><i class="fas fa-thumbtack"></i>{{ announcement.title }}</h2>
+                    <div class="announcement-content rich-content">{{ announcement.content|safe }}</div>
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
-            {% if non_fixed_announcements %}
-            <div class="announcement-container" id="non-fixed-announcements-container">
-                <div class="announcement-box">
-                    <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
-                    {% for announcement in non_fixed_announcements %}
-                    <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-                        <div class="mark-seen-checkbox-container">
-                            <input type="checkbox" class="mark-seen-checkbox">
-                            <span class="checkmark"></span>
-                            <span class="tooltip">Marcar como visto</span>
-                        </div>
-                        <div class="announcement-content">
-                            <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
-                            <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
-                        </div>
+        </div>
+        {% endif %}
+        {% if non_fixed_announcements %}
+        <div class="announcement-container" id="non-fixed-announcements-container">
+            <div class="announcement-box">
+                <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
+                {% for announcement in non_fixed_announcements %}
+                <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
+                    <div class="mark-seen-checkbox-container">
+                        <input type="checkbox" class="mark-seen-checkbox">
+                        <span class="checkmark"></span>
+                        <span class="tooltip">Marcar como visto</span>
                     </div>
-                    {% endfor %}
+                    <div class="announcement-content">
+                        <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
+                        <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# ===================================================================== #}
+    {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
+    {# ===================================================================== #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
+        {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
+        <div class="stat-card todo-list-card md:row-span-2"> 
+            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
+            <div class="todo-input-container">
+                <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
+                <button id="add-todo-btn" class="action-button">Adicionar</button>
+            </div>
+            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;"> {# Alterado de 'auto' para 'hidden' #}
+                {# Os itens serão carregados e renderizados via JavaScript #}
+                {% if todo_items %}
+                    {% for item in todo_items %}
+                        <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
+                            <label class="todo-item-content">
+                                <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
+                                {# Modificação para limitar o texto e adicionar tooltip #}
+                                <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
+                                <span class="todo-item-text-tooltip">{{ item.content }}</span>
+                            </label>
+                            <div class="todo-actions">
+                                <button type="button" class="todo-delete-btn" title="Excluir tarefa">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
+                {% endif %}
+            </ul>
+        </div>
+
+        {# Atividades Recentes (segunda coluna, primeira linha) #}
+        {% if recent_activities %}
+        <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
+            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+            <div class="flex flex-col space-y-2">
+                {% for activity in recent_activities %}
+                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
+                    <div class="compact-activity-content">
+                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
+                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
+                        </span>
+                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
 
-        {# ===================================================================== #}
-        {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-        {# ===================================================================== #}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
-            {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
-            <div class="stat-card todo-list-card md:row-span-2"> 
-                <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
-                <div class="todo-input-container">
-                    <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
-                    <button id="add-todo-btn" class="action-button">Adicionar</button>
-                </div>
-                <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;"> {# Alterado de 'auto' para 'hidden' #}
-                    {# Os itens serão carregados e renderizados via JavaScript #}
-                    {% if todo_items %}
-                        {% for item in todo_items %}
-                            <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
-                                <label class="todo-item-content">
-                                    <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                    {# Modificação para limitar o texto e adicionar tooltip #}
-                                    <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
-                                    <span class="todo-item-text-tooltip">{{ item.content }}</span>
-                                </label>
-                                <div class="todo-actions">
-                                    <button type="button" class="todo-delete-btn" title="Excluir tarefa">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    {% else %}
-                        <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
-                    {% endif %}
-                </ul>
-            </div>
-
-            {# Atividades Recentes (segunda coluna, primeira linha) #}
-            {% if recent_activities %}
-            <div class="stat-card recent-activities-card">
-                <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-                <div class="flex flex-col space-y-2">
-                    {% for activity in recent_activities %}
-                    <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                        <div class="compact-activity-content">
-                            <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                                {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                            </span>
-                            <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
-            <div class="stat-card daily-motivation-card">
-                <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
-                <div id="motivation-date" class="motivation-date"></div>
-                <p id="motivation-text" class="motivation-text"></p>
-            </div>
-
-            {# Sequência de Estudos (segunda coluna, segunda linha) #}
-            <div class="stat-card streak-card">
-                <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-                {% if user_streak > 0 %}
-                    <div class="streak-display">{{ user_streak }}</div>
-                    <p class="streak-text">dias consecutivos!</p>
-                {% else %}
-                    <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-                {% endif %}
-            </div>
-
-            {# Meu Nível (terceira coluna, segunda linha) #}
-            <div class="stat-card level-card">
-                <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
-                <div class="level-info">
-                    <i class="{{ level_info.current_level.icon }} level-icon"></i>
-                    <div>
-                        <div class="level-name">{{ level_info.current_level.name }}</div>
-                        <div class="level-points">{{ user_points }} pontos</div>
-                    </div>
-                </div>
-                <div class="xp-bar-container">
-                    <div class="xp-bar-fill" style="width: {{ '%.2f'|format(level_info.progress_percent) }}%;"></div>
-                </div>
-                {% if level_info.next_level %}
-                    <p class="next-level-info">
-                        Faltam <strong>{{ level_info.points_to_next }}</strong> pontos para <i class="{{ level_info.next_level.icon }}"></i> <strong>{{ level_info.next_level.name }}</strong>
-                    </p>
-                {% else %}
-                    <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
-                {% endif %}
-            </div>
+        {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
+        <div class="stat-card daily-motivation-card" id="daily-motivation-card"> {# Adicionado ID #}
+            <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
+            <div id="motivation-date" class="motivation-date"></div>
+            <p id="motivation-text" class="motivation-text"></p>
         </div>
-        {# ===================================================================== #}
-        {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-        {# ===================================================================== #}
-        
-        <div class="stat-card achievements-card">
-            <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
-            {% if user_achievements %}
-                <div class="achievements-list">
-                    {% for achievement in user_achievements %}
-                        <span class="achievement-badge" title="{{ achievement.description }}">
-                            <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                        </span>
-                    {% endfor %}
-                </div>
+
+        {# Sequência de Estudos (segunda coluna, segunda linha) #}
+        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
+            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+            {% if user_streak > 0 %}
+                <div class="streak-display">{{ user_streak }}</div>
+                <p class="streak-text">dias consecutivos!</p>
             {% else %}
-                <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
             {% endif %}
         </div>
-    </div> {# Fim do hidden-cards-group #}
+
+        {# Meu Nível (terceira coluna, segunda linha) #}
+        <div class="stat-card level-card" id="level-card"> {# Adicionado ID #}
+            <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
+            <div class="level-info">
+                <i class="{{ level_info.current_level.icon }} level-icon"></i>
+                <div>
+                    <div class="level-name">{{ level_info.current_level.name }}</div>
+                    <div class="level-points">{{ user_points }} pontos</div>
+                </div>
+            </div>
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" style="width: {{ '%.2f'|format(level_info.progress_percent) }}%;"></div>
+            </div>
+            {% if level_info.next_level %}
+                <p class="next-level-info">
+                    Faltam <strong>{{ level_info.points_to_next }}</strong> pontos para <i class="{{ level_info.next_level.icon }}"></i> <strong>{{ level_info.next_level.name }}</strong>
+                </p>
+            {% else %}
+                <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
+            {% endif %}
+        </div>
+    </div>
+    {# ===================================================================== #}
+    {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
+    {# ===================================================================== #}
+    
+    <div class="stat-card achievements-card" id="achievements-card"> {# Adicionado ID #}
+        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
+        {% if user_achievements %}
+            <div class="achievements-list">
+                {% for achievement in user_achievements %}
+                    <span class="achievement-badge" title="{{ achievement.description }}">
+                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+        {% endif %}
+    </div>
 
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
@@ -967,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter: document.getElementById('status_filter'),
         topicFilter: document.getElementById('topic_filter'),
     };
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') ?.getAttribute('content');
     let debounceTimer;
 
     const lawsSection = document.getElementById('laws-section');
@@ -975,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const accordionContainer = document.getElementById('laws-accordion-container');
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO, MOTIVAÇÃO E OCULTAR CARDS>>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
     // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
@@ -984,13 +981,59 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const motivationDateElement = document.getElementById('motivation-date');
     const motivationTextElement = document.getElementById('motivation-text');
-
-    // Novos elementos para a funcionalidade de ocultar cards
-    const toggleCardsBtn = document.getElementById('toggle-cards-btn');
-    const hiddenCardsGroup = document.getElementById('hidden-cards-group');
-    const STORAGE_KEY_HIDE_CARDS = 'hideDashboardCards'; // Chave para salvar a preferência no localStorage
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO, MOTIVAÇÃO E OCULTAR CARDS >>>
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR CARDS >>>
+    // =====================================================================
+    const toggleCardsBtn = document.getElementById('toggle-cards-btn');
+    const cardsToToggle = [
+        document.getElementById('announcement-cards-section'), // Seção de avisos (fixos e não fixos)
+        document.querySelector('.todo-list-card'), // Post-It
+        document.getElementById('recent-activities-card'), // Atividades Recentes
+        document.getElementById('daily-motivation-card'), // Motivação Diária
+        document.getElementById('streak-card'), // Sequência de Estudos
+        document.getElementById('level-card'), // Meu Nível
+        document.getElementById('achievements-card') // Medalhas e Feitos
+    ];
+
+    function applyCardsVisibility(hidden) {
+        cardsToToggle.forEach(card => {
+            if (card) { // Verifica se o card existe antes de manipular
+                if (hidden) {
+                    card.classList.add('hidden-card-section');
+                } else {
+                    card.classList.remove('hidden-card-section');
+                }
+            }
+        });
+        // Atualiza o texto e o ícone do botão
+        if (hidden) {
+            toggleCardsBtn.innerHTML = '<i class="fas fa-eye mr-2"></i> Mostrar Cards';
+        } else {
+            toggleCardsBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i> Ocultar Cards';
+        }
+        // Salva a preferência no localStorage
+        localStorage.setItem('hideCards', hidden);
+    }
+
+    // Ao carregar a página, verifica a preferência salva
+    const savedHideCardsPreference = localStorage.getItem('hideCards');
+    if (savedHideCardsPreference === 'true') {
+        applyCardsVisibility(true);
+    } else {
+        applyCardsVisibility(false);
+    }
+
+    // Adiciona o evento de clique ao botão
+    toggleCardsBtn.addEventListener('click', function() {
+        const isCurrentlyHidden = cardsToToggle[0] ? cardsToToggle[0].classList.contains('hidden-card-section') : false;
+        applyCardsVisibility(!isCurrentlyHidden);
+    });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR CARDS >>>
     // =====================================================================
 
 
@@ -1889,56 +1932,6 @@ document.addEventListener('DOMContentLoaded', function() {
     displayDailyMotivation();
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
-    // =====================================================================
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNCIONALIDADE DE OCULTAR CARDS >>>
-    // =====================================================================
-
-    // Função para salvar a preferência do usuário no localStorage
-    function saveCardVisibilityPreference(hidden) {
-        localStorage.setItem(STORAGE_KEY_HIDE_CARDS, hidden ? 'true' : 'false');
-    }
-
-    // Função para carregar a preferência do usuário do localStorage
-    function loadCardVisibilityPreference() {
-        return localStorage.getItem(STORAGE_KEY_HIDE_CARDS) === 'true';
-    }
-
-    // Função para alternar a visibilidade dos cards
-    function toggleCardsVisibility() {
-        const isHidden = hiddenCardsGroup.classList.toggle('hidden-cards-group');
-        const icon = toggleCardsBtn.querySelector('i');
-        const textNode = toggleCardsBtn.childNodes[1]; // O TextNode após o <i>
-
-        if (isHidden) {
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-            textNode.textContent = ' Mostrar Cards'; // Atualiza o texto do botão
-        } else {
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-            textNode.textContent = ' Ocultar Cards'; // Atualiza o texto do botão
-        }
-        saveCardVisibilityPreference(isHidden); // Salva a preferência
-    }
-
-    // Adiciona o event listener ao botão de alternar
-    if (toggleCardsBtn && hiddenCardsGroup) {
-        toggleCardsBtn.addEventListener('click', toggleCardsVisibility);
-
-        // Carrega a preferência ao carregar a página
-        if (loadCardVisibilityPreference()) {
-            hiddenCardsGroup.classList.add('hidden-cards-group');
-            const icon = toggleCardsBtn.querySelector('i');
-            const textNode = toggleCardsBtn.childNodes[1];
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-            textNode.textContent = ' Mostrar Cards';
-        }
-    }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNCIONALIDADE DE OCULTAR CARDS >>>
     // =====================================================================
 });
 </script>
