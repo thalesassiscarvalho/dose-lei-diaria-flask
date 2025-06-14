@@ -408,7 +408,7 @@
         transform: rotate(180deg);
     }
 
-    /* MEU DIÁRIO (TodoItem) */
+    /* Post-It (TodoItem) */
     .todo-list-card {
         background: linear-gradient(145deg, #e0ffe0, #f0fff0); /* Verde claro */
         border-color: #a5d6a7;
@@ -433,11 +433,12 @@
 
     .todo-item {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
+        align-items: center; /* Alinha verticalmente os itens */
+        justify-content: space-between; /* Espaça conteúdo e ações */
         padding: 0.75rem 0;
         border-bottom: 1px dashed #e0ffe0; /* Linha mais suave */
         transition: all 0.3s ease;
+        min-height: 24px; /* Garante altura mínima para o alinhamento */
     }
     .todo-item:last-child {
         border-bottom: none;
@@ -447,11 +448,13 @@
         display: flex;
         align-items: center;
         flex-grow: 1;
+        overflow: hidden; /* Importante para que text-overflow funcione no span */
         cursor: pointer; /* Indica que o item é clicável */
     }
     .todo-item-content input[type="checkbox"] {
         margin-right: 0.75rem;
         /* Estilos básicos para o checkbox, o Tailwind sobrescreve a aparência padrão */
+        flex-shrink: 0; /* Impede que o checkbox diminua */
         height: 1.25rem;
         width: 1.25rem;
         accent-color: #4caf50; /* Cor do checkmark */
@@ -466,14 +469,17 @@
         overflow: hidden;     /* Esconde o conteúdo que transborda */
         text-overflow: ellipsis; /* Adiciona "..." ao texto que transborda */
         flex-grow: 1; /* Permite que o texto ocupe o máximo de espaço possível */
+        min-width: 0; /* Permite que o flex item encolha abaixo de seu conteúdo */
     }
     .todo-item.completed .todo-item-text {
         text-decoration: line-through;
         color: #9ca3af; /* Cinza para itens concluídos */
     }
     .todo-actions {
-        flex-shrink: 0;
+        flex-shrink: 0; /* Impede que os botões de ação diminuam */
         margin-left: 0.75rem;
+        display: flex; /* Garante que os botões fiquem lado a lado se houver mais de um */
+        align-items: center;
     }
     .todo-delete-btn {
         background: none;
@@ -482,6 +488,12 @@
         cursor: pointer;
         font-size: 1.1rem;
         transition: color 0.2s ease;
+        padding: 0; /* Remova padding para melhor controle de espaço */
+        width: 24px; /* Largura fixa para o ícone */
+        height: 24px; /* Altura fixa para o ícone */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     .todo-delete-btn:hover {
         color: #dc2626;
@@ -511,7 +523,7 @@
         }
     }
 
-    /* Fim dos estilos do Meu Diário */
+    /* Fim dos estilos do Post-It */
 
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
@@ -567,17 +579,18 @@
     {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
-        {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
+        {# Post-It (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
             <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Post-It</h2> {# Nome alterado aqui #}
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
+            {# Limitando a exibição no HTML a 5 tarefas #}
             <ul id="todo-list" class="space-y-1 flex-grow overflow-y-auto" style="max-height: 400px;">
-                {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
-                    {% for item in todo_items %}
+                    {# Itera sobre as tarefas e limita a 5 #}
+                    {% for item in todo_items if loop.index <= 5 %}
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
@@ -590,6 +603,10 @@
                             </div>
                         </li>
                     {% endfor %}
+                    {# Mensagem se houver mais de 5 tarefas, mas não é estritamente necessário se o JS gerenciar #}
+                    {% if todo_items|length > 5 %}
+                        <p class="text-gray-500 italic text-sm text-center py-2">Mostrando as 5 tarefas mais recentes. <a href="#" id="view-all-todos" class="text-blue-600 hover:underline">Ver todas</a></p>
+                    {% endif %}
                 {% else %}
                     <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
                 {% endif %}
@@ -866,14 +883,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const accordionContainer = document.getElementById('laws-accordion-container');
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO POST-IT >>>
     // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
-    const noTodoItemsMessage = document.getElementById('no-todo-items-message');
+    let noTodoItemsMessage = document.getElementById('no-todo-items-message'); // Tornar let para reatribuição
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO >>>
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO POST-IT >>>
     // =====================================================================
 
 
@@ -1108,17 +1125,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
 
         // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO POST-IT >>>
         // =====================================================================
         // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
-        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', handleToggleTodoItem);
-        });
-        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
-            button.addEventListener('click', handleDeleteTodoItem);
-        });
+        // Esta função será chamada após cada renderização da lista
+        function attachTodoItemListeners() {
+            todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleToggleTodoItem);
+            });
+            todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
+                button.addEventListener('click', handleDeleteTodoItem);
+            });
+        }
+        attachTodoItemListeners(); // Chama pela primeira vez ao carregar a página
         // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
+        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO POST-IT >>>
         // =====================================================================
     }
     
@@ -1400,9 +1421,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO POST-IT (TodoItem) >>>
     // =====================================================================
-    // Função para renderizar um único item do diário
+    // Função para renderizar um único item do diário (agora Post-It)
     function renderTodoItem(item) {
         const listItem = document.createElement('li');
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
@@ -1418,10 +1439,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
-
-        // Adicionar event listeners para o novo item
-        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
-        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
         return listItem;
     }
 
@@ -1448,16 +1465,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
-                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
-                if (existingNoItemsMessage) {
-                    existingNoItemsMessage.remove();
-                }
-                
-                // Renderizar e adicionar o novo item ao topo da lista
-                const newItem = renderTodoItem(data.todo_item);
-                todoListUl.prepend(newItem); // Adiciona no início da lista
-
+                // Ao adicionar, sempre re-renderiza para garantir a contagem e ordem corretas
+                await fetchAndRenderTodoItems(); 
                 newTodoItemInput.value = ''; // Limpa o input
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
@@ -1495,22 +1504,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                // Atualizar a classe CSS e o status do checkbox
-                if (data.todo_item.is_completed) {
-                    listItem.classList.add('completed');
-                } else {
-                    listItem.classList.remove('completed');
-                }
-                checkbox.checked = data.todo_item.is_completed;
-                
-                // Se o item foi concluído, movê-lo para o final da lista
-                if (data.todo_item.is_completed) {
-                    todoListUl.appendChild(listItem);
-                } else {
-                    // Se o item foi reaberto, reordenar a lista para manter os não-concluídos no topo
-                    await fetchAndRenderTodoItems(); // Refetch e re-renderiza para garantir a ordem
-                }
-
+                // Sempre re-renderiza após toggle para garantir ordem e limite visual
+                await fetchAndRenderTodoItems();
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
@@ -1552,15 +1547,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                listItem.remove(); // Remove o item da lista
-                if (todoListUl.children.length === 0) {
-                    // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
-                    const p = document.createElement('p');
-                    p.id = 'no-todo-items-message';
-                    p.className = 'text-gray-500 italic text-sm text-center py-4';
-                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
-                    todoListUl.appendChild(p);
-                }
+                // Sempre re-renderiza após exclusão para garantir a contagem e ordem corretas
+                await fetchAndRenderTodoItems();
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
@@ -1579,8 +1567,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }).showToast();
         }
     }
-
-    // Função para buscar e renderizar todos os itens do diário (útil após toggle)
+    
+    // Função para buscar e renderizar todos os itens do diário (agora Post-It)
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -1589,44 +1577,70 @@ document.addEventListener('DOMContentLoaded', function() {
             todoListUl.innerHTML = ''; // Limpa a lista atual
 
             if (data.todo_items && data.todo_items.length > 0) {
-                // Ordena: não concluídos primeiro, depois concluídos. Dentro de cada grupo, por data de criação.
+                // Ordena: não concluídos primeiro (por ID), depois concluídos (por ID).
                 const sortedItems = data.todo_items.sort((a, b) => {
                     if (a.is_completed === b.is_completed) {
-                        // Se o status é o mesmo, ordena por ID (ou outra propriedade de ordem, como timestamp)
-                        return a.id - b.id;
+                        return a.id - b.id; // Mantém a ordem de criação ou ID dentro do mesmo status
                     }
-                    return a.is_completed ? 1 : -1; // Não concluído (-1) vem antes de concluído (1)
+                    return a.is_completed ? 1 : -1; // Tarefas não concluídas vêm antes (-1) das concluídas (1)
                 });
 
-                sortedItems.forEach(item => {
+                // Renderiza apenas as 5 primeiras tarefas
+                const itemsToRender = sortedItems.slice(0, 5);
+                itemsToRender.forEach(item => {
                     todoListUl.appendChild(renderTodoItem(item));
                 });
-                // Remove a mensagem de "nenhuma tarefa" se ela existir
-                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
-                if (existingNoItemsMessage) {
-                    existingNoItemsMessage.remove();
+
+                // Adiciona a mensagem "Ver todas" se houver mais de 5 itens
+                const existingViewAllMessage = document.getElementById('view-all-todos');
+                if (sortedItems.length > 5 && !existingViewAllMessage) {
+                    const p = document.createElement('p');
+                    p.className = 'text-gray-500 italic text-sm text-center py-2';
+                    p.innerHTML = 'Mostrando as 5 tarefas mais recentes. <a href="#" id="view-all-todos-link" class="text-blue-600 hover:underline">Ver todas</a>';
+                    todoListUl.appendChild(p);
+                    // Adiciona listener para o novo link "Ver todas"
+                    document.getElementById('view-all-todos-link').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        alert('Funcionalidade "Ver todas" seria implementada aqui (e.g., abrir modal, navegar para página de Post-It).');
+                        // Exemplo: window.location.href = '/student/todo_items';
+                    });
+                } else if (sortedItems.length <= 5 && existingViewAllMessage) {
+                    // Remove a mensagem "Ver todas" se não houver mais de 5 itens
+                    existingViewAllMessage.remove();
                 }
+
+                // Remove a mensagem de "nenhuma tarefa" se ela existir
+                if (noTodoItemsMessage) {
+                    noTodoItemsMessage.remove();
+                    noTodoItemsMessage = null; // Zera a referência para evitar adicionar novamente
+                }
+
             } else {
-                // Adiciona a mensagem de "nenhuma tarefa" se a lista estiver vazia
-                const p = document.createElement('p');
-                p.id = 'no-todo-items-message';
-                p.className = 'text-gray-500 italic text-sm text-center py-4';
-                p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
-                todoListUl.appendChild(p);
+                // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
+                if (!noTodoItemsMessage) { // Verifica se a mensagem já não existe
+                    const p = document.createElement('p');
+                    p.id = 'no-todo-items-message';
+                    p.className = 'text-gray-500 italic text-sm text-center py-4';
+                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                    todoListUl.appendChild(p);
+                    noTodoItemsMessage = p; // Atualiza a referência
+                }
             }
+            // Re-anexa os event listeners para os itens recém-renderizados
+            attachTodoItemListeners(); 
         } catch (error) {
-            console.error('Erro ao buscar itens do diário:', error);
+            console.error('Erro ao buscar itens do Post-It:', error);
             Toastify({
-                text: "Erro ao carregar as tarefas do diário.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                text: "Erro ao carregar as tarefas do Post-It.", duration: 3000, close: true, gravity: "bottom", position: "right",
                 style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
             }).showToast();
         }
     }
 
-    // Chama a função para buscar e renderizar os itens do diário quando a página carrega
+    // Chama a função para buscar e renderizar os itens do Post-It quando a página carrega
     fetchAndRenderTodoItems();
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO POST-IT (TodoItem) >>>
     // =====================================================================
 });
 </script>
