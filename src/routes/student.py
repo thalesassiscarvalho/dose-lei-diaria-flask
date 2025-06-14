@@ -8,6 +8,8 @@ from sqlalchemy.orm import joinedload
 # =====================================================================
 # Adicionado 'date' e 'timedelta' para a lógica do Streak
 from datetime import date, timedelta
+# Import 'datetime' para o cálculo do tempo humanizado
+import datetime
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO >>>
@@ -16,10 +18,43 @@ from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
-import datetime
 import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO PARA HUMANIZAR TEMPO (ADICIONADA) >>>
+# =====================================================================
+def _humanize_time_delta(dt):
+    """Converte um objeto datetime em uma string de tempo relativo (ex: '2 horas atrás')."""
+    if not dt:
+        return ""
+    # A base de dados salva em UTC (naive), então usamos utcnow() naive para comparar.
+    now = datetime.datetime.utcnow()
+    delta = now - dt
+    
+    seconds = delta.total_seconds()
+    days = delta.days
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+
+    if days > 0:
+        if days == 1:
+            return "1 dia atrás"
+        return f"{days} dias atrás"
+    if hours > 0:
+        if hours == 1:
+            return "1 hora atrás"
+        return f"{int(hours)} horas atrás"
+    if minutes > 0:
+        if minutes == 1:
+            return "1 minuto atrás"
+        return f"{int(minutes)} minutos atrás"
+    return "agora mesmo"
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
 
 # =====================================================================
 # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE NÍVEIS E PONTOS (ADICIONADA) >>>
@@ -253,12 +288,28 @@ def dashboard():
     completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
     global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
 
-    last_progress = UserProgress.query.join(Law).filter(
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: BUSCAR ATIVIDADES RECENTES >>>
+    # =====================================================================
+    # A consulta anterior por 'last_progress' foi substituída por esta para buscar os 3 últimos acessos.
+    recent_progresses = UserProgress.query.join(Law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
-    ).order_by(UserProgress.last_accessed_at.desc()).first()
-    last_accessed_law = last_progress.law if last_progress else None
+    ).options(
+        joinedload(Law.parent) # Carrega o 'pai' (diploma) para evitar queries extras no template
+    ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
+
+    # Processa a lista para incluir o tempo formatado pela nova função _humanize_time_delta
+    recent_activities = []
+    for progress in recent_progresses:
+        recent_activities.append({
+            "law": progress.law,
+            "time_ago": _humanize_time_delta(progress.last_accessed_at)
+        })
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
 
     fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
     seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
@@ -335,7 +386,13 @@ def dashboard():
                            user_achievements=current_user.achievements,
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
-                           last_accessed_law=last_accessed_law,
+                           # ==================================================
+                           # <<< INÍCIO DA ALTERAÇÃO: PASSAR DADOS DE ATIVIDADES RECENTES PARA O TEMPLATE >>>
+                           # ==================================================
+                           recent_activities=recent_activities, # Substitui o antigo 'last_accessed_law'
+                           # ==================================================
+                           # <<< FIM DA ALTERAÇÃO >>>
+                           # ==================================================
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
                            # ==================================================
