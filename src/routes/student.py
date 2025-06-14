@@ -10,7 +10,8 @@ from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 # Import 'datetime' para o cálculo do tempo humanizado
 import datetime
-from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity
+# Importar TodoItem da sua user.py (ou models.py onde ela estiver definida)
+from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
@@ -277,38 +278,6 @@ def _calculate_user_streak(user: User) -> int:
 # <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA FUNÇÃO PARA DADOS DO MAPA DE CALOR >>>
-# =====================================================================
-def get_study_heatmap_data(user: User, num_months: int = 6):
-    """
-    Retorna os dados de atividade de estudo para o mapa de calor.
-    
-    Args:
-        user (User): O objeto do usuário.
-        num_months (int): Número de meses para buscar dados (ex: 6 meses para o mapa de calor).
-        
-    Returns:
-        dict: Um dicionário onde as chaves são datas no formato 'YYYY-MM-DD'
-              e os valores são a contagem de atividades (1 para cada dia com atividade).
-    """
-    today = date.today()
-    # Define a data de início para buscar atividades (por exemplo, 6 meses atrás)
-    start_date = today - timedelta(days=30 * num_months) # Aproximadamente 6 meses
-
-    # Busca as atividades de estudo dentro do período
-    activities = user.study_activities.filter(StudyActivity.study_date >= start_date).all()
-    
-    # Converte a lista de objetos StudyActivity em um dicionário para fácil acesso
-    # A contagem é 1 para cada dia que houve atividade, para o mapa de calor.
-    heatmap_data = {activity.study_date.strftime('%Y-%m-%d'): 1 for activity in activities}
-    
-    return heatmap_data
-# =====================================================================
-# <<< FIM DA IMPLEMENTOÇÃO >>>
-# =====================================================================
-
-
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -406,11 +375,13 @@ def dashboard():
     # =====================================================================
 
     # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: BUSCAR DADOS PARA O MAPA DE CALOR >>>
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: BUSCAR ITENS DO DIÁRIO >>>
     # =====================================================================
-    study_heatmap_data = get_study_heatmap_data(current_user)
+    # Busca itens do diário, ordenados por concluídos (final da lista) e depois por data de criação
+    # Não vamos filtrar por is_completed=False aqui, para que o template possa exibir e marcar/desmarcar
+    todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
     # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # <<< FIM DA IMPLEMENTAÇÃO: BUSCAR ITENS DO DIÁRIO >>>
     # =====================================================================
 
     return render_template("student/dashboard.html",
@@ -426,13 +397,13 @@ def dashboard():
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
                            level_info=level_info,
-                           # =================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DO MAPA DE CALOR >>>
-                           # =================================================
-                           study_heatmap_data=study_heatmap_data
-                           # =================================================
+                           # ==================================================
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR ITENS DO DIÁRIO PARA O TEMPLATE >>>
+                           # ==================================================
+                           todo_items=todo_items
+                           # ==================================================
                            # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # =================================================
+                           # ==================================================
                            )
 
 
@@ -843,3 +814,110 @@ def restore_law_to_original(law_id):
         db.session.rollback()
         logging.error(f"Erro ao restaurar a lei {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao restaurar a lei.'}), 500
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: ROTAS DE API PARA MEU DIÁRIO (TodoItem) >>>
+# =====================================================================
+@student_bp.route("/api/todo_items", methods=["GET"])
+@login_required
+def get_todo_items():
+    """Retorna a lista de itens do diário do usuário."""
+    # Retornar itens não concluídos primeiro, depois os concluídos (ordenados por created_at decrescente)
+    todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
+    
+    items_data = []
+    for item in todo_items:
+        items_data.append({
+            "id": item.id,
+            "content": item.content,
+            "is_completed": item.is_completed,
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "completed_at": item.completed_at.isoformat() if item.completed_at else None
+        })
+    return jsonify(success=True, todo_items=items_data)
+
+@student_bp.route("/api/todo_items", methods=["POST"])
+@login_required
+def add_todo_item():
+    """Adiciona um novo item ao diário do usuário."""
+    data = request.get_json()
+    content = data.get("content", "").strip()
+
+    if not content:
+        return jsonify(success=False, error="O conteúdo da tarefa não pode estar vazio."), 400
+
+    new_item = TodoItem(user_id=current_user.id, content=content, is_completed=False)
+    
+    try:
+        db.session.add(new_item)
+        db.session.commit()
+        flash("Tarefa adicionada ao seu diário!", "success")
+        return jsonify(
+            success=True,
+            message="Tarefa adicionada!",
+            todo_item={
+                "id": new_item.id,
+                "content": new_item.content,
+                "is_completed": new_item.is_completed,
+                "created_at": new_item.created_at.isoformat(),
+                "completed_at": None
+            }
+        ), 201
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao adicionar item de diário para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao adicionar tarefa."), 500
+
+@student_bp.route("/api/todo_items/<int:item_id>/toggle", methods=["POST"])
+@login_required
+def toggle_todo_item(item_id):
+    """Alterna o status (concluído/não concluído) de um item do diário."""
+    item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
+
+    if not item:
+        return jsonify(success=False, error="Tarefa não encontrada."), 404
+
+    item.is_completed = not item.is_completed
+    item.completed_at = datetime.datetime.utcnow() if item.is_completed else None
+    
+    try:
+        db.session.commit()
+        message = "Tarefa marcada como concluída!" if item.is_completed else "Tarefa reaberta!"
+        flash(message, "info")
+        return jsonify(
+            success=True,
+            message=message,
+            todo_item={
+                "id": item.id,
+                "content": item.content,
+                "is_completed": item.is_completed,
+                "created_at": item.created_at.isoformat(),
+                "completed_at": item.completed_at.isoformat() if item.completed_at else None
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao alternar status do item de diário {item_id} para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao atualizar tarefa."), 500
+
+@student_bp.route("/api/todo_items/<int:item_id>", methods=["DELETE"])
+@login_required
+def delete_todo_item(item_id):
+    """Exclui um item do diário do usuário."""
+    item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
+
+    if not item:
+        return jsonify(success=False, error="Tarefa não encontrada."), 404
+    
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        flash("Tarefa excluída do seu diário.", "success")
+        return jsonify(success=True, message="Tarefa excluída!")
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO: ROTAS DE API PARA MEU DIÁRIO (TodoItem) >>>
+# =====================================================================
