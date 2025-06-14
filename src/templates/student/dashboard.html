@@ -771,14 +771,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
-        <div class="topic-item" data-law-id="<span class="math-inline">\{topic\.id\}"\>
-<div class\="topic\-title"\><i class\="fas fa\-file\-alt icon"\></i\><span\></span>{topic.title}</span></div>
+        <div class="topic-item" data-law-id="${topic.id}">
+            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
             <div class="topic-actions">
-                <span class="math-inline">\{statusBadge\}
-<a href\="/student/law/</span>{topic.id}" class="action-button">${actionButtonText}</a>
+                ${statusBadge}
+                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
                 ${reviewButton}
-                <button type="button" class="favorite-btn js-favorite-btn <span class="math-inline">\{favoriteClass\}" data\-law\-id\="</span>{topic.id}" title="<span class="math-inline">\{favoriteTitle\}"\>
-<i class\="</span>{favoriteIcon}"></i>
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
+                    <i class="${favoriteIcon}"></i>
                 </button>
             </div>
         </div>`;
@@ -966,8 +966,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.innerHTML = `
-                <span class="autocomplete-item-title"><span class="math-inline">\{item\.title\}</span\>
-<span class\="autocomplete\-item\-category"\></span>{item.category}</span>
+                <span class="autocomplete-item-title">${item.title}</span>
+                <span class="autocomplete-item-category">${item.category}</span>
             `;
             div.onclick = () => {
                 window.location.href = item.url;
@@ -1115,4 +1115,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-}
