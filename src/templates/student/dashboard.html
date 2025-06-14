@@ -561,35 +561,18 @@
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {# Grid para os cards superiores #}
-        {% if recent_activities %}
-        <div class="stat-card recent-activities-card">
-            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-            <div class="flex flex-col space-y-2">
-                {% for activity in recent_activities %}
-                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                    <div class="compact-activity-content">
-                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                        </span>
-                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        {# ===================================================================== #}
-        {# <<< INÍCIO DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO >>> #}
-        {# ===================================================================== #}
-        <div class="stat-card todo-list-card">
+    {# ===================================================================== #}
+    {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
+    {# ===================================================================== #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid principal com 3 colunas em telas médias #}
+        {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
+        <div class="stat-card todo-list-card md:row-span-2"> 
             <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Meu Diário</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <ul id="todo-list" class="space-y-1">
+            <ul id="todo-list" class="space-y-1 flex-grow overflow-y-auto" style="max-height: 400px;">
                 {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
                     {% for item in todo_items %}
@@ -610,14 +593,28 @@
                 {% endif %}
             </ul>
         </div>
-        {# ===================================================================== #}
-        {# <<< FIM DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO >>> #}
-        {# ===================================================================== #}
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {# Atividades Recentes (segunda coluna, primeira linha) #}
+        {% if recent_activities %}
+        <div class="stat-card recent-activities-card">
+            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+            <div class="flex flex-col space-y-2">
+                {% for activity in recent_activities %}
+                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
+                    <div class="compact-activity-content">
+                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
+                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
+                        </span>
+                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
-        <div class="md:col-span-1 stat-card progress-card">
+        {# Meu Progresso (terceira coluna, primeira linha) #}
+        <div class="stat-card progress-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
@@ -628,6 +625,7 @@
             </div>
         </div>
 
+        {# Sequência de Estudos (segunda coluna, segunda linha) #}
         <div class="stat-card streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             {% if user_streak > 0 %}
@@ -638,6 +636,7 @@
             {% endif %}
         </div>
 
+        {# Meu Nível (terceira coluna, segunda linha) #}
         <div class="stat-card level-card">
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
             <div class="level-info">
@@ -659,6 +658,9 @@
             {% endif %}
         </div>
     </div>
+    {# ===================================================================== #}
+    {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
+    {# ===================================================================== #}
     
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
@@ -1449,7 +1451,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
                 if (noTodoItemsMessage) {
-                    noTodoItemsMessage.remove();
+                    const existingNoItemsMessage = document.getElementById('no-todo-items-message');
+                    if (existingNoItemsMessage) {
+                        existingNoItemsMessage.remove();
+                    }
                 }
                 
                 // Renderizar e adicionar o novo item ao topo da lista
@@ -1501,20 +1506,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 checkbox.checked = data.todo_item.is_completed;
                 
-                // Mover o item para o final ou início da lista para manter a ordem
-                // Se a intenção é mover os concluídos para o final, você pode re-renderizar
-                // ou implementar uma lógica de DOM mais complexa.
-                // Para simplicidade, vamos apenas atualizar a classe e, se necessário, o usuário pode recarregar.
-                // Para mover na lista, precisaria de uma função que remova e insira no lugar certo.
-                // Exemplo simplificado de reordenação (move o concluído para o final)
+                // Se o item foi concluído, movê-lo para o final da lista
                 if (data.todo_item.is_completed) {
                     todoListUl.appendChild(listItem);
                 } else {
-                    // Se reaberto, tenta mover para o topo ou manter a ordem de criação
-                    // Isso é mais complexo, pode exigir re-fetching ou ordenar todos os LIs
-                    // Por enquanto, apenas atualiza o estado visual
-                    // Ou re-fetch all items to ensure correct order after toggle
-                    await fetchAndRenderTodoItems();
+                    // Se o item foi reaberto, reordenar a lista para manter os não-concluídos no topo
+                    await fetchAndRenderTodoItems(); // Refetch e re-renderiza para garantir a ordem
                 }
 
                 Toastify({
@@ -1585,7 +1582,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }).showToast();
         }
     }
-    
+
+    // Função para buscar e renderizar todos os itens do diário (útil após toggle)
+    async function fetchAndRenderTodoItems() {
+        try {
+            const response = await fetch('/student/api/todo_items');
+            const data = await response.json();
+
+            todoListUl.innerHTML = ''; // Limpa a lista atual
+
+            if (data.todo_items && data.todo_items.length > 0) {
+                // Ordena: não concluídos primeiro, depois concluídos. Dentro de cada grupo, por data de criação.
+                const sortedItems = data.todo_items.sort((a, b) => {
+                    if (a.is_completed === b.is_completed) {
+                        // Se o status é o mesmo, ordena por ID (ou outra propriedade de ordem, como timestamp)
+                        return a.id - b.id;
+                    }
+                    return a.is_completed ? 1 : -1; // Não concluído (-1) vem antes de concluído (1)
+                });
+
+                sortedItems.forEach(item => {
+                    todoListUl.appendChild(renderTodoItem(item));
+                });
+                // Remove a mensagem de "nenhuma tarefa" se ela existir
+                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
+                if (existingNoItemsMessage) {
+                    existingNoItemsMessage.remove();
+                }
+            } else {
+                // Adiciona a mensagem de "nenhuma tarefa" se a lista estiver vazia
+                const p = document.createElement('p');
+                p.id = 'no-todo-items-message';
+                p.className = 'text-gray-500 italic text-sm text-center py-4';
+                p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                todoListUl.appendChild(p);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar itens do diário:', error);
+            Toastify({
+                text: "Erro ao carregar as tarefas do diário.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
+        }
+    }
+
+    // Chama a função para buscar e renderizar os itens do diário quando a página carrega
+    fetchAndRenderTodoItems();
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
     // =====================================================================
