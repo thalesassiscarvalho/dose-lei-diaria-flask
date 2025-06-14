@@ -453,7 +453,6 @@
     }
     .todo-item-content input[type="checkbox"] {
         margin-right: 0.75rem;
-        /* Estilos básicos para o checkbox, o Tailwind sobrescreve a aparência padrão */
         flex-shrink: 0; /* Impede que o checkbox diminua */
         height: 1.25rem;
         width: 1.25rem;
@@ -586,15 +585,17 @@
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            {# Limitando a exibição no HTML a 5 tarefas #}
+            {# Renderização do JS aqui, o Jinja2 não precisa mais filtrar #}
             <ul id="todo-list" class="space-y-1 flex-grow overflow-y-auto" style="max-height: 400px;">
+                {# Os itens serão carregados e renderizados via JavaScript #}
+                {# O bloco Jinja2 abaixo é apenas um placeholder para a primeira carga da página.
+                   A lista será efetivamente gerenciada pelo JavaScript via fetchAndRenderTodoItems. #}
                 {% if todo_items %}
-                    {# Itera sobre as tarefas e limita a 5 #}
-                    {% for item in todo_items if loop.index <= 5 %}
+                    {% for item in todo_items %}
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                <span class="todo-item-text" title="{{ item.content }}">{{ item.content }}</span> {# Adicionado title aqui #}
+                                <span class="todo-item-text" title="{{ item.content }}">{{ item.content }}</span>
                             </label>
                             <div class="todo-actions">
                                 <button type="button" class="todo-delete-btn" title="Excluir tarefa">
@@ -603,10 +604,6 @@
                             </div>
                         </li>
                     {% endfor %}
-                    {# Mensagem se houver mais de 5 tarefas, mas não é estritamente necessário se o JS gerenciar #}
-                    {% if todo_items|length > 5 %}
-                        <p class="text-gray-500 italic text-sm text-center py-2">Mostrando as 5 tarefas mais recentes. <a href="#" id="view-all-todos" class="text-blue-600 hover:underline">Ver todas</a></p>
-                    {% endif %}
                 {% else %}
                     <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
                 {% endif %}
@@ -1592,38 +1589,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 // Adiciona a mensagem "Ver todas" se houver mais de 5 itens
-                const existingViewAllMessage = document.getElementById('view-all-todos');
-                if (sortedItems.length > 5 && !existingViewAllMessage) {
-                    const p = document.createElement('p');
-                    p.className = 'text-gray-500 italic text-sm text-center py-2';
-                    p.innerHTML = 'Mostrando as 5 tarefas mais recentes. <a href="#" id="view-all-todos-link" class="text-blue-600 hover:underline">Ver todas</a>';
-                    todoListUl.appendChild(p);
-                    // Adiciona listener para o novo link "Ver todas"
-                    document.getElementById('view-all-todos-link').addEventListener('click', (e) => {
-                        e.preventDefault();
-                        alert('Funcionalidade "Ver todas" seria implementada aqui (e.g., abrir modal, navegar para página de Post-It).');
-                        // Exemplo: window.location.href = '/student/todo_items';
-                    });
-                } else if (sortedItems.length <= 5 && existingViewAllMessage) {
-                    // Remove a mensagem "Ver todas" se não houver mais de 5 itens
-                    existingViewAllMessage.remove();
+                const existingViewAllLink = document.getElementById('view-all-todos-link');
+                const existingNoItemsMsgElement = document.getElementById('no-todo-items-message');
+
+                if (sortedItems.length > 5) {
+                    if (!existingViewAllLink) { // Se o link não existe, cria
+                        const p = document.createElement('p');
+                        p.className = 'text-gray-500 italic text-sm text-center py-2';
+                        p.innerHTML = 'Mostrando as 5 tarefas mais recentes. <a href="#" id="view-all-todos-link" class="text-blue-600 hover:underline">Ver todas</a>';
+                        todoListUl.appendChild(p);
+                        document.getElementById('view-all-todos-link').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            alert('Funcionalidade "Ver todas" seria implementada aqui (e.g., abrir modal, navegar para página de Post-It).');
+                            // Exemplo: window.location.href = '/student/todo_items';
+                        });
+                    }
+                } else {
+                    if (existingViewAllLink) { // Se o link existe mas não precisa mais, remove
+                        existingViewAllLink.closest('p').remove(); // Remove o parágrafo pai do link
+                    }
                 }
 
-                // Remove a mensagem de "nenhuma tarefa" se ela existir
-                if (noTodoItemsMessage) {
-                    noTodoItemsMessage.remove();
-                    noTodoItemsMessage = null; // Zera a referência para evitar adicionar novamente
+                // Remove a mensagem de "nenhuma tarefa" se ela existir após a renderização
+                if (existingNoItemsMsgElement) {
+                    existingNoItemsMsgElement.remove();
                 }
 
             } else {
                 // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
-                if (!noTodoItemsMessage) { // Verifica se a mensagem já não existe
+                // e remove o link "Ver todas" se ele existir
+                const existingViewAllLink = document.getElementById('view-all-todos-link');
+                if (existingViewAllLink) {
+                    existingViewAllLink.closest('p').remove();
+                }
+
+                if (!document.getElementById('no-todo-items-message')) { // Garante que não duplica a mensagem
                     const p = document.createElement('p');
                     p.id = 'no-todo-items-message';
                     p.className = 'text-gray-500 italic text-sm text-center py-4';
                     p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
                     todoListUl.appendChild(p);
-                    noTodoItemsMessage = p; // Atualiza a referência
                 }
             }
             // Re-anexa os event listeners para os itens recém-renderizados
