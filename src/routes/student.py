@@ -277,6 +277,38 @@ def _calculate_user_streak(user: User) -> int:
 # <<< FIM DA IMPLEMENTAÇÃO >>>
 # =====================================================================
 
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA FUNÇÃO PARA DADOS DO MAPA DE CALOR >>>
+# =====================================================================
+def get_study_heatmap_data(user: User, num_months: int = 6):
+    """
+    Retorna os dados de atividade de estudo para o mapa de calor.
+    
+    Args:
+        user (User): O objeto do usuário.
+        num_months (int): Número de meses para buscar dados (ex: 6 meses para o mapa de calor).
+        
+    Returns:
+        dict: Um dicionário onde as chaves são datas no formato 'YYYY-MM-DD'
+              e os valores são a contagem de atividades (1 para cada dia com atividade).
+    """
+    today = date.today()
+    # Define a data de início para buscar atividades (por exemplo, 6 meses atrás)
+    start_date = today - timedelta(days=30 * num_months) # Aproximadamente 6 meses
+
+    # Busca as atividades de estudo dentro do período
+    activities = user.study_activities.filter(StudyActivity.study_date >= start_date).all()
+    
+    # Converte a lista de objetos StudyActivity em um dicionário para fácil acesso
+    # A contagem é 1 para cada dia que houve atividade, para o mapa de calor.
+    heatmap_data = {activity.study_date.strftime('%Y-%m-%d'): 1 for activity in activities}
+    
+    return heatmap_data
+# =====================================================================
+# <<< FIM DA IMPLEMENTOÇÃO >>>
+# =====================================================================
+
+
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -373,6 +405,14 @@ def dashboard():
     # <<< FIM DA IMPLEMENTAÇÃO >>>
     # =====================================================================
 
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: BUSCAR DADOS PARA O MAPA DE CALOR >>>
+    # =====================================================================
+    study_heatmap_data = get_study_heatmap_data(current_user)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
+
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            progress_percentage=global_progress_percentage,
@@ -385,7 +425,14 @@ def dashboard():
                            recent_activities=recent_activities,
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
-                           level_info=level_info
+                           level_info=level_info,
+                           # =================================================
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR DADOS DO MAPA DE CALOR >>>
+                           # =================================================
+                           study_heatmap_data=study_heatmap_data
+                           # =================================================
+                           # <<< FIM DA IMPLEMENTAÇÃO >>>
+                           # =================================================
                            )
 
 
