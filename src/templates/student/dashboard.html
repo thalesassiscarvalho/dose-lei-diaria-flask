@@ -8,7 +8,7 @@
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
 
-    /* Estilos Gerais (sem alterações) */
+    /* Estilos Gerais (sem alterações significativas, apenas para referência) */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
     .progress-bar-container { height: 8px; border-radius: 4px; background-color: #e5e7eb; overflow: hidden; flex-grow: 1; }
@@ -581,30 +581,12 @@
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> {# Grid para os cards superiores #}
-        {% if recent_activities %}
-        <div class="stat-card recent-activities-card md:col-span-1"> {# Ocupa 1 coluna #}
-            <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-            <div class="flex flex-col space-y-2">
-                {% for activity in recent_activities %}
-                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                    <div class="compact-activity-content">
-                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                        </span>
-                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        {# ===================================================================== #}
-        {# <<< INÍCIO DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO (LAYOUT REVISADO) >>> #}
-        {# ===================================================================== #}
-        {# Ocupa as 2 colunas restantes se "Atividades Recentes" existir, ou 3 se não #}
-        <div class="stat-card todo-list-card {% if recent_activities %}md:col-span-2{% else %}md:col-span-3{% endif %}">
+    {# ===================================================================== #}
+    {# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO LAYOUT DO GRID SUPERIOR >>> #}
+    {# ===================================================================== #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {# Card "Meu Diário" - Ocupa a primeira coluna, com altura adaptável #}
+        <div class="stat-card todo-list-card md:col-span-1">
             <h2 class="stat-card-title"><i class="fas fa-clipboard-list"></i> Meu Diário</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
@@ -612,7 +594,6 @@
             </div>
             <p id="todo-limit-message" class="todo-max-items-message" style="display:none;">Você atingiu o limite de 6 tarefas.</p>
             <div id="todo-item-container" class="todo-item-container">
-                {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
                     {% for item in todo_items %}
                         <div class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
@@ -632,24 +613,42 @@
                 {% endif %}
             </div>
         </div>
-        {# ===================================================================== #}
-        {# <<< FIM DA IMPLEMENTAÇÃO: CARD MEU DIÁRIO (LAYOUT REVISADO) >>> #}
-        {# ===================================================================== #}
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="md:col-span-1 stat-card progress-card">
-            <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
-                <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+        {# Coluna à direita do Diário, contendo Atividades Recentes e Meu Progresso #}
+        <div class="md:col-span-2 flex flex-col gap-6">
+            {% if recent_activities %}
+            <div class="stat-card recent-activities-card">
+                <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
+                <div class="flex flex-col space-y-2">
+                    {% for activity in recent_activities %}
+                    <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
+                        <div class="compact-activity-content">
+                            <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
+                                {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
+                            </span>
+                            <span class="compact-activity-time">{{ activity.time_ago }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="progress-bar-container w-full" style="height:10px;">
-                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
+            {% endif %}
+
+            <div class="stat-card progress-card">
+                <h2 class="stat-card-title"><i class="fas fa-chart-line"></i> Meu Progresso</h2>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-600">Tópicos Concluídos: {{ completed_count }} / {{ total_laws }}</span>
+                    <span class="text-sm font-bold" style="color: #2563eb;">{{ "%.0f"|format(progress_percentage) }}%</span>
+                </div>
+                <div class="progress-bar-container w-full" style="height:10px;">
+                    <div class="progress-bar-fill" style="width: {{ progress_percentage }}%;"></div>
+                </div>
             </div>
         </div>
+    </div>
 
+    {# Nova linha para Sequência de Estudos e Meu Nível #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="stat-card streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             {% if user_streak > 0 %}
@@ -681,6 +680,9 @@
             {% endif %}
         </div>
     </div>
+    {# ===================================================================== #}
+    {# <<< FIM DA IMPLEMENTAÇÃO: NOVO LAYOUT DO GRID SUPERIOR >>> #}
+    {# ===================================================================== #}
     
     <div class="stat-card achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
@@ -1133,7 +1135,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // =====================================================================
         // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO (ATUALIZADO) >>>
         // =====================================================================
-        // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
         // Usa delegação de eventos para elementos adicionados dinamicamente
         todoListContainer.addEventListener('change', function(event) {
             if (event.target.classList.contains('todo-checkbox')) {
@@ -1535,11 +1536,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     todoListContainer.appendChild(listItem); // Mover para o final quando concluído
                 } else {
                     listItem.classList.remove('completed');
-                    // Opcional: mover para o início ou reordenar se reaberto.
-                    // Para manter a ordem de criação ou preferência de não concluídos no topo,
-                    // seria ideal re-fetchar e re-renderizar todos os itens.
-                    // Por simplicidade, se for reaberto, apenas atualiza a classe.
-                    // Se você quiser reordenar ao reabrir, chame fetchAndRenderTodoItems();
+                    // Para reordenar ao reabrir, vamos re-fetch e re-renderizar todos os itens
+                    await fetchAndRenderTodoItems();
                 }
                 checkbox.checked = data.todo_item.is_completed;
                 
