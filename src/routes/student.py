@@ -851,10 +851,11 @@ def add_todo_item():
     try:
         db.session.add(new_item)
         db.session.commit()
-        flash("Tarefa adicionada ao seu diário!", "success")
+        # Removido flash() aqui, pois o frontend exibirá a Toastify
+        # flash("Tarefa adicionada ao seu diário!", "success") 
         return jsonify(
             success=True,
-            message="Tarefa adicionada!",
+            message="Tarefa adicionada!", # A mensagem será usada pelo Toastify
             todo_item={
                 "id": new_item.id,
                 "content": new_item.content,
@@ -883,10 +884,11 @@ def toggle_todo_item(item_id):
     try:
         db.session.commit()
         message = "Tarefa marcada como concluída!" if item.is_completed else "Tarefa reaberta!"
-        flash(message, "info")
+        # Removido flash() aqui, pois o frontend exibirá a Toastify
+        # flash(message, "info") 
         return jsonify(
             success=True,
-            message=message,
+            message=message, # A mensagem será usada pelo Toastify
             todo_item={
                 "id": item.id,
                 "content": item.content,
@@ -912,8 +914,9 @@ def delete_todo_item(item_id):
     try:
         db.session.delete(item)
         db.session.commit()
-        flash("Tarefa excluída do seu diário.", "success")
-        return jsonify(success=True, message="Tarefa excluída!")
+        # Removido flash() aqui, pois o frontend exibirá a Toastify
+        # flash("Tarefa excluída do seu diário.", "success") 
+        return jsonify(success=True, message="Tarefa excluída!") # A mensagem será usada pelo Toastify
     except Exception as e:
         db.session.rollback()
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
