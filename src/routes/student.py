@@ -16,12 +16,18 @@ import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
-# NOVO: Definição das regras de sanitização para diferentes tipos de conteúdo
-# Para conteúdo rico como "Anotações Gerais"
-ALLOWED_TAGS_NOTES = ['p', 'strong', 'b', 'em', 'i', 'u', 's', 'br', 'ul', 'ol', 'li', 'a', 'blockquote']
-# Para o conteúdo que o próprio usuário marca na lei (negrito, itálico, marca-texto)
-ALLOWED_TAGS_MARKUP = ['strong', 'b', 'em', 'i', 's', 'strike', 'span']
-ALLOWED_ATTRIBUTES_MARKUP = {'span': ['class']} # Permite apenas o atributo 'class' na tag 'span'
+# NOVO: Definição de regras de sanitização mais permissivas e corretas para o seu caso de uso.
+# Esta lista agora permite as tags estruturais e os atributos de estilo que você usa.
+ALLOWED_TAGS = [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
+    'ul', 'ol', 'li', 'a', 'blockquote',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'span', 'div'
+]
+ALLOWED_ATTRIBUTES = {
+    '*': ['style', 'class', 'title'], # Permite style, class e title em qualquer tag
+    'a': ['href', 'title', 'target']
+}
 
 
 def _humanize_time_delta(dt):
@@ -547,9 +553,9 @@ def handle_user_notes(law_id):
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
     if request.method == "POST":
-        # ALTERADO: Sanitiza o conteúdo das anotações antes de salvar
+        # ALTERADO: Sanitiza o conteúdo rico das anotações antes de salvar
         untrusted_content = request.json.get("content", "")
-        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS_NOTES, strip=True)
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if notes:
             notes.content = sanitized_content
@@ -567,9 +573,9 @@ def save_law_markup(law_id):
         data = request.get_json()
         if not data or 'content' not in data:
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
-        # ALTERADO: Sanitiza o markup do usuário, permitindo apenas as tags e atributos seguros
+        # ALTERADO: Usa as mesmas regras permissivas para o markup do usuário, preservando o HTML original
         untrusted_content = data.get('content')
-        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS_MARKUP, attributes=ALLOWED_ATTRIBUTES_MARKUP, strip=True)
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if user_markup:
             user_markup.content = sanitized_content
@@ -591,9 +597,13 @@ def handle_comments(law_id):
         return jsonify(success=True, comments=[{"id": c.id, "content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} for c in comments])
     if request.method == "POST":
         data = request.json
-        # ALTERADO: Sanitiza o conteúdo do comentário e o ID da âncora
+        # ALTERADO: Sanitiza o conteúdo do comentário e o ID da âncora, removendo todo o HTML
         content = bleach.clean(data.get("content", ""), tags=[], strip=True)
         anchor_id = bleach.clean(data.get("anchor_paragraph_id", ""), tags=[], strip=True)
+        
+        if not content or not anchor_id:
+            return jsonify(success=False, error="Conteúdo e âncora são obrigatórios."), 400
+
         new_comment = UserComment(
             content=content,
             anchor_paragraph_id=anchor_id,
@@ -609,7 +619,7 @@ def handle_comments(law_id):
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
     if request.method == "PUT":
-        # ALTERADO: Sanitiza o conteúdo ao atualizar o comentário
+        # ALTERADO: Sanitiza o conteúdo ao atualizar o comentário, removendo todo o HTML
         untrusted_content = request.json.get("content", "")
         comment.content = bleach.clean(untrusted_content, tags=[], strip=True)
         db.session.commit()
