@@ -67,7 +67,7 @@
     .non-fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
     .non-fixed-announcement-item:last-child { padding-bottom: 0; }
     .non-fixed-announcement-item .announcement-content { flex-grow: 1; }
-    .mark-seen-checkbox-container { position: relative; min-width: 1.5rem; height: 1.5rem; margin-top: 0.2rem; }
+    .mark-seen-checkbox-container { position: relative; min-width: 1.5rem; height: 1.5rem; margin-top: 0.2rem; display: block; cursor: pointer; }
     .mark-seen-checkbox { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
     .checkmark { position: absolute; top: 0; left: 0; height: 1.5rem; width: 1.5rem; background-color: #FEF9C3; border: 2px solid #F59E0B; border-radius: 4px; transition: all 0.2s ease; }
     .mark-seen-checkbox:hover ~ .checkmark { background-color: #FDE68A; }
@@ -652,11 +652,12 @@
                 <h2><i class="fas fa-bullhorn"></i> Avisos Recentes</h2>
                 {% for announcement in non_fixed_announcements %}
                 <div class="non-fixed-announcement-item" data-announcement-id="{{ announcement.id }}">
-                    <div class="mark-seen-checkbox-container">
+                    <label class="mark-seen-checkbox-container">
                         <input type="checkbox" class="mark-seen-checkbox">
                         <span class="checkmark"></span>
                         <span class="tooltip">Marcar como visto</span>
-                    </div>
+                    </label>
+
                     <div class="announcement-content">
                         <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
                         <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
