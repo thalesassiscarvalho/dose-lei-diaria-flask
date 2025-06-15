@@ -3,18 +3,29 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVOS IMPORTS >>>
-# =====================================================================
 import datetime
+# NOVO: Importar a biblioteca de sanitização
+import bleach
 from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+# NOVO: Definição central de tags e atributos HTML que são permitidos
+# nos campos de texto rico (como o corpo da lei ou dos anúncios).
+ALLOWED_TAGS = [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
+    'ul', 'ol', 'li', 'a', 'blockquote',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'span', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
+]
+ALLOWED_ATTRIBUTES = {
+    '*': ['style', 'class'], # Permite style e class em qualquer tag
+    'a': ['href', 'title', 'target'],
+    'img': ['src', 'alt', 'height', 'width']
+}
+
 
 def admin_required(f):
     @wraps(f)
@@ -25,7 +36,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ... (dashboard e manage_subjects sem alterações) ...
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -69,7 +79,8 @@ def dashboard():
 @admin_required
 def manage_subjects():
     if request.method == "POST":
-        subject_name = request.form.get("name")
+        # ALTERADO: Sanitiza o nome da matéria para remover qualquer tag HTML
+        subject_name = bleach.clean(request.form.get("name"), tags=[], strip=True).strip()
         if subject_name:
             existing_subject = Subject.query.filter_by(name=subject_name).first()
             if not existing_subject:
@@ -109,21 +120,15 @@ def add_law():
     normative_acts = Law.query.filter(Law.parent_id.is_(None)).order_by(Law.title).all()
 
     if request.method == "POST":
-        title = request.form.get("title")
-        description = request.form.get("description")
-        content = request.form.get("content")
+        # ALTERADO: Sanitiza todos os campos de texto recebidos do formulário
+        title = bleach.clean(request.form.get("title", ""), tags=[], strip=True)
+        description = bleach.clean(request.form.get("description", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        content = bleach.clean(request.form.get("content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
-        audio_url = request.form.get("audio_url")
-        juridiques_explanation = request.form.get("juridiques_explanation")
-        
-        # =====================================================================
-        # <<< INÍCIO DA IMPLEMENTAÇÃO: CAPTURA DO CONTEÚDO DO BANNER >>>
-        # =====================================================================
-        banner_content = request.form.get("banner_content", "").strip()
-        # =====================================================================
-        # <<< FIM DA IMPLEMENTAÇÃO >>>
-        # =====================================================================
+        audio_url = bleach.clean(request.form.get("audio_url", ""), tags=[], strip=True)
+        juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES).strip()
 
         if not title:
             flash("O Título é obrigatório.", "danger")
@@ -141,25 +146,20 @@ def add_law():
         new_law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
             
         db.session.add(new_law)
-        db.session.flush() # Garante que new_law.id esteja disponível
+        db.session.flush()
 
-        # =====================================================================
-        # <<< INÍCIO DA IMPLEMENTAÇÃO: SALVANDO O BANNER SE EXISTIR >>>
-        # =====================================================================
         if banner_content:
             new_banner = LawBanner(
                 content=banner_content,
                 law_id=new_law.id
             )
             db.session.add(new_banner)
-        # =====================================================================
-        # <<< FIM DA IMPLEMENTAÇÃO >>>
-        # =====================================================================
 
         index = 0
         while f'link-{index}-title' in request.form:
-            link_title = request.form.get(f'link-{index}-title')
-            link_url = request.form.get(f'link-{index}-url')
+            # ALTERADO: Sanitiza os títulos e URLs dos links
+            link_title = bleach.clean(request.form.get(f'link-{index}-title', ""), tags=[], strip=True)
+            link_url = bleach.clean(request.form.get(f'link-{index}-url', ""), tags=[], strip=True)
             if link_title and link_url:
                 new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
@@ -180,47 +180,34 @@ def add_law():
 @login_required
 @admin_required
 def edit_law(law_id):
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: OTIMIZAR CONSULTA CARREGANDO O BANNER >>>
-    # =====================================================================
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
     subjects = Subject.query.order_by(Subject.name).all()
     normative_acts = Law.query.filter(Law.parent_id.is_(None), Law.id != law_id).order_by(Law.title).all()
 
     if request.method == "POST":
-        law.title = request.form.get("title")
-        law.description = request.form.get("description")
-        law.content = request.form.get("content")
+        # ALTERADO: Sanitiza todos os campos de texto antes de atualizar o objeto
+        law.title = bleach.clean(request.form.get("title"), tags=[], strip=True)
+        law.description = bleach.clean(request.form.get("description"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        law.content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        law.juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES).strip()
+        audio_url = bleach.clean(request.form.get("audio_url", ""), tags=[], strip=True)
+        
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
-        audio_url = request.form.get("audio_url")
-        law.juridiques_explanation = request.form.get("juridiques_explanation")
         
-        # =====================================================================
-        # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE ATUALIZAÇÃO DO BANNER >>>
-        # =====================================================================
-        banner_content = request.form.get("banner_content", "").strip()
         law_banner = law.banner
 
         if banner_content:
-            # Se já existe um banner, atualiza o conteúdo se for diferente
             if law_banner:
                 if law_banner.content != banner_content:
                     law_banner.content = banner_content
-                    law_banner.last_updated = datetime.datetime.utcnow() # Força a atualização do timestamp
-            # Se não existe um banner, cria um novo
+                    law_banner.last_updated = datetime.datetime.utcnow()
             else:
                 new_banner = LawBanner(content=banner_content, law_id=law.id)
                 db.session.add(new_banner)
-        # Se o campo veio vazio e existia um banner, remove-o
         elif law_banner:
             db.session.delete(law_banner)
-        # =====================================================================
-        # <<< FIM DA IMPLEMENTAÇÃO >>>
-        # =====================================================================
 
         if not law.title:
             flash("O Título é obrigatório.", "danger")
@@ -233,8 +220,9 @@ def edit_law(law_id):
         UsefulLink.query.filter_by(law_id=law.id).delete()
         index = 0
         while f'link-{index}-title' in request.form:
-            link_title = request.form.get(f'link-{index}-title')
-            link_url = request.form.get(f'link-{index}-url')
+            # ALTERADO: Sanitiza os títulos e URLs dos links
+            link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
+            link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
                 new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
                 db.session.add(new_link)
@@ -246,7 +234,6 @@ def edit_law(law_id):
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
 
-# ... (resto do arquivo: delete_law, manage_users, etc. sem alterações) ...
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -313,8 +300,9 @@ def reset_user_password(user_id):
 @admin_required
 def manage_announcements():
     if request.method == "POST":
-        title = request.form.get("title")
-        content = request.form.get("content")
+        # ALTERADO: Sanitiza os campos do anúncio
+        title = bleach.clean(request.form.get("title"), tags=[], strip=True)
+        content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
         is_active = request.form.get("is_active") == "on"
         is_fixed = request.form.get("is_fixed") == "on"
         announcement_id = request.form.get("announcement_id")
