@@ -34,6 +34,57 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+
+# =====================================================================
+# <<< INÍCIO DA CONFIGURAÇÃO CENTRALIZADA DO CSP >>>
+# Ter a política aqui facilita futuras alterações.
+# Se precisar adicionar um novo domínio, você só mexe aqui!
+# =====================================================================
+app.config['CSP_POLICY'] = {
+    'default-src': ["'self'"],
+    'script-src': [
+        "'self'",
+        "'unsafe-inline'",
+        'https://cdn.jsdelivr.net',
+        'https://cdn.tailwindcss.com',
+        'https://cdn.quilljs.com',
+        'https://cdn.tiny.cloud'
+    ],
+    'style-src': [
+        "'self'",
+        "'unsafe-inline'",
+        'https://cdn.jsdelivr.net',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.quilljs.com',
+        'https://cdn.tiny.cloud'
+    ],
+    'font-src': [
+        "'self'",
+        'https://cdnjs.cloudflare.com'
+    ],
+    'img-src': [
+        "'self'",
+        'data:',
+        'https://cdn.tiny.cloud'
+    ],
+    'media-src': [
+        "'self'",
+        'audios-estudoleieca.s3.us-west-2.amazonaws.com'
+    ],
+    'connect-src': [
+        "'self'",
+        'https://cdn.tiny.cloud'
+    ],
+    'frame-ancestors': ["'none'"],
+    'object-src': ["'none'"],
+    'form-action': ["'self'"],
+    'base-uri': ["'self'"]
+}
+# =====================================================================
+# <<< FIM DA CONFIGURAÇÃO CENTRALIZADA DO CSP >>>
+# =====================================================================
+
+
 db.init_app(app)
 
 migrate = Migrate(app, db)
@@ -119,75 +170,29 @@ def load_user(user_id):
     return User.query.get(int(user_id))
     
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO FINAL >>>
+# <<< FUNÇÃO CSP QUE AGORA LÊ A CONFIGURAÇÃO >>>
+# Esta função não precisa mais ser alterada.
 # =====================================================================
 
 @app.after_request
 def apply_csp(response):
     """
-    Aplica o cabeçalho Content-Security-Policy a todas as respostas.
+    Aplica o cabeçalho Content-Security-Policy lendo a política
+    definida na configuração do app.
     """
-    csp = {
-        'default-src': [
-            "'self'"
-        ],
-        'script-src': [
-            "'self'",
-            "'unsafe-inline'",
-            'https://cdn.jsdelivr.net',
-            'https://cdn.tailwindcss.com',
-            'https://cdn.quilljs.com',
-            'https://cdn.tiny.cloud'
-        ],
-        'style-src': [
-            "'self'",
-            "'unsafe-inline'",
-            'https://cdn.jsdelivr.net',
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.quilljs.com',
-            'https://cdn.tiny.cloud'      # NOVO: Permitindo estilos do TinyMCE
-        ],
-        'font-src': [
-            "'self'",
-            'https://cdnjs.cloudflare.com'
-        ],
-        'img-src': [
-            "'self'",
-            'data:',
-            'https://cdn.tiny.cloud'      # NOVO: Permitindo imagens/ícones do TinyMCE
-        ],
-        'media-src': [
-            "'self'",
-            'audios-estudoleieca.s3.us-west-2.amazonaws.com'
-        ],
-        'connect-src': [
-            "'self'",
-            'https://cdn.tiny.cloud'
-        ],
-        'frame-ancestors': [
-            "'none'"
-        ],
-        'object-src': [
-            "'none'"
-        ],
-        'form-action': [
-            "'self'"
-        ],
-        'base-uri': [
-            "'self'"
-        ]
-    }
-
+    # Lê a política do app.config
+    policy = app.config.get('CSP_POLICY', {})
+    
+    # Monta o cabeçalho a partir da política lida
     csp_header_value = "; ".join([
-        f"{key} {' '.join(values)}" for key, values in csp.items()
+        f"{key} {' '.join(values)}" for key, values in policy.items()
     ])
 
     response.headers['Content-Security-Policy'] = csp_header_value
-
     return response
 
 # =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) >>>
+# <<< FIM DA FUNÇÃO CSP >>>
 # =====================================================================
 
 
@@ -195,6 +200,7 @@ def apply_csp(response):
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp)
 app.register_blueprint(student_bp)
+
 
 # --- Main Routes ---
 @app.route('/')
