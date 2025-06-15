@@ -423,9 +423,7 @@
         /* Esconde botões de formatação de texto, exceto os de tamanho da fonte */
         #format-bold-btn,
         #format-italic-btn,
-        /* ===== INÍCIO DA ALTERAÇÃO 1/4: REMOVENDO O BOTÃO DE TACHADO DA VISUALIZAÇÃO MOBILE PARA MANTER O PADRÃO ===== */
         #format-strikethrough-btn,
-        /* ===== FIM DA ALTERAÇÃO 1/4 ===== */
         #highlight-buttons-group, /* Oculta o grupo de marca-textos */
         #toggle-font-family-btn {
             display: none;
@@ -934,6 +932,7 @@
             <button id="format-bold-btn" class="font-control-btn" title="Negrito (selecione o texto)"><b>B</b></button>
             <button id="format-italic-btn" class="font-control-btn" title="Itálico (selecione o texto)"><i class="fas fa-italic"></i></button>
             <button id="format-strikethrough-btn" class="font-control-btn" title="Tachado (selecione o texto)"><i class="fas fa-strikethrough"></i></button>
+
             <div id="highlight-buttons-group" class="flex items-center space-x-1 border-l border-gray-300 pl-2 ml-1">
                  <button id="format-highlight-yellow-btn" class="font-control-btn" title="Marca-texto Amarelo"><i class="fas fa-highlighter" style="color: #facc15;"></i></button>
                  <button id="format-highlight-green-btn" class="font-control-btn" title="Marca-texto Verde"><i class="fas fa-highlighter" style="color: #4ade80;"></i></button>
@@ -996,8 +995,7 @@
             <div class="notes-toolbar">
                 <button id="bold-btn" class="format-btn" title="Negrito"><i class="fas fa-bold"></i></button>
                 <button id="italic-btn" class="format-btn" title="Itálico"><i class="fas fa-italic"></i></button>
-                <button id="highlight-btn" class="format-btn" title="Marca-texto"><i class="fas fa-highlighter"></i></button>
-            </div>
+                </div>
             <div id="notes-editor" class="notes-editor" contenteditable="true" spellcheck="false"></div>
             <button id="save-notes-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center">
                 <i class="fas fa-save mr-2"></i> Salvar Anotações Gerais
@@ -1518,23 +1516,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    document.getElementById('highlight-btn').addEventListener('click', () => {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const parent = range.commonAncestorContainer.parentElement;
-            if (parent.classList.contains('highlight')) {
-                const text = document.createTextNode(parent.textContent);
-                parent.parentNode.replaceChild(text, parent);
-            } else {
-                const span = document.createElement('span');
-                span.className = 'highlight';
-                span.appendChild(range.extractContents());
-                range.insertNode(span);
-            }
-        }
-        notesEditor.focus();
-    });
+    
+    // ===== INÍCIO DA ALTERAÇÃO 2/2: REMOÇÃO DA FUNCIONALIDADE DO BOTÃO DE MARCA-TEXTO DO JAVASCRIPT =====
+    // O bloco de código para o 'highlight-btn' que estava aqui foi removido.
+    // ===== FIM DA ALTERAÇÃO 2/2 =====
 
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
@@ -1578,14 +1563,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const formatBoldBtn = document.getElementById('format-bold-btn');
     const formatItalicBtn = document.getElementById('format-italic-btn');
-    // ===== INÍCIO DA ALTERAÇÃO 4/4: DECLARAÇÃO DE VARIÁVEIS E FUNÇÕES ATUALIZADAS =====
-    const formatStrikethroughBtn = document.getElementById('format-strikethrough-btn'); // Novo botão
+    const formatStrikethroughBtn = document.getElementById('format-strikethrough-btn');
     const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
     const restoreLawBtn = document.getElementById('restore-law-btn');
-    // A constante 'clearFormattingBtn' foi removida.
     let saveMarkupTimeout;
 
     function applyMarkup(command) {
@@ -1611,7 +1594,6 @@ document.addEventListener("DOMContentLoaded", function () {
         
         lawContent.setAttribute('contenteditable', 'true');
         
-        // Condição atualizada para incluir negrito, itálico e o novo tachado
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } else if (command === 'strikethrough') {
@@ -1676,14 +1658,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
     if(formatItalicBtn) formatItalicBtn.addEventListener('click', () => applyMarkup('italic'));
-    // Adicionando o evento para o novo botão de tachado
     if(formatStrikethroughBtn) formatStrikethroughBtn.addEventListener('click', () => applyMarkup('strikethrough'));
     if(formatHighlightYellowBtn) formatHighlightYellowBtn.addEventListener('click', () => applyMarkup('highlight-yellow'));
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
-
-    // O bloco de código do 'clearFormattingBtn' foi completamente removido.
 
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
@@ -1713,14 +1692,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // ===== FIM DA ALTERAÇÃO 4/4 =====
 
-    // ADIÇÃO 2/2: Função de Favoritar com Notificação
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
-            const lawTitle = '{{ law.title | e }}'; // Pega o título da lei de forma segura
+            const lawTitle = '{{ law.title | e }}'; 
 
             fetch(`/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`, {
                 method: 'POST',
