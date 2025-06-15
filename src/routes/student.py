@@ -5,8 +5,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import datetime
-# NOVO: Importar a biblioteca de sanitização
+# NOVO: Importar a biblioteca de sanitização e o novo CSSSanitizer
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
@@ -34,9 +35,12 @@ ALLOWED_STYLES = [
     'border', 'border-left'
 ]
 
+# NOVO: Cria uma instância do CSSSanitizer com os estilos permitidos
+# Este objeto será passado para a função bleach.clean()
+css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_STYLES)
+
 
 def _humanize_time_delta(dt):
-    """Converte um objeto datetime em uma string de tempo relativo (ex: '2 horas atrás')."""
     if not dt:
         return ""
     now = datetime.datetime.utcnow()
@@ -557,9 +561,9 @@ def handle_user_notes(law_id):
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
     if request.method == "POST":
-        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
         untrusted_content = request.json.get("content") or ""
-        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES, strip=True)
+        # ALTERADO: Usa o novo objeto css_sanitizer para permitir os estilos
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer, strip=True)
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if notes:
             notes.content = sanitized_content
@@ -578,11 +582,10 @@ def save_law_markup(law_id):
         if not data or 'content' not in data:
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
         
-        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
         untrusted_content = data.get('content') or ""
         
-        # Sanitiza o markup do usuário, preservando a estrutura e os estilos originais
-        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES, strip=True)
+        # ALTERADO: Usa o novo objeto css_sanitizer para permitir os estilos
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer, strip=True)
         
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if user_markup:
@@ -626,7 +629,6 @@ def handle_comments(law_id):
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
     if request.method == "PUT":
-        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
         untrusted_content = request.json.get("content") or ""
         comment.content = bleach.clean(untrusted_content, tags=[], strip=True)
         db.session.commit()
