@@ -4,43 +4,55 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory, redirect, url_for, render_template, flash
+from flask import Flask, send_from_directory, redirect, url_for, render_template, flash # Import flash
 from flask_login import LoginManager, current_user
-from sqlalchemy import text, inspect
-from sqlalchemy.exc import OperationalError
-import logging
-from flask_wtf.csrf import CSRFProtect
+from sqlalchemy import text, inspect # Import text for raw SQL and inspect for introspection
+from sqlalchemy.exc import OperationalError # Import exception for handling errors
+import logging # Import logging
+from flask_wtf.csrf import CSRFProtect # Importação do CSRFProtect
 
+# --- NOVO: Importar Flask-Migrate ---
 from flask_migrate import Migrate
+# --- FIM NOVO ---
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from src.models.user import db, User, Achievement
+# Import models and db instance
+from src.models.user import db, User, Achievement # Import Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 
+# Import blueprints
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
 
+# Configure basic logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') # Use environment variable for secret key
 
+# --- Database Configuration ---
+# Use environment variables for database credentials for security
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 db.init_app(app)
 
+# --- NOVO: Inicializar Flask-Migrate ---
 migrate = Migrate(app, db)
+# --- FIM NOVO ---
 
+# --- NOVO: Inicializar CSRFProtect ---
 csrf = CSRFProtect()
 csrf.init_app(app)
+# --- FIM NOVO ---
 
+# --- Function to Ensure Achievements Exist ---
 def ensure_achievements_exist():
     """Checks for predefined achievements and creates them if they don't exist."""
     logging.debug("Ensuring base achievements exist...")
@@ -69,6 +81,8 @@ def ensure_achievements_exist():
             db.session.add(achievement)
             achievements_added += 1
             logging.debug(f"Adding achievement: {data['name']}")
+        # else: # Optional: Log if it already exists
+            # logging.debug(f"Achievement '{data['name']}' already exists.")
     
     if achievements_added > 0:
         try:
@@ -80,12 +94,20 @@ def ensure_achievements_exist():
     else:
         logging.debug("All base achievements already exist.")
 
+# --- Database Initialization and Migration (Manual/Basic) --- 
+# Note: This section performs basic checks and ALTER TABLE commands.
+# It's generally recommended to use Flask-Migrate for more robust migrations,
+# but this code attempts manual adjustments.
+# The Flask-Migrate commands (flask db migrate/upgrade) should be run separately
+# after initializing Migrate above.
 with app.app_context():
     logging.info("Initializing database (manual checks)...")
     try:
+        # Ensure tables exist (create_all is generally safe)
         db.create_all()
         logging.info("Database tables ensured (created if they didn't exist).")
 
+        # --- Admin User Creation/Check --- 
         admin_email = "thalesz@example.com"
         logging.debug(f"Checking for admin user with email: {admin_email}")
         admin_user = User.query.filter_by(email=admin_email).first()
@@ -103,13 +125,16 @@ with app.app_context():
                 logging.error(f"ERROR committing new admin user: {commit_error}")
         else:
             logging.debug(f"Admin user found. ID: {admin_user.id}")
+            # ... (rest of admin check logic)
 
+        # --- Ensure Base Achievements Exist ---
         ensure_achievements_exist()
 
     except Exception as e:
         logging.error(f"An error occurred during database initialization: {e}")
-        db.session.rollback()
+        db.session.rollback() # Rollback any partial changes on error
 
+# --- Flask-Login Configuration ---
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.init_app(app)
@@ -117,84 +142,6 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-    
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) >>>
-# =====================================================================
-
-@app.after_request
-def apply_csp(response):
-    """
-    Aplica o cabeçalho Content-Security-Policy a todas as respostas.
-    Esta função é executada pelo Flask logo antes de enviar uma resposta
-    ao navegador do usuário.
-    """
-    csp = {
-        # 'self' significa que o conteúdo só pode ser carregado do seu próprio domínio.
-        'default-src': [
-            "'self'"
-        ],
-        # Define de onde scripts JavaScript podem ser carregados.
-        'script-src': [
-            "'self'",
-            'https://cdn.jsdelivr.net' # Para Toastify e SweetAlert2
-            # Se você usa FontAwesome de um CDN como 'kit.fontawesome.com', adicione-o aqui.
-        ],
-        # Define de onde folhas de estilo (CSS) podem ser carregadas.
-        # 'unsafe-inline' é necessário por causa do bloco <style> no seu dashboard.html.
-        'style-src': [
-            "'self'",
-            "'unsafe-inline'",
-            'https://cdn.jsdelivr.net'  # Para o CSS do Toastify
-        ],
-        # Define de onde as fontes podem ser carregadas.
-        'font-src': [
-            "'self'"
-            # Se usar FontAwesome, adicione o domínio dele aqui. Ex: 'https://kit.fontawesome.com'
-        ],
-        # Define de onde imagens podem ser carregadas.
-        # 'data:' é necessário para o ícone de seta do seu menu <select> no dashboard.
-        'img-src': [
-            "'self'",
-            'data:'
-        ],
-        # Define de onde arquivos de áudio e vídeo podem ser carregados.
-        'media-src': [
-            "'self'",
-            'audios-estudoleieca.s3.us-west-2.amazonaws.com'
-        ],
-        # Impede que o site seja embutido em um <iframe> em outros sites (proteção contra clickjacking).
-        'frame-ancestors': [
-            "'none'"
-        ],
-        # Restringe o uso de plugins como Flash (prática recomendada).
-        'object-src': [
-            "'none'"
-        ],
-        # Define para onde formulários podem ser enviados.
-        'form-action': [
-            "'self'"
-        ],
-        # Protege contra ataques de "base tag hijacking".
-        'base-uri': [
-            "'self'"
-        ]
-    }
-
-    # Juntamos todas as regras em uma única string, que será o valor do cabeçalho.
-    csp_header_value = "; ".join([
-        f"{key} {' '.join(values)}" for key, values in csp.items()
-    ])
-
-    # Adicionamos o cabeçalho à resposta que será enviada ao navegador.
-    response.headers['Content-Security-Policy'] = csp_header_value
-
-    return response
-
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) >>>
-# =====================================================================
-
 
 # --- Register Blueprints ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -214,11 +161,19 @@ def index():
             return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
 
+# Serve static files (If needed, usually handled by web server in production)
+# @app.route('/<path:path>')
+# def serve_static_or_index(path):
+#     # ... (static file serving logic)
+
+# Add context processor for footer year
 import datetime
 @app.context_processor
 def inject_now():
     return {'now': datetime.datetime.utcnow}
 
+# --- Database Connection Check --- 
+# (Removed the manual migration logic from here as Flask-Migrate handles it)
 with app.app_context():
     try:
         db.session.execute(text("SELECT 1"))
@@ -227,4 +182,5 @@ with app.app_context():
         logging.error(f"❌ Falha na conexão com o banco de dados: {e}")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Note: Use a proper WSGI server like Gunicorn in production
+    app.run(debug=True) # debug=True is NOT for production
