@@ -698,6 +698,24 @@
     }
     /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA SWEETALERT2 EM MODO NOTURNO >>> */
+    /* ===================================================================== */
+    .dark-mode .swal2-popup {
+        background-color: #1f2937 !important;
+        color: #d1d5db !important;
+    }
+    .dark-mode .swal2-title {
+        color: #93c5fd !important;
+    }
+    .dark-mode .swal2-html-container,
+    .dark-mode .swal2-content {
+        color: #d1d5db !important;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
+    /* ===================================================================== */
+
     /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
     .font-control-group {
         border-left: 1px solid #d1d5db;
@@ -1664,34 +1682,67 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: SUBSTITUIÇÃO DE CONFIRM() POR SWEETALERT2 >>>
+    // =====================================================================
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
-            if (!confirm('Você tem certeza que deseja restaurar a lei? TODAS as suas marcações e anotações neste item serão perdidas permanentemente. Esta ação não pode ser desfeita.')) {
-                return;
-            }
+            Swal.fire({
+                title: 'Você tem certeza?',
+                html: "<strong>TODAS</strong> as suas marcações e anotações nesta lei serão <strong>perdidas permanentemente</strong>. Esta ação não pode ser desfeita.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sim, restaurar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    
+                    restoreLawBtn.disabled = true;
 
-            fetch(`/student/law/${lawId}/restore`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    fetch(`/student/law/${lawId}/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Restaurada!',
+                                text: 'A lei foi restaurada com sucesso. A página será recarregada.',
+                                icon: 'success'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro ao restaurar a lei: ' + (data.error || 'Erro desconhecido.'),
+                                icon: 'error'
+                            });
+                            restoreLawBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro de rede ao restaurar a lei:', error);
+                        Swal.fire({
+                            title: 'Erro de Comunicação',
+                            text: 'Não foi possível se conectar ao servidor para restaurar a lei.',
+                            icon: 'error'
+                        });
+                        restoreLawBtn.disabled = false;
+                    });
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Lei restaurada com sucesso! A página será recarregada.');
-                    window.location.reload();
-                } else {
-                    alert('Ocorreu um erro ao restaurar a lei: ' + (data.error || 'Erro desconhecido.'));
-                }
-            })
-            .catch(error => {
-                console.error('Erro de rede ao restaurar a lei:', error);
-                alert('Ocorreu um erro de comunicação ao tentar restaurar a lei.');
             });
         });
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
