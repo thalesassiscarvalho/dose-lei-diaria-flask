@@ -119,15 +119,13 @@ def load_user(user_id):
     return User.query.get(int(user_id))
     
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO CORRIGIDA >>>
+# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO CORRIGIDA 2 >>>
 # =====================================================================
 
 @app.after_request
 def apply_csp(response):
     """
     Aplica o cabeçalho Content-Security-Policy a todas as respostas.
-    Esta função é executada pelo Flask logo antes de enviar uma resposta
-    ao navegador do usuário.
     """
     csp = {
         'default-src': [
@@ -135,21 +133,22 @@ def apply_csp(response):
         ],
         'script-src': [
             "'self'",
-            "'unsafe-inline'",  # Necessário por causa dos erros "Refused to execute inline script"
+            "'unsafe-inline'",
             'https://cdn.jsdelivr.net',
-            'https://cdn.tailwindcss.com', # NOVO: Adicionado com base nos erros
-            'https://cdn.quilljs.com'      # NOVO: Adicionado com base nos erros
+            'https://cdn.tailwindcss.com',
+            'https://cdn.quilljs.com',
+            'https://cdn.tiny.cloud'      # NOVO: Adicionado para o editor TinyMCE
         ],
         'style-src': [
             "'self'",
             "'unsafe-inline'",
             'https://cdn.jsdelivr.net',
-            'https://cdnjs.cloudflare.com', # NOVO: Adicionado com base nos erros
-            'https://cdn.quilljs.com'       # NOVO: Adicionado com base nos erros
+            'https://cdnjs.cloudflare.com',
+            'https://cdn.quilljs.com'
         ],
         'font-src': [
             "'self'",
-            'https://cdnjs.cloudflare.com'  # NOVO: Adicionado para o Font Awesome
+            'https://cdnjs.cloudflare.com'
         ],
         'img-src': [
             "'self'",
@@ -158,6 +157,11 @@ def apply_csp(response):
         'media-src': [
             "'self'",
             'audios-estudoleieca.s3.us-west-2.amazonaws.com'
+        ],
+        # Adicione 'connect-src' para permitir que o TinyMCE carregue plugins/skins
+        'connect-src': [
+            "'self'",
+            'https://cdn.tiny.cloud'
         ],
         'frame-ancestors': [
             "'none'"
