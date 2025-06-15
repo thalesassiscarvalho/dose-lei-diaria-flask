@@ -397,10 +397,11 @@ def dashboard():
                            user_streak=user_streak,
                            favorites_by_subject=favorites_by_subject,
                            level_info=level_info,
+                           todo_items=todo_items,
                            # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR ITENS DO DIÁRIO PARA O TEMPLATE >>>
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR TÍTULO PARA O TEMPLATE >>>
                            # ==================================================
-                           todo_items=todo_items
+                           custom_favorite_title=current_user.favorite_label
                            # ==================================================
                            # <<< FIM DA IMPLEMENTAÇÃO >>>
                            # ==================================================
@@ -814,6 +815,35 @@ def restore_law_to_original(law_id):
         db.session.rollback()
         logging.error(f"Erro ao restaurar a lei {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao restaurar a lei.'}), 500
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA API PARA SALVAR TÍTULO DOS FAVORITOS >>>
+# =====================================================================
+@student_bp.route("/api/save_favorite_title", methods=["POST"])
+@login_required
+def save_favorite_title():
+    data = request.get_json()
+    new_title = data.get('title', '').strip()
+
+    if not new_title:
+        return jsonify(success=False, error="O título não pode estar vazio."), 400
+    
+    # Limita o tamanho do título para segurança
+    if len(new_title) > 100:
+        return jsonify(success=False, error="O título é muito longo."), 400
+        
+    try:
+        current_user.favorite_label = new_title
+        db.session.commit()
+        return jsonify(success=True, message="Título salvo com sucesso!")
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar título dos favoritos para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao salvar o título."), 500
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
 
 # =====================================================================
 # <<< INÍCIO DA IMPLEMENTAÇÃO: ROTAS DE API PARA MEU DIÁRIO (TodoItem) >>>
