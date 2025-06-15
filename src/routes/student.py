@@ -16,7 +16,7 @@ import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
-# NOVO: Definição das regras de sanitização, agora incluindo os ESTILOS CSS permitidos.
+# Definição das regras de sanitização
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -27,7 +27,6 @@ ALLOWED_ATTRIBUTES = {
     '*': ['style', 'class', 'title'],
     'a': ['href', 'title', 'target']
 }
-# NOVO: A lista de propriedades CSS que o bleach vai permitir dentro de um atributo "style".
 ALLOWED_STYLES = [
     'color', 'background-color', 'font-weight', 'font-style', 'text-decoration',
     'text-align', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
@@ -558,8 +557,8 @@ def handle_user_notes(law_id):
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
     if request.method == "POST":
-        untrusted_content = request.json.get("content", "")
-        # ALTERADO: Usa as regras mais permissivas para as anotações ricas
+        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
+        untrusted_content = request.json.get("content") or ""
         sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES, strip=True)
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if notes:
@@ -578,9 +577,13 @@ def save_law_markup(law_id):
         data = request.get_json()
         if not data or 'content' not in data:
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
-        untrusted_content = data.get('content')
-        # ALTERADO: A sanitização aqui agora permite a estrutura e os estilos originais
+        
+        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
+        untrusted_content = data.get('content') or ""
+        
+        # Sanitiza o markup do usuário, preservando a estrutura e os estilos originais
         sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES, strip=True)
+        
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if user_markup:
             user_markup.content = sanitized_content
@@ -623,7 +626,8 @@ def handle_comments(law_id):
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
     if request.method == "PUT":
-        untrusted_content = request.json.get("content", "")
+        # ALTERADO: Garante que o conteúdo não seja nulo antes de passar para o bleach
+        untrusted_content = request.json.get("content") or ""
         comment.content = bleach.clean(untrusted_content, tags=[], strip=True)
         db.session.commit()
         return jsonify(success=True, message="Anotação atualizada!", comment={"id": comment.id, "content": comment.content})
