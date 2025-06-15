@@ -616,6 +616,29 @@
         .fixed-announcement-box h2, .announcement-box h2 { font-size: 1.1rem; }
         .accordion-header .diploma-progress { display: none; }
     }
+    
+    /* INÍCIO: Estilo para o botão de editar título dos favoritos */
+    #edit-favorites-title-btn {
+        background: none;
+        border: none;
+        color: #9ca3af; /* Cinza claro */
+        cursor: pointer;
+        margin-left: 0.75rem;
+        font-size: 0.9rem;
+        padding: 0.25rem;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        line-height: 28px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    #edit-favorites-title-btn:hover {
+        color: #4b5563; /* Cinza mais escuro */
+        background-color: #f3f4f6; /* Fundo cinza claro no hover */
+    }
+    /* FIM: Estilo para o botão de editar título dos favoritos */
+
     /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
@@ -657,7 +680,6 @@
                         <span class="checkmark"></span>
                         <span class="tooltip">Marcar como visto</span>
                     </label>
-
                     <div class="announcement-content">
                         <h3 class="text-md font-semibold">{{ announcement.title }}</h3>
                         <div class="text-sm rich-content">{{ announcement.content|safe }}</div>
@@ -864,10 +886,14 @@
     
         {% if favorites_by_subject %}
             <div class="text-center mb-10">
-                 <h2 class="text-2xl font-semibold text-gray-800 flex items-center justify-center">
-                    <i class="fas fa-star text-yellow-400 mr-3"></i>Acesso Rápido aos Seus Favoritos
+                <h2 class="text-2xl font-semibold text-gray-800 flex items-center justify-center">
+                    <i class="fas fa-star text-yellow-400 mr-3"></i>
+                    <span id="favorites-title-text">{{ custom_favorite_title or 'Acesso Rápido aos Seus Favoritos' }}</span>
+                    <button id="edit-favorites-title-btn" title="Renomear esta seção">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
                 </h2>
-            </div>
+                </div>
 
             <div id="favorite-cards-container">
                 {% for subject, cards in favorites_by_subject.items()|sort(attribute='0.name') %}
@@ -985,6 +1011,79 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
     // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
     // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
+    // =====================================================================
+    const favoritesTitleText = document.getElementById('favorites-title-text');
+    const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
+
+    // Removemos a lógica de carregar do localStorage, pois o valor já vem renderizado pelo servidor.
+
+    if (editFavoritesTitleBtn) {
+        editFavoritesTitleBtn.addEventListener('click', function() {
+            const currentTitle = favoritesTitleText.textContent;
+            const newTitle = prompt("Digite o novo nome para esta seção:", currentTitle);
+
+            if (newTitle !== null && newTitle.trim() !== '') {
+                const finalTitle = newTitle.trim();
+                
+                // Atualiza o título na página imediatamente para uma resposta rápida
+                favoritesTitleText.textContent = finalTitle;
+
+                // Agora, envia o novo título para o servidor para ser salvo no banco de dados
+                fetch('/student/api/save_favorite_title', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken // Token CSRF para segurança
+                    },
+                    body: JSON.stringify({ title: finalTitle })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Toastify({
+                            text: data.message || "Título atualizado com sucesso!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "bottom",
+                            position: "right",
+                            style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
+                        }).showToast();
+                    } else {
+                        // Se falhar, reverte para o título antigo e mostra um erro
+                        favoritesTitleText.textContent = currentTitle;
+                        Toastify({
+                            text: data.error || "Falha ao salvar o título.",
+                            duration: 3000,
+                            close: true,
+                            gravity: "bottom",
+                            position: "right",
+                            style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                        }).showToast();
+                    }
+                })
+                .catch(error => {
+                    // Em caso de erro de rede, também reverte e avisa
+                    favoritesTitleText.textContent = currentTitle;
+                    console.error('Erro de rede:', error);
+                    Toastify({
+                        text: "Erro de comunicação. Tente novamente.",
+                        duration: 3000,
+                        close: true,
+                        gravity: "bottom",
+                        position: "right",
+                        style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                    }).showToast();
+                });
+            }
+        });
+    }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO >>>
+    // =====================================================================
+
 
     // =====================================================================
     // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR CARDS >>>
