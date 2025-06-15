@@ -3,18 +3,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVOS IMPORTS >>>
-# =====================================================================
-# Adicionado 'date' e 'timedelta' para a lógica do Streak
 from datetime import date, timedelta
-# Import 'datetime' para o cálculo do tempo humanizado
 import datetime
-# Importar TodoItem da sua user.py (ou models.py onde ela estiver definida)
+# NOVO: Importar a biblioteca de sanitização
+import bleach
 from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
@@ -23,14 +16,18 @@ import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO PARA HUMANIZAR TEMPO (ADICIONADA) >>>
-# =====================================================================
+# NOVO: Definição das regras de sanitização para diferentes tipos de conteúdo
+# Para conteúdo rico como "Anotações Gerais"
+ALLOWED_TAGS_NOTES = ['p', 'strong', 'b', 'em', 'i', 'u', 's', 'br', 'ul', 'ol', 'li', 'a', 'blockquote']
+# Para o conteúdo que o próprio usuário marca na lei (negrito, itálico, marca-texto)
+ALLOWED_TAGS_MARKUP = ['strong', 'b', 'em', 'i', 's', 'strike', 'span']
+ALLOWED_ATTRIBUTES_MARKUP = {'span': ['class']} # Permite apenas o atributo 'class' na tag 'span'
+
+
 def _humanize_time_delta(dt):
     """Converte um objeto datetime em uma string de tempo relativo (ex: '2 horas atrás')."""
     if not dt:
         return ""
-    # A base de dados salva em UTC (naive), então usamos utcnow() naive para comparar.
     now = datetime.datetime.utcnow()
     delta = now - dt
     
@@ -52,15 +49,7 @@ def _humanize_time_delta(dt):
             return "1 minuto atrás"
         return f"{int(minutes)} minutos atrás"
     return "agora mesmo"
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE NÍVEIS E PONTOS (ADICIONADA) >>>
-# =====================================================================
-# Mapeamento de 'laws_completed_threshold' para 'min_points' (1 lei = 10 pontos)
 LEVELS = [
     {"name": "Novato", "min_points": 0, "icon": "fas fa-seedling"},
     {"name": "Primeiro Passo", "min_points": 10, "icon": "fas fa-shoe-prints"},
@@ -75,22 +64,19 @@ LEVELS = [
 ]
 
 def get_user_level_info(points):
-    """Calcula o nível atual do usuário e o progresso para o próximo."""
     user_level = LEVELS[0]
     next_level = None
 
-    # Encontra o nível atual e o próximo
     for i, level in enumerate(LEVELS):
         if points >= level["min_points"]:
             user_level = level
             if i + 1 < len(LEVELS):
                 next_level = LEVELS[i + 1]
             else:
-                next_level = None # Último nível alcançado
+                next_level = None
         else:
             break
     
-    # Se o usuário está no último nível
     if not next_level:
         return {
             "current_level": user_level,
@@ -99,7 +85,6 @@ def get_user_level_info(points):
             "points_to_next": 0
         }
 
-    # Calcula o progresso
     level_start_points = user_level["min_points"]
     points_for_next_level = next_level["min_points"]
     
@@ -114,19 +99,10 @@ def get_user_level_info(points):
         "progress_percent": progress_percent,
         "points_to_next": points_for_next_level - points
     }
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-# =====================================================================
-# <<< ENDPOINTS DE API PARA FILTROS E BUSCA >>>
-# =====================================================================
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
 def get_laws_for_subject(subject_id):
-    """
-    Endpoint de API para retornar os diplomas (leis principais) de uma matéria.
-    """
     laws = Law.query.filter(
         Law.subject_id == subject_id,
         Law.parent_id.is_(None)
@@ -136,16 +112,10 @@ def get_laws_for_subject(subject_id):
 @student_bp.route("/api/topics_for_law/<int:law_id>")
 @login_required
 def get_topics_for_law(law_id):
-    """
-    Endpoint de API para retornar os tópicos (trechos/filhos) de uma lei (diploma).
-    """
     parent_law = Law.query.filter_by(id=law_id, parent_id=None).first_or_404("Diploma não encontrado.")
     topics = Law.query.filter_by(parent_id=law_id).order_by(Law.id).all()
     return jsonify([{"id": topic.id, "title": topic.title} for topic in topics])
 
-# =====================================================================
-# <<< NOVO ENDPOINT DE API PARA BUSCA COM AUTOCOMPLETE >>>
-# =====================================================================
 @student_bp.route("/api/autocomplete_search")
 @login_required
 def autocomplete_search():
@@ -155,9 +125,8 @@ def autocomplete_search():
 
     search_term = f"%{query}%"
     results = []
-    limit = 5 # Limite de resultados por categoria
+    limit = 5
 
-    # Buscar em Tópicos/Artigos
     topics = Law.query.filter(
         Law.parent_id.isnot(None),
         Law.title.ilike(search_term)
@@ -169,20 +138,17 @@ def autocomplete_search():
             "url": url_for('student.view_law', law_id=topic.id)
         })
 
-    # Buscar em Leis/Diplomas
     laws = Law.query.filter(
         Law.parent_id.is_(None),
         Law.title.ilike(search_term)
     ).limit(limit).all()
     for law in laws:
-        # Para uma lei, levamos ao dashboard com o filtro aplicado
         results.append({
             "title": law.title,
             "category": "Lei",
             "url": url_for('student.dashboard', diploma_id=law.id, subject_id=law.subject_id)
         })
 
-    # Buscar em Matérias
     subjects = Subject.query.filter(Subject.name.ilike(search_term)).limit(limit).all()
     for subject in subjects:
         results.append({
@@ -191,7 +157,6 @@ def autocomplete_search():
             "url": url_for('student.dashboard', subject_id=subject.id)
         })
 
-    # Remove duplicados com base no título e categoria, mantendo a ordem
     unique_results = []
     seen = set()
     for r in results:
@@ -200,39 +165,23 @@ def autocomplete_search():
             unique_results.append(r)
             seen.add(identifier)
 
-    return jsonify(results=unique_results[:7]) # Retorna no máximo 7 resultados únicos
-# =====================================================================
+    return jsonify(results=unique_results[:7])
 
-
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO DE CONQUISTAS CORRIGIDA >>>
-# =====================================================================
 def check_and_award_achievements(user):
-    """Verifica e concede conquistas ao usuário com base APENAS nos pontos."""
     unlocked_achievements_objects = []
     all_achievements = Achievement.query.order_by(Achievement.points_threshold).all()
     user_achievement_ids = {a.id for a in user.achievements}
 
     for achievement in all_achievements:
         if achievement.id not in user_achievement_ids:
-            # A única condição agora é se o usuário tem pontos suficientes
-            # e se o 'points_threshold' não é nulo.
             if achievement.points_threshold is not None and user.points >= achievement.points_threshold:
                 user.achievements.append(achievement)
                 unlocked_achievements_objects.append(achievement)
 
     return unlocked_achievements_objects
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO STREAK DE ESTUDOS >>>
-# =====================================================================
 def _record_study_activity(user: User):
-    """Registra que o usuário estudou hoje. Cria um registro em StudyActivity se ainda não houver um para o dia."""
     today = date.today()
-    # Verifica se já existe um registro para o usuário no dia de hoje
     activity_exists = user.study_activities.filter(StudyActivity.study_date == today).first()
 
     if not activity_exists:
@@ -245,7 +194,6 @@ def _record_study_activity(user: User):
             logging.error(f"Erro ao registrar atividade de estudo para o usuário {user.id}: {e}")
 
 def _calculate_user_streak(user: User) -> int:
-    """Calcula a sequência de dias de estudo consecutivos do usuário."""
     activities = user.study_activities.order_by(StudyActivity.study_date.desc()).all()
     
     if not activities:
@@ -256,61 +204,44 @@ def _calculate_user_streak(user: User) -> int:
     
     latest_activity_date = activities[0].study_date
     
-    # Se a última atividade não foi hoje nem ontem, a sequência foi quebrada.
     if latest_activity_date not in [today, yesterday]:
         return 0
 
     streak_count = 1
     current_date = latest_activity_date
 
-    # Itera sobre as atividades restantes para contar os dias consecutivos
     for activity in activities[1:]:
         expected_previous_day = current_date - timedelta(days=1)
         if activity.study_date == expected_previous_day:
             streak_count += 1
             current_date = activity.study_date
         else:
-            # A sequência foi interrompida
             break
             
     return streak_count
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
-    """
-    Renderiza a página principal do dashboard.
-    """
     subjects_for_filter = Subject.query.order_by(Subject.name).all()
     total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
     completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
     global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
 
-    # =====================================================================
-    # <<< INÍCIO DA ALTERAÇÃO: BUSCAR ATIVIDADES RECENTES >>>
-    # =====================================================================
     recent_progresses = UserProgress.query.join(UserProgress.law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
     ).options(
-        # CORREÇÃO: Especifica o caminho completo para o joinedload, resolvendo o erro.
         joinedload(UserProgress.law).joinedload(Law.parent)
     ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
 
-    # Processa a lista para incluir o tempo formatado
     recent_activities = []
     for progress in recent_progresses:
         recent_activities.append({
             "law": progress.law,
             "time_ago": _humanize_time_delta(progress.last_accessed_at)
         })
-    # =====================================================================
-    # <<< FIM DA ALTERAÇÃO >>>
-    # =====================================================================
 
     fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
     seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
@@ -320,7 +251,6 @@ def dashboard():
     
     user_streak = _calculate_user_streak(current_user)
 
-    # --- INÍCIO: 3ª MELHORIA - LÓGICA PARA AGRUPAR FAVORITOS POR MATÉRIA ---
     favorites_by_subject = {}
     
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
@@ -364,25 +294,9 @@ def dashboard():
             "topics": topic_details_list,
             "progress": progress_percentage
         })
-    # --- FIM DA LÓGICA ---
 
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: CHAMADA DA FUNÇÃO DE NÍVEL (ADICIONADA) >>>
-    # =====================================================================
     level_info = get_user_level_info(current_user.points)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
-
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: BUSCAR ITENS DO DIÁRIO >>>
-    # =====================================================================
-    # Busca itens do diário, ordenados por concluídos (final da lista) e depois por data de criação
-    # Não vamos filtrar por is_completed=False aqui, para que o template possa exibir e marcar/desmarcar
     todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO: BUSCAR ITENS DO DIÁRIO >>>
-    # =====================================================================
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -398,51 +312,32 @@ def dashboard():
                            favorites_by_subject=favorites_by_subject,
                            level_info=level_info,
                            todo_items=todo_items,
-                           # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR TÍTULO PARA O TEMPLATE >>>
-                           # ==================================================
                            custom_favorite_title=current_user.favorite_label
-                           # ==================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # ==================================================
                            )
-
 
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
-    """
-    Endpoint da API que retorna a lista de legislações filtradas em JSON.
-    """
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
     selected_status = request.args.get("status_filter", "")
     selected_topic_id_str = request.args.get("topic_id", "")
-
     show_favorites_str = request.args.get("show_favorites", "false")
     show_favorites = show_favorites_str.lower() == 'true'
-
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.law_id: p.status for p in user_progress_records}
     completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
     in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
-
-    diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(
-        joinedload(Law.children)
-    )
-
+    diplomas_query = Law.query.outerjoin(Subject).filter(Law.parent_id.is_(None)).options(joinedload(Law.children))
     selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
     if selected_subject_id:
         diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
-
     selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
     if selected_diploma_id:
         diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
-
     all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
-
     processed_diplomas = []
     for diploma in all_diplomas:
         children_to_display = []
@@ -451,27 +346,22 @@ def filter_laws():
             is_in_progress = topic.id in in_progress_topic_ids
             is_not_read = not is_completed and not is_in_progress
             is_favorite = topic.id in favorite_topic_ids
-
             passes_status = (not selected_status or
                              (selected_status == 'completed' and is_completed) or
                              (selected_status == 'in_progress' and is_in_progress) or
                              (selected_status == 'not_read' and is_not_read))
-            
             passes_topic = (not selected_topic_id or topic.id == selected_topic_id)
             passes_favorite = not show_favorites or is_favorite
-
             if passes_status and passes_topic and passes_favorite:
                 children_to_display.append({
                     "id": topic.id, "title": topic.title,
                     "is_completed": is_completed, "is_in_progress": is_in_progress,
                     "is_favorite": is_favorite
                 })
-
         if children_to_display:
             total_children = len(diploma.children)
             completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
             progress_percentage = (completed_children_count / total_children * 100) if total_children > 0 else 0
-
             diploma_data = {
                 "title": diploma.title,
                 "progress_percentage": progress_percentage,
@@ -479,44 +369,25 @@ def filter_laws():
                 "filtered_children": children_to_display
             }
             processed_diplomas.append(diploma_data)
-
     subjects_with_diplomas = {}
     for diploma_data in processed_diplomas:
         subject_name = diploma_data["subject_name"]
         if subject_name not in subjects_with_diplomas:
             subjects_with_diplomas[subject_name] = []
         subjects_with_diplomas[subject_name].append(diploma_data)
-
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
-
 
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: OTIMIZAR CONSULTA E VERIFICAR BANNER >>>
-    # =====================================================================
-    # Otimiza a consulta para carregar a lei e seu banner (se existir) de uma vez
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
-        
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: REGISTRO DA ATIVIDADE DE ESTUDO >>>
-    # =====================================================================
     _record_study_activity(current_user)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
-
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     is_favorited = law in current_user.favorite_laws
-
     now = datetime.datetime.utcnow()
     if progress:
         progress.last_accessed_at = now
@@ -524,42 +395,23 @@ def view_law(law_id):
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
     db.session.commit()
-
     content_to_display = user_markup.content if user_markup else law.content
     if content_to_display is None: content_to_display = ""
-
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DE EXIBIÇÃO DO BANNER >>>
-    # =====================================================================
     banner_to_show = None
     if law.banner:
-        # Verifica se já existe um registro do usuário vendo ESTA VERSÃO do banner
         seen_banner_record = UserSeenLawBanner.query.filter_by(
             user_id=current_user.id,
             law_id=law_id,
             seen_at_timestamp=law.banner.last_updated
         ).first()
-
-        # Se não houver registro, o banner deve ser mostrado
         if not seen_banner_record:
             banner_to_show = law.banner
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
-
     return render_template("student/view_law.html",
                            law=law, is_completed=(progress.status == 'concluido'),
                            last_read_article=progress.last_read_article, current_status=progress.status,
                            is_favorited=is_favorited, display_content=content_to_display,
-                           # ==================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: PASSAR BANNER PARA O TEMPLATE >>>
-                           # ==================================================
                            banner_to_show=banner_to_show
-                           # ==================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # ==================================================
                            )
-
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
 @login_required
@@ -578,18 +430,13 @@ def toggle_favorite(law_id):
         db.session.rollback()
         return jsonify(success=False, error=str(e)), 500
 
-# --- INÍCIO DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (2/2) ---
-# A rota foi modificada para retornar JSON em vez de redirecionar.
-# Isso permite que o frontend (JavaScript) receba os dados e dispare a animação.
 @student_bp.route("/law/mark_complete/<int:law_id>", methods=["POST"])
 @login_required
 def mark_complete(law_id):
     law = Law.query.get_or_404(law_id)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     should_award_points = not progress or not progress.completed_at
-
     unlocked_achievements = []
-
     if not progress or progress.status != 'concluido':
         if not progress:
             progress = UserProgress(user_id=current_user.id, law_id=law_id)
@@ -597,43 +444,32 @@ def mark_complete(law_id):
         progress.status = 'concluido'
         if not progress.completed_at:
             progress.completed_at = datetime.datetime.utcnow()
-        
         if should_award_points:
             points_to_award = 10
             current_user.points += points_to_award
             flash(f"Lei \"{law.title}\" marcada como concluída! Você ganhou {points_to_award} pontos.", "success")
         else:
             flash(f"Lei \"{law.title}\" marcada como concluída novamente!", "info")
-        
-        # A função 'check_and_award_achievements' agora retorna os objetos completos.
         unlocked_achievements_obj = check_and_award_achievements(current_user)
-        
-        # Prepara os dados das conquistas para serem enviados como JSON.
         if unlocked_achievements_obj:
             flash(f"Conquistas desbloqueadas: {', '.join([ach.name for ach in unlocked_achievements_obj])}!", "success")
             unlocked_achievements = [
                 {"name": ach.name, "description": ach.description, "icon": ach.icon}
                 for ach in unlocked_achievements_obj
             ]
-
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            # Mantemos o flash de erro para o caso de o JS falhar e a página recarregar
             flash(f"Erro ao salvar progresso: {e}", "danger")
             logging.error(f"Erro ao salvar progresso para law_id {law_id}: {e}")
             return jsonify(success=False, error=str(e)), 500
     else:
         flash(f"Você já marcou \"{law.title}\" como concluída.", "info")
-
-    # Retorna uma resposta JSON com os dados das conquistas desbloqueadas.
     return jsonify(
         success=True,
         unlocked_achievements=unlocked_achievements
     )
-# --- FIM DA ALTERAÇÃO: ANIMAÇÃO DE CONQUISTA (2/2) ---
-
 
 @student_bp.route("/law/review/<int:law_id>", methods=["POST"])
 @login_required
@@ -652,7 +488,8 @@ def review_law(law_id):
 @student_bp.route("/save_last_read/<int:law_id>", methods=["POST"])
 @login_required
 def save_last_read(law_id):
-    last_read_article = request.form.get("last_read_article", "").strip()
+    # ALTERADO: Sanitiza o input do usuário para remover HTML
+    last_read_article = bleach.clean(request.form.get("last_read_article", "").strip(), tags=[], strip=True)
     if not last_read_article:
         return jsonify(success=False, error="Campo obrigatório"), 400
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
@@ -676,28 +513,18 @@ def mark_announcement_seen(announcement_id):
         db.session.commit()
     return jsonify(success=True)
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA ROTA PARA MARCAR BANNER COMO VISTO >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>/mark_banner_seen", methods=["POST"])
 @login_required
 def mark_banner_seen(law_id):
-    """
-    Endpoint de API para o aluno marcar o banner de uma lei como visto.
-    """
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
-    
     if not law.banner:
         return jsonify(success=False, error="Banner não encontrado."), 404
-
     banner_timestamp = law.banner.last_updated
-
     existing_seen = UserSeenLawBanner.query.filter_by(
         user_id=current_user.id,
         law_id=law.id,
         seen_at_timestamp=banner_timestamp
     ).first()
-
     if not existing_seen:
         seen_record = UserSeenLawBanner(
             user_id=current_user.id,
@@ -711,11 +538,7 @@ def mark_banner_seen(law_id):
             db.session.rollback()
             logging.error(f"Erro ao salvar 'seen banner' para user {current_user.id} e law {law_id}: {e}")
             return jsonify(success=False, error="Erro ao salvar no banco de dados."), 500
-
     return jsonify(success=True)
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 @student_bp.route("/law/<int:law_id>/notes", methods=["GET", "POST"])
 @login_required
@@ -724,12 +547,14 @@ def handle_user_notes(law_id):
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         return jsonify(success=True, content=notes.content if notes else "")
     if request.method == "POST":
-        content = request.json.get("content", "")
+        # ALTERADO: Sanitiza o conteúdo das anotações antes de salvar
+        untrusted_content = request.json.get("content", "")
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS_NOTES, strip=True)
         notes = UserNotes.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if notes:
-            notes.content = content
+            notes.content = sanitized_content
         else:
-            notes = UserNotes(user_id=current_user.id, law_id=law_id, content=content)
+            notes = UserNotes(user_id=current_user.id, law_id=law_id, content=sanitized_content)
             db.session.add(notes)
         db.session.commit()
         return jsonify(success=True, message="Anotações salvas!")
@@ -742,12 +567,14 @@ def save_law_markup(law_id):
         data = request.get_json()
         if not data or 'content' not in data:
             return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
-        content = data.get('content')
+        # ALTERADO: Sanitiza o markup do usuário, permitindo apenas as tags e atributos seguros
+        untrusted_content = data.get('content')
+        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS_MARKUP, attributes=ALLOWED_ATTRIBUTES_MARKUP, strip=True)
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
         if user_markup:
-            user_markup.content = content
+            user_markup.content = sanitized_content
         else:
-            new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=content)
+            new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=sanitized_content)
             db.session.add(new_markup)
         db.session.commit()
         return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
@@ -764,9 +591,12 @@ def handle_comments(law_id):
         return jsonify(success=True, comments=[{"id": c.id, "content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} for c in comments])
     if request.method == "POST":
         data = request.json
+        # ALTERADO: Sanitiza o conteúdo do comentário e o ID da âncora
+        content = bleach.clean(data.get("content", ""), tags=[], strip=True)
+        anchor_id = bleach.clean(data.get("anchor_paragraph_id", ""), tags=[], strip=True)
         new_comment = UserComment(
-            content=data["content"],
-            anchor_paragraph_id=data["anchor_paragraph_id"],
+            content=content,
+            anchor_paragraph_id=anchor_id,
             user_id=current_user.id,
             law_id=law_id
         )
@@ -779,7 +609,9 @@ def handle_comments(law_id):
 def handle_single_comment(comment_id):
     comment = UserComment.query.filter_by(id=comment_id, user_id=current_user.id).first_or_404()
     if request.method == "PUT":
-        comment.content = request.json.get("content", "")
+        # ALTERADO: Sanitiza o conteúdo ao atualizar o comentário
+        untrusted_content = request.json.get("content", "")
+        comment.content = bleach.clean(untrusted_content, tags=[], strip=True)
         db.session.commit()
         return jsonify(success=True, message="Anotação atualizada!", comment={"id": comment.id, "content": comment.content})
     if request.method == "DELETE":
@@ -787,51 +619,30 @@ def handle_single_comment(comment_id):
         db.session.commit()
         return jsonify(success=True, message="Anotação excluída!")
 
-# =====================================================================
-# <<< NOVA ROTA PARA RESTAURAR A LEI >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>/restore", methods=['POST'])
 @login_required
 def restore_law_to_original(law_id):
-    """
-    Restaura a lei para seu estado original para o usuário,
-    removendo marcações e comentários.
-    """
     Law.query.get_or_404(law_id)
-    
     try:
-        # Deleta as marcações (highlights, bold, etc.) do usuário para esta lei
         UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
-
-        # Deleta os comentários de parágrafo do usuário para esta lei
         UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).delete()
-        
-        # Confirma as alterações no banco de dados
         db.session.commit()
-        
         return jsonify({'success': True, 'message': 'Lei restaurada com sucesso.'})
-
     except Exception as e:
         db.session.rollback()
         logging.error(f"Erro ao restaurar a lei {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao restaurar a lei.'}), 500
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA API PARA SALVAR TÍTULO DOS FAVORITOS >>>
-# =====================================================================
 @student_bp.route("/api/save_favorite_title", methods=["POST"])
 @login_required
 def save_favorite_title():
     data = request.get_json()
-    new_title = data.get('title', '').strip()
-
+    # ALTERADO: Sanitiza o título para remover HTML
+    new_title = bleach.clean(data.get('title', ''), tags=[], strip=True).strip()
     if not new_title:
         return jsonify(success=False, error="O título não pode estar vazio."), 400
-    
-    # Limita o tamanho do título para segurança
     if len(new_title) > 100:
         return jsonify(success=False, error="O título é muito longo."), 400
-        
     try:
         current_user.favorite_label = new_title
         db.session.commit()
@@ -840,21 +651,11 @@ def save_favorite_title():
         db.session.rollback()
         logging.error(f"Erro ao salvar título dos favoritos para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao salvar o título."), 500
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: ROTAS DE API PARA MEU DIÁRIO (TodoItem) >>>
-# =====================================================================
 @student_bp.route("/api/todo_items", methods=["GET"])
 @login_required
 def get_todo_items():
-    """Retorna a lista de itens do diário do usuário."""
-    # Retornar itens não concluídos primeiro, depois os concluídos (ordenados por created_at decrescente)
     todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
-    
     items_data = []
     for item in todo_items:
         items_data.append({
@@ -869,23 +670,18 @@ def get_todo_items():
 @student_bp.route("/api/todo_items", methods=["POST"])
 @login_required
 def add_todo_item():
-    """Adiciona um novo item ao diário do usuário."""
     data = request.get_json()
-    content = data.get("content", "").strip()
-
+    # ALTERADO: Sanitiza o conteúdo da tarefa para remover HTML
+    content = bleach.clean(data.get("content", ""), tags=[], strip=True).strip()
     if not content:
         return jsonify(success=False, error="O conteúdo da tarefa não pode estar vazio."), 400
-
     new_item = TodoItem(user_id=current_user.id, content=content, is_completed=False)
-    
     try:
         db.session.add(new_item)
         db.session.commit()
-        # Removido flash() aqui, pois o frontend exibirá a Toastify
-        # flash("Tarefa adicionada ao seu diário!", "success") 
         return jsonify(
             success=True,
-            message="Tarefa adicionada!", # A mensagem será usada pelo Toastify
+            message="Tarefa adicionada!",
             todo_item={
                 "id": new_item.id,
                 "content": new_item.content,
@@ -902,23 +698,17 @@ def add_todo_item():
 @student_bp.route("/api/todo_items/<int:item_id>/toggle", methods=["POST"])
 @login_required
 def toggle_todo_item(item_id):
-    """Alterna o status (concluído/não concluído) de um item do diário."""
     item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
-
     if not item:
         return jsonify(success=False, error="Tarefa não encontrada."), 404
-
     item.is_completed = not item.is_completed
     item.completed_at = datetime.datetime.utcnow() if item.is_completed else None
-    
     try:
         db.session.commit()
         message = "Tarefa marcada como concluída!" if item.is_completed else "Tarefa reaberta!"
-        # Removido flash() aqui, pois o frontend exibirá a Toastify
-        # flash(message, "info") 
         return jsonify(
             success=True,
-            message=message, # A mensagem será usada pelo Toastify
+            message=message,
             todo_item={
                 "id": item.id,
                 "content": item.content,
@@ -935,22 +725,14 @@ def toggle_todo_item(item_id):
 @student_bp.route("/api/todo_items/<int:item_id>", methods=["DELETE"])
 @login_required
 def delete_todo_item(item_id):
-    """Exclui um item do diário do usuário."""
     item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
-
     if not item:
         return jsonify(success=False, error="Tarefa não encontrada."), 404
-    
     try:
         db.session.delete(item)
         db.session.commit()
-        # Removido flash() aqui, pois o frontend exibirá a Toastify
-        # flash("Tarefa excluída do seu diário.", "success") 
-        return jsonify(success=True, message="Tarefa excluída!") # A mensagem será usada pelo Toastify
+        return jsonify(success=True, message="Tarefa excluída!")
     except Exception as e:
         db.session.rollback()
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO: ROTAS DE API PARA MEU DIÁRIO (TodoItem) >>>
-# =====================================================================
