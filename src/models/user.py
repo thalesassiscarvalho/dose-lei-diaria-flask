@@ -42,6 +42,14 @@ class User(UserMixin, db.Model):
     is_approved = db.Column(db.Boolean, nullable=False, default=False)
     points = db.Column(db.Integer, default=0, nullable=False) # Added points field
 
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: NOME PERSONALIZADO PARA FAVORITOS >>>
+    # =====================================================================
+    favorite_label = db.Column(db.String(100), nullable=True)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
+
     # Relationships
     progress = db.relationship("UserProgress", backref="user", lazy=True)
     achievements = db.relationship("Achievement", secondary=achievements_association, lazy="subquery",
@@ -202,7 +210,7 @@ class UserSeenLawBanner(db.Model):
 # =====================================================================
 class TodoItem(db.Model):
     """
-    Representa um item de tarefa no diário pessoal do usuário.
+    Represents um item de tarefa no diário pessoal do usuário.
     """
     __tablename__ = 'todo_item'
 
