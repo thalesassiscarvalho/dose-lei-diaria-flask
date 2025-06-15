@@ -4,16 +4,16 @@ from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
 import datetime
-# NOVO: Importar a biblioteca de sanitização
+# NOVO: Importar a biblioteca de sanitização e o CSSSanitizer
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# NOVO: Definição central de tags e atributos HTML que são permitidos
-# nos campos de texto rico (como o corpo da lei ou dos anúncios).
+# Definição das regras de sanitização
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -21,10 +21,19 @@ ALLOWED_TAGS = [
     'span', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
 ]
 ALLOWED_ATTRIBUTES = {
-    '*': ['style', 'class'], # Permite style e class em qualquer tag
+    '*': ['style', 'class'],
     'a': ['href', 'title', 'target'],
     'img': ['src', 'alt', 'height', 'width']
 }
+ALLOWED_STYLES = [
+    'color', 'background-color', 'font-weight', 'font-style', 'text-decoration',
+    'text-align', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+    'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+    'border', 'border-left'
+]
+
+# NOVO: Cria a instância do CSSSanitizer
+css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_STYLES)
 
 
 def admin_required(f):
@@ -79,7 +88,6 @@ def dashboard():
 @admin_required
 def manage_subjects():
     if request.method == "POST":
-        # ALTERADO: Sanitiza o nome da matéria para remover qualquer tag HTML
         subject_name = bleach.clean(request.form.get("name"), tags=[], strip=True).strip()
         if subject_name:
             existing_subject = Subject.query.filter_by(name=subject_name).first()
@@ -120,15 +128,16 @@ def add_law():
     normative_acts = Law.query.filter(Law.parent_id.is_(None)).order_by(Law.title).all()
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza todos os campos de texto recebidos do formulário
         title = bleach.clean(request.form.get("title", ""), tags=[], strip=True)
-        description = bleach.clean(request.form.get("description", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
-        content = bleach.clean(request.form.get("content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        # ALTERADO: Usa o novo css_sanitizer
+        description = bleach.clean(request.form.get("description", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        content = bleach.clean(request.form.get("content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer).strip()
+        
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         audio_url = bleach.clean(request.form.get("audio_url", ""), tags=[], strip=True)
-        juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
-        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES).strip()
 
         if not title:
             flash("O Título é obrigatório.", "danger")
@@ -157,7 +166,6 @@ def add_law():
 
         index = 0
         while f'link-{index}-title' in request.form:
-            # ALTERADO: Sanitiza os títulos e URLs dos links
             link_title = bleach.clean(request.form.get(f'link-{index}-title', ""), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url', ""), tags=[], strip=True)
             if link_title and link_url:
@@ -185,14 +193,14 @@ def edit_law(law_id):
     normative_acts = Law.query.filter(Law.parent_id.is_(None), Law.id != law_id).order_by(Law.title).all()
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza todos os campos de texto antes de atualizar o objeto
         law.title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        law.description = bleach.clean(request.form.get("description"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
-        law.content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
-        law.juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
-        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES).strip()
-        audio_url = bleach.clean(request.form.get("audio_url", ""), tags=[], strip=True)
+        # ALTERADO: Usa o novo css_sanitizer
+        law.description = bleach.clean(request.form.get("description"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        law.content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        law.juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
+        banner_content = bleach.clean(request.form.get("banner_content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer).strip()
         
+        audio_url = bleach.clean(request.form.get("audio_url", ""), tags=[], strip=True)
         subject_id = request.form.get("subject_id")
         parent_id = request.form.get("parent_id")
         
@@ -220,7 +228,6 @@ def edit_law(law_id):
         UsefulLink.query.filter_by(law_id=law.id).delete()
         index = 0
         while f'link-{index}-title' in request.form:
-            # ALTERADO: Sanitiza os títulos e URLs dos links
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
@@ -300,9 +307,9 @@ def reset_user_password(user_id):
 @admin_required
 def manage_announcements():
     if request.method == "POST":
-        # ALTERADO: Sanitiza os campos do anúncio
         title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        # ALTERADO: Usa o novo css_sanitizer
+        content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         is_active = request.form.get("is_active") == "on"
         is_fixed = request.form.get("is_fixed") == "on"
         announcement_id = request.form.get("announcement_id")
