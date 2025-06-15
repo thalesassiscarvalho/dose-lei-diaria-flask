@@ -610,6 +610,11 @@
         display: none;
     }
 
+    /* Nova classe para ocultar cards ANTES do JavaScript rodar */
+    .initially-hidden-cards {
+        display: none !important; /* !important para garantir que sobrescreva outros estilos */
+    }
+
     @media (max-width: 768px) {
         .fixed-announcement-box, .announcement-box { padding: 1rem; }
         .non-fixed-announcement-item { gap: 0.75rem; }
@@ -624,16 +629,15 @@
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex items-center justify-between"> {# Adiciona um contêiner flex para o título e o botão #}
+    <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
-        {# Botão de Ocultar Cards - Adicionado aqui #}
         <button id="toggle-cards-btn" class="action-button">
             <i class="fas fa-eye-slash mr-2"></i> Ocultar Cards
         </button>
     </div>
 
     {% if fixed_announcements or non_fixed_announcements %}
-    <div class="announcement-section" id="announcement-cards-section"> {# Adicionado ID para a seção de avisos #}
+    <div class="announcement-section initially-hidden-cards" id="announcement-cards-section"> {# Adicionado initially-hidden-cards #}
         {% if fixed_announcements %}
         <div class="announcement-container">
             <div class="fixed-announcement-box">
@@ -672,7 +676,7 @@
     {# ===================================================================== #}
     {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 initially-hidden-cards" id="main-cards-grid"> {# Adicionado initially-hidden-cards #}
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
             <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
@@ -767,7 +771,7 @@
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
     
-    <div class="stat-card achievements-card" id="achievements-card"> {# Adicionado ID #}
+    <div class="stat-card achievements-card initially-hidden-cards" id="achievements-card"> {# Adicionado initially-hidden-cards #}
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
         {% if user_achievements %}
             <div class="achievements-list">
@@ -998,6 +1002,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('level-card'), // Meu Nível
         document.getElementById('achievements-card') // Medalhas e Feitos
     ];
+
+    // Remove a classe "initially-hidden-cards" assim que o JavaScript carrega,
+    // permitindo que a lógica de visibilidade baseada no localStorage assuma o controle.
+    cardsToToggle.forEach(card => {
+        if (card) {
+            card.classList.remove('initially-hidden-cards');
+        }
+    });
 
     function applyCardsVisibility(hidden) {
         cardsToToggle.forEach(card => {
