@@ -36,9 +36,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 
 # =====================================================================
-# <<< INÍCIO DA CONFIGURAÇÃO CENTRALIZADA DO CSP >>>
-# Ter a política aqui facilita futuras alterações.
-# Se precisar adicionar um novo domínio, você só mexe aqui!
+# <<< CONFIGURAÇÃO CENTRALIZADA DO CSP - VERSÃO FINAL CORRIGIDA >>>
+# Adicionamos permissões para Font Awesome e Google Fonts
 # =====================================================================
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
@@ -48,7 +47,8 @@ app.config['CSP_POLICY'] = {
         'https://cdn.jsdelivr.net',
         'https://cdn.tailwindcss.com',
         'https://cdn.quilljs.com',
-        'https://cdn.tiny.cloud'
+        'https://cdn.tiny.cloud',
+        'https://kit.fontawesome.com'  # NOVO: Para carregar o script do Font Awesome
     ],
     'style-src': [
         "'self'",
@@ -56,11 +56,15 @@ app.config['CSP_POLICY'] = {
         'https://cdn.jsdelivr.net',
         'https://cdnjs.cloudflare.com',
         'https://cdn.quilljs.com',
-        'https://cdn.tiny.cloud'
+        'https://cdn.tiny.cloud',
+        'https://fonts.googleapis.com', # NOVO: Para carregar os estilos das fontes do Google
+        'https://ka-f.fontawesome.com'  # NOVO: Para carregar os estilos do Font Awesome
     ],
     'font-src': [
         "'self'",
-        'https://cdnjs.cloudflare.com'
+        'https://cdnjs.cloudflare.com',
+        'https://fonts.gstatic.com',    # NOVO: Para carregar os arquivos de fonte do Google
+        'https://ka-f.fontawesome.com'  # NOVO: Para carregar os arquivos de fonte do Font Awesome
     ],
     'img-src': [
         "'self'",
@@ -73,7 +77,8 @@ app.config['CSP_POLICY'] = {
     ],
     'connect-src': [
         "'self'",
-        'https://cdn.tiny.cloud'
+        'https://cdn.tiny.cloud',
+        'https://ka-f.fontawesome.com'  # NOVO: Para o Font Awesome se conectar
     ],
     'frame-ancestors': ["'none'"],
     'object-src': ["'none'"],
@@ -169,31 +174,20 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
     
-# =====================================================================
-# <<< FUNÇÃO CSP QUE AGORA LÊ A CONFIGURAÇÃO >>>
-# Esta função não precisa mais ser alterada.
-# =====================================================================
-
 @app.after_request
 def apply_csp(response):
     """
     Aplica o cabeçalho Content-Security-Policy lendo a política
     definida na configuração do app.
     """
-    # Lê a política do app.config
     policy = app.config.get('CSP_POLICY', {})
     
-    # Monta o cabeçalho a partir da política lida
     csp_header_value = "; ".join([
         f"{key} {' '.join(values)}" for key, values in policy.items()
     ])
 
     response.headers['Content-Security-Policy'] = csp_header_value
     return response
-
-# =====================================================================
-# <<< FIM DA FUNÇÃO CSP >>>
-# =====================================================================
 
 
 # --- Register Blueprints ---
