@@ -119,7 +119,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
     
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO CORRIGIDA 2 >>>
+# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO FINAL >>>
 # =====================================================================
 
 @app.after_request
@@ -137,14 +137,15 @@ def apply_csp(response):
             'https://cdn.jsdelivr.net',
             'https://cdn.tailwindcss.com',
             'https://cdn.quilljs.com',
-            'https://cdn.tiny.cloud'      # NOVO: Adicionado para o editor TinyMCE
+            'https://cdn.tiny.cloud'
         ],
         'style-src': [
             "'self'",
             "'unsafe-inline'",
             'https://cdn.jsdelivr.net',
             'https://cdnjs.cloudflare.com',
-            'https://cdn.quilljs.com'
+            'https://cdn.quilljs.com',
+            'https://cdn.tiny.cloud'      # NOVO: Permitindo estilos do TinyMCE
         ],
         'font-src': [
             "'self'",
@@ -152,13 +153,13 @@ def apply_csp(response):
         ],
         'img-src': [
             "'self'",
-            'data:'
+            'data:',
+            'https://cdn.tiny.cloud'      # NOVO: Permitindo imagens/ícones do TinyMCE
         ],
         'media-src': [
             "'self'",
             'audios-estudoleieca.s3.us-west-2.amazonaws.com'
         ],
-        # Adicione 'connect-src' para permitir que o TinyMCE carregue plugins/skins
         'connect-src': [
             "'self'",
             'https://cdn.tiny.cloud'
