@@ -119,7 +119,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
     
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) >>>
+# <<< INÍCIO DA IMPLEMENTAÇÃO DO CONTENT SECURITY POLICY (CSP) - VERSÃO CORRIGIDA >>>
 # =====================================================================
 
 @app.after_request
@@ -130,63 +130,53 @@ def apply_csp(response):
     ao navegador do usuário.
     """
     csp = {
-        # 'self' significa que o conteúdo só pode ser carregado do seu próprio domínio.
         'default-src': [
             "'self'"
         ],
-        # Define de onde scripts JavaScript podem ser carregados.
         'script-src': [
             "'self'",
-            'https://cdn.jsdelivr.net' # Para Toastify e SweetAlert2
-            # Se você usa FontAwesome de um CDN como 'kit.fontawesome.com', adicione-o aqui.
+            "'unsafe-inline'",  # Necessário por causa dos erros "Refused to execute inline script"
+            'https://cdn.jsdelivr.net',
+            'https://cdn.tailwindcss.com', # NOVO: Adicionado com base nos erros
+            'https://cdn.quilljs.com'      # NOVO: Adicionado com base nos erros
         ],
-        # Define de onde folhas de estilo (CSS) podem ser carregadas.
-        # 'unsafe-inline' é necessário por causa do bloco <style> no seu dashboard.html.
         'style-src': [
             "'self'",
             "'unsafe-inline'",
-            'https://cdn.jsdelivr.net'  # Para o CSS do Toastify
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com', # NOVO: Adicionado com base nos erros
+            'https://cdn.quilljs.com'       # NOVO: Adicionado com base nos erros
         ],
-        # Define de onde as fontes podem ser carregadas.
         'font-src': [
-            "'self'"
-            # Se usar FontAwesome, adicione o domínio dele aqui. Ex: 'https://kit.fontawesome.com'
+            "'self'",
+            'https://cdnjs.cloudflare.com'  # NOVO: Adicionado para o Font Awesome
         ],
-        # Define de onde imagens podem ser carregadas.
-        # 'data:' é necessário para o ícone de seta do seu menu <select> no dashboard.
         'img-src': [
             "'self'",
             'data:'
         ],
-        # Define de onde arquivos de áudio e vídeo podem ser carregados.
         'media-src': [
             "'self'",
             'audios-estudoleieca.s3.us-west-2.amazonaws.com'
         ],
-        # Impede que o site seja embutido em um <iframe> em outros sites (proteção contra clickjacking).
         'frame-ancestors': [
             "'none'"
         ],
-        # Restringe o uso de plugins como Flash (prática recomendada).
         'object-src': [
             "'none'"
         ],
-        # Define para onde formulários podem ser enviados.
         'form-action': [
             "'self'"
         ],
-        # Protege contra ataques de "base tag hijacking".
         'base-uri': [
             "'self'"
         ]
     }
 
-    # Juntamos todas as regras em uma única string, que será o valor do cabeçalho.
     csp_header_value = "; ".join([
         f"{key} {' '.join(values)}" for key, values in csp.items()
     ])
 
-    # Adicionamos o cabeçalho à resposta que será enviada ao navegador.
     response.headers['Content-Security-Policy'] = csp_header_value
 
     return response
