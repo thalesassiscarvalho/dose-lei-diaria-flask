@@ -893,7 +893,7 @@
                         <i class="fas fa-pencil-alt"></i>
                     </button>
                 </h2>
-                </div>
+            </div>
 
             <div id="favorite-cards-container">
                 {% for subject, cards in favorites_by_subject.items()|sort(attribute='0.name') %}
@@ -1013,12 +1013,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================================================
 
     // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
     // =====================================================================
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
-
-    // Removemos a lógica de carregar do localStorage, pois o valor já vem renderizado pelo servidor.
 
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
@@ -1028,15 +1026,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (newTitle !== null && newTitle.trim() !== '') {
                 const finalTitle = newTitle.trim();
                 
-                // Atualiza o título na página imediatamente para uma resposta rápida
                 favoritesTitleText.textContent = finalTitle;
 
-                // Agora, envia o novo título para o servidor para ser salvo no banco de dados
                 fetch('/student/api/save_favorite_title', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken // Token CSRF para segurança
+                        'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({ title: finalTitle })
                 })
@@ -1045,35 +1041,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         Toastify({
                             text: data.message || "Título atualizado com sucesso!",
-                            duration: 3000,
-                            close: true,
-                            gravity: "bottom",
-                            position: "right",
+                            duration: 3000, close: true, gravity: "bottom", position: "right",
                             style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
                         }).showToast();
                     } else {
-                        // Se falhar, reverte para o título antigo e mostra um erro
                         favoritesTitleText.textContent = currentTitle;
                         Toastify({
                             text: data.error || "Falha ao salvar o título.",
-                            duration: 3000,
-                            close: true,
-                            gravity: "bottom",
-                            position: "right",
+                            duration: 3000, close: true, gravity: "bottom", position: "right",
                             style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
                         }).showToast();
                     }
                 })
                 .catch(error => {
-                    // Em caso de erro de rede, também reverte e avisa
                     favoritesTitleText.textContent = currentTitle;
                     console.error('Erro de rede:', error);
                     Toastify({
                         text: "Erro de comunicação. Tente novamente.",
-                        duration: 3000,
-                        close: true,
-                        gravity: "bottom",
-                        position: "right",
+                        duration: 3000, close: true, gravity: "bottom", position: "right",
                         style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
                     }).showToast();
                 });
@@ -1081,27 +1066,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     // =====================================================================
-    // <<< FIM DA ALTERAÇÃO >>>
+    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
     // =====================================================================
 
 
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR CARDS >>>
+    // <<< INÍCIO DA CORREÇÃO: LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
     // =====================================================================
     const toggleCardsBtn = document.getElementById('toggle-cards-btn');
     const cardsToToggle = [
-        document.getElementById('announcement-cards-section'), // Seção de avisos (fixos e não fixos)
-        document.querySelector('.todo-list-card'), // Post-It
-        document.getElementById('recent-activities-card'), // Atividades Recentes
-        document.getElementById('daily-motivation-card'), // Motivação Diária
-        document.getElementById('streak-card'), // Sequência de Estudos
-        document.getElementById('level-card'), // Meu Nível
-        document.getElementById('achievements-card') // Medalhas e Feitos
+        document.getElementById('announcement-cards-section'),
+        document.querySelector('.todo-list-card'),
+        document.getElementById('recent-activities-card'),
+        document.getElementById('daily-motivation-card'),
+        document.getElementById('streak-card'),
+        document.getElementById('level-card'),
+        document.getElementById('achievements-card')
     ];
 
     function applyCardsVisibility(hidden) {
         cardsToToggle.forEach(card => {
-            if (card) { // Verifica se o card existe antes de manipular
+            if (card) { // Esta verificação é importante caso um card não seja renderizado
                 if (hidden) {
                     card.classList.add('hidden-card-section');
                 } else {
@@ -1109,31 +1094,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        // Atualiza o texto e o ícone do botão
+        
         if (hidden) {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye mr-2"></i> Mostrar Cards';
         } else {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i> Ocultar Cards';
         }
-        // Salva a preferência no localStorage
+        // A fonte da verdade (localStorage) é sempre atualizada
         localStorage.setItem('hideCards', hidden);
     }
 
-    // Ao carregar a página, verifica a preferência salva
-    const savedHideCardsPreference = localStorage.getItem('hideCards');
-    if (savedHideCardsPreference === 'true') {
-        applyCardsVisibility(true);
-    } else {
-        applyCardsVisibility(false);
-    }
+    // Ao carregar a página, lê o estado do localStorage
+    const savedHideCardsPreference = localStorage.getItem('hideCards') === 'true';
+    applyCardsVisibility(savedHideCardsPreference);
 
     // Adiciona o evento de clique ao botão
     toggleCardsBtn.addEventListener('click', function() {
-        const isCurrentlyHidden = cardsToToggle[0] ? cardsToToggle[0].classList.contains('hidden-card-section') : false;
+        // Para decidir a próxima ação, lemos o estado ATUAL do localStorage
+        const isCurrentlyHidden = localStorage.getItem('hideCards') === 'true';
+        // A ação é sempre inverter o estado atual.
         applyCardsVisibility(!isCurrentlyHidden);
     });
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS E LÓGICA DO BOTÃO OCULTAR CARDS >>>
+    // <<< FIM DA CORREÇÃO >>>
     // =====================================================================
 
 
