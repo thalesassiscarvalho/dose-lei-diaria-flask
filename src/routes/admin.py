@@ -1,4 +1,4 @@
-# admin.py ATUALIZADO E COMPLETO
+# admin.py ATUALIZADO PARA A ETAPA 1
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash
@@ -14,7 +14,6 @@ from src.models.progress import UserProgress
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# As regras de sanitização continuam as mesmas
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -44,27 +43,37 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- MUDANÇA #1: A rota do dashboard agora é super simples ---
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
 def dashboard():
-    """
-    Esta é a nova página do painel. Por enquanto, ela apenas renderiza
-    o template do novo dashboard, que estará inicialmente vazio.
-    """
-    # No futuro, aqui entrará a busca por dados de métricas (KPIs e gráficos)
-    return render_template("admin/dashboard.html")
+    # --- ETAPA 1: LÓGICA PARA OS CARTÕES DE MÉTRICAS ---
+    # Adicionamos de volta a busca pelos dados dos KPIs.
+    stats = {
+        'total_users': User.query.filter_by(role="student").count(),
+        'active_users_week': UserProgress.query.filter(UserProgress.last_accessed_at >= (datetime.datetime.utcnow() - datetime.timedelta(days=7))).distinct(UserProgress.user_id).count(),
+        'total_laws': Law.query.filter(Law.parent_id.isnot(None)).count(),
+    }
+    pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
+    active_announcements_count = Announcement.query.filter_by(is_active=True).count()
 
-# --- MUDANÇA #2: Criamos a nova rota para gerenciar o conteúdo ---
+    # Por enquanto, os dados dos gráficos continuam vazios para não gerar erros.
+    charts_data = {
+        'new_users': {'labels': [], 'values': []},
+        'top_content': {'labels': [], 'values': []}
+    }
+
+    return render_template("admin/dashboard.html",
+                           stats=stats,
+                           pending_users_count=pending_users_count,
+                           charts_data=charts_data, # A variável ainda é passada, mas com dados vazios
+                           active_announcements_count=active_announcements_count
+                           )
+
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
 def content_management():
-    """
-    Esta rota agora contém a lógica que estava ANTES no dashboard.
-    Ela é responsável por buscar e filtrar os itens de estudo.
-    """
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
     
@@ -89,14 +98,13 @@ def content_management():
             subjects_with_diplomas[subject_name] = []
         subjects_with_diplomas[subject_name].append(diploma)
 
-    # Note que agora estamos renderizando o template 'content_management.html'
     return render_template("admin/content_management.html", 
                            subjects_with_diplomas=subjects_with_diplomas,
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
 
-# O resto do arquivo continua exatamente como estava no seu original
+# O resto do arquivo continua exatamente igual...
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -187,7 +195,6 @@ def add_law():
             index += 1
         
         db.session.commit()
-        # MUDANÇA #3: Redireciona para o content_management, não para o dashboard
         flash("Item de estudo adicionado com sucesso!", "success")
         return redirect(url_for("admin.content_management"))
 
@@ -266,7 +273,6 @@ def delete_law(law_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Erro ao excluir o item: {e}", "danger")
-    # MUDANÇA #4: Redireciona para o content_management
     return redirect(url_for("admin.content_management"))
 
 @admin_bp.route("/users")
