@@ -1,4 +1,4 @@
-# admin.py VERSÃO FINAL CORRIGIDA
+# admin.py VERSÃO FINAL CORRIGIDA - 16/06/2025
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
@@ -8,13 +8,14 @@ from sqlalchemy.orm import joinedload
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-# ALTERAÇÃO 1: Importar o modelo que faltava: UserSeenLawBanner
-from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner
+# ALTERAÇÃO 1: Importar o último modelo que faltava: UserComment
+from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, UserComment
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+# ... (todo o resto do arquivo permanece o mesmo) ...
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -44,7 +45,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ... (dashboard, content_management e outras rotas que não foram alteradas) ...
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -269,7 +269,6 @@ def delete_law(law_id):
             for child in law.children:
                 ids_to_delete.append(child.id)
         
-        # ALTERAÇÃO 2: Adicionar a exclusão da dependência que faltava
         UserSeenLawBanner.query.filter(UserSeenLawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         LawBanner.query.filter(LawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UsefulLink.query.filter(UsefulLink.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
@@ -311,7 +310,8 @@ def deny_user(user_id):
     else:
         try:
             email = user.email
-            # Deletar todas as dependências do usuário, incluindo a nova.
+            # ALTERAÇÃO 2: Adicionar a exclusão da última dependência que faltava: os comentários.
+            UserComment.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             UserSeenLawBanner.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             UserSeenAnnouncement.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             UserProgress.query.filter_by(user_id=user.id).delete(synchronize_session=False)
