@@ -1054,9 +1054,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO FINAL NO JAVASCRIPT >>>
-    // =====================================================================
     const completeForm = document.getElementById('mark-complete-form');
     if (completeForm) {
         completeForm.addEventListener('submit', function(event) {
@@ -1064,6 +1061,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const url = this.action;
             const csrfToken = this.querySelector('input[name="csrf_token"]').value;
+
             const button = this.querySelector('button[type="submit"]');
             const originalButtonText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando...';
@@ -1071,7 +1069,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
             })
             .then(response => response.json())
             .then(data => {
@@ -1079,6 +1080,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
                         const ach = data.unlocked_achievements[0];
                         Swal.fire({
+                            icon: 'success',
                             title: 'Conquista Desbloqueada!',
                             html: `
                                 <div class="flex flex-col items-center">
@@ -1087,10 +1089,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                     <p class="text-gray-600 mt-2">${ach.description}</p>
                                 </div>
                             `,
-                            iconHtml: '<span class="text-green-500"><i class="fas fa-check-circle fa-3x"></i></span>',
                             confirmButtonText: 'Rumo à próxima!',
                             customClass: {
-                                icon: 'border-0',
                                 confirmButton: 'inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg'
                             },
                             buttonsStyling: false
@@ -1123,13 +1123,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById('law-content');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // ... (O restante do código que não muda fica aqui)
     function fixDuplicateDescription() {
         if (!lawContent) return;
+
         const templateDescriptionP = lawContent.querySelector('p.text-gray-600.italic.mb-6');
         if (!templateDescriptionP) return;
+
         const descriptionText = templateDescriptionP.textContent.trim();
         if (!descriptionText) return;
+
         let potentialDuplicate = templateDescriptionP.nextElementSibling;
         while (potentialDuplicate) {
             if (potentialDuplicate.tagName === 'P' && potentialDuplicate.innerHTML.trim().toLowerCase() === '&nbsp;') {
@@ -1587,9 +1589,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
+                                icon: 'success',
                                 title: 'Restaurada!',
                                 text: 'A lei foi restaurada com sucesso. A página será recarregada.',
-                                icon: 'success'
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg'
+                                },
+                                buttonsStyling: false
                             }).then(() => {
                                 window.location.reload();
                             });
@@ -1886,9 +1893,6 @@ document.addEventListener("DOMContentLoaded", function () {
             juridiquesChevron.style.transform = juridiquesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
         });
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO FINAL NO JAVASCRIPT >>>
-    // =====================================================================
 });
 </script>
 {% endblock %}
