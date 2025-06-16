@@ -1,4 +1,4 @@
-# admin.py VERSÃO FINAL CORRIGIDA - 16/06/2025
+# admin.py VERSÃO FINAL E CORRIGIDA - AGORA COM TODOS OS MODELOS E DEPENDÊNCIAS
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
@@ -8,14 +8,22 @@ from sqlalchemy.orm import joinedload
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-# ALTERAÇÃO 1: Importar o último modelo que faltava: UserComment
-from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, UserComment
+
+# =====================================================================
+# <<< INÍCIO DA CORREÇÃO: IMPORTAÇÕES COMPLETAS E CORRETAS >>>
+# =====================================================================
+# Importando cada modelo de seu respectivo arquivo de origem
+from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 from src.models.law import Law, Subject, UsefulLink 
-from src.models.progress import UserProgress 
+from src.models.progress import UserProgress
+from src.models.comment import UserComment
+from src.models.notes import UserNotes, UserLawMarkup
+# =====================================================================
+# <<< FIM DA CORREÇÃO >>>
+# =====================================================================
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# ... (todo o resto do arquivo permanece o mesmo) ...
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -45,6 +53,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ... (dashboard, content_management e outras rotas que não foram alteradas) ...
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -265,14 +274,26 @@ def delete_law(law_id):
     law = Law.query.options(joinedload(Law.children)).get_or_404(law_id)
     try:
         ids_to_delete = [law.id]
-        if law.children:
-            for child in law.children:
+        # Usar uma função recursiva para coletar todos os IDs de filhos, netos, etc.
+        def collect_child_ids(current_law):
+            for child in current_law.children:
                 ids_to_delete.append(child.id)
+                collect_child_ids(child)
+        collect_child_ids(law)
         
+        # =====================================================================
+        # <<< INÍCIO DA CORREÇÃO: LIMPEZA COMPLETA DE DEPENDÊNCIAS DA LEI >>>
+        # =====================================================================
+        UserComment.query.filter(UserComment.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        UserNotes.query.filter(UserNotes.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        UserLawMarkup.query.filter(UserLawMarkup.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserSeenLawBanner.query.filter(UserSeenLawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         LawBanner.query.filter(LawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UsefulLink.query.filter(UsefulLink.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserProgress.query.filter(UserProgress.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        # =====================================================================
+        # <<< FIM DA CORREÇÃO >>>
+        # =====================================================================
 
         db.session.delete(law)
         db.session.commit()
@@ -307,22 +328,38 @@ def deny_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.role == "admin":
         flash("Não é possível excluir um administrador.", "danger")
-    else:
-        try:
-            email = user.email
-            # ALTERAÇÃO 2: Adicionar a exclusão da última dependência que faltava: os comentários.
-            UserComment.query.filter_by(user_id=user.id).delete(synchronize_session=False)
-            UserSeenLawBanner.query.filter_by(user_id=user.id).delete(synchronize_session=False)
-            UserSeenAnnouncement.query.filter_by(user_id=user.id).delete(synchronize_session=False)
-            UserProgress.query.filter_by(user_id=user.id).delete(synchronize_session=False)
-            
-            db.session.delete(user)
-            db.session.commit()
-            flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Falha ao negar o usuário ID {user_id}. Erro: {e}", exc_info=True)
-            flash(f"Ocorreu um erro ao excluir o usuário. Verifique o log da aplicação.", "danger")
+        return redirect(url_for("admin.manage_users"))
+
+    try:
+        email = user.email
+        # =====================================================================
+        # <<< INÍCIO DA CORREÇÃO: LIMPEZA COMPLETA DE DEPENDÊNCIAS DO USUÁRIO >>>
+        # =====================================================================
+        # Limpa todas as tabelas que têm uma relação direta com o usuário
+        UserComment.query.filter_by(user_id=user_id).delete()
+        UserProgress.query.filter_by(user_id=user_id).delete()
+        UserSeenAnnouncement.query.filter_by(user_id=user_id).delete()
+        UserSeenLawBanner.query.filter_by(user_id=user_id).delete()
+        StudyActivity.query.filter_by(user_id=user_id).delete()
+        TodoItem.query.filter_by(user_id=user_id).delete()
+        UserNotes.query.filter_by(user_id=user_id).delete()
+        UserLawMarkup.query.filter_by(user_id=user_id).delete()
+        
+        # Limpa tabelas de associação (muitas-para-muitas)
+        # A maneira mais segura é acessar o relacionamento no objeto do usuário e limpá-lo
+        user.achievements.clear()
+        user.favorite_laws.clear()
+        # =====================================================================
+        # <<< FIM DA CORREÇÃO >>>
+        # =====================================================================
+        
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Falha ao negar o usuário ID {user_id}. Erro: {e}", exc_info=True)
+        flash(f"Ocorreu um erro ao excluir o usuário. Verifique o log da aplicação.", "danger")
 
     return redirect(url_for("admin.manage_users"))
 
@@ -399,11 +436,12 @@ def toggle_announcement(announcement_id):
 def delete_announcement(announcement_id):
     announcement = Announcement.query.get_or_404(announcement_id)
     try:
-        UserSeenAnnouncement.query.filter_by(announcement_id=announcement_id).delete()
+        # A exclusão de UserSeenAnnouncement é tratada pela cascata ao deletar o anúncio
         db.session.delete(announcement)
         db.session.commit()
         flash("Aviso excluído com sucesso!", "success")
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Falha ao excluir o aviso ID {announcement_id}. Erro: {e}", exc_info=True)
         flash(f"Erro ao excluir o aviso: {e}", "danger")
     return redirect(url_for('admin.manage_announcements'))
