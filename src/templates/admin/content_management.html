@@ -38,7 +38,8 @@
         <label for="subject_filter" class="mr-3 font-medium text-gray-700">Filtrar por matéria:</label>
         <select id="subject_filter" name="subject_filter" class="form-select rounded-md border-gray-300 shadow-sm">
             <option value="all" {% if selected_subject == 'all' %}selected{% endif %}>Todas as matérias</option>
-            {% for subject in all_subjects %}
+            {# ALTERAÇÃO APLICADA: Adicionado |sort(attribute='name') para ordenar o dropdown #}
+            {% for subject in all_subjects|sort(attribute='name') %}
                 <option value="{{ subject.id }}" {% if selected_subject == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
             {% endfor %}
             <option value="none" {% if selected_subject == 'none' %}selected{% endif %}>Sem matéria</option>
@@ -47,10 +48,12 @@
     </form>
 </div>
 
-{% for subject_name, diplomas in subjects_with_diplomas.items() %}
+{# ALTERAÇÃO APLICADA: Adicionado |sort(attribute='0') para ordenar as matérias pelo nome #}
+{% for subject_name, diplomas in subjects_with_diplomas.items()|sort(attribute='0') %}
     <div class="mb-8">
         <h3 class="text-xl font-semibold text-brand-text mb-3 border-b pb-2">{{ subject_name }}</h3>
-        {% for diploma in diplomas %}
+        {# ALTERAÇÃO APLICADA: Adicionado |sort(attribute='title') para ordenar os diplomas #}
+        {% for diploma in diplomas|sort(attribute='title') %}
         <div class="bg-white shadow-md rounded-lg border overflow-hidden mb-4">
             <table class="min-w-full">
                 <thead class="bg-gray-100 accordion-header" data-target="#accordion-body-{{ diploma.id }}">
@@ -77,7 +80,8 @@
                             </form>
                         </td>
                     </tr>
-                    {% for topic in diploma.children %}
+                    {# ALTERAÇÃO APLICADA: Adicionado |sort(attribute='title') para ordenar os tópicos #}
+                    {% for topic in diploma.children|sort(attribute='title') %}
                     <tr>
                         <td class="pl-12 pr-6 py-4 whitespace-nowrap text-sm font-medium text-brand-text"><i class="fas fa-file-alt mr-3 text-gray-400"></i>{{ topic.title }}</td>
                         <td class="px-6 py-4 text-sm text-brand-text-light">{{ topic.description or "-" }}</td>
