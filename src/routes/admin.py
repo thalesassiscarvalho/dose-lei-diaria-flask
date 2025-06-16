@@ -1,11 +1,10 @@
-# admin.py ATUALIZADO PARA A ETAPA 2
+# admin.py ATUALIZADO PARA A ETAPA 1
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
-from sqlalchemy import desc # IMPORTANTE: Adicionar o 'desc' para ordenação
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
@@ -14,8 +13,6 @@ from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-# ... (O resto das definições de sanitização e o decorator @admin_required continuam iguais) ...
 
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
@@ -46,12 +43,12 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
 def dashboard():
-    # Lógica para os cartões de métricas (já funcionando)
+    # --- ETAPA 1: LÓGICA PARA OS CARTÕES DE MÉTRICAS ---
+    # Adicionamos de volta a busca pelos dados dos KPIs.
     stats = {
         'total_users': User.query.filter_by(role="student").count(),
         'active_users_week': UserProgress.query.filter(UserProgress.last_accessed_at >= (datetime.datetime.utcnow() - datetime.timedelta(days=7))).distinct(UserProgress.user_id).count(),
@@ -60,33 +57,19 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
 
-    # --- ETAPA 2: LÓGICA PARA O GRÁFICO DE TOP CONTEÚDOS ---
-    # Adicionamos a busca pelos itens mais acessados.
-    top_content = db.session.query(
-        Law.title,
-        db.func.count(UserProgress.id).label('views')
-    ).join(UserProgress, UserProgress.law_id == Law.id)\
-     .filter(Law.parent_id.isnot(None))\
-     .group_by(Law.title)\
-     .order_by(desc('views'))\
-     .limit(5).all()
-
-    top_content_labels = [item[0] for item in top_content]
-    top_content_values = [item[1] for item in top_content]
-    
+    # Por enquanto, os dados dos gráficos continuam vazios para não gerar erros.
     charts_data = {
-        'new_users': {'labels': [], 'values': []}, # Gráfico de novos usuários continua desativado
-        'top_content': {'labels': top_content_labels, 'values': top_content_values}
+        'new_users': {'labels': [], 'values': []},
+        'top_content': {'labels': [], 'values': []}
     }
 
     return render_template("admin/dashboard.html",
                            stats=stats,
                            pending_users_count=pending_users_count,
-                           charts_data=charts_data,
+                           charts_data=charts_data, # A variável ainda é passada, mas com dados vazios
                            active_announcements_count=active_announcements_count
                            )
 
-# ... (O resto do arquivo continua exatamente igual) ...
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
@@ -121,6 +104,7 @@ def content_management():
                            selected_subject=subject_filter)
 
 
+# O resto do arquivo continua exatamente igual...
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -264,8 +248,8 @@ def edit_law(law_id):
         UsefulLink.query.filter_by(law_id=law.id).delete()
         index = 0
         while f'link-{index}-title' in request.form:
-            link_title = bleach.clean(request.form.get(f'link-{index}-title', ""), tags=[], strip=True)
-            link_url = bleach.clean(request.form.get(f'link-{index}-url', ""), tags=[], strip=True)
+            link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
+            link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
                 new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
