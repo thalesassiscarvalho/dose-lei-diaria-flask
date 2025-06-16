@@ -1,20 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}Painel Admin{% endblock %}
+{% block title %}Painel de Controle - Admin{% endblock %}
 
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-brand-purple">Painel de Controle</h1>
+    
+    <div class="space-x-2">
+        <a href="{{ url_for('admin.content_management') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Leis e Tópicos">
+            <i class="fas fa-edit mr-2"></i>Gerenciar Conteúdo
+        </a>
+        <a href="{{ url_for('admin.manage_subjects') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded" title="Gerenciar Matérias">
+            <i class="fas fa-tags mr-2"></i>Matérias
+        </a>
+        <a href="{{ url_for('admin.manage_users') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Usuários">
+            <i class="fas fa-users-cog mr-2"></i>Usuários
+        </a>
+        <a href="{{ url_for('admin.manage_announcements') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Avisos">
+            <i class="fas fa-bullhorn mr-2"></i>Avisos
+        </a>
+    </div>
 </div>
 
-<div class="bg-white p-6 rounded-lg shadow-md border">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Primeiros Passos</h2>
-    <p class="text-gray-600 mb-4">
-        Bem-vindo ao novo painel! A antiga tela de gerenciamento de leis agora está em uma página separada para melhor organização.
+<div class="bg-white p-6 rounded-lg shadow-md border mt-8">
+    <h2 class="text-xl font-semibold text-brand-text mb-4">Bem-vindo!</h2>
+    <p class="text-gray-600">
+        Esta é a sua nova central de controle. Use os botões acima para navegar pelas seções administrativas.
     </p>
-    <a href="{{ url_for('admin.content_management') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded inline-block">
-        <i class="fas fa-edit mr-2"></i>Acessar Gerenciador de Itens de Estudo
-    </a>
+    <p class="text-gray-600 mt-2">
+        Nas próximas etapas, adicionaremos os cartões de métricas e os gráficos de atividade aqui nesta área.
+    </p>
 </div>
 
 {% endblock %}
