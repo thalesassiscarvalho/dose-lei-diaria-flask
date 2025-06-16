@@ -2,6 +2,37 @@
 
 {% block title %}Painel de Controle - Admin{% endblock %}
 
+{% block head_extra %}
+<style>
+    .kpi-card {
+        background-color: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .kpi-card .value {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #4f46e5; /* Roxo índigo */
+    }
+    .kpi-card .label {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #6b7280;
+    }
+    .kpi-card .icon {
+        font-size: 1.8rem;
+        color: #c7d2fe;
+        align-self: flex-end;
+    }
+</style>
+{% endblock %}
+
+
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-brand-purple">Painel de Controle</h1>
@@ -14,26 +45,47 @@
             <i class="fas fa-tags mr-2"></i>Matérias
         </a>
         <a href="{{ url_for('admin.manage_users') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Usuários">
-            <i class="fas fa-users-cog mr-2"></i>Usuários
+            <i class="fas fa-users-cog mr-2"></i>Usuários {% if pending_users_count > 0 %}<span class="ml-2 bg-red-600 text-red-100 text-xs font-bold rounded-full px-2 py-1">{{ pending_users_count }}</span>{% endif %}
         </a>
         <a href="{{ url_for('admin.manage_announcements') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Avisos">
-            <i class="fas fa-bullhorn mr-2"></i>Avisos
+            <i class="fas fa-bullhorn mr-2"></i>Avisos {% if active_announcements_count > 0 %}<span class="ml-2 bg-green-800 text-green-100 text-xs font-bold rounded-full px-2 py-1">{{ active_announcements_count }}</span>{% endif %}
         </a>
-        
         <a href="{{ url_for('admin.add_law') }}" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded" title="Adicionar Nova Lei ou Tópico">
             <i class="fas fa-plus mr-2"></i>Adicionar Item
         </a>
     </div>
 </div>
 
-<div class="bg-white p-6 rounded-lg shadow-md border mt-8">
-    <h2 class="text-xl font-semibold text-brand-text mb-4">Bem-vindo!</h2>
-    <p class="text-gray-600">
-        Esta é a sua nova central de controle. Use os botões acima para navegar pelas seções administrativas.
-    </p>
-    <p class="text-gray-600 mt-2">
-        Nas próximas etapas, adicionaremos os cartões de métricas e os gráficos de atividade aqui nesta área.
-    </p>
+<h2 class="text-2xl font-semibold mb-4 text-brand-purple mt-8">Visão Geral</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="kpi-card">
+        <div>
+            <div class="value">{{ stats.total_users or '0' }}</div>
+            <div class="label">Total de Usuários</div>
+        </div>
+        <i class="fas fa-users icon"></i>
+    </div>
+    <div class="kpi-card">
+        <div>
+            <div class="value">{{ stats.active_users_week or '0' }}</div>
+            <div class="label">Usuários Ativos (7d)</div>
+        </div>
+        <i class="fas fa-user-clock icon"></i>
+    </div>
+    <div class="kpi-card">
+        <div>
+            <div class="value">{{ stats.total_laws or '0' }}</div>
+            <div class="label">Itens de Estudo</div>
+        </div>
+        <i class="fas fa-gavel icon"></i>
+    </div>
+    <div class="kpi-card">
+        <div>
+            <div class="value">{{ pending_users_count or '0' }}</div>
+            <div class="label">Cadastros Pendentes</div>
+        </div>
+        <i class="fas fa-user-plus icon"></i>
+    </div>
 </div>
 
 {% endblock %}
