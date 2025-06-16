@@ -919,7 +919,10 @@
                                             </div>
                                         </div>
                                         <div class="favorite-card-body">
-                                            {% for topic in card.topics %}
+                                            {# ===================================================================== #}
+                                            {# <<< ALTERAÇÃO APLICADA AQUI: Adicionado |sort(attribute='title') >>> #}
+                                            {# ===================================================================== #}
+                                            {% for topic in card.topics|sort(attribute='title') %}
                                                 <div class="topic-item" data-law-id="{{ topic.id }}">
                                                     <div class="topic-title">
                                                         <i class="fas fa-file-alt icon"></i>
@@ -1225,6 +1228,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // =====================================================================
+    // <<< ALTERAÇÃO APLICADA AQUI: Função renderLaws foi reescrita para ordenar os resultados >>>
+    // =====================================================================
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -1232,7 +1238,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let html = '';
-        for (const subjectName in subjects) {
+        // 1. Pega as chaves do objeto (nomes das matérias) e as ordena alfabeticamente
+        const sortedSubjectNames = Object.keys(subjects).sort((a, b) => a.localeCompare(b));
+
+        // Itera sobre as matérias já em ordem alfabética
+        for (const subjectName of sortedSubjectNames) {
+            // 2. Ordena as leis (diplomas) dentro de cada matéria pelo título
+            const sortedDiplomas = subjects[subjectName].sort((a, b) => a.title.localeCompare(b.title));
+
             html += `
             <div class="subject-accordion-item">
                 <div class="subject-accordion-header">
@@ -1240,9 +1253,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="subject-accordion-content">
-                    ${subjects[subjectName].map(diploma => {
+                    ${sortedDiplomas.map(diploma => {
                         const displayStyle = 'none';
                         const iconRotation = 'rotate(0deg)';
+
+                        // 3. Ordena os tópicos (filtered_children) dentro de cada lei pelo título
+                        const sortedTopics = diploma.filtered_children.sort((a, b) => a.title.localeCompare(b.title));
 
                         return `
                         <div class="accordion-item mt-3 first:mt-0">
@@ -1255,7 +1271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                             <div class="accordion-content" style="display: ${displayStyle};">
-                                ${diploma.filtered_children.length > 0 ? diploma.filtered_children.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
+                                ${sortedTopics.length > 0 ? sortedTopics.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
                             </div>
                         </div>`;
                     }).join('')}
