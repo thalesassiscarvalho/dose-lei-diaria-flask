@@ -923,21 +923,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: `
-                                <i class="<span class="math-inline">\{ach\.icon \|\| 'fas fa\-trophy'\} fa\-3x text\-yellow\-400 mb\-4" style\="display\:inline\-block;"\></i\>
-<h3 class\="text\-xl font\-bold"\></span>{ach.name}</h3>
-                                <p class="text-gray-600 mt-2">${ach.description}</p>
+                                <i class="\<span class="math-inline">\{ach\.icon \|\| 'fas fa\-trophy'\} fa\-3x text\-yellow\-400 mb\-4" style\="display\:inline\-block;"\></i\>
+<h3 class\="text\-xl font\-bold"\>\\$\{ach\.name\}</h3\>
+<p class\="text\-gray\-600 mt\-2"\>\\</span>{ach.description}</p>
                             `,
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!',
-                            // =====================================================================
-                            // <<< INÍCIO DA CORREÇÃO: Adicionando classe personalizada ao botão >>>
-                            // =====================================================================
                             customClass: {
                                 confirmButton: 'my-swal-confirm-button'
                             }
-                            // =====================================================================
-                            // <<< FIM DA CORREÇÃO >>>
-                            // =====================================================================
                         }).then(() => {
                             window.location.reload();
                         });
@@ -1470,16 +1464,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Sim, restaurar!',
                 cancelButtonText: 'Cancelar',
-                // =====================================================================
-                // <<< INÍCIO DA CORREÇÃO: Adicionando classes personalizadas aos botões >>>
-                // =====================================================================
                 customClass: {
                     confirmButton: 'my-swal-confirm-button-danger',
                     cancelButton: 'my-swal-cancel-button'
                 }
-                // =====================================================================
-                // <<< FIM DA CORREÇÃO >>>
-                // =====================================================================
             }).then((result) => {
                 if (result.isConfirmed) {
                     
