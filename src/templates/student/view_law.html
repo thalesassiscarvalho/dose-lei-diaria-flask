@@ -5,13 +5,22 @@
 {% block head_extra %}
 <style>
     /* ===================================================================== */
-    /* <<< INÍCIO DA CORREÇÃO: Visibilidade dos Botões de Confirmação >>> */
+    /* <<< INÍCIO DA CORREÇÃO DEFINITIVA: Visibilidade dos Botões >>> */
     /* ===================================================================== */
+    /* Força o estilo correto para o botão de confirmação (que pode ser azul ou vermelho) */
     .swal2-confirm.swal2-styled {
-        color: white !important; /* Garante que o texto do botão de confirmação seja branco */
+        background-color: #3085d6 !important; /* Cor de fundo azul padrão */
+        color: white !important;
     }
+    /* Força a cor de fundo vermelha especificamente quando é um botão de perigo/exclusão */
+    .swal2-confirm.swal2-styled.swal2-default-outline, 
+    .swal2-confirm.swal2-styled[style*="background-color: rgb(211, 51, 51)"] {
+        background-color: #d33 !important;
+    }
+    /* Força a cor de texto correta para o botão de cancelar */
     .swal2-cancel.swal2-styled {
-        color: #595959 !important; /* Força uma cor de texto escura para o botão de cancelar, tornando-o visível */
+        color: #595959 !important;
+        background-color: #e5e7eb !important; /* Fundo cinza claro para garantir contraste */
     }
     /* ===================================================================== */
     /* <<< FIM DA CORREÇÃO >>> */
@@ -78,9 +87,6 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         color: #1f2937; /* Dark gray text for readability */
         line-height: 1.7;
-        /* A proteção contra cópia (user-select: none) foi REMOVIDA para permitir a marcação de texto. */
-        /* A proteção de impressão via @media print foi mantida. */
-        /* Adicionando borda azul clara */
         border: 1px solid #bfdbfe; /* Tailwind blue-200 */
     }
 
@@ -107,31 +113,27 @@
     .law-content-container li {
         margin-bottom: 0.5em;
     }
-    /* Estilos para tags de formatação que serão salvas */
     .law-content-container strong { font-weight: bold; }
     .law-content-container em { font-style: italic; }
     .law-content-container u { text-decoration: underline; }
     .law-content-container s { text-decoration: line-through; }
     
     .completed-banner {
-        background-color: #d1fae5; /* Light green */
-        color: #065f46; /* Dark green */
+        background-color: #d1fae5;
+        color: #065f46;
         padding: 1rem;
         border-radius: 0.375rem;
         margin-bottom: 1.5rem;
         border: 1px solid #a7f3d0;
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/4: ESTILOS PARA O BANNER DE AVISO DA LEI >>> */
-    /* ===================================================================== */
     .law-banner {
         padding: 1rem;
         margin-bottom: 1.5rem;
         border-radius: 0.375rem;
-        background-color: #fefce8; /* Amarelo bem claro (yellow-50) */
-        border: 1px solid #fde047; /* Amarelo (yellow-300) */
-        color: #854d0e; /* Amarelo escuro (yellow-800) */
+        background-color: #fefce8;
+        border: 1px solid #fde047;
+        color: #854d0e;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -158,107 +160,75 @@
     .law-banner-dismiss-btn:hover {
         opacity: 1;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 1/4 >>> */
-    /* ===================================================================== */
 
     .last-read-info {
-        background-color: #e0e7ff; /* Indigo 100 */
-        color: #3730a3; /* Indigo 800 */
+        background-color: #e0e7ff;
+        color: #3730a3;
         padding: 0.75rem 1rem;
         border-radius: 0.375rem;
         margin-bottom: 1.5rem;
-        border: 1px solid #c7d2fe; /* Indigo 200 */
+        border: 1px solid #c7d2fe;
         font-size: 0.9rem;
     }
 
     .save-article-form {
         margin-top: 1.5rem;
         padding: 1rem;
-        background-color: #f9fafb; /* Gray 50 */
-        border: 1px solid #e5e7eb; /* Gray 200 */
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
         border-radius: 0.5rem;
     }
 
-    /* --- INÍCIO: NOVOS ESTILOS PARA BOTÕES DE FILTRO --- */
     .toggle-button {
-        padding: 0.6rem; /* Padding quadrado para o ícone */
+        padding: 0.6rem;
         border-radius: 0.375rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
         border: 1px solid transparent;
-        font-size: 0.875rem; /* 14px */
+        font-size: 0.875rem;
         line-height: 1.25rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
     }
     
-    /* Esconde o texto do botão em todas as resoluções */
     .toggle-button span {
         display: none;
     }
 
-    /* Comentários (Verde) */
-    .toggle-btn-comments {
-        background-color: #d1fae5; /* green-100 */
-        color: #065f46; /* green-800 */
-        border-color: #a7f3d0; /* green-200 */
-    }
-    .toggle-btn-comments:hover { background-color: #a7f3d0; /* green-200 */ }
+    .toggle-btn-comments { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .toggle-btn-comments:hover { background-color: #a7f3d0; }
     
-    /* Jurisprudência (Vermelho) */
-    .toggle-btn-juris {
-        background-color: #fee2e2; /* red-100 */
-        color: #991b1b; /* red-800 */
-        border-color: #fecaca; /* red-200 */
-    }
-    .toggle-btn-juris:hover { background-color: #fecaca; /* red-200 */ }
+    .toggle-btn-juris { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .toggle-btn-juris:hover { background-color: #fecaca; }
 
-    /* Doutrina (Roxo) */
-    .toggle-btn-doutrina {
-        background-color: #e0e7ff; /* indigo-100 */
-        color: #3730a3; /* indigo-800 */
-        border-color: #c7d2fe; /* indigo-200 */
-    }
-    .toggle-btn-doutrina:hover { background-color: #c7d2fe; /* indigo-200 */ }
+    .toggle-btn-doutrina { background-color: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+    .toggle-btn-doutrina:hover { background-color: #c7d2fe; }
     
-    /* Minhas Anotações (Laranja) */
-    .toggle-btn-my-notes {
-        background-color: #ffedd5; /* orange-100 */
-        color: #9a3412; /* orange-800 */
-        border-color: #fed7aa; /* orange-200 */
-    }
-    .toggle-btn-my-notes:hover { background-color: #fed7aa; /* orange-200 */ }
-    
-    /* --- FIM: NOVOS ESTILOS PARA BOTÕES DE FILTRO --- */
+    .toggle-btn-my-notes { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+    .toggle-btn-my-notes:hover { background-color: #fed7aa; }
 
-
-    /* Classe CSS para ocultar elementos */
     .conteudo-oculto {
-        display: none !important; /* Usar !important para garantir a sobreposição */
+        display: none !important;
     }
-    /* Estilos para o container do player de áudio */
     .audio-player-container {
-        background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
-        border-radius: 0.5rem; /* Tailwind rounded-lg */
-        padding: 1rem; /* Tailwind p-4 */
-        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
     }
 
     .audio-player-container audio {
-        border-radius: 0.375rem; /* Tailwind rounded-md */
+        border-radius: 0.375rem;
     }
     
-    /* Classe para ocultar conteúdo durante impressão */
     .print-hidden {
         display: none !important;
     }
 
-    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
     .neural-waves-container {
         display: flex;
         justify-content: flex-start;
@@ -267,7 +237,6 @@
         margin-bottom: 20px;
         flex-wrap: wrap;
     }
-
     .neural-wave-button {
         width: 45px;
         height: 45px;
@@ -281,58 +250,37 @@
         border: none;
         position: relative;
     }
-
     .neural-wave-button::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
         opacity: 0;
         transition: opacity 0.3s ease;
         border-radius: 50%;
     }
-
     .neural-wave-button:hover::before {
         opacity: 1;
     }
-
     .neural-wave-button i {
         font-size: 20px;
         color: white;
         transition: transform 0.3s ease;
     }
-
     .neural-wave-button:hover i {
         transform: scale(1.2);
     }
-
     .neural-wave-button.playing {
         animation: pulse 2s infinite;
     }
-
     .neural-wave-button.playing i {
         animation: spin 10s linear infinite;
     }
-
-    /* Cores específicas para cada tipo de onda neural */
-    .wave-alpha {
-        background: linear-gradient(135deg, #4f46e5, #818cf8);
-    }
-    .wave-beta {
-        background: linear-gradient(135deg, #0ea5e9, #38bdf8);
-    }
-    .wave-theta {
-        background: linear-gradient(135deg, #10b981, #34d399);
-    }
-    .wave-classical {
-        background: linear-gradient(135deg, #7e22ce, #a855f7);
-    }
-    .wave-white-noise {
-        background: linear-gradient(135deg, #64748b, #94a3b8);
-    }
+    .wave-alpha { background: linear-gradient(135deg, #4f46e5, #818cf8); }
+    .wave-beta { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+    .wave-theta { background: linear-gradient(135deg, #10b981, #34d399); }
+    .wave-classical { background: linear-gradient(135deg, #7e22ce, #a855f7); }
+    .wave-white-noise { background: linear-gradient(135deg, #64748b, #94a3b8); }
 
     .neural-wave-button .tooltip {
         position: absolute;
@@ -355,7 +303,6 @@
         z-index: 100;
         line-height: 1.4;
     }
-
     .neural-wave-button .tooltip::after {
         content: '';
         position: absolute;
@@ -366,7 +313,6 @@
         border-style: solid;
         border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
     }
-
     .neural-wave-button:hover .tooltip {
         opacity: 1;
         visibility: visible;
@@ -388,16 +334,14 @@
         .neural-wave-button i { font-size: 18px; }
         .neural-wave-button .tooltip { width: 200px; max-width: 200px; font-size: 11px; }
     }
-    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
 
-    /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
     .notes-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
     .format-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
     .format-btn:hover { background-color: #e5e7eb; }
     .format-btn.active { background-color: #dbeafe; border-color: #93c5fd; }
     .format-btn i { font-size: 14px; }
     .notes-editor {
-        min-height: 200px; /* Altura padrão para desktop */
+        min-height: 200px;
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         padding: 12px;
@@ -410,7 +354,6 @@
     .notes-editor strong { font-weight: bold; }
     .notes-editor em { font-style: italic; }
     .notes-editor .highlight { background-color: #fef08a; padding: 0 2px; }
-    /* FIM DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
 
     .go-to-notes-btn { background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: 1px solid #7c3aed; display: flex; align-items: center; }
     .go-to-notes-btn:hover { background-color: #7c3aed; }
@@ -427,83 +370,70 @@
         .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
         .back-to-top-btn { margin-left: 0; margin-top: 1rem; }
         #sticky-action-bar .flex-wrap.gap-2 {
-            gap: 0.5rem; /* Reduz o espaçamento entre os botões */
+            gap: 0.5rem;
         }
     }
 
-    /* --- INÍCIO: AJUSTES PARA BARRA DE AÇÕES EM CELULARES (NOVO) --- */
     @media (max-width: 640px) {
-        /* Esconde botões de formatação de texto, exceto os de tamanho da fonte */
         #format-bold-btn,
         #format-italic-btn,
         #format-strikethrough-btn,
-        #highlight-buttons-group, /* Oculta o grupo de marca-textos */
+        #highlight-buttons-group,
         #toggle-font-family-btn {
             display: none;
         }
-
-        /* Esconde o lado direito da barra de ações (busca e anotações gerais) */
         .sticky-bar-right-side {
             display: none;
         }
     }
-    /* --- FIM: AJUSTES PARA BARRA DE AÇÕES EM CELULARES (NOVO) --- */
 
     @media (min-width: 641px) {
         .bookmark-section { max-width: 33.33%; }
     }
     
-    /* Adicionado para ajustar a altura das anotações no mobile */
     @media (max-width: 768px) {
         .notes-editor {
-            min-height: 150px; /* Nova altura para telas menores - ajuste este valor se necessário */
+            min-height: 150px;
         }
     }
 
-    /* --- INÍCIO: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO (ANTIGOS COMENTÁRIOS) --- */
     .paragraph-wrapper {
         position: relative;
-        padding-right: 30px; /* Espaço para o ícone de anotação */
+        padding-right: 30px;
     }
-
     .comment-icon {
         position: absolute;
         top: 5px;
         right: 0;
         cursor: pointer;
-        color: #a5b4fc; /* Roxo claro */
+        color: #a5b4fc;
         font-size: 1.1rem;
         transition: all 0.2s ease;
         opacity: 0.5;
     }
-
     .paragraph-wrapper:hover .comment-icon {
         opacity: 1;
         transform: scale(1.2);
     }
-
     .comment-icon.has-comment {
-        color: #6366f1; /* Roxo mais forte */
+        color: #6366f1;
         opacity: 1;
     }
-
     .comment-display {
-        background-color: #fff7ed; /* Laranja bem clarinho (Tailwind orange-50) */
-        border-left: 3px solid #f97316; /* Laranja (Tailwind orange-500) */
+        background-color: #fff7ed;
+        border-left: 3px solid #f97316;
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        font-style: italic;     /* Texto da anotação em itálico */
-        color: #f97316;         /* Cor do texto em laranja */
-        cursor: pointer;        /* Indica que o elemento é clicável para edição */
+        font-style: italic;
+        color: #f97316;
+        cursor: pointer;
     }
-    
     .comment-display:hover {
-        background-color: #ffedd5; /* Laranja um pouco mais escuro no hover (orange-100) */
+        background-color: #ffedd5;
     }
-
     .comment-delete-btn {
         position: absolute;
         top: 5px;
@@ -516,12 +446,11 @@
     }
     .comment-delete-btn:hover { color: #ef4444; }
 
-    /* Modal de Anotação (Antigo Modal de Comentário) */
     .comment-modal-backdrop {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        display: none; /* Começa oculto */
+        display: none;
         align-items: center;
         justify-content: center;
         z-index: 1000;
@@ -542,13 +471,10 @@
         border-radius: 5px;
         margin-bottom: 15px;
     }
-    /* --- FIM: ESTILOS PARA ANOTAÇÕES POR PARÁGRAFO --- */
 
-    /* --- INÍCIO: ESTILOS PARA MODO NOTURNO --- */
     body.dark-mode {
-        background-color: #030712; /* Fundo geral da página (quase preto) */
+        background-color: #030712;
     }
-
     .dark-mode .law-content-container,
     .dark-mode .completed-banner,
     .dark-mode .law-banner,
@@ -559,43 +485,33 @@
     .dark-mode .comment-modal-content,
     .dark-mode .audio-player-container,
     .dark-mode .juridiques-container,
-    .dark-mode .links-container /* Adicionado para modo noturno */
+    .dark-mode .links-container
     {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
-
-    /* Conteúdo principal da lei */
     .dark-mode .law-content-container {
-        background-color: #1f2937; /* Cinza escuro para o conteúdo */
-        color: #d1d5db; /* Texto principal - cinza claro */
-        border-color: #374151; /* Borda sutil */
+        background-color: #1f2937;
+        color: #d1d5db;
+        border-color: #374151;
     }
-    
-    /* --- INÍCIO: ESTILOS MODO NOTURNO PARA MARCA-TEXTO DO USUÁRIO --- */
     .dark-mode .user-highlight-yellow { background-color: rgba(254, 249, 195, 0.3); }
     .dark-mode .user-highlight-green { background-color: rgba(220, 252, 231, 0.3); }
     .dark-mode .user-highlight-blue { background-color: rgba(219, 234, 254, 0.3); }
     .dark-mode .user-highlight-pink { background-color: rgba(252, 231, 243, 0.3); }
-    /* --- FIM: ESTILOS MODO NOTURNO PARA MARCA-TEXTO DO USUÁRIO --- */
 
-    /* Títulos dentro da lei */
     .dark-mode .law-content-container h1,
     .dark-mode .law-content-container h2,
     .dark-mode .law-content-container h3,
     .dark-mode .law-content-container h4,
     .dark-mode .law-content-container h5,
     .dark-mode .law-content-container h6 {
-        color: #93c5fd; /* Azul claro para títulos */
+        color: #93c5fd;
     }
-
-    /* Cabeçalho da página */
     .dark-mode h1.text-blue-700 {
         color: #93c5fd;
     }
-
-    /* Banners e seções */
     .dark-mode .completed-banner {
-        background-color: #064e3b; /* Verde escuro */
+        background-color: #064e3b;
         color: #a7f3d0;
         border-color: #059669;
     }
@@ -605,21 +521,19 @@
         color: #fef08a;
     }
     .dark-mode .last-read-info {
-        background-color: #3730a3; /* Indigo escuro */
+        background-color: #3730a3;
         color: #c7d2fe;
         border-color: #4f46e5;
     }
     .dark-mode .bookmark-section {
-        background-color: #1e293b; /* Azul-acinzentado escuro */
+        background-color: #1e293b;
         border-color: #374151;
     }
     .dark-mode .bookmark-section h3 {
         color: #e5e7eb;
     }
-
-    /* Barra de Ações Fixa */
     .dark-mode #sticky-action-bar {
-        background-color: #111827; /* Fundo da barra */
+        background-color: #111827;
         border-color: #374151;
     }
     .dark-mode #sticky-action-bar label {
@@ -630,8 +544,6 @@
         color: #e5e7eb;
         border-color: #4b5563;
     }
-
-    /* Seção de Anotações */
     .dark-mode .notes-container {
         background-color: #1f2937;
         border-color: #374151;
@@ -648,8 +560,6 @@
         color: #d1d5db;
         border-color: #4b5563;
     }
-
-    /* Player de Áudio */
     .dark-mode .audio-player-container {
         background-color: #1f2937;
         border-color: #374151;
@@ -657,8 +567,6 @@
      .dark-mode .audio-player-container h4 {
         color: #d1d5db;
      }
-
-    /* Modal de anotação */
     .dark-mode .comment-modal-content {
         background-color: #1f2937;
     }
@@ -670,14 +578,12 @@
         color: #d1d5db;
         border-color: #4b5563;
     }
-
-    /* Botão de Toggle do Tema */
     .theme-toggle-btn {
         position: fixed;
         bottom: 20px;
         right: 20px;
         background-color: #4b5563;
-        color: #fde047; /* Amarelo para sol/lua */
+        color: #fde047;
         border: none;
         width: 50px;
         height: 50px;
@@ -697,11 +603,7 @@
     .dark-mode .theme-toggle-btn {
         background-color: #1f2937;
     }
-    /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA SWEETALERT2 EM MODO NOTURNO >>> */
-    /* ===================================================================== */
     .dark-mode .swal2-popup {
         background-color: #1f2937 !important;
         color: #d1d5db !important;
@@ -713,11 +615,7 @@
     .dark-mode .swal2-content {
         color: #d1d5db !important;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
-    /* ===================================================================== */
 
-    /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
     .font-control-group {
         border-left: 1px solid #d1d5db;
         margin-left: 0.75rem;
@@ -753,34 +651,30 @@
         background-color: #4b5563;
     }
     
-    /* Classes de Tamanho de Fonte */
     #law-content.font-size-sm, #law-content.font-size-sm p { font-size: 0.85rem; line-height: 1.6; }
-    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; } /* Padrão */
+    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; }
     #law-content.font-size-lg, #law-content.font-size-lg p { font-size: 1.1rem; line-height: 1.8; }
     #law-content.font-size-xl, #law-content.font-size-xl p { font-size: 1.2rem; line-height: 1.85; }
 
-    /* Classe de Tipo de Fonte */
     #law-content.font-serif, 
     #law-content.font-serif p, 
     #law-content.font-serif li {
         font-family: Georgia, 'Times New Roman', Times, serif;
     }
-    /* --- FIM: ESTILOS PARA CONTROLE DE FONTE --- */
     
-    /* Estilos para a seção de links úteis */
     .links-container {
-        background-color: #f0fdf4; /* Verde muito claro */
-        border: 1px solid #bbf7d0; /* Verde claro */
+        background-color: #f0fdf4;
+        border: 1px solid #bbf7d0;
     }
     .links-container #toggle-links-btn {
-        background-color: #dcfce7; /* Verde um pouco mais escuro */
+        background-color: #dcfce7;
         border-bottom-color: #bbf7d0;
     }
     .links-container #toggle-links-btn h3 {
-        color: #166534; /* Verde escuro */
+        color: #166534;
     }
     .dark-mode .links-container {
-        background-color: #14532d; /* Verde escuro para o fundo no modo noturno */
+        background-color: #14532d;
         border-color: #22c55e;
     }
     .dark-mode .links-container #toggle-links-btn {
@@ -788,73 +682,60 @@
         border-bottom-color: #22c55e;
     }
     .dark-mode .links-container #toggle-links-btn h3 {
-        color: #dcfce7; /* Texto claro */
+        color: #dcfce7;
     }
     .dark-mode .links-container a {
-        color: #86efac; /* Links verdes claros */
+        color: #86efac;
     }
     .dark-mode .links-container a:hover {
         color: #f0fdf4;
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO): NOVOS ESTILOS CSS PARA JURIDIQUÊS >>> */
-    /* ===================================================================== */
     .juridiques-container {
-        background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
-        border: 1px solid #ddd6fe; /* Roxo claro (violet-200) */
+        background-color: #f5f3ff;
+        border: 1px solid #ddd6fe;
     }
     .juridiques-container #toggle-juridiques-btn {
-        background-color: #ede9fe; /* Roxo um pouco mais escuro (violet-100) */
-        border-bottom-color: #ddd6fe; /* violet-200 */
+        background-color: #ede9fe;
+        border-bottom-color: #ddd6fe;
     }
     .juridiques-container #toggle-juridiques-btn h3 {
-        color: #5b21b6; /* Roxo escuro (violet-700) */
+        color: #5b21b6;
     }
     .dark-mode .juridiques-container {
-        background-color: #4c1d95; /* Roxo escuro para o fundo no modo noturno (violet-900) */
-        border-color: #7c3aed; /* violet-600 */
+        background-color: #4c1d95;
+        border-color: #7c3aed;
     }
     .dark-mode .juridiques-container #toggle-juridiques-btn {
-        background-color: #5b21b6; /* violet-700 */
+        background-color: #5b21b6;
         border-bottom-color: #7c3aed;
     }
     .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
-        color: #ddd6fe; /* Texto claro (violet-200) */
+        color: #ddd6fe;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
 
-    /* --- CÓDIGO ATUALIZADO: AJUSTE DE ROLAGEM HORIZONTAL PARA BARRA DE AÇÕES EM TELAS PEQUENAS --- */
     @media (max-width: 480px) {
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
-            flex-wrap: nowrap; /* Impede que os botões quebrem para a próxima linha */
-            overflow-x: auto;  /* Adiciona a rolagem horizontal */
-            justify-content: flex-start; /* Alinha os botões ao início */
-            padding: 0 10px; /* Adiciona um respiro nas laterais para não colar na borda */
-            -ms-overflow-style: none;  /* Oculta scrollbar (IE and Edge) */
-            scrollbar-width: none;  /* Oculta scrollbar (Firefox) */
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            justify-content: flex-start;
+            padding: 0 10px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
-        /* Oculta a barra de rolagem para navegadores WebKit (Chrome, Safari) */
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center::-webkit-scrollbar {
             display: none;
         }
     }
-    /* --- FIM DO CÓDIGO ATUALIZADO --- */
 
-    /* --- INÍCIO: PROTEÇÃO DE IMPRESSÃO --- */
     @media print {
-        /* Oculta todos os elementos da página durante a impressão */
         body * {
             visibility: hidden;
         }
-        /* Remove o fundo para não gastar tinta desnecessariamente */
         body {
             background-color: #fff;
         }
-        /* Cria e exibe uma mensagem de aviso no lugar do conteúdo */
         body::after {
             visibility: visible;
             position: fixed;
@@ -871,7 +752,6 @@
             font-family: sans-serif;
         }
     }
-    /* --- FIM: PROTEÇÃO DE IMPRESSÃO --- */
 
 </style>
 {% endblock %}
@@ -1135,26 +1015,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.success) {
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
                         const ach = data.unlocked_achievements[0];
-                        // =================================================================
-                        // <<< INÍCIO DA CORREÇÃO: Estrutura HTML do Alerta de Conquista >>>
-                        // =================================================================
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: `
-                                <div style="text-align: center;">
-                                    <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
-                                    <h3 class="text-xl font-bold mt-2">${ach.name}</h3>
-                                    <p class="text-gray-600 mt-2">${ach.description}</p>
-                                </div>
+                                <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
+                                <h3 class="text-xl font-bold">${ach.name}</h3>
+                                <p class="text-gray-600 mt-2">${ach.description}</p>
                             `,
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!'
                         }).then(() => {
                             window.location.reload();
                         });
-                        // =================================================================
-                        // <<< FIM DA CORREÇÃO >>>
-                        // =================================================================
                     } else {
                         window.location.reload();
                     }
@@ -1183,9 +1055,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
 
-    // =================================================================
-    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
-    // =================================================================
     function fixDuplicateDescription() {
         if (!lawContent) return;
 
@@ -1214,13 +1083,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     fixDuplicateDescription();
-    // =================================================================
-    // <<< FIM: CORREÇÃO DO BUG >>>
-    // =================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
-    // =====================================================================
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
 
@@ -1262,10 +1125,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
-    // =====================================================================
-
 
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
@@ -1543,10 +1402,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    
-    // ===== INÍCIO DA ALTERAÇÃO 2/2: REMOÇÃO DA FUNCIONALIDADE DO BOTÃO DE MARCA-TEXTO DO JAVASCRIPT =====
-    // O bloco de código para o 'highlight-btn' que estava aqui foi removido.
-    // ===== FIM DA ALTERAÇÃO 2/2 =====
 
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
@@ -1691,9 +1546,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: SUBSTITUIÇÃO DE CONFIRM() POR SWEETALERT2 >>>
-    // =====================================================================
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
             Swal.fire({
@@ -1749,9 +1601,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO >>>
-    // =====================================================================
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
