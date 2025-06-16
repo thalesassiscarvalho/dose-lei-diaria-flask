@@ -226,7 +226,10 @@
         <div class="container mx-auto flex flex-col items-center">
             <div class="header-container">
                 <span class="site-title">Estudo da Lei Seca</span>
-                <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo">
+                <picture>
+                  <source srcset="{{ url_for('static', filename='logo_livro.webp') }}" type="image/webp">
+                  <img src="{{ url_for('static', filename='logo_livro.png') }}" alt="Logo Estudo da Lei Seca" class="site-logo" width="134" height="40">
+                </picture>
             </div>
             <div class="flex space-x-6 fade-in-up pb-4">
                 {% if current_user.is_authenticated %}
