@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Itens de Estudo - Admin{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Estilos do Acordeão para expandir/recolher */
+    .accordion-header {
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+    .accordion-header:hover {
+        background-color: #f3f4f6; /* Um cinza um pouco mais escuro no hover */
+    }
+    .accordion-toggle-icon {
+        transition: transform 0.3s ease-in-out;
+        font-size: 0.8em; /* Deixa o ícone um pouco menor */
+    }
+    .accordion-body.collapsed {
+        display: none;
+    }
+    .accordion-header.open .accordion-toggle-icon {
+        transform: rotate(90deg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-brand-purple">Gerenciar Itens de Estudo</h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="text-indigo-600 hover:text-indigo-800">
+        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel
+    </a>
+</div>
+
+<div class="mb-6 bg-white p-4 rounded-lg shadow-sm border">
+    <form action="{{ url_for('admin.content_management') }}" method="GET" class="flex items-center">
+        <label for="subject_filter" class="mr-3 font-medium text-gray-700">Filtrar por matéria:</label>
+        <select id="subject_filter" name="subject_filter" class="form-select rounded-md border-gray-300 shadow-sm">
+            <option value="all" {% if selected_subject == 'all' %}selected{% endif %}>Todas as matérias</option>
+            {% for subject in all_subjects %}
+                <option value="{{ subject.id }}" {% if selected_subject == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+            {% endfor %}
+            <option value="none" {% if selected_subject == 'none' %}selected{% endif %}>Sem matéria</option>
+        </select>
+        <button type="submit" class="ml-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"><i class="fas fa-filter mr-2"></i>Filtrar</button>
+    </form>
+</div>
+
+{% for subject_name, diplomas in subjects_with_diplomas.items() %}
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-brand-text mb-3 border-b pb-2">{{ subject_name }}</h3>
+        {% for diploma in diplomas %}
+        <div class="bg-white shadow-md rounded-lg border overflow-hidden mb-4">
+            <table class="min-w-full">
+                <thead class="bg-gray-100 accordion-header" data-target="#accordion-body-{{ diploma.id }}">
+                    <tr>
+                        <th colspan="2" class="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase">
+                            <i class="fas fa-chevron-right accordion-toggle-icon mr-3"></i>
+                            <i class="fas fa-gavel mr-2"></i>
+                            {{ diploma.title }}
+                        </th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 accordion-body collapsed" id="accordion-body-{{ diploma.id }}">
+                    <tr class="bg-blue-50">
+                        <td colspan="2" class="px-6 py-4 text-sm text-brand-text-light italic">{{ diploma.description or "Item principal." }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <a href="{{ url_for('admin.add_law', parent_id=diploma.id) }}" class="text-green-600 hover:text-green-900 mr-3" title="Adicionar Tópico Filho">
+                                <i class="fas fa-plus-square"></i>
+                            </a>
+                            <a href="{{ url_for('admin.edit_law', law_id=diploma.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar Diploma"><i class="fas fa-edit"></i></a>
+                            <form action="{{ url_for('admin.delete_law', law_id=diploma.id) }}" method="POST" class="inline-block" onsubmit="return confirm('ATENÇÃO! Excluir este item principal também excluirá todos os seus tópicos. Deseja continuar?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="text-red-600 hover:text-red-900" title="Excluir Diploma e Tópicos"><i class="fas fa-trash-alt"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% for topic in diploma.children %}
+                    <tr>
+                        <td class="pl-12 pr-6 py-4 whitespace-nowrap text-sm font-medium text-brand-text"><i class="fas fa-file-alt mr-3 text-gray-400"></i>{{ topic.title }}</td>
+                        <td class="px-6 py-4 text-sm text-brand-text-light">{{ topic.description or "-" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <a href="{{ url_for('admin.edit_law', law_id=topic.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar Tópico"><i class="fas fa-edit"></i></a>
+                            <form action="{{ url_for('admin.delete_law', law_id=topic.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir este tópico?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="text-red-600 hover:text-red-900" title="Excluir Tópico"><i class="fas fa-trash-alt"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="pl-12 pr-6 py-4 text-sm text-gray-500 italic">Nenhum tópico cadastrado para este diploma.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-center text-gray-500 py-8">Nenhum item de estudo encontrado para o filtro selecionado.</p>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', function () {
+            this.classList.toggle('open');
+            const targetId = this.getAttribute('data-target');
+            const targetBody = document.querySelector(targetId);
+
+            if (targetBody) {
+                targetBody.classList.toggle('collapsed');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
