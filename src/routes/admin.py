@@ -283,7 +283,7 @@ def edit_law(law_id):
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
             index += 1
 
