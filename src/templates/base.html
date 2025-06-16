@@ -286,5 +286,36 @@
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     {% block scripts %}{% endblock %}
-</body>
+
+    <script>
+        // Desabilita o clique com o botão direito
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    
+        // Desabilita atalhos comuns para abrir DevTools
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+            }
+            // Ctrl+Shift+I
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+            }
+            // Ctrl+Shift+C
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+                e.preventDefault();
+            }
+            // Ctrl+Shift+J
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                e.preventDefault();
+            }
+            // Ctrl+U
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    </body>
 </html>
