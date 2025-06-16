@@ -4,6 +4,19 @@
 
 {% block head_extra %}
 <style>
+    /* ===================================================================== */
+    /* <<< INÍCIO DA CORREÇÃO: Visibilidade dos Botões de Confirmação >>> */
+    /* ===================================================================== */
+    .swal2-confirm.swal2-styled {
+        color: white !important; /* Garante que o texto do botão de confirmação seja branco */
+    }
+    .swal2-cancel.swal2-styled {
+        color: #595959 !important; /* Força uma cor de texto escura para o botão de cancelar, tornando-o visível */
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA CORREÇÃO >>> */
+    /* ===================================================================== */
+
     /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
@@ -538,13 +551,7 @@
 
     .dark-mode .law-content-container,
     .dark-mode .completed-banner,
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4: ESTILO MODO NOTURNO PARA BANNER DE AVISO >>> */
-    /* ===================================================================== */
     .dark-mode .law-banner,
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
     .dark-mode .last-read-info,
     .dark-mode #sticky-action-bar,
     .dark-mode .bookmark-section,
@@ -592,17 +599,11 @@
         color: #a7f3d0;
         border-color: #059669;
     }
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO PARA MANTER A LÓGICA): ESTILO MODO NOTURNO PARA BANNER >>> */
-    /* ===================================================================== */
     .dark-mode .law-banner {
         background-color: #422006;
         border-color: #ca8a04;
         color: #fef08a;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
     .dark-mode .last-read-info {
         background-color: #3730a3; /* Indigo escuro */
         color: #c7d2fe;
@@ -1137,8 +1138,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: `
-                                <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
-                                <h3 class="text-xl font-bold">${ach.name}</h3>
+                                <i class="<span class="math-inline">\{ach\.icon \|\| 'fas fa\-trophy'\} fa\-3x text\-yellow\-400 mb\-4" style\="display\:inline\-block;"\></i\>
+<h3 class\="text\-xl font\-bold"\></span>{ach.name}</h3>
                                 <p class="text-gray-600 mt-2">${ach.description}</p>
                             `,
                             icon: 'success',
