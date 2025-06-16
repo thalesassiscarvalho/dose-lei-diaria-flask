@@ -1,4 +1,4 @@
-# admin.py ATUALIZADO E CORRIGIDO
+# admin.py ATUALIZADO PARA CORRIGIR EXCLUSÃO DE LEIS E USUÁRIOS
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash
@@ -47,8 +47,6 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    # --- ETAPA 1: LÓGICA PARA OS CARTÕES DE MÉTRICAS ---
-    # Adicionamos de volta a busca pelos dados dos KPIs.
     stats = {
         'total_users': User.query.filter_by(role="student").count(),
         'active_users_week': UserProgress.query.filter(UserProgress.last_accessed_at >= (datetime.datetime.utcnow() - datetime.timedelta(days=7))).distinct(UserProgress.user_id).count(),
@@ -57,7 +55,6 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
 
-    # Por enquanto, os dados dos gráficos continuam vazios para não gerar erros.
     charts_data = {
         'new_users': {'labels': [], 'values': []},
         'top_content': {'labels': [], 'values': []}
@@ -66,7 +63,7 @@ def dashboard():
     return render_template("admin/dashboard.html",
                            stats=stats,
                            pending_users_count=pending_users_count,
-                           charts_data=charts_data, # A variável ainda é passada, mas com dados vazios
+                           charts_data=charts_data,
                            active_announcements_count=active_announcements_count
                            )
 
@@ -103,8 +100,6 @@ def content_management():
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
-
-# O resto do arquivo continua exatamente igual...
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -265,14 +260,39 @@ def edit_law(law_id):
 @login_required
 @admin_required
 def delete_law(law_id):
-    law = Law.query.get_or_404(law_id)
+    # A função `get_or_404` garante que o item existe
+    law = Law.query.options(joinedload(Law.children)).get_or_404(law_id)
     try:
+        # --- INÍCIO DA CORREÇÃO ---
+        # 1. Coletar IDs da lei principal e de todos os seus filhos recursivamente
+        ids_to_delete = [law.id]
+        # Esta função simples irá coletar todos os IDs dos filhos
+        def collect_child_ids(current_law):
+            for child in current_law.children:
+                ids_to_delete.append(child.id)
+                collect_child_ids(child)
+        collect_child_ids(law)
+
+        # 2. Deletar todos os registros dependentes usando a lista de IDs
+        # Usamos 'in_' para deletar de múltiplas leis de uma vez
+        LawBanner.query.filter(LawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        UsefulLink.query.filter(UsefulLink.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        UserProgress.query.filter(UserProgress.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
+
+        # 3. Finalmente, deletar a lei (e seus filhos, se a cascata estiver configurada)
+        # Se a cascata não funcionar perfeitamente, deletamos manualmente do filho para o pai.
+        for child in law.children:
+             db.session.delete(child)
         db.session.delete(law)
+        # --- FIM DA CORREÇÃO ---
+
         db.session.commit()
         flash("Item e todos os seus dados relacionados foram excluídos!", "success")
     except Exception as e:
         db.session.rollback()
-        flash(f"Erro ao excluir o item: {e}", "danger")
+        # É uma boa prática registrar o erro para depuração
+        print(f"Erro ao excluir o item: {e}") 
+        flash(f"Erro ao excluir o item. Verifique as dependências.", "danger")
     return redirect(url_for("admin.content_management"))
 
 @admin_bp.route("/users")
@@ -303,8 +323,9 @@ def deny_user(user_id):
         try:
             email = user.email
             # --- INÍCIO DA CORREÇÃO ---
-            # Antes de deletar o usuário, deletamos seus registros dependentes.
+            # Antes de deletar o usuário, deletamos todos os seus registros dependentes.
             UserSeenAnnouncement.query.filter_by(user_id=user.id).delete()
+            UserProgress.query.filter_by(user_id=user.id).delete()
             # --- FIM DA CORREÇÃO ---
             
             db.session.delete(user)
@@ -312,6 +333,7 @@ def deny_user(user_id):
             flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
         except Exception as e:
             db.session.rollback()
+            print(f"Erro ao excluir o usuário: {e}")
             flash(f"Ocorreu um erro ao excluir o usuário: {e}", "danger")
 
     return redirect(url_for("admin.manage_users"))
