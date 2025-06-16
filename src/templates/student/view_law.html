@@ -1575,13 +1575,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
             event.preventDefault();
-            // Substituindo o alert() padrão por um SweetAlert2 mais elegante
-            Swal.fire({
-                title: 'Cópia Desabilitada',
-                html: 'Para proteger a propriedade intelectual e incentivar o uso dos recursos interativos, a função de copiar foi desativada.<br><br>Agradecemos a sua compreensão!',
-                icon: 'info',
-                confirmButtonText: 'Entendi'
-            });
+            alert('A cópia deste conteúdo está desabilitada para proteger a propriedade intelectual.');
         });
     }
 
