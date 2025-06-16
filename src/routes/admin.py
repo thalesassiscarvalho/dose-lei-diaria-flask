@@ -1,7 +1,6 @@
-# admin.py ATUALIZADO PARA MELHORAR LOGS DE ERRO E DIAGNÓSTICO
+# admin.py VERSÃO FINAL CORRIGIDA
 
 # -*- coding: utf-8 -*-
-# ALTERAÇÃO: Importar 'current_app' para usar o logger do Flask
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
 from flask_login import login_required, current_user
 from functools import wraps
@@ -9,7 +8,8 @@ from sqlalchemy.orm import joinedload
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner
+# ALTERAÇÃO 1: Importar o modelo que faltava: UserSeenLawBanner
+from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress 
 
@@ -44,6 +44,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ... (dashboard, content_management e outras rotas que não foram alteradas) ...
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -101,7 +102,6 @@ def content_management():
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
-# ... (outras rotas como manage_subjects, add_law, edit_law permanecem iguais) ...
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -264,27 +264,22 @@ def edit_law(law_id):
 def delete_law(law_id):
     law = Law.query.options(joinedload(Law.children)).get_or_404(law_id)
     try:
-        # --- LÓGICA DE EXCLUSÃO SIMPLIFICADA E COM LOGS ---
-        # 1. Coletar IDs da lei principal e de todos os filhos.
         ids_to_delete = [law.id]
         if law.children:
             for child in law.children:
                 ids_to_delete.append(child.id)
         
-        # 2. Deletar registros dependentes em outras tabelas.
+        # ALTERAÇÃO 2: Adicionar a exclusão da dependência que faltava
+        UserSeenLawBanner.query.filter(UserSeenLawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         LawBanner.query.filter(LawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UsefulLink.query.filter(UsefulLink.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserProgress.query.filter(UserProgress.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
 
-        # 3. Deletar o item principal. A configuração de 'cascade' no modelo
-        # deve cuidar da exclusão dos filhos automaticamente.
         db.session.delete(law)
-
         db.session.commit()
         flash("Item e todos os seus dados relacionados foram excluídos!", "success")
     except Exception as e:
         db.session.rollback()
-        # ALTERAÇÃO: Usando o logger do Flask para garantir que o erro seja registrado.
         current_app.logger.error(f"Falha ao excluir a lei ID {law_id}. Erro: {e}", exc_info=True)
         flash(f"Erro ao excluir o item. Verifique o log da aplicação para mais detalhes.", "danger")
     return redirect(url_for("admin.content_management"))
@@ -316,7 +311,8 @@ def deny_user(user_id):
     else:
         try:
             email = user.email
-            # Deletar todos os registros dependentes primeiro.
+            # Deletar todas as dependências do usuário, incluindo a nova.
+            UserSeenLawBanner.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             UserSeenAnnouncement.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             UserProgress.query.filter_by(user_id=user.id).delete(synchronize_session=False)
             
@@ -325,7 +321,6 @@ def deny_user(user_id):
             flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
         except Exception as e:
             db.session.rollback()
-            # ALTERAÇÃO: Usando o logger do Flask para garantir que o erro seja registrado.
             current_app.logger.error(f"Falha ao negar o usuário ID {user_id}. Erro: {e}", exc_info=True)
             flash(f"Ocorreu um erro ao excluir o usuário. Verifique o log da aplicação.", "danger")
 
@@ -348,7 +343,6 @@ def reset_user_password(user_id):
         return redirect(url_for("admin.manage_users"))
     return render_template("admin/reset_password.html", user=user)
 
-# ... (rotas de announcements permanecem iguais) ...
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
 @admin_required
