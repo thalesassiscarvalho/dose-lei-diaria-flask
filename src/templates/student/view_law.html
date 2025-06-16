@@ -1135,18 +1135,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.success) {
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
                         const ach = data.unlocked_achievements[0];
+                        // =================================================================
+                        // <<< INÍCIO DA CORREÇÃO: Estrutura HTML do Alerta de Conquista >>>
+                        // =================================================================
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: `
-                                <i class="<span class="math-inline">\{ach\.icon \|\| 'fas fa\-trophy'\} fa\-3x text\-yellow\-400 mb\-4" style\="display\:inline\-block;"\></i\>
-<h3 class\="text\-xl font\-bold"\></span>{ach.name}</h3>
-                                <p class="text-gray-600 mt-2">${ach.description}</p>
+                                <div style="text-align: center;">
+                                    <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
+                                    <h3 class="text-xl font-bold mt-2">${ach.name}</h3>
+                                    <p class="text-gray-600 mt-2">${ach.description}</p>
+                                </div>
                             `,
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!'
                         }).then(() => {
                             window.location.reload();
                         });
+                        // =================================================================
+                        // <<< FIM DA CORREÇÃO >>>
+                        // =================================================================
                     } else {
                         window.location.reload();
                     }
