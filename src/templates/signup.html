@@ -44,7 +44,7 @@
 /* APENAS DESKTOP - Fundo com documentos legais */
 @media (min-width: 769px) {
     body {
-        background-image: url("{{ url_for("static", filename="backgroundlogin.png") }}");
+        background-image: url("{{ url_for("static", filename="backgroundlogin.webp") }}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -54,7 +54,7 @@
 
     /* Overlay para melhorar legibilidade - APENAS DESKTOP */
     body::before {
-        content: ";
+        content: '';
         position: fixed;
         top: 0;
         left: 0;
@@ -79,26 +79,24 @@
     }
 }
 
-/* MOBILE - Fundo com imagem específica para mobile */
+/* ===================================================================== */
+/* <<< INÍCIO DA ALTERAÇÃO: MOBILE - Fundo com cor sólida >>> */
+/* ===================================================================== */
 @media (max-width: 768px) {
     body {
-        background-image: url("{{ url_for("static", filename="backgroundloginmobile.png") }}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: scroll;
+        background-color: #2D68EB; /* Cor sólida para mobile, muito mais rápido! */
         min-height: 100vh;
     }
 
-    /* Overlay para melhorar legibilidade - MOBILE */
+    /* Overlay não é mais necessário com cor sólida, mas pode ser mantido se desejar um efeito */
     body::before {
-        content: ";
+        content: '';
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.40);
+        background: rgba(255, 255, 255, 0.0); /* Removido o overlay, mas mantido para estrutura */
         z-index: -1;
     }
     
@@ -118,6 +116,10 @@
         backdrop-filter: blur(10px);
     }
 }
+/* ===================================================================== */
+/* <<< FIM DA ALTERAÇÃO >>> */
+/* ===================================================================== */
+
 
 /* Estilos gerais (aplicam em ambas as versões) */
 .form-input-focus:focus {
