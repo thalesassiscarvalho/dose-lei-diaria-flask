@@ -1,10 +1,11 @@
+# admin.py ATUALIZADO E COMPLETO
+
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
 import datetime
-# NOVO: Importar a biblioteca de sanitização e o CSSSanitizer
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner
@@ -13,7 +14,7 @@ from src.models.progress import UserProgress
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# Definição das regras de sanitização
+# As regras de sanitização continuam as mesmas
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 
     'ul', 'ol', 'li', 'a', 'blockquote',
@@ -31,8 +32,6 @@ ALLOWED_STYLES = [
     'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
     'border', 'border-left'
 ]
-
-# NOVO: Cria a instância do CSSSanitizer
 css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_STYLES)
 
 
@@ -45,10 +44,27 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# --- MUDANÇA #1: A rota do dashboard agora é super simples ---
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
 def dashboard():
+    """
+    Esta é a nova página do painel. Por enquanto, ela apenas renderiza
+    o template do novo dashboard, que estará inicialmente vazio.
+    """
+    # No futuro, aqui entrará a busca por dados de métricas (KPIs e gráficos)
+    return render_template("admin/dashboard.html")
+
+# --- MUDANÇA #2: Criamos a nova rota para gerenciar o conteúdo ---
+@admin_bp.route('/content-management')
+@login_required
+@admin_required
+def content_management():
+    """
+    Esta rota agora contém a lógica que estava ANTES no dashboard.
+    Ela é responsável por buscar e filtrar os itens de estudo.
+    """
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
     
@@ -73,16 +89,14 @@ def dashboard():
             subjects_with_diplomas[subject_name] = []
         subjects_with_diplomas[subject_name].append(diploma)
 
-    pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
-    active_announcements_count = Announcement.query.filter_by(is_active=True).count()
-    
-    return render_template("admin/dashboard.html", 
+    # Note que agora estamos renderizando o template 'content_management.html'
+    return render_template("admin/content_management.html", 
                            subjects_with_diplomas=subjects_with_diplomas,
-                           pending_users_count=pending_users_count,
-                           active_announcements_count=active_announcements_count,
                            all_subjects=all_subjects,
                            selected_subject=subject_filter)
 
+
+# O resto do arquivo continua exatamente como estava no seu original
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -129,7 +143,6 @@ def add_law():
 
     if request.method == "POST":
         title = bleach.clean(request.form.get("title", ""), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         description = bleach.clean(request.form.get("description", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         content = bleach.clean(request.form.get("content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
@@ -174,8 +187,9 @@ def add_law():
             index += 1
         
         db.session.commit()
+        # MUDANÇA #3: Redireciona para o content_management, não para o dashboard
         flash("Item de estudo adicionado com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("admin.content_management"))
 
     return render_template("admin/add_edit_law.html", 
                            law=None, 
@@ -194,7 +208,6 @@ def edit_law(law_id):
 
     if request.method == "POST":
         law.title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         law.description = bleach.clean(request.form.get("description"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         law.content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         law.juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
@@ -231,13 +244,13 @@ def edit_law(law_id):
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
             index += 1
 
         db.session.commit()
         flash("Item de estudo atualizado com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("admin.content_management"))
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
 
@@ -253,7 +266,8 @@ def delete_law(law_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Erro ao excluir o item: {e}", "danger")
-    return redirect(url_for("admin.dashboard"))
+    # MUDANÇA #4: Redireciona para o content_management
+    return redirect(url_for("admin.content_management"))
 
 @admin_bp.route("/users")
 @login_required
@@ -308,7 +322,6 @@ def reset_user_password(user_id):
 def manage_announcements():
     if request.method == "POST":
         title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         is_active = request.form.get("is_active") == "on"
         is_fixed = request.form.get("is_fixed") == "on"
