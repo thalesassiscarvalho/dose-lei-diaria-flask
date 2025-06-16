@@ -1,4 +1,4 @@
-# admin.py ATUALIZADO PARA A ETAPA 1
+# admin.py ATUALIZADO E CORRIGIDO
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash
@@ -300,11 +300,22 @@ def deny_user(user_id):
     if user.role == "admin":
         flash("Não é possível excluir um administrador.", "danger")
     else:
-        email = user.email
-        db.session.delete(user)
-        db.session.commit()
-        flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
+        try:
+            email = user.email
+            # --- INÍCIO DA CORREÇÃO ---
+            # Antes de deletar o usuário, deletamos seus registros dependentes.
+            UserSeenAnnouncement.query.filter_by(user_id=user.id).delete()
+            # --- FIM DA CORREÇÃO ---
+            
+            db.session.delete(user)
+            db.session.commit()
+            flash(f"Usuário {email} e seus dados foram excluídos com sucesso!", "warning")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Ocorreu um erro ao excluir o usuário: {e}", "danger")
+
     return redirect(url_for("admin.manage_users"))
+
 
 @admin_bp.route("/users/reset-password/<int:user_id>", methods=["GET", "POST"])
 @login_required
