@@ -100,27 +100,27 @@
         <i class="fas fa-edit mr-2"></i>Ver e Gerenciar Todo o Conteúdo
     </a>
 </div>
-<p class="text-center text-gray-500 py-8 bg-white rounded-lg shadow-sm">
-    O gerenciamento de leis e tópicos agora pode ser acessado em sua própria página para um painel mais limpo.
-</p>
 
 {% endblock %}
+
 
 {% block scripts %}
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Removemos a variável que vem do Python ({{ charts_data... }}) e colocamos
+    // uma lista vazia '[]' diretamente no JavaScript.
+    
     // --- Gráfico de Novos Usuários ---
-    // IMPORTANTE: Os dados para 'labels' e 'data' devem vir do seu backend (Flask)
-    // Exemplo de dados que o backend enviaria:
     const newUsersData = {
-        labels: {{ charts_data.new_users.labels|tojson|safe }}, // Ex: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4']
-        values: {{ charts_data.new_users.values|tojson|safe }}  // Ex: [12, 19, 3, 5]
+        labels: [], // Antes era: {{ charts_data.new_users.labels|tojson|safe }}
+        values: []  // Antes era: {{ charts_data.new_users.values|tojson|safe }}
     };
 
     const ctxNewUsers = document.getElementById('newUsersChart').getContext('2d');
     new Chart(ctxNewUsers, {
-        type: 'line', // ou 'bar'
+        type: 'line',
         data: {
             labels: newUsersData.labels,
             datasets: [{
@@ -143,15 +143,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // --- Gráfico de Conteúdo Popular ---
-    // IMPORTANTE: Os dados para 'labels' e 'data' devem vir do seu backend (Flask)
     const topContentData = {
-        labels: {{ charts_data.top_content.labels|tojson|safe }}, // Ex: ['CF, Art. 5', 'CP, Art. 121', 'Lei 8.112']
-        values: {{ charts_data.top_content.values|tojson|safe }}  // Ex: [300, 150, 80]
+        labels: [], // Antes era: {{ charts_data.top_content.labels|tojson|safe }}
+        values: []  // Antes era: {{ charts_data.top_content.values|tojson|safe }}
     };
     
     const ctxTopContent = document.getElementById('topContentChart').getContext('2d');
     new Chart(ctxTopContent, {
-        type: 'bar', // ou 'doughnut'
+        type: 'bar',
         data: {
             labels: topContentData.labels,
             datasets: [{
@@ -175,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }]
         },
         options: {
-            indexAxis: 'y', // Deixa as barras na horizontal, bom para títulos longos
+            indexAxis: 'y',
             responsive: true,
         }
     });
