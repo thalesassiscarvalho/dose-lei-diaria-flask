@@ -57,15 +57,19 @@ def dashboard():
     }
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
 
-    # Lógica para buscar dados para os gráficos (exemplo)
-    # Para o gráfico de novos usuários
-    new_users_labels = []
-    new_users_values = []
-    for i in range(29, -1, -1):
-        day = datetime.date.today() - datetime.timedelta(days=i)
-        count = User.query.filter(db.func.date(User.created_at) == day, User.role == 'student').count()
-        new_users_labels.append(day.strftime("%d/%m"))
-        new_users_values.append(count)
+    # --- CORREÇÃO APLICADA AQUI ---
+    # O bloco de código abaixo foi comentado porque o modelo User não possui o campo 'created_at'.
+    # Isso impede o erro e permite que o dashboard seja carregado.
+    #
+    # # Lógica para o gráfico de novos usuários (Temporariamente Desativada)
+    # new_users_labels = []
+    # new_users_values = []
+    # for i in range(29, -1, -1):
+    #     day = datetime.date.today() - datetime.timedelta(days=i)
+    #     # A linha abaixo causa o erro, pois User.created_at não existe
+    #     count = User.query.filter(db.func.date(User.created_at) == day, User.role == 'student').count()
+    #     new_users_labels.append(day.strftime("%d/%m"))
+    #     new_users_values.append(count)
 
     # Para o gráfico de top conteúdos (exemplo, baseado em visualizações)
     top_content = db.session.query(
@@ -81,7 +85,8 @@ def dashboard():
     top_content_values = [item[1] for item in top_content]
     
     charts_data = {
-        'new_users': {'labels': new_users_labels, 'values': new_users_values},
+        # Passa uma lista vazia para o gráfico de novos usuários para não quebrar o template
+        'new_users': {'labels': [], 'values': []},
         'top_content': {'labels': top_content_labels, 'values': top_content_values}
     }
     
