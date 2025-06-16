@@ -6,16 +6,6 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-purple-800">Gerenciar Usuários</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="p-4 mb-4 text-sm rounded-lg {% if category == 'danger' %} bg-red-100 text-red-700 {% elif category == 'success' %} bg-green-100 text-green-700 {% else %} bg-blue-100 text-blue-700 {% endif %}" role="alert">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <div class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
         <div class="min-w-full inline-block align-middle">
             <div class="overflow-hidden overflow-x-scroll">
