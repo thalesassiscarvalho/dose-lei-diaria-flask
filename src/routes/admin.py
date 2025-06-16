@@ -49,6 +49,59 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
+    # Lógica para buscar os dados para os KPIs (Key Performance Indicators)
+    stats = {
+        'total_users': User.query.filter_by(role="student").count(),
+        'active_users_week': UserProgress.query.filter(UserProgress.last_accessed_at >= (datetime.datetime.utcnow() - datetime.timedelta(days=7))).distinct(UserProgress.user_id).count(),
+        'total_laws': Law.query.filter(Law.parent_id.isnot(None)).count(),
+    }
+    pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
+
+    # Lógica para buscar dados para os gráficos (exemplo)
+    # Para o gráfico de novos usuários
+    new_users_labels = []
+    new_users_values = []
+    for i in range(29, -1, -1):
+        day = datetime.date.today() - datetime.timedelta(days=i)
+        count = User.query.filter(db.func.date(User.created_at) == day, User.role == 'student').count()
+        new_users_labels.append(day.strftime("%d/%m"))
+        new_users_values.append(count)
+
+    # Para o gráfico de top conteúdos (exemplo, baseado em visualizações)
+    top_content = db.session.query(
+        Law.title,
+        db.func.count(UserProgress.id).label('views')
+    ).join(UserProgress, UserProgress.law_id == Law.id)\
+     .filter(Law.parent_id.isnot(None))\
+     .group_by(Law.title)\
+     .order_by(db.desc('views'))\
+     .limit(5).all()
+
+    top_content_labels = [item[0] for item in top_content]
+    top_content_values = [item[1] for item in top_content]
+    
+    charts_data = {
+        'new_users': {'labels': new_users_labels, 'values': new_users_values},
+        'top_content': {'labels': top_content_labels, 'values': top_content_values}
+    }
+    
+    active_announcements_count = Announcement.query.filter_by(is_active=True).count()
+
+
+    return render_template("admin/dashboard.html",
+                           stats=stats,
+                           pending_users_count=pending_users_count,
+                           charts_data=charts_data,
+                           active_announcements_count=active_announcements_count
+                           )
+
+@admin_bp.route('/content-management')
+@login_required
+@admin_required
+def content_management():
+    """
+    Nova rota dedicada para listar e gerenciar todos os itens de estudo.
+    """
     subject_filter = request.args.get("subject_filter", "all")
     all_subjects = Subject.query.order_by(Subject.name).all()
     
@@ -73,15 +126,11 @@ def dashboard():
             subjects_with_diplomas[subject_name] = []
         subjects_with_diplomas[subject_name].append(diploma)
 
-    pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
-    active_announcements_count = Announcement.query.filter_by(is_active=True).count()
-    
-    return render_template("admin/dashboard.html", 
+    return render_template("admin/content_management.html", 
                            subjects_with_diplomas=subjects_with_diplomas,
-                           pending_users_count=pending_users_count,
-                           active_announcements_count=active_announcements_count,
                            all_subjects=all_subjects,
-                           selected_subject=subject_filter)
+                           selected_subject=subject_filter,
+                           title="Gerenciar Conteúdo")
 
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
@@ -175,7 +224,7 @@ def add_law():
         
         db.session.commit()
         flash("Item de estudo adicionado com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("admin.content_management"))
 
     return render_template("admin/add_edit_law.html", 
                            law=None, 
@@ -237,7 +286,7 @@ def edit_law(law_id):
 
         db.session.commit()
         flash("Item de estudo atualizado com sucesso!", "success")
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("admin.content_management"))
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts)
 
@@ -253,7 +302,7 @@ def delete_law(law_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Erro ao excluir o item: {e}", "danger")
-    return redirect(url_for("admin.dashboard"))
+    return redirect(url_for("admin.content_management"))
 
 @admin_bp.route("/users")
 @login_required
