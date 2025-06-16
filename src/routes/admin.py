@@ -1,4 +1,4 @@
-# admin.py VERSÃO FINAL E CORRIGIDA - AGORA COM TODOS OS MODELOS E DEPENDÊNCIAS
+# admin.py VERSÃO FINAL CORRIGIDA - 16/06/2025 v2
 
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
@@ -9,18 +9,12 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
-# =====================================================================
-# <<< INÍCIO DA CORREÇÃO: IMPORTAÇÕES COMPLETAS E CORRETAS >>>
-# =====================================================================
-# Importando cada modelo de seu respectivo arquivo de origem
+# Importações completas e corretas
 from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
-# =====================================================================
-# <<< FIM DA CORREÇÃO >>>
-# =====================================================================
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -274,16 +268,12 @@ def delete_law(law_id):
     law = Law.query.options(joinedload(Law.children)).get_or_404(law_id)
     try:
         ids_to_delete = [law.id]
-        # Usar uma função recursiva para coletar todos os IDs de filhos, netos, etc.
         def collect_child_ids(current_law):
             for child in current_law.children:
                 ids_to_delete.append(child.id)
                 collect_child_ids(child)
         collect_child_ids(law)
         
-        # =====================================================================
-        # <<< INÍCIO DA CORREÇÃO: LIMPEZA COMPLETA DE DEPENDÊNCIAS DA LEI >>>
-        # =====================================================================
         UserComment.query.filter(UserComment.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserNotes.query.filter(UserNotes.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserLawMarkup.query.filter(UserLawMarkup.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
@@ -291,9 +281,6 @@ def delete_law(law_id):
         LawBanner.query.filter(LawBanner.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UsefulLink.query.filter(UsefulLink.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
         UserProgress.query.filter(UserProgress.law_id.in_(ids_to_delete)).delete(synchronize_session=False)
-        # =====================================================================
-        # <<< FIM DA CORREÇÃO >>>
-        # =====================================================================
 
         db.session.delete(law)
         db.session.commit()
@@ -332,9 +319,7 @@ def deny_user(user_id):
 
     try:
         email = user.email
-        # =====================================================================
-        # <<< INÍCIO DA CORREÇÃO: LIMPEZA COMPLETA DE DEPENDÊNCIAS DO USUÁRIO >>>
-        # =====================================================================
+        
         # Limpa todas as tabelas que têm uma relação direta com o usuário
         UserComment.query.filter_by(user_id=user_id).delete()
         UserProgress.query.filter_by(user_id=user_id).delete()
@@ -345,12 +330,14 @@ def deny_user(user_id):
         UserNotes.query.filter_by(user_id=user_id).delete()
         UserLawMarkup.query.filter_by(user_id=user_id).delete()
         
-        # Limpa tabelas de associação (muitas-para-muitas)
-        # A maneira mais segura é acessar o relacionamento no objeto do usuário e limpá-lo
-        user.achievements.clear()
-        user.favorite_laws.clear()
         # =====================================================================
-        # <<< FIM DA CORREÇÃO >>>
+        # <<< INÍCIO DA CORREÇÃO FINAL >>>
+        # =====================================================================
+        # Limpa relacionamentos muitos-para-muitos atribuindo uma lista vazia
+        user.achievements = []
+        user.favorite_laws = []
+        # =====================================================================
+        # <<< FIM DA CORREÇÃO FINAL >>>
         # =====================================================================
         
         db.session.delete(user)
@@ -436,7 +423,6 @@ def toggle_announcement(announcement_id):
 def delete_announcement(announcement_id):
     announcement = Announcement.query.get_or_404(announcement_id)
     try:
-        # A exclusão de UserSeenAnnouncement é tratada pela cascata ao deletar o anúncio
         db.session.delete(announcement)
         db.session.commit()
         flash("Aviso excluído com sucesso!", "success")
