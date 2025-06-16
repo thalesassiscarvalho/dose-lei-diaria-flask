@@ -49,49 +49,24 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    # Lógica para buscar os dados para os KPIs (Key Performance Indicators)
-    stats = {
-        'total_users': User.query.filter_by(role="student").count(),
-        'active_users_week': UserProgress.query.filter(UserProgress.last_accessed_at >= (datetime.datetime.utcnow() - datetime.timedelta(days=7))).distinct(UserProgress.user_id).count(),
-        'total_laws': Law.query.filter(Law.parent_id.isnot(None)).count(),
-    }
-    pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
-
-    # --- CORREÇÃO APLICADA AQUI ---
-    # O bloco de código para o gráfico de novos usuários foi comentado porque o modelo User não possui o campo 'created_at'.
-    # Isso impede o erro e permite que o dashboard seja carregado.
+    # --- INÍCIO DO TESTE DE ISOLAMENTO ---
+    # Toda a lógica de busca no banco de dados foi removida temporariamente.
+    # Estamos passando dados estáticos (falsos) para o template.
+    # O objetivo é ver se a página carrega sem erros.
     
-    # # Lógica para o gráfico de novos usuários (Temporariamente Desativada)
-    # new_users_labels = []
-    # new_users_values = []
-    # for i in range(29, -1, -1):
-    #     day = datetime.date.today() - datetime.timedelta(days=i)
-    #     # A linha abaixo causa o erro, pois User.created_at não existe
-    #     count = User.query.filter(db.func.date(User.created_at) == day, User.role == 'student').count()
-    #     new_users_labels.append(day.strftime("%d/%m"))
-    #     new_users_values.append(count)
-
-    # Para o gráfico de top conteúdos (exemplo, baseado em visualizações)
-    top_content = db.session.query(
-        Law.title,
-        db.func.count(UserProgress.id).label('views')
-    ).join(UserProgress, UserProgress.law_id == Law.id)\
-     .filter(Law.parent_id.isnot(None))\
-     .group_by(Law.title)\
-     .order_by(db.desc('views'))\
-     .limit(5).all()
-
-    top_content_labels = [item[0] for item in top_content]
-    top_content_values = [item[1] for item in top_content]
+    stats = {
+        'total_users': 0,
+        'active_users_week': 0,
+        'total_laws': 0,
+    }
+    pending_users_count = 0
     
     charts_data = {
-        # Passa listas vazias para o gráfico de novos usuários para não quebrar o template
         'new_users': {'labels': [], 'values': []},
-        'top_content': {'labels': top_content_labels, 'values': top_content_values}
+        'top_content': {'labels': [], 'values': []}
     }
     
-    active_announcements_count = Announcement.query.filter_by(is_active=True).count()
-
+    active_announcements_count = 0
 
     return render_template("admin/dashboard.html",
                            stats=stats,
@@ -99,6 +74,7 @@ def dashboard():
                            charts_data=charts_data,
                            active_announcements_count=active_announcements_count
                            )
+    # --- FIM DO TESTE DE ISOLAMENTO ---
 
 @admin_bp.route('/content-management')
 @login_required
@@ -136,6 +112,8 @@ def content_management():
                            all_subjects=all_subjects,
                            selected_subject=subject_filter,
                            title="Gerenciar Conteúdo")
+
+# ... (O resto do arquivo continua exatamente igual, não precisa copiar daqui para baixo se já estiver igual) ...
 
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
@@ -281,7 +259,7 @@ def edit_law(law_id):
         index = 0
         while f'link-{index}-title' in request.form:
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
-            link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
+            link_url = bleach.clean(request.form.get(f'link-{index}-url', ""), tags=[], strip=True)
             if link_title and link_url:
                 new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
