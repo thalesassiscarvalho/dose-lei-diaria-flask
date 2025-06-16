@@ -58,9 +58,9 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
 
     # --- CORREÇÃO APLICADA AQUI ---
-    # O bloco de código abaixo foi comentado porque o modelo User não possui o campo 'created_at'.
+    # O bloco de código para o gráfico de novos usuários foi comentado porque o modelo User não possui o campo 'created_at'.
     # Isso impede o erro e permite que o dashboard seja carregado.
-    #
+    
     # # Lógica para o gráfico de novos usuários (Temporariamente Desativada)
     # new_users_labels = []
     # new_users_values = []
@@ -85,7 +85,7 @@ def dashboard():
     top_content_values = [item[1] for item in top_content]
     
     charts_data = {
-        # Passa uma lista vazia para o gráfico de novos usuários para não quebrar o template
+        # Passa listas vazias para o gráfico de novos usuários para não quebrar o template
         'new_users': {'labels': [], 'values': []},
         'top_content': {'labels': top_content_labels, 'values': top_content_values}
     }
@@ -183,7 +183,6 @@ def add_law():
 
     if request.method == "POST":
         title = bleach.clean(request.form.get("title", ""), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         description = bleach.clean(request.form.get("description", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         content = bleach.clean(request.form.get("content", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation", ""), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
@@ -248,7 +247,6 @@ def edit_law(law_id):
 
     if request.method == "POST":
         law.title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         law.description = bleach.clean(request.form.get("description"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         law.content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         law.juridiques_explanation = bleach.clean(request.form.get("juridiques_explanation"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
@@ -362,7 +360,6 @@ def reset_user_password(user_id):
 def manage_announcements():
     if request.method == "POST":
         title = bleach.clean(request.form.get("title"), tags=[], strip=True)
-        # ALTERADO: Usa o novo css_sanitizer
         content = bleach.clean(request.form.get("content"), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer)
         is_active = request.form.get("is_active") == "on"
         is_fixed = request.form.get("is_fixed") == "on"
