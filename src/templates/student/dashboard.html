@@ -335,11 +335,52 @@
     .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
     .topic-item:first-child { border-top: 1px solid #e5e7eb; }
     .topic-item:last-child { border-bottom: none; }
-    .topic-item:hover { background-color: #f3f4f6; }
-
     .topic-title { display: flex; align-items: center; color: #334155; }
     .topic-title .icon { margin-right: 0.75rem; color: #94a3b8; }
     .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+    /* ===================================================================== */
+    /* <<< INÍCIO DAS ALTERAÇÕES SOLICITADAS: Divisão e Alinhamento dos Tópicos >>> */
+    /* ===================================================================== */
+
+    /* 1. Divisão aprimorada com cores de fundo intercaladas */
+    .topic-item:nth-child(even) {
+        background-color: #f9fafb; /* Cinza bem claro para diferenciar as linhas */
+    }
+
+    .topic-item:hover {
+        background-color: #f0f2f5; /* Efeito de hover consistente para todas as linhas */
+    }
+
+    /* 2. Alinhamento vertical dos botões em telas maiores (desktop) */
+    @media (min-width: 769px) {
+        /*
+         O seletor '> div:first-child' é usado para ser flexível,
+         pegando tanto a div '.topic-title' (usada nos favoritos)
+         quanto a div '.topic-info' (usada na busca dinâmica).
+        */
+        .topic-item > div:first-child {
+            flex-grow: 1;           /* Faz a área do título expandir, ocupando o espaço vazio */
+            margin-right: 1.5rem;     /* Cria uma separação visual dos botões */
+            /* As 3 propriedades abaixo evitam quebra de layout com títulos muito grandes */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /*
+         O seletor '> div:last-child' pega a área de ações,
+         seja '.topic-actions' ou '.topic-status-and-actions'.
+        */
+        .topic-item > div:last-child {
+            flex-shrink: 0; /* Impede que a área dos botões encolha ou seja empurrada */
+        }
+    }
+
+    /* ===================================================================== */
+    /* <<< FIM DAS ALTERAÇÕES SOLICITADAS >>> */
+    /* ===================================================================== */
+
     .accordion-toggle-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
     .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
@@ -708,9 +749,9 @@
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
     /* ===================================================================== */
     
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>>
-    // =====================================================================
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
+    /* ===================================================================== */
     @media (max-width: 768px) {
     /* Altera o item principal para empilhar os elementos verticalmente */
     .topic-item {
@@ -764,9 +805,9 @@
         margin-right: 0.3rem;
     }
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>>
-    // =====================================================================
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
+    /* ===================================================================== */
 
 </style>
 {% endblock %}
