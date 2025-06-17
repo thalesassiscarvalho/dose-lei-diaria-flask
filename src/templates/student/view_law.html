@@ -109,6 +109,9 @@
         border: 1px solid #a7f3d0;
     }
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/4: ESTILOS PARA O BANNER DE AVISO DA LEI >>> */
+    /* ===================================================================== */
     .law-banner {
         padding: 1rem;
         margin-bottom: 1.5rem;
@@ -142,6 +145,9 @@
     .law-banner-dismiss-btn:hover {
         opacity: 1;
     }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 1/4 >>> */
+    /* ===================================================================== */
 
     .last-read-info {
         background-color: #e0e7ff; /* Indigo 100 */
@@ -532,7 +538,13 @@
 
     .dark-mode .law-content-container,
     .dark-mode .completed-banner,
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4: ESTILO MODO NOTURNO PARA BANNER DE AVISO >>> */
+    /* ===================================================================== */
     .dark-mode .law-banner,
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
+    /* ===================================================================== */
     .dark-mode .last-read-info,
     .dark-mode #sticky-action-bar,
     .dark-mode .bookmark-section,
@@ -580,11 +592,17 @@
         color: #a7f3d0;
         border-color: #059669;
     }
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO PARA MANTER A LÓGICA): ESTILO MODO NOTURNO PARA BANNER >>> */
+    /* ===================================================================== */
     .dark-mode .law-banner {
         background-color: #422006;
         border-color: #ca8a04;
         color: #fef08a;
     }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
+    /* ===================================================================== */
     .dark-mode .last-read-info {
         background-color: #3730a3; /* Indigo escuro */
         color: #c7d2fe;
@@ -680,7 +698,9 @@
     }
     /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
-    /* ESTILOS PARA SWEETALERT2 EM MODO NOTURNO */
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA SWEETALERT2 EM MODO NOTURNO >>> */
+    /* ===================================================================== */
     .dark-mode .swal2-popup {
         background-color: #1f2937 !important;
         color: #d1d5db !important;
@@ -692,6 +712,9 @@
     .dark-mode .swal2-content {
         color: #d1d5db !important;
     }
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
+    /* ===================================================================== */
 
     /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
     .font-control-group {
@@ -773,6 +796,9 @@
         color: #f0fdf4;
     }
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO): NOVOS ESTILOS CSS PARA JURIDIQUÊS >>> */
+    /* ===================================================================== */
     .juridiques-container {
         background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
         border: 1px solid #ddd6fe; /* Roxo claro (violet-200) */
@@ -795,7 +821,10 @@
     .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
         color: #ddd6fe; /* Texto claro (violet-200) */
     }
-    
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
+    /* ===================================================================== */
+
     /* --- CÓDIGO ATUALIZADO: AJUSTE DE ROLAGEM HORIZONTAL PARA BARRA DE AÇÕES EM TELAS PEQUENAS --- */
     @media (max-width: 480px) {
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
@@ -927,7 +956,7 @@
                  <button id="format-highlight-green-btn" class="font-control-btn" title="Marca-texto Verde"><i class="fas fa-highlighter" style="color: #4ade80;"></i></button>
                  <button id="format-highlight-blue-btn" class="font-control-btn" title="Marca-texto Azul"><i class="fas fa-highlighter" style="color: #60a5fa;"></i></button>
                  <button id="format-highlight-pink-btn" class="font-control-btn" title="Marca-texto Rosa"><i class="fas fa-highlighter" style="color: #f472b6;"></i></button>
-                 <button id="format-remove-format-btn" class="font-control-btn" title="Remover Formatação (selecione o texto)"><i class="fas fa-eraser"></i></button>
+                 <button id="format-unformat-btn" class="font-control-btn" title="Remover formatação (selecione o texto)"><i class="fas fa-eraser" style="color: #6b7280;"></i></button>
                  <button id="restore-law-btn" class="font-control-btn" title="Restaurar lei ao original (remove todas as marcações e anotações)"><i class="fas fa-history" style="color: #6b7280;"></i></button>
             </div>
             <div class="flex items-center space-x-2 border-l border-gray-300 pl-2 ml-1">
@@ -1075,6 +1104,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
     const completeForm = document.getElementById('mark-complete-form');
     if (completeForm) {
         completeForm.addEventListener('submit', function(event) {
@@ -1151,12 +1181,16 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    // --- FIM DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
 
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
 
+    // =================================================================
+    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
+    // =================================================================
     function fixDuplicateDescription() {
         if (!lawContent) return;
 
@@ -1185,7 +1219,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     fixDuplicateDescription();
+    // =================================================================
+    // <<< FIM: CORREÇÃO DO BUG >>>
+    // =================================================================
 
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
+    // =====================================================================
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
 
@@ -1227,6 +1267,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
+    // =====================================================================
 
 
     const progressBar = document.getElementById('reading-progress-bar');
@@ -1506,6 +1549,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
     
+
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
             if (d.success && d.content) notesEditor.innerHTML = d.content;
@@ -1561,11 +1605,41 @@ document.addEventListener("DOMContentLoaded", function () {
     const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
     const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
     const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
-    // --- INÍCIO DA IMPLEMENTAÇÃO: Adiciona a borracha ao JavaScript ---
-    const formatRemoveFormatBtn = document.getElementById('format-remove-format-btn');
-    // --- FIM DA IMPLEMENTAÇÃO ---
+    const formatUnformatBtn = document.getElementById('format-unformat-btn');
     const restoreLawBtn = document.getElementById('restore-law-btn');
     let saveMarkupTimeout;
+
+    // ================================================================================================
+    // <<< INÍCIO DA CORREÇÃO: NOVA FUNÇÃO PARA REMOVER MARCA-TEXTO E LÓGICA ATUALIZADA DA BORRACHA >>>
+    // ================================================================================================
+
+    /**
+     * Esta função remove os `<span>` de marca-texto de dentro da seleção do usuário.
+     * Ela "desembrulha" o conteúdo do span, mantendo o texto mas removendo o fundo colorido.
+     */
+    function removeHighlightsFromSelection() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount || selection.isCollapsed) return;
+
+        // Função auxiliar para "desembrulhar" um elemento (remover a tag, manter o conteúdo)
+        function unwrap(element) {
+            const parent = element.parentNode;
+            while (element.firstChild) {
+                parent.insertBefore(element.firstChild, element);
+            }
+            parent.removeChild(element);
+        }
+
+        // Pega todos os spans de marca-texto que estão dentro do conteúdo da lei
+        const allHighlightSpans = lawContent.querySelectorAll('span[class*="user-highlight-"]');
+        
+        // Para cada um, verifica se ele está (total ou parcialmente) dentro da seleção do usuário
+        allHighlightSpans.forEach(span => {
+            if (selection.containsNode(span, true)) {
+                unwrap(span);
+            }
+        });
+    }
 
     function applyMarkup(command) {
         const selection = window.getSelection();
@@ -1595,11 +1669,12 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (command === 'strikethrough') {
              document.execCommand('strikeThrough', false, null);
         }
-        // --- INÍCIO DA IMPLEMENTAÇÃO: Lógica para o comando da borracha ---
-        else if (command === 'removeFormat') {
-             document.execCommand('removeFormat', false, null);
+        else if (command === 'unformat') {
+            // Ação 1: Usa nossa nova função para remover os marca-textos de forma confiável.
+            removeHighlightsFromSelection();
+            // Ação 2: Usa o comando antigo para remover outras formatações (negrito, itálico, etc).
+            document.execCommand('removeFormat', false, null);
         }
-        // --- FIM DA IMPLEMENTAÇÃO ---
         else if (command.startsWith('highlight-')) {
             const color = command.split('-')[1];
             const className = `user-highlight-${color}`;
@@ -1622,6 +1697,10 @@ document.addEventListener("DOMContentLoaded", function () {
         lawContent.focus();
         debounceSaveMarkup();
     }
+    
+    // ==========================================================
+    // <<< FIM DA CORREÇÃO >>>
+    // ==========================================================
     
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
@@ -1664,9 +1743,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
-    // --- INÍCIO DA IMPLEMENTAÇÃO: Ativa o clique do botão de borracha ---
-    if(formatRemoveFormatBtn) formatRemoveFormatBtn.addEventListener('click', () => applyMarkup('removeFormat'));
-    // --- FIM DA IMPLEMENTAÇÃO ---
+    if(formatUnformatBtn) formatUnformatBtn.addEventListener('click', () => applyMarkup('unformat'));
+
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
             Swal.fire({
