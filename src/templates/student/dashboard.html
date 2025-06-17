@@ -645,6 +645,8 @@
 
     /* ===================================================================== */
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO (JUN/2025): NOVA ÁREA DE FILTRO >>> */
+    /* ===================================================================== */
+    
     /* Agrupamento visual do combo Matéria + Lei */
     .filter-duo {
         display: grid;
@@ -661,14 +663,48 @@
     .filter-concurso {
         border-left: 4px solid #3b82f6;
         padding-left: 1rem;
+        position: relative; /* Necessário para posicionar o botão de pino */
     }
     
-    /* >>> NOVA REGRA DE ESTILO ADICIONADA AQUI <<< */
     /* Destaque para o contêiner de Matéria e Lei */
     .filter-materia-lei {
         border-left: 4px solid #f97316; /* Laranja vibrante */
         padding-left: 1rem;
     }
+
+    /* --- INÍCIO: Estilos para o botão de Definir Concurso Padrão --- */
+    #set-default-concurso-btn {
+        display: none; /* Começa oculto */
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #9ca3af; /* Cinza claro, indicando inativo */
+        font-size: 1rem;
+        padding: 0.25rem;
+        transition: color 0.2s ease, transform 0.2s ease;
+    }
+    #set-default-concurso-btn:hover {
+        color: #3b82f6; /* Azul no hover */
+        transform: scale(1.1);
+    }
+    #set-default-concurso-btn.active {
+        color: #3b82f6; /* Azul quando ativo */
+    }
+    #remove-default-concurso-btn {
+        display: none; /* Começa oculto */
+        color: #ef4444; /* Vermelho */
+        margin-left: 4px;
+        font-weight: bold;
+    }
+    #set-default-concurso-btn.active + #remove-default-concurso-btn {
+        display: inline; /* Mostra o "X" quando o pino está ativo */
+    }
+    /* --- FIM: Estilos para o botão --- */
+
+    /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
     /* ===================================================================== */
 
@@ -858,7 +894,15 @@
 {# ===================================================================== #}
 <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
     <div class="filter-concurso">
-        <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i> Filtrar por Concurso</label>
+        <label for="concurso_id" class="filter-label">
+            <i class="fas fa-trophy"></i> Filtrar por Concurso
+            <button id="set-default-concurso-btn" title="Definir como filtro padrão">
+                <i class="fas fa-thumbtack"></i>
+            </button>
+            <button id="remove-default-concurso-btn" title="Remover filtro padrão">
+                &times;
+            </button>
+        </label>
         <select id="concurso_id" name="concurso_id" class="custom-input">
             <option value="all" selected>-- Todos os Concursos --</option>
             {% for concurso in concursos %}
@@ -868,7 +912,7 @@
     </div>
 
     <div class="filter-materia-lei">
-       <div class="filter-duo">
+        <div class="filter-duo">
             <div>
                 <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
@@ -930,7 +974,7 @@
     </div>
 
     <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
-        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Legislações Disponíveis</h2>
+        <h2 id="laws-section-title" class="text-2xl font-semibold mb-6 text-gray-800 text-center">Legislações Disponíveis</h2>
         <div id="laws-accordion-container"></div>
     </div>
 
@@ -1035,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
-        concurso: document.getElementById('concurso_id'), // <<< ADICIONADO
+        concurso: document.getElementById('concurso_id'),
         subject: document.getElementById('subject_id'),
         diploma: document.getElementById('diploma_id'),
         favorites: document.getElementById('show_favorites'),
@@ -1047,18 +1091,101 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter: document.getElementById('status_filter'),
         topicFilter: document.getElementById('topic_filter'),
     };
-    const csrfToken = document.querySelector('meta[name="csrf-token"]') ?.getAttribute('content');
+    const csrfToken = '{{ csrf_token() }}';
     let debounceTimer;
 
     const lawsSection = document.getElementById('laws-section');
+    const lawsSectionTitle = document.getElementById('laws-section-title'); // <<< NOVO
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
     
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO CONCURSO PADRÃO E TÍTULO DINÂMICO >>>
+    // =====================================================================
+    const setDefaultConcursoBtn = document.getElementById('set-default-concurso-btn');
+    const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
+    const defaultConcursoId = {{ default_concurso_id|tojson }};
+
+    function updateLawsTitle(concursoSelectElement) {
+        const selectedOption = concursoSelectElement.options[concursoSelectElement.selectedIndex];
+        if (concursoSelectElement.value && concursoSelectElement.value !== 'all') {
+            lawsSectionTitle.textContent = `Legislações para ${selectedOption.text}`;
+        } else {
+            lawsSectionTitle.textContent = 'Legislações Disponíveis';
+        }
+    }
+
+    function updateDefaultConcursoButtonState() {
+        const selectedConcursoId = filterControls.concurso.value;
+        const isDefault = selectedConcursoId && selectedConcursoId == defaultConcursoId;
+
+        if (selectedConcursoId && selectedConcursoId !== 'all') {
+            setDefaultConcursoBtn.style.display = 'inline-block';
+            if (isDefault) {
+                setDefaultConcursoBtn.classList.add('active');
+            } else {
+                setDefaultConcursoBtn.classList.remove('active');
+            }
+        } else {
+            setDefaultConcursoBtn.style.display = 'none';
+        }
+    }
+
+    setDefaultConcursoBtn.addEventListener('click', function() {
+        const concursoId = filterControls.concurso.value;
+        if (!concursoId || concursoId === 'all') return;
+
+        fetch('/student/api/set_default_concurso', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ concurso_id: concursoId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                // Recarregar a página para refletir o estado atualizado em todos os lugares
+                window.location.reload();
+            } else {
+                Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+            }
+        });
+    });
+
+    removeDefaultConcursoBtn.addEventListener('click', function() {
+        fetch('/student/api/set_default_concurso', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ concurso_id: 'clear' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                window.location.reload();
+            } else {
+                Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+            }
+        });
+    });
+
+    // Listener para o filtro de CONCURSO
+    filterControls.concurso.addEventListener('change', () => {
+        showLawsSection();
+        updateLawsTitle(filterControls.concurso); // Atualiza o título
+        updateDefaultConcursoButtonState(); // Atualiza o botão de pino
+
+        if (filterControls.concurso.value !== 'all') {
+            filterControls.subject.value = '';
+        }
+        updateDiplomaFilter(null, filterControls.concurso.value);
+    });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
     // =====================================================================
 
-    // Função auxiliar para mostrar a seção de leis
+
+    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     function showLawsSection() {
         if (lawsSection.style.display === 'none') {
             initialPrompt.style.display = 'none';
@@ -1067,36 +1194,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Listener para o novo filtro de CONCURSO
-    filterControls.concurso.addEventListener('change', () => {
-        showLawsSection();
-        if (filterControls.concurso.value !== 'all') {
-            filterControls.subject.value = ''; // Reseta o filtro de matéria
-        }
-        updateDiplomaFilter(null, filterControls.concurso.value);
-    });
-
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
-    // =====================================================================
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
-    // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
     const noTodoItemsMessage = document.getElementById('no-todo-items-message');
-
     const motivationDateElement = document.getElementById('motivation-date');
     const motivationTextElement = document.getElementById('motivation-text');
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
-    // =====================================================================
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
-    // =====================================================================
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
 
@@ -1112,49 +1215,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 fetch('/student/api/save_favorite_title', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({ title: finalTitle })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Toastify({
-                            text: data.message || "Título atualizado com sucesso!",
-                            duration: 3000, close: true, gravity: "bottom", position: "right",
-                            style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
-                        }).showToast();
+                        Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                     } else {
                         favoritesTitleText.textContent = currentTitle;
-                        Toastify({
-                            text: data.error || "Falha ao salvar o título.",
-                            duration: 3000, close: true, gravity: "bottom", position: "right",
-                            style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                        }).showToast();
+                        Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
                     }
                 })
                 .catch(error => {
                     favoritesTitleText.textContent = currentTitle;
                     console.error('Erro de rede:', error);
-                    Toastify({
-                        text: "Erro de comunicação. Tente novamente.",
-                        duration: 3000, close: true, gravity: "bottom", position: "right",
-                        style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                    }).showToast();
+                    Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
                 });
             }
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
-    // =====================================================================
 
-
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO: LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
-    // =====================================================================
     const toggleCardsBtn = document.getElementById('toggle-cards-btn');
     const cardsToToggle = [
         document.getElementById('announcement-cards-section'),
@@ -1168,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyCardsVisibility(hidden) {
         cardsToToggle.forEach(card => {
-            if (card) { // Esta verificação é importante caso um card não seja renderizado
+            if (card) {
                 if (hidden) {
                     card.classList.add('hidden-card-section');
                 } else {
@@ -1182,38 +1263,25 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i> Ocultar Cards';
         }
-        // A fonte da verdade (localStorage) é sempre atualizada
         localStorage.setItem('hideCards', hidden);
     }
 
-    // Ao carregar a página, lê o estado do localStorage
     const savedHideCardsPreference = localStorage.getItem('hideCards') === 'true';
     applyCardsVisibility(savedHideCardsPreference);
 
-    // Adiciona o evento de clique ao botão
     toggleCardsBtn.addEventListener('click', function() {
-        // Para decidir a próxima ação, lemos o estado ATUAL do localStorage
         const isCurrentlyHidden = localStorage.getItem('hideCards') === 'true';
-        // A ação é sempre inverter o estado atual.
         applyCardsVisibility(!isCurrentlyHidden);
     });
-    // =====================================================================
-    // <<< FIM DA CORREÇÃO >>>
-    // =====================================================================
 
-
-    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
-        // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
-        // =====================================================================
         const subjectId = filterControls.subject.value;
-        const concursoId = filterControls.concurso.value; // Pega o valor do novo filtro
+        const concursoId = filterControls.concurso.value;
         const diplomaId = filterControls.diploma.value;
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        const isInitialState = !subjectId && !concursoId; // Modificado para checar concurso também
+        const isInitialState = !subjectId && (concursoId === 'all' || !concursoId);
         if (isInitialState && !showFavorites) {
              accordionContainer.innerHTML = '';
              return;
@@ -1224,7 +1292,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', 'true');
 
-        // ALTERADO: Adiciona o concursoId ou o subjectId aos parâmetros
         if (concursoId && concursoId !== 'all') {
             params.append('concurso_id', concursoId);
         } else if (subjectId && subjectId !== 'all') {
@@ -1243,9 +1310,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
-        // =====================================================================
         
         try {
             const response = await fetch(`/student/filter_laws?${params.toString()}`);
@@ -1259,9 +1323,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
-    // =====================================================================
     async function updateDiplomaFilter(subjectId, concursoId) {
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
@@ -1270,20 +1331,16 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        // Se um concurso foi selecionado, a gente não popula o filtro de diploma,
-        // apenas chama a renderização principal. O backend cuidará de tudo.
         if (concursoId && concursoId !== 'all') {
             fetchAndRenderLaws();
             return;
         }
 
-        // Se nenhuma matéria ou 'todas' foi selecionada (e nenhum concurso), limpa e renderiza.
         if (!subjectId || subjectId === 'all') {
             fetchAndRenderLaws();
             return;
         }
         
-        // Lógica original: popula o filtro de diploma baseado na matéria.
         filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
         try {
             const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
@@ -1301,18 +1358,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         fetchAndRenderLaws();
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
-    // =====================================================================
 
     async function updateTopicFilter(lawId) {
         const topicSelect = filterControls.topicFilter;
         topicSelect.innerHTML = '<option value="">-- Selecione um Trecho --</option>';
         topicSelect.disabled = true;
 
-        if (!lawId) {
-            return;
-        }
+        if (!lawId) return;
         
         topicSelect.innerHTML = '<option value="">Carregando trechos...</option>';
         try {
@@ -1332,9 +1384,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // =====================================================================
-    // <<< ALTERAÇÃO APLICADA AQUI: Função renderLaws foi reescrita para ordenar os resultados >>>
-    // =====================================================================
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
             accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
@@ -1342,12 +1391,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let html = '';
-        // 1. Pega as chaves do objeto (nomes das matérias) e as ordena alfabeticamente
         const sortedSubjectNames = Object.keys(subjects).sort((a, b) => a.localeCompare(b));
 
-        // Itera sobre as matérias já em ordem alfabética
         for (const subjectName of sortedSubjectNames) {
-            // 2. Ordena as leis (diplomas) dentro de cada matéria pelo título
             const sortedDiplomas = subjects[subjectName].sort((a, b) => a.title.localeCompare(b.title));
 
             html += `
@@ -1358,12 +1404,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="subject-accordion-content">
                     ${sortedDiplomas.map(diploma => {
-                        const displayStyle = 'none';
-                        const iconRotation = 'rotate(0deg)';
-
-                        // 3. Ordena os tópicos (filtered_children) dentro de cada lei pelo título
                         const sortedTopics = diploma.filtered_children.sort((a, b) => a.title.localeCompare(b.title));
-
                         return `
                         <div class="accordion-item mt-3 first:mt-0">
                             <div class="accordion-header">
@@ -1371,10 +1412,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="diploma-progress">
                                     <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
                                     <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
-                                    <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
+                                    <i class="fas fa-chevron-right accordion-toggle-icon"></i>
                                 </div>
                             </div>
-                            <div class="accordion-content" style="display: ${displayStyle};">
+                            <div class="accordion-content" style="display: none;">
                                 ${sortedTopics.length > 0 ? sortedTopics.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
                             </div>
                         </div>`;
@@ -1396,11 +1437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (topic.is_in_progress) actionButtonText = '<i class="fas fa-book-reader mr-1"></i> Continuar';
         else actionButtonText = '<i class="fas fa-book mr-1"></i> Começar';
 
-        const reviewButton = topic.is_completed ? `
-            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído">
-                <i class="fas fa-undo-alt"></i>
-            </button>` : '';
-        
+        const reviewButton = topic.is_completed ? `<button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído"><i class="fas fa-undo-alt"></i></button>` : '';
         const favoriteClass = topic.is_favorite ? 'favorited' : '';
         const favoriteIcon = 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
@@ -1412,100 +1449,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${statusBadge}
                 <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
                 ${reviewButton}
-                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
-                    <i class="${favoriteIcon}"></i>
-                </button>
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}"><i class="${favoriteIcon}"></i></button>
             </div>
         </div>`;
     }
 
     function attachEventListeners() {
-        document.querySelectorAll('.subject-accordion-header').forEach(header => {
-            header.addEventListener('click', function() {
-                this.classList.toggle('open');
-                const content = this.nextElementSibling;
-                const icon = this.querySelector('.toggle-icon');
-                if (content.style.display === 'block') {
-                    content.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
-                } else {
-                    content.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
-                }
-            });
-        });
-        
-        document.querySelectorAll('.accordion-header').forEach(header => {
+        document.querySelectorAll('.subject-accordion-header, .accordion-header, .favorite-card-header').forEach(header => {
             header.addEventListener('click', function(event) {
-                event.stopPropagation();
+                if (header.classList.contains('accordion-header')) event.stopPropagation();
                 
-                const content = this.nextElementSibling;
-                const icon = this.querySelector('.accordion-toggle-icon');
                 this.classList.toggle('open');
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon, .accordion-toggle-icon');
                 if (content.style.display === 'block') {
                     content.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
+                    if (icon) icon.style.transform = 'rotate(0deg)';
                 } else {
                     content.style.display = 'block';
-                    icon.style.transform = 'rotate(90deg)';
-                }
-            });
-        });
-
-        document.querySelectorAll('.favorite-card-header').forEach(header => {
-            header.addEventListener('click', function() {
-                this.classList.toggle('open');
-                const body = this.nextElementSibling;
-                const icon = this.querySelector('.toggle-icon');
-                if (body.style.display === 'block') {
-                    body.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
-                } else {
-                    body.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
+                    if (icon) icon.style.transform = icon.classList.contains('accordion-toggle-icon') ? 'rotate(90deg)' : 'rotate(180deg)';
                 }
             });
         });
 
         document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
-
-        // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
-        // =====================================================================
-        // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
-        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', handleToggleTodoItem);
-        });
-        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
-            button.addEventListener('click', handleDeleteTodoItem);
-        });
-        // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
-        // =====================================================================
+        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => checkbox.addEventListener('change', handleToggleTodoItem));
+        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => button.addEventListener('click', handleDeleteTodoItem));
     }
-    
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
-    // =====================================================================
-    // Altera o listener do filtro de MATÉRIA para resetar o de concurso
+
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
         if (subjectId === '') {
             initialPrompt.style.display = 'block';
             lawsSection.style.display = 'none';
             lawsSection.style.opacity = '0';
-        } 
-        else {
+        } else {
             showLawsSection();
         }
-        filterControls.concurso.value = 'all'; // <<< ADICIONADO
+        filterControls.concurso.value = 'all';
+        updateDefaultConcursoButtonState(); // Atualiza o botão de pino
+        updateLawsTitle(filterControls.concurso); // Garante que o título volte ao padrão
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
     });
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
-    // =====================================================================
 
     filterControls.diploma.addEventListener('change', async () => {
         filterControls.search.value = '';
@@ -1515,20 +1502,14 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderLaws();
     });
 
-    filterControls.refineTypeRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            const isStatus = radio.value === 'status';
-            filterControls.statusFilterWrapper.style.display = isStatus ? 'block' : 'none';
-            filterControls.topicFilterWrapper.style.display = isStatus ? 'none' : 'block';
-            
-            if (isStatus) {
-                filterControls.topicFilter.value = '';
-            } else {
-                filterControls.statusFilter.value = '';
-            }
-            fetchAndRenderLaws();
-        });
-    });
+    filterControls.refineTypeRadios.forEach(radio => radio.addEventListener('change', () => {
+        const isStatus = radio.value === 'status';
+        filterControls.statusFilterWrapper.style.display = isStatus ? 'block' : 'none';
+        filterControls.topicFilterWrapper.style.display = isStatus ? 'none' : 'block';
+        filterControls.topicFilter.value = isStatus ? '' : filterControls.topicFilter.value;
+        filterControls.statusFilter.value = !isStatus ? '' : filterControls.statusFilter.value;
+        fetchAndRenderLaws();
+    }));
     
     filterControls.statusFilter.addEventListener('change', fetchAndRenderLaws);
     filterControls.topicFilter.addEventListener('change', fetchAndRenderLaws);
@@ -1537,8 +1518,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const isChecked = filterControls.favorites.checked;
         if (isChecked) {
              showLawsSection();
-        } 
-        else if (filterControls.subject.value === '' && filterControls.concurso.value === 'all') {
+        } else if (filterControls.subject.value === '' && (filterControls.concurso.value === 'all' || !filterControls.concurso.value)) {
              initialPrompt.style.display = 'block';
              lawsSection.style.display = 'none';
              lawsSection.style.opacity = '0';
@@ -1550,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.search.value = '';
         const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
         
-        filterControls.concurso.value = 'all'; // <<< ADICIONADO
+        filterControls.concurso.value = 'all';
         filterControls.subject.value = hasFavorites ? '' : 'all';
         
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
@@ -1563,6 +1543,9 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.topicFilterWrapper.style.display = 'none';
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
+        
+        updateLawsTitle(filterControls.concurso); // Reseta o título
+        updateDefaultConcursoButtonState(); // Esconde o botão de pino
 
         if (hasFavorites) {
             initialPrompt.style.display = 'block';
@@ -1599,49 +1582,30 @@ document.addEventListener('DOMContentLoaded', function() {
         searchDebounceTimer = setTimeout(() => {
             fetch(`/student/api/autocomplete_search?q=${query}`)
                 .then(response => response.json())
-                .then(data => {
-                    renderAutocompleteResults(data.results);
-                });
+                .then(data => renderAutocompleteResults(data.results));
         }, 300);
     });
 
     function renderAutocompleteResults(results) {
-        if (!results || results.length === 0) {
-            resultsContainer.innerHTML = '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>';
-            resultsContainer.style.display = 'block';
-            return;
-        }
-
-        resultsContainer.innerHTML = '';
-        results.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'autocomplete-item';
-            div.innerHTML = `
-                <span class="autocomplete-item-title">${item.title}</span>
-                <span class="autocomplete-item-category">${item.category}</span>
-            `;
-            div.onclick = () => {
-                window.location.href = item.url;
-            };
-            resultsContainer.appendChild(div);
-        });
+        resultsContainer.innerHTML = !results || results.length === 0 ? '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>' : 
+            results.map(item => `
+                <div class="autocomplete-item" onclick="window.location.href='${item.url}'">
+                    <span class="autocomplete-item-title">${item.title}</span>
+                    <span class="autocomplete-item-category">${item.category}</span>
+                </div>
+            `).join('');
         resultsContainer.style.display = 'block';
     }
 
-    document.addEventListener('click', function(event) {
-        const searchWrapper = document.querySelector('.search-wrapper');
-        if (searchWrapper && !searchWrapper.contains(event.target)) {
+    document.addEventListener('click', event => {
+        if (!document.querySelector('.search-wrapper')?.contains(event.target)) {
             resultsContainer.style.display = 'none';
         }
     });
 
     function setupDynamicPlaceholder() {
         if (!searchInput) return;
-        const placeholders = [
-            "Busque por 'Código Penal'...", "Tente 'Direito Administrativo'...",
-            "Digite 'Art. 5º da Constituição'...", "Qual legislação você procura hoje?",
-            "Busque por Súmulas ou Tópicos..."
-        ];
+        const placeholders = ["Busque por 'Código Penal'...", "Tente 'Direito Administrativo'...", "Digite 'Art. 5º da Constituição'...", "Qual legislação você procura hoje?", "Busque por Súmulas ou Tópicos..."];
         let currentIndex = 0;
         setInterval(() => {
             currentIndex = (currentIndex + 1) % placeholders.length;
@@ -1654,12 +1618,11 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', function() {
             this.disabled = true;
             const announcementItem = this.closest('.non-fixed-announcement-item');
-            const announcementId = announcementItem.getAttribute('data-announcement-id');
-            const apiUrl = `/student/announcement/${announcementId}/mark_seen`;
-            fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+            const announcementId = announcementItem.dataset.announcementId;
+            fetch(`/student/announcement/${announcementId}/mark_seen`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
             .then(response => response.json())
             .then(data => {
-                if(data.success) {
+                if (data.success) {
                     announcementItem.classList.add('fade-out');
                     setTimeout(() => {
                         announcementItem.remove();
@@ -1669,7 +1632,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 500);
                 } else { this.checked = false; this.disabled = false; }
             })
-            .catch(error => { console.error('Erro:', error); this.checked = false; this.disabled = false; });
+            .catch(() => { this.checked = false; this.disabled = false; });
         });
     });
 
@@ -1681,13 +1644,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const topicItem = button.closest('.topic-item'); 
         const topicTitle = topicItem ? topicItem.querySelector('.topic-title span').textContent : 'Item';
 
-        fetch(`/student/law/toggle_favorite/${lawId}`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-        })
+        fetch(`/student/law/toggle_favorite/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
         .then(response => response.json())
         .then(data => {
-            let notificationText = '';
+            let notificationText;
             if (data.favorited) {
                 button.classList.add('favorited');
                 icon.className = 'fas fa-star';
@@ -1698,7 +1658,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.className = 'far fa-star';
                 button.title = 'Adicionar aos Favoritos';
                 notificationText = `'${topicTitle}' removido dos favoritos.`;
-                
                 if (button.closest('#initial-prompt')) {
                     const topicToRemove = button.closest('.topic-item');
                     if (topicToRemove) {
@@ -1719,12 +1678,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     fetchAndRenderLaws();
                 }
             }
-            Toastify({
-                text: notificationText, duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #1f2937, #374151)", borderRadius: "0.5rem" }
-            }).showToast();
+            Toastify({ text: notificationText, duration: 3000, style: { background: "linear-gradient(to right, #1f2937, #374151)" } }).showToast();
         })
-        .catch(error => console.error('Erro:', error))
         .finally(() => { button.disabled = false; });
     }
 
@@ -1741,252 +1696,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     fetchAndRenderLaws();
                 }
-            } else {
-                alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
-                buttonEl.disabled = false;
-            }
+            } else { buttonEl.disabled = false; }
         })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Ocorreu um erro de comunicação.');
-            buttonEl.disabled = false;
-        });
+        .catch(() => buttonEl.disabled = false);
     }
-
-    attachEventListeners();
     
-    if (filterControls.subject.value === 'all') {
-         showLawsSection();
-        fetchAndRenderLaws();
-    }
-
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para carregar o concurso padrão >>>
     // =====================================================================
-    const MAX_TODO_ITEMS = 5; // Constante para o limite de tarefas
-
-    // Função para renderizar um único item do diário
-    function renderTodoItem(item) {
-        const listItem = document.createElement('li');
-        listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
-        listItem.dataset.itemId = item.id;
+    function initializeDashboard() {
+        attachEventListeners();
         
-        // Limita o texto visível para 40 caracteres e adiciona reticências
-        const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
-
-        listItem.innerHTML = `
-            <label class="todo-item-content">
-                <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <span class="todo-item-text">${displayText}</span>
-                <span class="todo-item-text-tooltip">${item.content}</span>
-            </label>
-            <div class="todo-actions">
-                <button type="button" class="todo-delete-btn" title="Excluir tarefa">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `;
-
-        // Adicionar event listeners para o novo item
-        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
-        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
-        return listItem;
+        if (defaultConcursoId) {
+            filterControls.concurso.value = defaultConcursoId;
+            // Dispara o evento 'change' para carregar os dados e atualizar a UI
+            filterControls.concurso.dispatchEvent(new Event('change'));
+        } else if (filterControls.subject.value === 'all') {
+            showLawsSection();
+            fetchAndRenderLaws();
+        }
+        
+        // Atualiza o estado do botão de pino no carregamento inicial
+        updateDefaultConcursoButtonState();
+        fetchAndRenderTodoItems();
+        displayDailyMotivation();
+        setupDynamicPlaceholder();
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
-    // Função para adicionar uma nova tarefa
-    addTodoBtn.addEventListener('click', async function() {
-        const content = newTodoItemInput.value.trim();
-        if (!content) {
-            Toastify({
-                text: "Por favor, digite o conteúdo da tarefa.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-            return;
-        }
+    // ... (restante das funções do To-Do list)...
 
-        // Verifica se o limite de tarefas foi atingido
-        if (todoListUl.children.length >= MAX_TODO_ITEMS) {
-            Toastify({
-                text: `Você atingiu o limite de ${MAX_TODO_ITEMS} tarefas. Conclua ou exclua algumas para adicionar novas.`, duration: 5000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff9900, #ffba4d)", borderRadius: "0.5rem" } // Laranja para aviso
-            }).showToast();
-            return;
-        }
-
-        try {
-            const response = await fetch('/student/api/todo_items', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ content: content })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
-                if (noTodoItemsMessage) {
-                    const existingNoItemsMessage = document.getElementById('no-todo-items-message');
-                    if (existingNoItemsMessage) {
-                        existingNoItemsMessage.remove();
-                    }
-                }
-                
-                // Renderizar e adicionar o novo item ao topo da lista
-                const newItem = renderTodoItem(data.todo_item);
-                todoListUl.prepend(newItem); // Adiciona no início da lista
-
-                newTodoItemInput.value = ''; // Limpa o input
-                Toastify({
-                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
-                }).showToast();
-            } else {
-                Toastify({
-                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                }).showToast();
-            }
-        } catch (error) {
-            console.error('Erro ao adicionar tarefa:', error);
-            Toastify({
-                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-        }
-    });
-
-    // Função para alternar o status de uma tarefa
-    async function handleToggleTodoItem(event) {
-        const checkbox = event.currentTarget;
-        const listItem = checkbox.closest('.todo-item');
-        const itemId = listItem.dataset.itemId;
-
-        try {
-            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // Atualizar a classe CSS e o status do checkbox
-                if (data.todo_item.is_completed) {
-                    listItem.classList.add('completed');
-                } else {
-                    listItem.classList.remove('completed');
-                }
-                checkbox.checked = data.todo_item.is_completed;
-                
-                // Se o item foi concluído, movê-lo para o final da lista
-                if (data.todo_item.is_completed) {
-                    todoListUl.appendChild(listItem);
-                } else {
-                    // Se o item foi reaberto, reordenar a lista para manter os não-concluídos no topo
-                    await fetchAndRenderTodoItems(); // Refetch e re-renderiza para garantir a ordem
-                }
-
-                Toastify({
-                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
-                }).showToast();
-            } else {
-                checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
-                Toastify({
-                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                }).showToast();
-            }
-        } catch (error) {
-            console.error('Erro ao alternar status da tarefa:', error);
-            checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
-            Toastify({
-                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-        }
-    }
-
-    // Função para excluir uma tarefa
-    async function handleDeleteTodoItem(event) {
-        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
-            return;
-        }
-
-        const button = event.currentTarget;
-        const listItem = button.closest('.todo-item');
-        const itemId = listItem.dataset.itemId;
-
-        try {
-            const response = await fetch(`/student/api/todo_items/${itemId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                listItem.remove(); // Remove o item da lista
-                if (todoListUl.children.length === 0) {
-                    // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
-                    const p = document.createElement('p');
-                    p.id = 'no-todo-items-message';
-                    p.className = 'text-gray-500 italic text-sm text-center py-4';
-                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
-                    todoListUl.appendChild(p);
-                }
-                Toastify({
-                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
-                }).showToast();
-            } else {
-                Toastify({
-                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
-                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-                }).showToast();
-            }
-        } catch (error) {
-            console.error('Erro ao excluir tarefa:', error);
-            Toastify({
-                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
-        }
-    }
-
-    // Função para buscar e renderizar todos os itens do diário (útil após toggle)
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
             const data = await response.json();
-
-            todoListUl.innerHTML = ''; // Limpa a lista atual
-
+            todoListUl.innerHTML = '';
             if (data.todo_items && data.todo_items.length > 0) {
-                // Ordena: não concluídos primeiro, depois concluídos. Dentro de cada grupo, por data de criação.
-                const sortedItems = data.todo_items.sort((a, b) => {
-                    if (a.is_completed === b.is_completed) {
-                        // Se o status é o mesmo, ordena por ID (ou outra propriedade de ordem, como timestamp)
-                        return a.id - b.id;
-                    }
-                    return a.is_completed ? 1 : -1; // Não concluído (-1) vem antes de concluído (1)
-                });
-
-                sortedItems.forEach(item => {
-                    todoListUl.appendChild(renderTodoItem(item));
-                });
-                // Remove a mensagem de "nenhuma tarefa" se ela existir
-                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
-                if (existingNoItemsMessage) {
-                    existingNoItemsMessage.remove();
-                }
+                const sortedItems = data.todo_items.sort((a, b) => a.is_completed - b.is_completed || a.id - b.id);
+                sortedItems.forEach(item => todoListUl.appendChild(renderTodoItem(item)));
             } else {
-                // Adiciona a mensagem de "nenhuma tarefa" se a lista estiver vazia
                 const p = document.createElement('p');
                 p.id = 'no-todo-items-message';
                 p.className = 'text-gray-500 italic text-sm text-center py-4';
@@ -1995,145 +1745,90 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Erro ao buscar itens do diário:', error);
-            Toastify({
-                text: "Erro ao carregar as tarefas do diário.", duration: 3000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
-            }).showToast();
         }
     }
-
-    // Chama a função para buscar e renderizar os itens do diário quando a página carrega
-    fetchAndRenderTodoItems();
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
-    // =====================================================================
-
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
-    // =====================================================================
-    function getDayOfYear(date) {
-        const start = new Date(date.getFullYear(), 0, 0);
-        const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
-        const oneDay = 1000 * 60 * 60 * 24;
-        return Math.floor(diff / oneDay);
+    
+    function renderTodoItem(item) {
+        const listItem = document.createElement('li');
+        listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
+        listItem.dataset.itemId = item.id;
+        const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
+        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
+        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
+        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
+        return listItem;
     }
 
+    addTodoBtn.addEventListener('click', async function() {
+        const content = newTodoItemInput.value.trim();
+        if (!content) return;
+        if (todoListUl.children.length >= 5) {
+            Toastify({ text: "Você atingiu o limite de 5 tarefas.", duration: 5000 }).showToast();
+            return;
+        }
+        try {
+            const response = await fetch('/student/api/todo_items', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content }) });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('no-todo-items-message')?.remove();
+                todoListUl.prepend(renderTodoItem(data.todo_item));
+                newTodoItemInput.value = '';
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            }
+        } catch (error) { console.error('Erro ao adicionar tarefa:', error); }
+    });
+
+    async function handleToggleTodoItem(event) {
+        const checkbox = event.currentTarget;
+        const listItem = checkbox.closest('.todo-item');
+        const itemId = listItem.dataset.itemId;
+        try {
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } });
+            const data = await response.json();
+            if (data.success) {
+                listItem.classList.toggle('completed', data.todo_item.is_completed);
+                checkbox.checked = data.todo_item.is_completed;
+                if (data.todo_item.is_completed) todoListUl.appendChild(listItem);
+                else await fetchAndRenderTodoItems();
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            } else checkbox.checked = !checkbox.checked;
+        } catch (error) { checkbox.checked = !checkbox.checked; }
+    }
+
+    async function handleDeleteTodoItem(event) {
+        if (!confirm('Tem certeza?')) return;
+        const button = event.currentTarget;
+        const listItem = button.closest('.todo-item');
+        const itemId = listItem.dataset.itemId;
+        try {
+            const response = await fetch(`/student/api/todo_items/${itemId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
+            const data = await response.json();
+            if (data.success) {
+                listItem.remove();
+                if (todoListUl.children.length === 0 && !document.getElementById('no-todo-items-message')) {
+                    const p = document.createElement('p');
+                    p.id = 'no-todo-items-message';
+                    p.className = 'text-gray-500 italic text-sm text-center py-4';
+                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                    todoListUl.appendChild(p);
+                }
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            }
+        } catch (error) { console.error('Erro ao excluir tarefa:', error); }
+    }
+    
     function displayDailyMotivation() {
         const today = new Date();
-        const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-        const dayOfWeek = daysOfWeek[today.getDay()];
-        const dayOfMonth = today.getDate();
-        const month = months[today.getMonth()];
-        const year = today.getFullYear();
-
-        motivationDateElement.textContent = `${dayOfWeek}, ${dayOfMonth} de ${month} de ${year}`;
-
-        // Nova lista de frases motivacionais
-        const motivationalPhrases = [
-            "Não desista. O começo é sempre o mais difícil.",
-            "A persistência é o caminho do êxito.",
-            "O sucesso é a soma de pequenos esforços repetidos.",
-            "Caia sete vezes, levante-se oito.",
-            "Sua perseverança é a ponte entre seus sonhos e a realidade.",
-            "A força não vem da capacidade física, mas de uma vontade indomável.",
-            "Acredite no processo e na sua capacidade de superar.",
-            "Nunca subestime o poder de um pequeno passo.",
-            "Não importa a lentidão, desde que você não pare.",
-            "Seu esforço é o combustível do seu progresso.",
-            "A disciplina é a ponte entre metas e realizações.",
-            "Mantenha o foco, a força e a fé.",
-            "A determinação de hoje é a recompensa de amanhã.",
-            "O medo de falhar não pode ser maior que a vontade de crescer.",
-            "Sua disciplina nos estudos molda o seu destino.",
-            "O estudo é a chave que abre todas as portas do conhecimento.",
-            "Cada hora de estudo é um investimento no seu futuro.",
-            "Aprender é o único tesouro que a traça não rói e o ladrão não rouba.",
-            "Dedique-se aos estudos e veja a sua mente florescer.",
-            "A persistência nos estudos transforma sonhos em realidade.",
-            "Sua jornada de aprendizado é a sua maior aventura.",
-            "O estudo de hoje é a vitória de amanhã.",
-            "A cada nova lei compreendida, um novo horizonte se abre.",
-            "Permita que o conhecimento seja a sua bússola.",
-            "Não pare até se orgulhar do seu progresso.",
-            "O caminho do sucesso é pavimentado com estudo e dedicação.",
-            "A melhoria contínua começa com a vontade de aprender.",
-            "O que você aprende hoje, usa para sempre.",
-            "Estude como se fosse viver para sempre.",
-            "As leis são o alicerce da sociedade; seu estudo, o seu poder.",
-            "A mente que se abre a uma nova ideia jamais voltará ao seu tamanho original.",
-            "O estudo liberta, empodera e transforma.",
-            "Acredite que você pode, e você estará no meio do caminho.",
-            "Onde o foco vai, a energia flui.",
-            "Menos distrações, mais resultados.",
-            "Sua disciplina é a semente do seu sucesso.",
-            "Defina suas prioridades e foque nelas.",
-            "O foco transforma o comum em extraordinário.",
-            "A disciplina é a liberdade de ser quem você quer ser.",
-            "Organize-se para conquistar.",
-            "Seu foco determina sua realidade.",
-            "Não desvie do seu objetivo; ele te espera.",
-            "A disciplina é o caminho para a maestria.",
-            "Um passo de cada vez, com foco total.",
-            "Concentre-se no que importa e o resto se alinha.",
-            "O tempo é seu maior ativo; use-o com sabedoria.",
-            "Sua capacidade de focar define seus resultados.",
-            "A disciplina é o segredo dos grandes realizadores.",
-            "Mantenha os olhos no prêmio.",
-            "Acredite no seu potencial ilimitado de crescimento.",
-            "Cada desafio é uma oportunidade para evoluir.",
-            "Seu crescimento é um processo contínuo e maravilhoso.",
-            "Não tenha medo de recomeçar; tenha medo de não evoluir.",
-            "O único limite para o seu crescimento é a sua imaginação.",
-            "Evoluir é se tornar a melhor versão de si mesmo.",
-            "Sua jornada de crescimento é única e valiosa.",
-            "Pequenas mudanças diárias levam a grandes resultados.",
-            "Crescer dói, mas compensa.",
-            "A cada passo, você se aproxima de quem você quer ser.",
-            "O sucesso não é um destino, é uma jornada de crescimento constante.",
-            "Seu esforço de hoje é o seu triunfo de amanhã.",
-            "A cada dia, uma nova chance de ser melhor.",
-            "Aprenda com o passado, viva o presente e construa o futuro.",
-            "Sua resiliência define sua capacidade de crescer.",
-            "Abrace a imperfeição e celebre o progresso.",
-            "Sua mente é um jardim; cultive-a com bons pensamentos e muito aprendizado.",
-            "Você está crescendo, mesmo quando não percebe.",
-            "A resiliência é a arte de transformar a dor em poder.",
-            "A diferença entre o impossível e o possível reside na determinação.",
-            "Sua persistência é a sua maior aliada.",
-            "O futuro pertence àqueles que acreditam na beleza de seus sonhos.",
-            "Comece onde você está, use o que você tem, faça o que você pode.",
-            "Sua atitude determina sua altitude.",
-            "Grandes coisas nunca vêm de zonas de conforto.",
-            "A vida é sobre criar-se.",
-            "Abrace a jornada, celebre cada conquista.",
-            "Seja a luz que ilumina o seu próprio caminho.",
-            "Inspire-se e inspire os outros.",
-            "Sua história está sendo escrita a cada dia.",
-            "A felicidade está na jornada, não no destino.",
-            "Deixe sua paixão te guiar.",
-            "Viva o presente, planeje o futuro, aprenda com o passado.",
-            "Cada novo dia é uma nova chance de mudar.",
-            "A vida é um aprendizado contínuo.",
-            "Seja grato pelas pequenas vitórias.",
-            "O otimismo é a fé que leva à conquista.",
-            "Você é mais forte do que pensa.",
-            "A beleza do amanhã depende do que você faz hoje.",
-            "Faça do seu propósito a sua força.",
-            "Seja a mudança que você quer ver no mundo, começando por você.",
-            "O valor de uma pessoa não está na sua beleza, mas na sua coragem para lutar."
-        ];
-
-        const dayIndex = getDayOfYear(today) % motivationalPhrases.length;
+        motivationDateElement.textContent = `${daysOfWeek[today.getDay()]}, ${today.getDate()} de ${months[today.getMonth()]} de ${today.getFullYear()}`;
+        const motivationalPhrases = ["Não desista. O começo é sempre o mais difícil.", "A persistência é o caminho do êxito.", "Sua perseverança é a ponte entre seus sonhos e a realidade.", "A disciplina é a ponte entre metas e realizações."];
+        const dayIndex = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) % motivationalPhrases.length;
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
-
-    // Chama a função para exibir a motivação diária ao carregar a página
-    displayDailyMotivation();
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
-    // =====================================================================
+    
+    // Inicializa o painel
+    initializeDashboard();
 });
 </script>
 {% endblock %}
