@@ -692,25 +692,21 @@
     </div>
     {% endif %}
 
-    {# ===================================================================== #}
-    {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
-            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
+            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;"> {# Alterado de 'auto' para 'hidden' #}
+            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;">
                 {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
                     {% for item in todo_items %}
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                {# Modificação para limitar o texto e adicionar tooltip #}
                                 <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
                                 <span class="todo-item-text-tooltip">{{ item.content }}</span>
                             </label>
@@ -729,7 +725,7 @@
 
         {# Atividades Recentes (segunda coluna, primeira linha) #}
         {% if recent_activities %}
-        <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
+        <div class="stat-card recent-activities-card" id="recent-activities-card">
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
             <div class="flex flex-col space-y-2">
                 {% for activity in recent_activities %}
@@ -747,14 +743,14 @@
         {% endif %}
 
         {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
-        <div class="stat-card daily-motivation-card" id="daily-motivation-card"> {# Adicionado ID #}
+        <div class="stat-card daily-motivation-card" id="daily-motivation-card">
             <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
             <div id="motivation-date" class="motivation-date"></div>
             <p id="motivation-text" class="motivation-text"></p>
         </div>
 
         {# Sequência de Estudos (segunda coluna, segunda linha) #}
-        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
+        <div class="stat-card streak-card" id="streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             {% if user_streak > 0 %}
                 <div class="streak-display">{{ user_streak }}</div>
@@ -765,7 +761,7 @@
         </div>
 
         {# Meu Nível (terceira coluna, segunda linha) #}
-        <div class="stat-card level-card" id="level-card"> {# Adicionado ID #}
+        <div class="stat-card level-card" id="level-card">
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
             <div class="level-info">
                 <i class="{{ level_info.current_level.icon }} level-icon"></i>
@@ -786,11 +782,8 @@
             {% endif %}
         </div>
     </div>
-    {# ===================================================================== #}
-    {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
     
-    <div class="stat-card achievements-card" id="achievements-card"> {# Adicionado ID #}
+    <div class="stat-card achievements-card" id="achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
         {% if user_achievements %}
             <div class="achievements-list">
@@ -823,8 +816,9 @@
             </div>
         </div>
         <hr class="my-6 border-t border-gray-200">
+        
         {# ===================================================================== #}
-        {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+        {# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA ESTRUTURA DOS FILTROS >>> #}
         {# ===================================================================== #}
         <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
             <div>
@@ -888,7 +882,7 @@
             </div>
         </div>
         {# ===================================================================== #}
-        {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+        {# <<< FIM DA IMPLEMENTAÇÃO: NOVA ESTRUTURA DOS FILTROS >>> #}
         {# ===================================================================== #}
     </div>
 
@@ -911,6 +905,7 @@
             </div>
 
             <div id="favorite-cards-container">
+                {# Ordena as matérias favoritas pelo nome #}
                 {% for subject, cards in favorites_by_subject.items()|sort(attribute='0.name') %}
                     <div class="subject-accordion-item">
                         <div class="subject-accordion-header">
@@ -919,6 +914,7 @@
                         </div>
                         <div class="subject-accordion-content">
                             <div class="favorites-grid-container">
+                                {# Ordena as leis (cards) dentro de cada matéria pelo título #}
                                 {% for card in cards|sort(attribute='parent.title') %}
                                     <div class="favorite-card">
                                         <div class="favorite-card-header">
@@ -934,9 +930,7 @@
                                             </div>
                                         </div>
                                         <div class="favorite-card-body">
-                                            {# ===================================================================== #}
-                                            {# <<< ALTERAÇÃO APLICADA AQUI: Adicionado |sort(attribute='title') >>> #}
-                                            {# ===================================================================== #}
+                                            {# Ordena os tópicos dentro de cada lei pelo título #}
                                             {% for topic in card.topics|sort(attribute='title') %}
                                                 <div class="topic-item" data-law-id="{{ topic.id }}">
                                                     <div class="topic-title">
@@ -998,7 +992,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
-        concurso: document.getElementById('concurso_id'), // <<< ADICIONADO
+        // =====================================================================
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: ADIÇÃO DO FILTRO DE CONCURSO AOS CONTROLES >>>
+        // =====================================================================
+        concurso: document.getElementById('concurso_id'),
+        // =====================================================================
+        // <<< FIM DA IMPLEMENTAÇÃO >>>
+        // =====================================================================
         subject: document.getElementById('subject_id'),
         diploma: document.getElementById('diploma_id'),
         favorites: document.getElementById('show_favorites'),
@@ -1021,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
     // =====================================================================
 
-    // Função auxiliar para mostrar a seção de leis
+    // Função auxiliar para mostrar a seção de leis e esconder o prompt inicial
     function showLawsSection() {
         if (lawsSection.style.display === 'none') {
             initialPrompt.style.display = 'none';
@@ -1033,8 +1033,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Listener para o novo filtro de CONCURSO
     filterControls.concurso.addEventListener('change', () => {
         showLawsSection();
+        // Se um concurso for selecionado, reseta o filtro de matéria para evitar conflito
         if (filterControls.concurso.value !== 'all') {
-            filterControls.subject.value = ''; // Reseta o filtro de matéria
+            filterControls.subject.value = ''; // Usamos '' pois é a opção "-- Favoritas --" ou a primeira
         }
         updateDiplomaFilter(null, filterControls.concurso.value);
     });
@@ -1043,9 +1044,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
     // =====================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
-    // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
@@ -1053,13 +1051,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const motivationDateElement = document.getElementById('motivation-date');
     const motivationTextElement = document.getElementById('motivation-text');
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
-    // =====================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
-    // =====================================================================
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
 
@@ -1110,14 +1102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
-    // =====================================================================
 
-
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO: LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
-    // =====================================================================
     const toggleCardsBtn = document.getElementById('toggle-cards-btn');
     const cardsToToggle = [
         document.getElementById('announcement-cards-section'),
@@ -1131,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyCardsVisibility(hidden) {
         cardsToToggle.forEach(card => {
-            if (card) { // Esta verificação é importante caso um card não seja renderizado
+            if (card) { 
                 if (hidden) {
                     card.classList.add('hidden-card-section');
                 } else {
@@ -1145,30 +1130,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i> Ocultar Cards';
         }
-        // A fonte da verdade (localStorage) é sempre atualizada
         localStorage.setItem('hideCards', hidden);
     }
 
-    // Ao carregar a página, lê o estado do localStorage
     const savedHideCardsPreference = localStorage.getItem('hideCards') === 'true';
     applyCardsVisibility(savedHideCardsPreference);
 
-    // Adiciona o evento de clique ao botão
     toggleCardsBtn.addEventListener('click', function() {
-        // Para decidir a próxima ação, lemos o estado ATUAL do localStorage
         const isCurrentlyHidden = localStorage.getItem('hideCards') === 'true';
-        // A ação é sempre inverter o estado atual.
         applyCardsVisibility(!isCurrentlyHidden);
     });
-    // =====================================================================
-    // <<< FIM DA CORREÇÃO >>>
-    // =====================================================================
-
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
         // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS PARA O FETCH >>>
         // =====================================================================
         const subjectId = filterControls.subject.value;
         const concursoId = filterControls.concurso.value; // Pega o valor do novo filtro
@@ -1176,7 +1152,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        const isInitialState = !subjectId && !concursoId; // Modificado para checar concurso também
+        // Verifica se o painel está no estado inicial (sem filtros ativos)
+        const isInitialState = !subjectId && concursoId === 'all';
         if (isInitialState && !showFavorites) {
              accordionContainer.innerHTML = '';
              return;
@@ -1187,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', 'true');
 
-        // ALTERADO: Adiciona o concursoId ou o subjectId aos parâmetros
+        // Adiciona o concursoId OU o subjectId aos parâmetros, nunca ambos.
         if (concursoId && concursoId !== 'all') {
             params.append('concurso_id', concursoId);
         } else if (subjectId && subjectId !== 'all') {
@@ -1207,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // <<< FIM DA IMPLEMENTAÇÃO >>>
         // =====================================================================
         
         try {
@@ -1223,37 +1200,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO `updateDiplomaFilter` >>>
     // =====================================================================
     async function updateDiplomaFilter(subjectId, concursoId) {
+        // Reseta os filtros dependentes
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
-        
         filterControls.refinementWrapper.style.visibility = 'hidden';
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        // Se um concurso foi selecionado, a gente não popula o filtro de diploma,
-        // apenas chama a renderização principal. O backend cuidará de tudo.
+        // Se um concurso foi selecionado, a função apenas dispara a busca principal.
+        // O backend cuidará de encontrar todas as leis daquele concurso.
         if (concursoId && concursoId !== 'all') {
             fetchAndRenderLaws();
             return;
         }
 
-        // Se nenhuma matéria ou 'todas' foi selecionada (e nenhum concurso), limpa e renderiza.
+        // Se nenhuma matéria ou "todas as matérias" for selecionada (e nenhum concurso ativo),
+        // apenas dispara a busca (que pode mostrar favoritos ou nada).
         if (!subjectId || subjectId === 'all') {
             fetchAndRenderLaws();
             return;
         }
         
-        // Lógica original: popula o filtro de diploma baseado na matéria.
+        // Lógica original: se uma matéria específica foi selecionada,
+        // busca as leis correspondentes para popular o filtro de "Lei".
         filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
         try {
             const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
             const laws = await response.json();
 
             filterControls.diploma.innerHTML = '<option value="">-- Todas as Leis da Matéria --</option>';
-            laws.forEach(law => {
+            // Ordena as leis alfabeticamente antes de adicioná-las
+            laws.sort((a, b) => a.title.localeCompare(b.title)).forEach(law => {
                 const option = new Option(law.title, law.id);
                 filterControls.diploma.appendChild(option);
             });
@@ -1262,10 +1242,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Erro ao buscar leis:", error);
             filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
         }
-        fetchAndRenderLaws();
+        fetchAndRenderLaws(); // Dispara a renderização inicial para a matéria selecionada
     }
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
     // =====================================================================
 
     async function updateTopicFilter(lawId) {
@@ -1284,7 +1264,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const topics = await response.json();
 
             topicSelect.innerHTML = '<option value="">-- Todos os Trechos --</option>';
-            topics.forEach(topic => {
+            // Ordena os trechos alfabeticamente
+            topics.sort((a, b) => a.title.localeCompare(b.title)).forEach(topic => {
                 const option = new Option(topic.title, topic.id);
                 topicSelect.appendChild(option);
             });
@@ -1296,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =====================================================================
-    // <<< ALTERAÇÃO APLICADA AQUI: Função renderLaws foi reescrita para ordenar os resultados >>>
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: Função `renderLaws` reescrita para ordenar os resultados >>>
     // =====================================================================
     function renderLaws(subjects) {
         if (Object.keys(subjects).length === 0) {
@@ -1305,7 +1286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let html = '';
-        // 1. Pega as chaves do objeto (nomes das matérias) e as ordena alfabeticamente
+        // 1. Pega os nomes das matérias (chaves do objeto) e as ordena alfabeticamente
         const sortedSubjectNames = Object.keys(subjects).sort((a, b) => a.localeCompare(b));
 
         // Itera sobre as matérias já em ordem alfabética
@@ -1321,9 +1302,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="subject-accordion-content">
                     ${sortedDiplomas.map(diploma => {
-                        const displayStyle = 'none';
-                        const iconRotation = 'rotate(0deg)';
-
                         // 3. Ordena os tópicos (filtered_children) dentro de cada lei pelo título
                         const sortedTopics = diploma.filtered_children.sort((a, b) => a.title.localeCompare(b.title));
 
@@ -1334,10 +1312,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="diploma-progress">
                                     <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
                                     <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
-                                    <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
+                                    <i class="fas fa-chevron-right accordion-toggle-icon"></i>
                                 </div>
                             </div>
-                            <div class="accordion-content" style="display: ${displayStyle};">
+                            <div class="accordion-content">
                                 ${sortedTopics.length > 0 ? sortedTopics.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
                             </div>
                         </div>`;
@@ -1346,8 +1324,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
         }
         accordionContainer.innerHTML = html;
-        attachEventListeners();
+        attachEventListeners(); // Reanexa todos os event listeners aos novos elementos
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
     function renderTopicItem(topic) {
         let statusBadge = '';
@@ -1433,19 +1414,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
 
-        // =====================================================================
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
-        // =====================================================================
-        // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
         todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', handleToggleTodoItem);
         });
         todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
             button.addEventListener('click', handleDeleteTodoItem);
         });
-        // =====================================================================
-        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
-        // =====================================================================
     }
     
     // =====================================================================
@@ -1462,12 +1436,13 @@ document.addEventListener('DOMContentLoaded', function() {
         else {
             showLawsSection();
         }
-        filterControls.concurso.value = 'all'; // <<< ADICIONADO
+        // Reseta o filtro de concurso quando uma matéria é selecionada
+        filterControls.concurso.value = 'all';
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
     });
     // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
     // =====================================================================
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -1509,11 +1484,16 @@ document.addEventListener('DOMContentLoaded', function() {
        fetchAndRenderLaws();
     });
 
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE LIMPAR FILTROS >>>
+    // =====================================================================
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
         
-        filterControls.concurso.value = 'all'; // <<< ADICIONADO
+        // Limpa também o filtro de concurso
+        filterControls.concurso.value = 'all'; 
+        
         filterControls.subject.value = hasFavorites ? '' : 'all';
         
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
@@ -1527,16 +1507,15 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
 
-        if (hasFavorites) {
-            initialPrompt.style.display = 'block';
-            lawsSection.style.display = 'none';
-            lawsSection.style.opacity = '0';
-            accordionContainer.innerHTML = '';
-        } else {
-            initialPrompt.style.display = 'block';
-            lawsSection.style.display = 'none';
-        }
+        // Volta para a tela inicial (favoritos ou mensagem de 'comece a estudar')
+        initialPrompt.style.display = 'block';
+        lawsSection.style.display = 'none';
+        lawsSection.style.opacity = '0';
+        accordionContainer.innerHTML = '';
     });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
     const searchInput = document.getElementById('search');
     const resultsContainer = document.getElementById('autocomplete-results');
@@ -1723,18 +1702,14 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderLaws();
     }
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
-    // =====================================================================
-    const MAX_TODO_ITEMS = 5; // Constante para o limite de tarefas
+    // --- Funções do Meu Diário (Post-It) ---
+    const MAX_TODO_ITEMS = 5;
 
-    // Função para renderizar um único item do diário
     function renderTodoItem(item) {
         const listItem = document.createElement('li');
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
         listItem.dataset.itemId = item.id;
         
-        // Limita o texto visível para 40 caracteres e adiciona reticências
         const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
 
         listItem.innerHTML = `
@@ -1750,13 +1725,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Adicionar event listeners para o novo item
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
         return listItem;
     }
 
-    // Função para adicionar uma nova tarefa
     addTodoBtn.addEventListener('click', async function() {
         const content = newTodoItemInput.value.trim();
         if (!content) {
@@ -1767,11 +1740,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Verifica se o limite de tarefas foi atingido
         if (todoListUl.children.length >= MAX_TODO_ITEMS) {
             Toastify({
                 text: `Você atingiu o limite de ${MAX_TODO_ITEMS} tarefas. Conclua ou exclua algumas para adicionar novas.`, duration: 5000, close: true, gravity: "bottom", position: "right",
-                style: { background: "linear-gradient(to right, #ff9900, #ffba4d)", borderRadius: "0.5rem" } // Laranja para aviso
+                style: { background: "linear-gradient(to right, #ff9900, #ffba4d)", borderRadius: "0.5rem" }
             }).showToast();
             return;
         }
@@ -1788,7 +1760,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
                 if (noTodoItemsMessage) {
                     const existingNoItemsMessage = document.getElementById('no-todo-items-message');
                     if (existingNoItemsMessage) {
@@ -1796,11 +1767,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // Renderizar e adicionar o novo item ao topo da lista
                 const newItem = renderTodoItem(data.todo_item);
-                todoListUl.prepend(newItem); // Adiciona no início da lista
+                todoListUl.prepend(newItem); 
 
-                newTodoItemInput.value = ''; // Limpa o input
+                newTodoItemInput.value = '';
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
@@ -1820,7 +1790,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Função para alternar o status de uma tarefa
     async function handleToggleTodoItem(event) {
         const checkbox = event.currentTarget;
         const listItem = checkbox.closest('.todo-item');
@@ -1837,7 +1806,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                // Atualizar a classe CSS e o status do checkbox
                 if (data.todo_item.is_completed) {
                     listItem.classList.add('completed');
                 } else {
@@ -1845,20 +1813,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 checkbox.checked = data.todo_item.is_completed;
                 
-                // Se o item foi concluído, movê-lo para o final da lista
-                if (data.todo_item.is_completed) {
-                    todoListUl.appendChild(listItem);
-                } else {
-                    // Se o item foi reaberto, reordenar a lista para manter os não-concluídos no topo
-                    await fetchAndRenderTodoItems(); // Refetch e re-renderiza para garantir a ordem
-                }
+                await fetchAndRenderTodoItems();
 
                 Toastify({
                     text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
                 }).showToast();
             } else {
-                checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
+                checkbox.checked = !checkbox.checked;
                 Toastify({
                     text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
                     style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
@@ -1866,7 +1828,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Erro ao alternar status da tarefa:', error);
-            checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
+            checkbox.checked = !checkbox.checked;
             Toastify({
                 text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
                 style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
@@ -1874,7 +1836,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para excluir uma tarefa
     async function handleDeleteTodoItem(event) {
         if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
             return;
@@ -1894,9 +1855,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                listItem.remove(); // Remove o item da lista
+                listItem.remove();
                 if (todoListUl.children.length === 0) {
-                    // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
                     const p = document.createElement('p');
                     p.id = 'no-todo-items-message';
                     p.className = 'text-gray-500 italic text-sm text-center py-4';
@@ -1922,34 +1882,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para buscar e renderizar todos os itens do diário (útil após toggle)
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
             const data = await response.json();
 
-            todoListUl.innerHTML = ''; // Limpa a lista atual
+            todoListUl.innerHTML = '';
 
             if (data.todo_items && data.todo_items.length > 0) {
-                // Ordena: não concluídos primeiro, depois concluídos. Dentro de cada grupo, por data de criação.
                 const sortedItems = data.todo_items.sort((a, b) => {
                     if (a.is_completed === b.is_completed) {
-                        // Se o status é o mesmo, ordena por ID (ou outra propriedade de ordem, como timestamp)
                         return a.id - b.id;
                     }
-                    return a.is_completed ? 1 : -1; // Não concluído (-1) vem antes de concluído (1)
+                    return a.is_completed ? 1 : -1;
                 });
 
                 sortedItems.forEach(item => {
                     todoListUl.appendChild(renderTodoItem(item));
                 });
-                // Remove a mensagem de "nenhuma tarefa" se ela existir
                 const existingNoItemsMessage = document.getElementById('no-todo-items-message');
                 if (existingNoItemsMessage) {
                     existingNoItemsMessage.remove();
                 }
             } else {
-                // Adiciona a mensagem de "nenhuma tarefa" se a lista estiver vazia
                 const p = document.createElement('p');
                 p.id = 'no-todo-items-message';
                 p.className = 'text-gray-500 italic text-sm text-center py-4';
@@ -1964,16 +1919,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }).showToast();
         }
     }
-
-    // Chama a função para buscar e renderizar os itens do diário quando a página carrega
     fetchAndRenderTodoItems();
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
-    // =====================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
-    // =====================================================================
+    // --- Funções do Card de Motivação Diária ---
     function getDayOfYear(date) {
         const start = new Date(date.getFullYear(), 0, 0);
         const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
@@ -1993,7 +1941,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         motivationDateElement.textContent = `${dayOfWeek}, ${dayOfMonth} de ${month} de ${year}`;
 
-        // Nova lista de frases motivacionais
         const motivationalPhrases = [
             "Não desista. O começo é sempre o mais difícil.",
             "A persistência é o caminho do êxito.",
@@ -2092,11 +2039,7 @@ document.addEventListener('DOMContentLoaded', function() {
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
 
-    // Chama a função para exibir a motivação diária ao carregar a página
     displayDailyMotivation();
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
-    // =====================================================================
 });
 </script>
 {% endblock %}
