@@ -18,6 +18,14 @@ class Concurso(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: CAMPO PARA EDITAL VERTICALIZADO >>>
+    # =====================================================================
+    edital_verticalizado_url = db.Column(db.String(300), nullable=True)
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
+
     # Relação Muitos-para-Muitos com a tabela Law
     # 'secondary' aponta para a nossa tabela de associação.
     # 'back_populates' cria a relação inversa no modelo Law.
