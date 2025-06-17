@@ -879,8 +879,20 @@
 <div class="progress-bar-container">
     <div class="progress-bar" id="reading-progress-bar"></div>
 </div>
-<div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
-    <h1 class="text-xl md:text-2xl font-bold text-blue-700">{{ law.title }}</h1>
+
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0" id="page-top">
+    
+    <div>
+        {% if law.parent %}
+        <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+            {{ law.parent.title }}
+        </span>
+        {% endif %}
+        
+        <h1 class="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-400 mt-1">
+            {{ law.title }}
+        </h1>
+    </div>
 
     <div class="flex justify-end w-full sm:w-auto items-center space-x-3 sm:space-x-4">
         <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
@@ -895,7 +907,6 @@
         </a>
     </div>
 </div>
-
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
     <div class="law-banner-content">
@@ -1609,19 +1620,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const restoreLawBtn = document.getElementById('restore-law-btn');
     let saveMarkupTimeout;
 
-    // ================================================================================================
-    // <<< INÍCIO DA CORREÇÃO: NOVA FUNÇÃO PARA REMOVER MARCA-TEXTO E LÓGICA ATUALIZADA DA BORRACHA >>>
-    // ================================================================================================
-
-    /**
-     * Esta função remove os `<span>` de marca-texto de dentro da seleção do usuário.
-     * Ela "desembrulha" o conteúdo do span, mantendo o texto mas removendo o fundo colorido.
-     */
     function removeHighlightsFromSelection() {
         const selection = window.getSelection();
         if (!selection.rangeCount || selection.isCollapsed) return;
 
-        // Função auxiliar para "desembrulhar" um elemento (remover a tag, manter o conteúdo)
         function unwrap(element) {
             const parent = element.parentNode;
             while (element.firstChild) {
@@ -1630,10 +1632,8 @@ document.addEventListener("DOMContentLoaded", function () {
             parent.removeChild(element);
         }
 
-        // Pega todos os spans de marca-texto que estão dentro do conteúdo da lei
         const allHighlightSpans = lawContent.querySelectorAll('span[class*="user-highlight-"]');
         
-        // Para cada um, verifica se ele está (total ou parcialmente) dentro da seleção do usuário
         allHighlightSpans.forEach(span => {
             if (selection.containsNode(span, true)) {
                 unwrap(span);
@@ -1670,9 +1670,7 @@ document.addEventListener("DOMContentLoaded", function () {
              document.execCommand('strikeThrough', false, null);
         }
         else if (command === 'unformat') {
-            // Ação 1: Usa nossa nova função para remover os marca-textos de forma confiável.
             removeHighlightsFromSelection();
-            // Ação 2: Usa o comando antigo para remover outras formatações (negrito, itálico, etc).
             document.execCommand('removeFormat', false, null);
         }
         else if (command.startsWith('highlight-')) {
@@ -1697,10 +1695,6 @@ document.addEventListener("DOMContentLoaded", function () {
         lawContent.focus();
         debounceSaveMarkup();
     }
-    
-    // ==========================================================
-    // <<< FIM DA CORREÇÃO >>>
-    // ==========================================================
     
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
