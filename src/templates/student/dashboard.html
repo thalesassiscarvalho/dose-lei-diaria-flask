@@ -1109,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLawsTitle(concursoSelectElement) {
         const selectedOption = concursoSelectElement.options[concursoSelectElement.selectedIndex];
         if (concursoSelectElement.value && concursoSelectElement.value !== 'all') {
-            lawsSectionTitle.textContent = `Legislações para ${selectedOption.text}`;
+            lawsSectionTitle.textContent = ` ${selectedOption.text}`;
         } else {
             lawsSectionTitle.textContent = 'Legislações Disponíveis';
         }
