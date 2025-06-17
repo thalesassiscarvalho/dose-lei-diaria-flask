@@ -1095,10 +1095,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let debounceTimer;
 
     const lawsSection = document.getElementById('laws-section');
-    const lawsSectionTitle = document.getElementById('laws-section-title');
+    const lawsSectionTitle = document.getElementById('laws-section-title'); // <<< NOVO
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
     
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO CONCURSO PADRÃO E TÍTULO DINÂMICO >>>
+    // =====================================================================
     const setDefaultConcursoBtn = document.getElementById('set-default-concurso-btn');
     const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
     const defaultConcursoId = {{ default_concurso_id|tojson }};
@@ -1141,6 +1144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                // Recarregar a página para refletir o estado atualizado em todos os lugares
                 window.location.reload();
             } else {
                 Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
@@ -1165,17 +1169,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Listener para o filtro de CONCURSO
     filterControls.concurso.addEventListener('change', () => {
         showLawsSection();
-        updateLawsTitle(filterControls.concurso);
-        updateDefaultConcursoButtonState();
+        updateLawsTitle(filterControls.concurso); // Atualiza o título
+        updateDefaultConcursoButtonState(); // Atualiza o botão de pino
 
         if (filterControls.concurso.value !== 'all') {
             filterControls.subject.value = '';
         }
         updateDiplomaFilter(null, filterControls.concurso.value);
     });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
+
+    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     function showLawsSection() {
         if (lawsSection.style.display === 'none') {
             initialPrompt.style.display = 'none';
@@ -1433,13 +1443,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
         return `
-        <div class="topic-item" data-law-id="<span class="math-inline">\{topic\.id\}"\>
-<div class\="topic\-title"\><i class\="fas fa\-file\-alt icon"\></i\><span\></span>{topic.title}</span></div>
+        <div class="topic-item" data-law-id="${topic.id}">
+            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
             <div class="topic-actions">
-                <span class="math-inline">\{statusBadge\}
-<a href\="/student/law/</span>{topic.id}" class="action-button">${actionButtonText}</a>
+                ${statusBadge}
+                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
                 ${reviewButton}
-                <button type="button" class="favorite-btn js-favorite-btn <span class="math-inline">\{favoriteClass\}" data\-law\-id\="</span>{topic.id}" title="<span class="math-inline">\{favoriteTitle\}"\><i class\="</span>{favoriteIcon}"></i></button>
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}"><i class="${favoriteIcon}"></i></button>
             </div>
         </div>`;
     }
@@ -1579,8 +1589,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderAutocompleteResults(results) {
         resultsContainer.innerHTML = !results || results.length === 0 ? '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>' : 
             results.map(item => `
-                <div class="autocomplete-item" onclick="window.location.href='<span class="math-inline">\{item\.url\}'"\>
-<span class\="autocomplete\-item\-title"\></span>{item.title}</span>
+                <div class="autocomplete-item" onclick="window.location.href='${item.url}'">
+                    <span class="autocomplete-item-title">${item.title}</span>
                     <span class="autocomplete-item-category">${item.category}</span>
                 </div>
             `).join('');
@@ -1691,23 +1701,33 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => buttonEl.disabled = false);
     }
     
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para carregar o concurso padrão >>>
+    // =====================================================================
     function initializeDashboard() {
         attachEventListeners();
         
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
+            // Dispara o evento 'change' para carregar os dados e atualizar a UI
             filterControls.concurso.dispatchEvent(new Event('change'));
         } else if (filterControls.subject.value === 'all') {
             showLawsSection();
             fetchAndRenderLaws();
         }
         
+        // Atualiza o estado do botão de pino no carregamento inicial
         updateDefaultConcursoButtonState();
         fetchAndRenderTodoItems();
         displayDailyMotivation();
         setupDynamicPlaceholder();
     }
-    
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
+
+    // ... (restante das funções do To-Do list)...
+
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -1733,7 +1753,7 @@ document.addEventListener('DOMContentLoaded', function() {
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
         listItem.dataset.itemId = item.id;
         const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
-        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" <span class="math-inline">\{item\.is\_completed ? 'checked' \: ''\}\><span class\="todo\-item\-text"\></span>{displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
+        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
         return listItem;
@@ -1807,6 +1827,7 @@ document.addEventListener('DOMContentLoaded', function() {
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
     
+    // Inicializa o painel
     initializeDashboard();
 });
 </script>
