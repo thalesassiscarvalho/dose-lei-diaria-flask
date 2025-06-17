@@ -13,13 +13,7 @@ from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: IMPORTAR O MODELO CONCURSO >>>
-# =====================================================================
 from src.models.concurso import Concurso
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -53,7 +47,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Rota do dashboard (sem alterações)
+# Rota do dashboard
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
@@ -78,7 +72,7 @@ def dashboard():
                            active_announcements_count=active_announcements_count
                            )
 
-# Rota de gerenciamento de conteúdo (sem alterações)
+# Rota de gerenciamento de conteúdo
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
@@ -114,8 +108,7 @@ def content_management():
 
 
 # =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVAS ROTAS PARA GERENCIAR CONCURSOS >>>
-# Estas rotas são cópias adaptadas das rotas de 'subjects'.
+# <<< INÍCIO DA IMPLEMENTAÇÃO: ROTAS ATUALIZADAS PARA GERENCIAR CONCURSOS >>>
 # =====================================================================
 @admin_bp.route("/concursos", methods=["GET", "POST"])
 @login_required
@@ -139,6 +132,30 @@ def manage_concursos():
     concursos = Concurso.query.order_by(Concurso.name).all()
     return render_template("admin/manage_concursos.html", concursos=concursos)
 
+
+@admin_bp.route("/concursos/edit/<int:concurso_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_concurso(concurso_id):
+    concurso = Concurso.query.get_or_404(concurso_id)
+    if request.method == "POST":
+        # Pega os dados do formulário e limpa para segurança
+        name = bleach.clean(request.form.get("name"), tags=[], strip=True).strip()
+        edital_url = bleach.clean(request.form.get("edital_url"), tags=[], strip=True).strip()
+        
+        if not name:
+            flash("O nome do concurso não pode ser vazio.", "danger")
+        else:
+            concurso.name = name
+            # Se a URL estiver vazia, salva como None (nulo) no banco
+            concurso.edital_verticalizado_url = edital_url if edital_url else None
+            db.session.commit()
+            flash(f"Concurso '{concurso.name}' atualizado com sucesso!", "success")
+            return redirect(url_for("admin.manage_concursos"))
+            
+    return render_template("admin/edit_concurso.html", concurso=concurso)
+
+
 @admin_bp.route("/concursos/delete/<int:concurso_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -159,7 +176,7 @@ def delete_concurso(concurso_id):
 # =====================================================================
 
 
-# Rota para gerenciar matérias (sem alterações)
+# Rota para gerenciar matérias
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -181,7 +198,7 @@ def manage_subjects():
     subjects = Subject.query.order_by(Subject.name).all()
     return render_template("admin/manage_subjects.html", subjects=subjects)
 
-# Rota para deletar matérias (sem alterações)
+# Rota para deletar matérias
 @admin_bp.route("/subjects/delete/<int:subject_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -196,9 +213,7 @@ def delete_subject(subject_id):
     return redirect(url_for("admin.manage_subjects"))
 
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES NAS ROTAS DE ADICIONAR/EDITAR LEI >>>
-# =====================================================================
+# Rota para adicionar lei
 @admin_bp.route("/laws/add", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -207,7 +222,6 @@ def add_law():
     
     subjects = Subject.query.order_by(Subject.name).all()
     normative_acts = Law.query.filter(Law.parent_id.is_(None)).order_by(Law.title).all()
-    # ALTERADO: Busca todos os concursos para passar para o template
     concursos = Concurso.query.order_by(Concurso.name).all()
 
     if request.method == "POST":
@@ -223,7 +237,6 @@ def add_law():
 
         if not title:
             flash("O Título é obrigatório.", "danger")
-            # ALTERADO: Passa a variável concursos para o template em caso de erro
             return render_template("admin/add_edit_law.html", law=None, subjects=subjects, normative_acts=normative_acts, pre_selected_parent_id=pre_selected_parent_id, concursos=concursos)
 
         new_law = Law(
@@ -237,7 +250,6 @@ def add_law():
         new_law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
         new_law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
         
-        # ALTERADO: Associa os concursos selecionados no formulário
         concurso_ids = request.form.getlist('concursos')
         if concurso_ids:
             selected_concursos = Concurso.query.filter(Concurso.id.in_(concurso_ids)).all()
@@ -266,7 +278,6 @@ def add_law():
         flash("Item de estudo adicionado com sucesso!", "success")
         return redirect(url_for("admin.content_management"))
 
-    # ALTERADO: Passa a variável concursos para o template
     return render_template("admin/add_edit_law.html", 
                            law=None, 
                            subjects=subjects, 
@@ -274,16 +285,14 @@ def add_law():
                            pre_selected_parent_id=pre_selected_parent_id,
                            concursos=concursos)
 
-
+# Rota para editar lei
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
 def edit_law(law_id):
-    # ALTERADO: Usa joinedload para carregar os concursos junto com a lei
     law = Law.query.options(joinedload(Law.banner), joinedload(Law.concursos)).get_or_404(law_id)
     subjects = Subject.query.order_by(Subject.name).all()
     normative_acts = Law.query.filter(Law.parent_id.is_(None), Law.id != law_id).order_by(Law.title).all()
-    # ALTERADO: Busca todos os concursos para passar para o template
     concursos = Concurso.query.order_by(Concurso.name).all()
 
     if request.method == "POST":
@@ -312,14 +321,12 @@ def edit_law(law_id):
 
         if not law.title:
             flash("O Título é obrigatório.", "danger")
-            # ALTERADO: Passa a variável concursos para o template em caso de erro
             return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts, concursos=concursos)
 
         law.subject_id = int(subject_id) if subject_id and subject_id != "None" else None
         law.parent_id = int(parent_id) if parent_id and parent_id != "" else None
         law.audio_url = audio_url if audio_url else None
         
-        # ALTERADO: Atualiza os concursos associados
         concurso_ids = request.form.getlist('concursos')
         selected_concursos = Concurso.query.filter(Concurso.id.in_(concurso_ids)).all()
         law.concursos = selected_concursos
@@ -330,7 +337,6 @@ def edit_law(law_id):
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
-                # CORRIGIDO: Era new_law.id, agora é o law.id correto
                 new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
                 db.session.add(new_link)
             index += 1
@@ -339,14 +345,9 @@ def edit_law(law_id):
         flash("Item de estudo atualizado com sucesso!", "success")
         return redirect(url_for("admin.content_management"))
 
-    # ALTERADO: Passa a variável concursos para o template
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts, concursos=concursos)
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-
-# Rota para deletar leis (sem alterações)
+# Rota para deletar leis
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -378,7 +379,7 @@ def delete_law(law_id):
     return redirect(url_for("admin.content_management"))
 
 
-# Rotas de gerenciamento de usuários (sem alterações)
+# Rotas de gerenciamento de usuários
 @admin_bp.route("/users")
 @login_required
 @admin_required
@@ -447,7 +448,7 @@ def reset_user_password(user_id):
     return render_template("admin/reset_password.html", user=user)
 
 
-# Rotas de gerenciamento de anúncios (sem alterações)
+# Rotas de gerenciamento de anúncios
 @admin_bp.route("/announcements", methods=["GET", "POST"])
 @login_required
 @admin_required
