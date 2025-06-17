@@ -708,65 +708,6 @@
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
     /* ===================================================================== */
     
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>>
-    // =====================================================================
-    @media (max-width: 768px) {
-    /* Altera o item principal para empilhar os elementos verticalmente */
-    .topic-item {
-        flex-direction: column; /* A mágica acontece aqui: muda a direção para vertical */
-        align-items: flex-start; /* Alinha tudo à esquerda */
-        gap: 0.75rem; /* Cria um espaço entre a área do título e a área dos botões */
-        padding: 1rem; /* Adiciona mais respiro interno */
-    }
-
-    /* Garante que o contêiner do título ocupe toda a largura */
-    .topic-item .topic-info {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        color: #334155;
-        font-weight: 600; /* Deixa o título um pouco mais forte */
-    }
-
-    /* Renomeado de .topic-title para .topic-info */
-    .topic-item .topic-info .icon {
-        margin-right: 0.75rem;
-        color: #94a3b8;
-    }
-
-    /* Nova div que agrupa a linha de baixo (status e ações) */
-    .topic-item .topic-status-and-actions {
-        display: flex;
-        justify-content: space-between; /* Empurra o status para a esquerda e as ações para a direita */
-        align-items: center;
-        width: 100%; /* Ocupa toda a largura do card */
-        padding-top: 0.5rem;
-        border-top: 1px solid #f3f4f6; /* Adiciona uma linha sutil de separação */
-    }
-    
-    /* Nova div que agrupa os botões principais */
-    .topic-status-and-actions .main-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem; /* Espaço entre o botão de ação e a estrela de favorito */
-    }
-    
-    /* Ajusta o botão de ação principal para telas menores */
-    .topic-status-and-actions .action-button {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem; /* Diminui um pouco o botão */
-    }
-
-    /* Garante que os ícones dos botões fiquem alinhados */
-    .topic-status-and-actions .action-button i,
-    .topic-status-and-actions .review-button i {
-        margin-right: 0.3rem;
-    }
-    }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>>
-    // =====================================================================
 
 </style>
 {% endblock %}
@@ -1509,20 +1450,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Nova estrutura HTML para o item, mais amigável para celulares
         // e com a sintaxe de template literal (${...}) corrigida.
         return `
-        <div class="topic-item" data-law-id="${topic.id}">
-            <div class="topic-info">
-                <i class="fas fa-file-alt icon"></i>
-                <span>${topic.title}</span>
+        <div class="topic-item" data-law-id="<span class="math-inline">\{topic\.id\}"\>
+<div class\="topic\-info"\>
+<i class\="fas fa\-file\-alt icon"\></i\>
+<span\></span>{topic.title}</span>
             </div>
             <div class="topic-status-and-actions">
                 <div class="status-badge-container">
-                    ${statusBadge}
-                </div>
-                <div class="main-actions">
-                    <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
+                    <span class="math-inline">\{statusBadge\}
+</div\>
+<div class\="main\-actions"\>
+<a href\="/student/law/</span>{topic.id}" class="action-button">${actionButtonText}</a>
                     ${reviewButton}
-                    <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
-                        <i class="${favoriteIcon}"></i>
+                    <button type="button" class="favorite-btn js-favorite-btn <span class="math-inline">\{favoriteClass\}" data\-law\-id\="</span>{topic.id}" title="<span class="math-inline">\{favoriteTitle\}"\>
+<i class\="</span>{favoriteIcon}"></i>
                     </button>
                 </div>
             </div>
@@ -1664,8 +1605,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderAutocompleteResults(results) {
         resultsContainer.innerHTML = !results || results.length === 0 ? '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>' : 
             results.map(item => `
-                <div class="autocomplete-item" onclick="window.location.href='${item.url}'">
-                    <span class="autocomplete-item-title">${item.title}</span>
+                <div class="autocomplete-item" onclick="window.location.href='<span class="math-inline">\{item\.url\}'"\>
+<span class\="autocomplete\-item\-title"\></span>{item.title}</span>
                     <span class="autocomplete-item-category">${item.category}</span>
                 </div>
             `).join('');
@@ -1824,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
         
         // CORREÇÃO: Adicionado o $ em ${...} para que as variáveis sejam interpretadas
-        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
+        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" <span class="math-inline">\{item\.is\_completed ? 'checked' \: ''\}\><span class\="todo\-item\-text"\></span>{displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
         
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
@@ -1902,6 +1843,7 @@ document.addEventListener('DOMContentLoaded', function() {
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
     
+    // Inicializa o painel
     initializeDashboard();
 });
 </script>
