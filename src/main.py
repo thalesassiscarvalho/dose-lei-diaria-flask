@@ -136,35 +136,35 @@ def ensure_achievements_exist():
     else:
         logging.debug("All base achievements already exist.")
 
-with app.app_context():
-    logging.info("Initializing database (manual checks)...")
-    try:
-        db.create_all()
-        logging.info("Database tables ensured (created if they didn't exist).")
-
-        admin_email = "thalesz@example.com"
-        logging.debug(f"Checking for admin user with email: {admin_email}")
-        admin_user = User.query.filter_by(email=admin_email).first()
-
-        if not admin_user:
-            logging.info(f"Admin user not found. Creating new admin user...")
-            admin_user = User(email=admin_email, role='admin', is_approved=True, full_name='Admin User')
-            admin_user.set_password('admin123')
-            db.session.add(admin_user)
-            try:
-                db.session.commit()
-                logging.info(f"Default admin user created and committed successfully.")
-            except Exception as commit_error:
-                db.session.rollback()
-                logging.error(f"ERROR committing new admin user: {commit_error}")
-        else:
-            logging.debug(f"Admin user found. ID: {admin_user.id}")
-
-        ensure_achievements_exist()
-
-    except Exception as e:
-        logging.error(f"An error occurred during database initialization: {e}")
-        db.session.rollback()
+#with app.app_context():
+#   logging.info("Initializing database (manual checks)...")
+#    try:
+#        db.create_all()
+#        logging.info("Database tables ensured (created if they didn't exist).")
+#
+#        admin_email = "thalesz@example.com"
+#        logging.debug(f"Checking for admin user with email: {admin_email}")
+#        admin_user = User.query.filter_by(email=admin_email).first()
+#
+#        if not admin_user:
+#            logging.info(f"Admin user not found. Creating new admin user...")
+#            admin_user = User(email=admin_email, role='admin', is_approved=True, full_name='Admin User')
+#            admin_user.set_password('admin123')
+#            db.session.add(admin_user)
+#            try:
+#                db.session.commit()
+#                logging.info(f"Default admin user created and committed successfully.")
+#            except Exception as commit_error:
+#                db.session.rollback()
+#                logging.error(f"ERROR committing new admin user: {commit_error}")
+#        else:
+#            logging.debug(f"Admin user found. ID: {admin_user.id}")
+#
+#        ensure_achievements_exist()
+#
+#    except Exception as e:
+#        logging.error(f"An error occurred during database initialization: {e}")
+#        db.session.rollback()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
