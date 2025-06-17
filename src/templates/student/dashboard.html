@@ -642,6 +642,29 @@
     /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
+
+    /* ===================================================================== */
+    /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO (JUN/2025): NOVA ÁREA DE FILTRO >>> */
+    /* Agrupamento visual do combo Matéria + Lei */
+    .filter-duo {
+        display: grid;
+        grid-template-columns: 1fr; /* mobile */
+        gap: 1rem;
+    }
+    @media (min-width: 1024px) {
+        .filter-duo {
+            grid-template-columns: repeat(2, 1fr); /* lado-a-lado em telas grandes */
+        }
+    }
+
+    /* Destaque para o contêiner de concurso */
+    .filter-concurso {
+        border-left: 4px solid #3b82f6;
+        padding-left: 1rem;
+    }
+    /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
+    /* ===================================================================== */
+
 </style>
 {% endblock %}
 
@@ -824,72 +847,84 @@
         </div>
         <hr class="my-6 border-t border-gray-200">
         {# ===================================================================== #}
-        {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
-        {# ===================================================================== #}
-        <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+{# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+{# ===================================================================== #}
+<div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+    <!-- 1. Concurso separado -->
+    <div class="filter-concurso">
+        <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i> Filtrar por Concurso</label>
+        <select id="concurso_id" name="concurso_id" class="custom-input">
+            <option value="all" selected>-- Todos os Concursos --</option>
+            {% for concurso in concursos %}
+                <option value="{{ concurso.id }}">{{ concurso.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- 2. Matéria & Lei agrupados -->
+    <div>
+        <span class="filter-label block"><i class="fas fa-layer-group"></i> Matéria &amp; Lei</span>
+        <div class="filter-duo">
             <div>
-                <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i>Filtrar por Concurso</label>
-                <select id="concurso_id" name="concurso_id" class="custom-input">
-                    <option value="all" selected>-- Todos os Concursos --</option>
-                    {% for concurso in concursos %}
-                        <option value="{{ concurso.id }}">{{ concurso.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
+                <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
-                {% if favorites_by_subject %}
-                    <option value="" selected>-- Favoritas --</option>
-                    <option value="all">-- Todas as Matérias --</option>
-                {% else %}
-                    <option value="all" selected>-- Todas as Matérias --</option>
-                {% endif %}
-                {% for subject in subjects %}
-                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% if favorites_by_subject %}
+                        <option value="" selected>-- Favoritas --</option>
+                        <option value="all">-- Todas as Matérias --</option>
+                    {% else %}
+                        <option value="all" selected>-- Todas as Matérias --</option>
+                    {% endif %}
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
+                <label for="diploma_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-gavel"></i> Lei</label>
                 <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
                     <option value="">-- Selecione uma Matéria --</option>
                 </select>
             </div>
-            <div id="refinement-wrapper" class="lg:col-span-1" style="visibility: hidden;">
-                <label class="filter-label"><i class="fas fa-filter"></i>3. Refinar por</label>
-                <div class="flex items-center space-x-4 mb-2">
-                    <label class="flex items-center text-sm cursor-pointer">
-                        <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
-                        <span class="ml-1.5">Status</span>
-                    </label>
-                    <label class="flex items-center text-sm cursor-pointer">
-                        <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
-                        <span class="ml-1.5">Trecho</span>
-                    </label>
-                </div>
-                <div id="status-filter-wrapper">
-                    <select id="status_filter" name="status_filter" class="custom-input">
-                        <option value="">-- Todos os Status --</option>
-                        <option value="not_read">Não Lidas</option>
-                        <option value="in_progress">Em Andamento</option>
-                        <option value="completed">Concluídas</option>
-                    </select>
-                </div>
-                <div id="topic-filter-wrapper" style="display: none;">
-                     <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
-                        <option value="">-- Selecione um Trecho --</option>
-                     </select>
-                </div>
-            </div>
-            <div>
-                <label class="filter-label">&nbsp;</label>
-                <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
-            </div>
         </div>
-        {# ===================================================================== #}
-        {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
-        {# ===================================================================== #}
+    </div>
+
+    <!-- 3. Refinar por -->
+    <div id="refinement-wrapper" style="visibility: hidden;">
+        <label class="filter-label"><i class="fas fa-filter"></i> Refinar por</label>
+        <div class="flex items-center space-x-4 mb-2">
+            <label class="flex items-center text-sm cursor-pointer">
+                <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
+                <span class="ml-1.5">Status</span>
+            </label>
+            <label class="flex items-center text-sm cursor-pointer">
+                <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
+                <span class="ml-1.5">Trecho</span>
+            </label>
+        </div>
+        <div id="status-filter-wrapper">
+            <select id="status_filter" name="status_filter" class="custom-input">
+                <option value="">-- Todos os Status --</option>
+                <option value="not_read">Não Lidas</option>
+                <option value="in_progress">Em Andamento</option>
+                <option value="completed">Concluídas</option>
+            </select>
+        </div>
+        <div id="topic-filter-wrapper" style="display: none;">
+             <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
+                <option value="">-- Selecione um Trecho --</option>
+             </select>
+        </div>
+    </div>
+
+    <!-- 4. Limpar filtros -->
+    <div class="flex items-end">
+        <label class="filter-label hidden lg:block">&nbsp;</label>
+        <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
+    </div>
+</div>
+{# ===================================================================== #}
+{# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+{# ===================================================================== #}
     </div>
 
     <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
