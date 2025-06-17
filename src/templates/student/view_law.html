@@ -109,9 +109,6 @@
         border: 1px solid #a7f3d0;
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 1/4: ESTILOS PARA O BANNER DE AVISO DA LEI >>> */
-    /* ===================================================================== */
     .law-banner {
         padding: 1rem;
         margin-bottom: 1.5rem;
@@ -145,9 +142,6 @@
     .law-banner-dismiss-btn:hover {
         opacity: 1;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 1/4 >>> */
-    /* ===================================================================== */
 
     .last-read-info {
         background-color: #e0e7ff; /* Indigo 100 */
@@ -538,13 +532,7 @@
 
     .dark-mode .law-content-container,
     .dark-mode .completed-banner,
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4: ESTILO MODO NOTURNO PARA BANNER DE AVISO >>> */
-    /* ===================================================================== */
     .dark-mode .law-banner,
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
     .dark-mode .last-read-info,
     .dark-mode #sticky-action-bar,
     .dark-mode .bookmark-section,
@@ -592,17 +580,11 @@
         color: #a7f3d0;
         border-color: #059669;
     }
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO PARA MANTER A LÓGICA): ESTILO MODO NOTURNO PARA BANNER >>> */
-    /* ===================================================================== */
     .dark-mode .law-banner {
         background-color: #422006;
         border-color: #ca8a04;
         color: #fef08a;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
     .dark-mode .last-read-info {
         background-color: #3730a3; /* Indigo escuro */
         color: #c7d2fe;
@@ -698,9 +680,7 @@
     }
     /* --- FIM: ESTILOS PARA MODO NOTURNO --- */
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA SWEETALERT2 EM MODO NOTURNO >>> */
-    /* ===================================================================== */
+    /* ESTILOS PARA SWEETALERT2 EM MODO NOTURNO */
     .dark-mode .swal2-popup {
         background-color: #1f2937 !important;
         color: #d1d5db !important;
@@ -712,9 +692,6 @@
     .dark-mode .swal2-content {
         color: #d1d5db !important;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO >>> */
-    /* ===================================================================== */
 
     /* --- INÍCIO: ESTILOS PARA CONTROLE DE FONTE --- */
     .font-control-group {
@@ -796,9 +773,6 @@
         color: #f0fdf4;
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO 2/4 (REPETIDO): NOVOS ESTILOS CSS PARA JURIDIQUÊS >>> */
-    /* ===================================================================== */
     .juridiques-container {
         background-color: #f5f3ff; /* Roxo muito claro (violet-50) */
         border: 1px solid #ddd6fe; /* Roxo claro (violet-200) */
@@ -821,10 +795,7 @@
     .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
         color: #ddd6fe; /* Texto claro (violet-200) */
     }
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO 2/4 >>> */
-    /* ===================================================================== */
-
+    
     /* --- CÓDIGO ATUALIZADO: AJUSTE DE ROLAGEM HORIZONTAL PARA BARRA DE AÇÕES EM TELAS PEQUENAS --- */
     @media (max-width: 480px) {
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
@@ -1103,7 +1074,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
     const completeForm = document.getElementById('mark-complete-form');
     if (completeForm) {
         completeForm.addEventListener('submit', function(event) {
@@ -1143,15 +1113,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             `,
                             icon: 'success',
                             confirmButtonText: 'Rumo à próxima!',
-                            // ==========================================================
-                            // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                            // ==========================================================
                             customClass: {
                                 confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                             }
-                            // ==========================================================
-                            // <<< FIM DA IMPLEMENTAÇÃO >>>
-                            // ==========================================================
                         }).then(() => {
                             window.location.reload();
                         });
@@ -1163,15 +1127,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         title: 'Erro!',
                         text: data.error || 'Ocorreu um erro ao processar sua solicitação.',
                         icon: 'error',
-                        // ==========================================================
-                        // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                        // ==========================================================
                         customClass: {
                             confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                         }
-                        // ==========================================================
-                        // <<< FIM DA IMPLEMENTAÇÃO >>>
-                        // ==========================================================
                     });
                     button.innerHTML = originalButtonText;
                     button.disabled = false;
@@ -1183,31 +1141,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     title: 'Erro de comunicação',
                     text: 'Não foi possível se conectar ao servidor.',
                     icon: 'error',
-                    // ==========================================================
-                    // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                    // ==========================================================
                     customClass: {
                         confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                     }
-                    // ==========================================================
-                    // <<< FIM DA IMPLEMENTAÇÃO >>>
-                    // ==========================================================
                 });
                 button.innerHTML = originalButtonText;
                 button.disabled = false;
             });
         });
     }
-    // --- FIM DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
 
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
 
-    // =================================================================
-    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
-    // =================================================================
     function fixDuplicateDescription() {
         if (!lawContent) return;
 
@@ -1236,13 +1184,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     fixDuplicateDescription();
-    // =================================================================
-    // <<< FIM: CORREÇÃO DO BUG >>>
-    // =================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
-    // =====================================================================
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
 
@@ -1284,9 +1226,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
-    // =====================================================================
 
 
     const progressBar = document.getElementById('reading-progress-bar');
@@ -1566,10 +1505,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
     
-    // ===== INÍCIO DA ALTERAÇÃO 2/2: REMOÇÃO DA FUNCIONALIDADE DO BOTÃO DE MARCA-TEXTO DO JAVASCRIPT =====
-    // O bloco de código para o 'highlight-btn' que estava aqui foi removido.
-    // ===== FIM DA ALTERAÇÃO 2/2 =====
-
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
             if (d.success && d.content) notesEditor.innerHTML = d.content;
@@ -1606,21 +1541,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
             event.preventDefault();
-            // Substituindo o alert() padrão por um SweetAlert2 mais elegante
             Swal.fire({
                 title: 'Cópia Desabilitada',
                 html: 'Para proteger a propriedade intelectual e incentivar o uso dos recursos interativos, a função de copiar foi desativada.<br><br>Agradecemos a sua compreensão!',
                 icon: 'info',
                 confirmButtonText: 'Entendi',
-                // ==========================================================
-                // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                // ==========================================================
                 customClass: {
                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                 }
-                // ==========================================================
-                // <<< FIM DA IMPLEMENTAÇÃO >>>
-                // ==========================================================
             });
         });
     }
@@ -1728,9 +1656,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
     if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: SUBSTITUIÇÃO DE CONFIRM() POR SWEETALERT2 >>>
-    // =====================================================================
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
             Swal.fire({
@@ -1740,16 +1665,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 showCancelButton: true,
                 confirmButtonText: 'Sim, restaurar!',
                 cancelButtonText: 'Cancelar',
-                // ==========================================================
-                // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSES DOS BOTÕES >>>
-                // ==========================================================
                 customClass: {
                     confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded',
                     cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3'
                 }
-                // ==========================================================
-                // <<< FIM DA IMPLEMENTAÇÃO >>>
-                // ==========================================================
             }).then((result) => {
                 if (result.isConfirmed) {
                     
@@ -1769,15 +1688,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                 title: 'Restaurada!',
                                 text: 'A lei foi restaurada com sucesso. A página será recarregada.',
                                 icon: 'success',
-                                // ==========================================================
-                                // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                                // ==========================================================
                                 customClass: {
                                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                                 }
-                                // ==========================================================
-                                // <<< FIM DA IMPLEMENTAÇÃO >>>
-                                // ==========================================================
                             }).then(() => {
                                 window.location.reload();
                             });
@@ -1786,15 +1699,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                 title: 'Erro!',
                                 text: 'Ocorreu um erro ao restaurar a lei: ' + (data.error || 'Erro desconhecido.'),
                                 icon: 'error',
-                                // ==========================================================
-                                // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                                // ==========================================================
                                 customClass: {
                                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                                 }
-                                // ==========================================================
-                                // <<< FIM DA IMPLEMENTAÇÃO >>>
-                                // ==========================================================
                             });
                             restoreLawBtn.disabled = false;
                         }
@@ -1805,15 +1712,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             title: 'Erro de Comunicação',
                             text: 'Não foi possível se conectar ao servidor para restaurar a lei.',
                             icon: 'error',
-                            // ==========================================================
-                            // <<< INÍCIO DA IMPLEMENTAÇÃO: CLASSE DO BOTÃO >>>
-                            // ==========================================================
                             customClass: {
                                 confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                             }
-                            // ==========================================================
-                            // <<< FIM DA IMPLEMENTAÇÃO >>>
-                            // ==========================================================
                         });
                         restoreLawBtn.disabled = false;
                     });
@@ -1821,9 +1722,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO >>>
-    // =====================================================================
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
