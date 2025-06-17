@@ -394,7 +394,16 @@ def filter_laws():
     if selected_diploma_id:
         diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
 
-    all_diplomas = diplomas_query.order_by(Subject.name, Law.title).all()
+    # =====================================================================
+    # <<< INÍCIO DA CORREÇÃO >>>
+    # =====================================================================
+    # CORREÇÃO: Adicionado .join(Law.subject) para garantir que a tabela
+    # Subject esteja disponível para a cláusula order_by.
+    all_diplomas = diplomas_query.join(Law.subject).order_by(Subject.name, Law.title).all()
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO >>>
+    # =====================================================================
+    
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
     
     processed_diplomas = []
@@ -490,7 +499,6 @@ def view_law(law_id):
                            )
 
 # ... (Restante do arquivo student.py sem alterações) ...
-# ... toggle_favorite, mark_complete, review_law, etc. permanecem os mesmos ...
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
 @login_required
