@@ -335,50 +335,61 @@
     .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
     .topic-item:first-child { border-top: 1px solid #e5e7eb; }
     .topic-item:last-child { border-bottom: none; }
-    .topic-title { display: flex; align-items: center; color: #334155; }
-    .topic-title .icon { margin-right: 0.75rem; color: #94a3b8; }
-    .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .topic-item:hover { background-color: #f3f4f6; }
 
     /* ===================================================================== */
-    /* <<< INÍCIO DAS ALTERAÇÕES SOLICITADAS: Divisão e Alinhamento dos Tópicos >>> */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: LISTA DE LEIS MAIS LEGÍVEL >>> */
     /* ===================================================================== */
 
-    /* 1. Divisão aprimorada com cores de fundo intercaladas */
+    /* Estilo para intercalar cores de fundo nos itens de tópico (efeito zebra) */
     .topic-item:nth-child(even) {
-        background-color: #f9fafb; /* Cinza bem claro para diferenciar as linhas */
+        background-color: #f9fafb; /* Cinza muito claro para linhas pares */
     }
 
+    /* Garante que o hover sempre se sobreponha à cor da linha */
     .topic-item:hover {
-        background-color: #f0f2f5; /* Efeito de hover consistente para todas as linhas */
+        background-color: #f3f4f6;
     }
 
-    /* 2. Alinhamento vertical dos botões em telas maiores (desktop) */
-    @media (min-width: 769px) {
-        /*
-         O seletor '> div:first-child' é usado para ser flexível,
-         pegando tanto a div '.topic-title' (usada nos favoritos)
-         quanto a div '.topic-info' (usada na busca dinâmica).
-        */
-        .topic-item > div:first-child {
-            flex-grow: 1;           /* Faz a área do título expandir, ocupando o espaço vazio */
-            margin-right: 1.5rem;     /* Cria uma separação visual dos botões */
-            /* As 3 propriedades abaixo evitam quebra de layout com títulos muito grandes */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+    /* Contêiner do título do tópico */
+    .topic-info {
+        display: flex;
+        align-items: center;
+        color: #334155;
+        font-weight: 500;
+        flex-grow: 1; /* Permite que o título ocupe o espaço disponível */
+        margin-right: 1rem; /* Espaço entre o título e os botões */
+    }
 
-        /*
-         O seletor '> div:last-child' pega a área de ações,
-         seja '.topic-actions' ou '.topic-status-and-actions'.
-        */
-        .topic-item > div:last-child {
-            flex-shrink: 0; /* Impede que a área dos botões encolha ou seja empurrada */
-        }
+    .topic-info .icon {
+        margin-right: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Novo contêiner para status e ações, para melhor controle do alinhamento */
+    .topic-status-and-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; /* Alinha tudo à direita */
+        flex-shrink: 0; /* Impede que o container encolha */
+    }
+
+    /* Container do status para garantir largura fixa e alinhar botões */
+    .status-badge-container {
+        min-width: 110px; /* Largura mínima para caber "Em Andamento" confortavelmente */
+        text-align: right;
+        margin-right: 0.75rem; /* Espaço entre o status (se houver) e os botões */
+    }
+
+    /* Container apenas para os botões */
+    .main-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     /* ===================================================================== */
-    /* <<< FIM DAS ALTERAÇÕES SOLICITADAS >>> */
+    /* <<< FIM DA IMPLEMENTAÇÃO: LISTA DE LEIS MAIS LEGÍVEL >>> */
     /* ===================================================================== */
 
     .accordion-toggle-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
@@ -753,57 +764,56 @@
     /* <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
     /* ===================================================================== */
     @media (max-width: 768px) {
-    /* Altera o item principal para empilhar os elementos verticalmente */
-    .topic-item {
-        flex-direction: column; /* A mágica acontece aqui: muda a direção para vertical */
-        align-items: flex-start; /* Alinha tudo à esquerda */
-        gap: 0.75rem; /* Cria um espaço entre a área do título e a área dos botões */
-        padding: 1rem; /* Adiciona mais respiro interno */
-    }
+        /* Altera o item principal para empilhar os elementos verticalmente */
+        .topic-item {
+            flex-direction: column; /* A mágica acontece aqui: muda a direção para vertical */
+            align-items: flex-start; /* Alinha tudo à esquerda */
+            gap: 0.75rem; /* Cria um espaço entre a área do título e a área dos botões */
+            padding: 1rem; /* Adiciona mais respiro interno */
+        }
 
-    /* Garante que o contêiner do título ocupe toda a largura */
-    .topic-item .topic-info {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        color: #334155;
-        font-weight: 600; /* Deixa o título um pouco mais forte */
-    }
+        /* Garante que o contêiner do título ocupe toda a largura */
+        .topic-item .topic-info {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            color: #334155;
+            font-weight: 600; /* Deixa o título um pouco mais forte */
+        }
 
-    /* Renomeado de .topic-title para .topic-info */
-    .topic-item .topic-info .icon {
-        margin-right: 0.75rem;
-        color: #94a3b8;
-    }
+        .topic-item .topic-info .icon {
+            margin-right: 0.75rem;
+            color: #94a3b8;
+        }
 
-    /* Nova div que agrupa a linha de baixo (status e ações) */
-    .topic-item .topic-status-and-actions {
-        display: flex;
-        justify-content: space-between; /* Empurra o status para a esquerda e as ações para a direita */
-        align-items: center;
-        width: 100%; /* Ocupa toda a largura do card */
-        padding-top: 0.5rem;
-        border-top: 1px solid #f3f4f6; /* Adiciona uma linha sutil de separação */
-    }
-    
-    /* Nova div que agrupa os botões principais */
-    .topic-status-and-actions .main-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem; /* Espaço entre o botão de ação e a estrela de favorito */
-    }
-    
-    /* Ajusta o botão de ação principal para telas menores */
-    .topic-status-and-actions .action-button {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem; /* Diminui um pouco o botão */
-    }
+        /* Nova div que agrupa a linha de baixo (status e ações) */
+        .topic-item .topic-status-and-actions {
+            display: flex;
+            justify-content: space-between; /* Empurra o status para a esquerda e as ações para a direita */
+            align-items: center;
+            width: 100%; /* Ocupa toda a largura do card */
+            padding-top: 0.5rem;
+            border-top: 1px solid #f3f4f6; /* Adiciona uma linha sutil de separação */
+        }
+        
+        /* Nova div que agrupa os botões principais */
+        .topic-status-and-actions .main-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Espaço entre o botão de ação e a estrela de favorito */
+        }
+        
+        /* Ajusta o botão de ação principal para telas menores */
+        .topic-status-and-actions .action-button {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem; /* Diminui um pouco o botão */
+        }
 
-    /* Garante que os ícones dos botões fiquem alinhados */
-    .topic-status-and-actions .action-button i,
-    .topic-status-and-actions .review-button i {
-        margin-right: 0.3rem;
-    }
+        /* Garante que os ícones dos botões fiquem alinhados */
+        .topic-status-and-actions .action-button i,
+        .topic-status-and-actions .review-button i {
+            margin-right: 0.3rem;
+        }
     }
     /* ===================================================================== */
     /* <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
@@ -1116,42 +1126,44 @@
                                             </div>
                                         </div>
                                         <div class="favorite-card-body">
-                                            {# ===================================================================== #}
-                                            {# <<< ALTERAÇÃO APLICADA AQUI: Adicionado |sort(attribute='title') >>> #}
-                                            {# ===================================================================== #}
                                             {% for topic in card.topics|sort(attribute='title') %}
                                                 <div class="topic-item" data-law-id="{{ topic.id }}">
-                                                    <div class="topic-title">
+                                                    <div class="topic-info">
                                                         <i class="fas fa-file-alt icon"></i>
                                                         <span>{{ topic.title }}</span>
                                                     </div>
-                                                    <div class="topic-actions">
-                                                        {% if topic.is_completed %}
-                                                            <span class="completed-badge">Concluída</span>
-                                                        {% elif topic.is_in_progress %}
-                                                            <span class="in-progress-badge">Em Andamento</span>
-                                                        {% endif %}
-                                                        <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                                    
+                                                    <div class="topic-status-and-actions">
+                                                        <div class="status-badge-container">
                                                             {% if topic.is_completed %}
-                                                                <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                                <span class="completed-badge">Concluída</span>
                                                             {% elif topic.is_in_progress %}
-                                                                <i class="fas fa-book-reader mr-1"></i> Continuar
-                                                            {% else %}
-                                                                <i class="fas fa-book mr-1"></i> Começar
+                                                                <span class="in-progress-badge">Em Andamento</span>
                                                             {% endif %}
-                                                        </a>
-                                                        {% if topic.is_completed %}
-                                                        <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
-                                                            <i class="fas fa-undo-alt"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
-                                                            <i class="fas fa-star"></i>
-                                                        </button>
+                                                        </div>
+                                                        <div class="main-actions">
+                                                            <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
+                                                                {% if topic.is_completed %}
+                                                                    <i class="fas fa-check-circle mr-1"></i> Revisar
+                                                                {% elif topic.is_in_progress %}
+                                                                    <i class="fas fa-book-reader mr-1"></i> Continuar
+                                                                {% else %}
+                                                                    <i class="fas fa-book mr-1"></i> Começar
+                                                                {% endif %}
+                                                            </a>
+                                                            {% if topic.is_completed %}
+                                                            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="{{ topic.id }}" title="Marcar como não concluído">
+                                                                <i class="fas fa-undo-alt"></i>
+                                                            </button>
+                                                            {% endif %}
+                                                            <button type="button" class="favorite-btn js-favorite-btn favorited" data-law-id="{{ topic.id }}" title="Remover dos Favoritos">
+                                                                <i class="fas fa-star"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             {% endfor %}
-                                        </div>
+                                            </div>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -1519,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO DE SINTAXE E IMPLEMENTAÇÃO MOBILE >>>
+    // <<< INÍCIO DA ALTERAÇÃO: FUNÇÃO DE RENDERIZAR ITEM DE LEI >>>
     // =====================================================================
     function renderTopicItem(topic) {
         let statusBadge = '';
@@ -1547,8 +1559,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteIcon = 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
-        // Nova estrutura HTML para o item, mais amigável para celulares
-        // e com a sintaxe de template literal (${...}) corrigida.
+        // Nova estrutura HTML que usa os novos contêineres para alinhamento.
         return `
         <div class="topic-item" data-law-id="${topic.id}">
             <div class="topic-info">
@@ -1569,6 +1580,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>`;
     }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO: FUNÇÃO DE RENDERIZAR ITEM DE LEI >>>
+    // =====================================================================
 
     function attachEventListeners() {
         document.querySelectorAll('.subject-accordion-header, .accordion-header, .favorite-card-header').forEach(header => {
@@ -1835,9 +1849,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupDynamicPlaceholder();
     }
     
-    // =====================================================================
-    // <<< INÍCIO DA CORREÇÃO DE SINTAXE E IMPLEMENTAÇÃO MOBILE >>>
-    // =====================================================================
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -1864,16 +1875,12 @@ document.addEventListener('DOMContentLoaded', function() {
         listItem.dataset.itemId = item.id;
         const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
         
-        // CORREÇÃO: Adicionado o $ em ${...} para que as variáveis sejam interpretadas
         listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
         
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
         return listItem;
     }
-    // =====================================================================
-    // <<< FIM DA CORREÇÃO DE SINTAXE E IMPLEMENTAÇÃO MOBILE >>>
-    // =====================================================================
 
     addTodoBtn.addEventListener('click', async function() {
         const content = newTodoItemInput.value.trim();
