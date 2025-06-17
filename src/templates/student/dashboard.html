@@ -823,7 +823,19 @@
             </div>
         </div>
         <hr class="my-6 border-t border-gray-200">
-        <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+        {# ===================================================================== #}
+        {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+        {# ===================================================================== #}
+        <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+            <div>
+                <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i>Filtrar por Concurso</label>
+                <select id="concurso_id" name="concurso_id" class="custom-input">
+                    <option value="all" selected>-- Todos os Concursos --</option>
+                    {% for concurso in concursos %}
+                        <option value="{{ concurso.id }}">{{ concurso.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div>
                 <label for="subject_id" class="filter-label"><i class="fas fa-book-open"></i>1. Filtrar por Matéria</label>
                 <select id="subject_id" name="subject_id" class="custom-input">
@@ -836,7 +848,7 @@
                 {% for subject in subjects %}
                     <option value="{{ subject.id }}">{{ subject.name }}</option>
                     {% endfor %}
-        </select>
+                </select>
             </div>
             <div>
                 <label for="diploma_id" class="filter-label"><i class="fas fa-gavel"></i>2. Filtrar por Lei</label>
@@ -875,6 +887,9 @@
                 <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
             </div>
         </div>
+        {# ===================================================================== #}
+        {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+        {# ===================================================================== #}
     </div>
 
     <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
@@ -983,6 +998,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
+        concurso: document.getElementById('concurso_id'), // <<< ADICIONADO
         subject: document.getElementById('subject_id'),
         diploma: document.getElementById('diploma_id'),
         favorites: document.getElementById('show_favorites'),
@@ -1000,6 +1016,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const lawsSection = document.getElementById('laws-section');
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
+    
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
+    // =====================================================================
+
+    // Função auxiliar para mostrar a seção de leis
+    function showLawsSection() {
+        if (lawsSection.style.display === 'none') {
+            initialPrompt.style.display = 'none';
+            lawsSection.style.display = 'block';
+            setTimeout(() => lawsSection.style.opacity = '1', 50);
+        }
+    }
+
+    // Listener para o novo filtro de CONCURSO
+    filterControls.concurso.addEventListener('change', () => {
+        showLawsSection();
+        if (filterControls.concurso.value !== 'all') {
+            filterControls.subject.value = ''; // Reseta o filtro de matéria
+        }
+        updateDiplomaFilter(null, filterControls.concurso.value);
+    });
+
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
+    // =====================================================================
 
     // =====================================================================
     // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
@@ -1125,12 +1167,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
     async function fetchAndRenderLaws() {
+        // =====================================================================
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // =====================================================================
         const subjectId = filterControls.subject.value;
+        const concursoId = filterControls.concurso.value; // Pega o valor do novo filtro
         const diplomaId = filterControls.diploma.value;
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
         
-        const isInitialState = !subjectId;
+        const isInitialState = !subjectId && !concursoId; // Modificado para checar concurso também
         if (isInitialState && !showFavorites) {
              accordionContainer.innerHTML = '';
              return;
@@ -1140,8 +1186,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const params = new URLSearchParams();
         if (showFavorites) params.append('show_favorites', 'true');
-        
-        if (subjectId && subjectId !== 'all') {
+
+        // ALTERADO: Adiciona o concursoId ou o subjectId aos parâmetros
+        if (concursoId && concursoId !== 'all') {
+            params.append('concurso_id', concursoId);
+        } else if (subjectId && subjectId !== 'all') {
              params.append('subject_id', subjectId);
         }
         
@@ -1157,6 +1206,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+        // =====================================================================
+        // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // =====================================================================
         
         try {
             const response = await fetch(`/student/filter_laws?${params.toString()}`);
@@ -1170,7 +1222,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    async function updateDiplomaFilter(subjectId) {
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // =====================================================================
+    async function updateDiplomaFilter(subjectId, concursoId) {
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         
@@ -1178,11 +1233,20 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
 
-        if (!subjectId || subjectId === 'all') {
+        // Se um concurso foi selecionado, a gente não popula o filtro de diploma,
+        // apenas chama a renderização principal. O backend cuidará de tudo.
+        if (concursoId && concursoId !== 'all') {
             fetchAndRenderLaws();
             return;
         }
 
+        // Se nenhuma matéria ou 'todas' foi selecionada (e nenhum concurso), limpa e renderiza.
+        if (!subjectId || subjectId === 'all') {
+            fetchAndRenderLaws();
+            return;
+        }
+        
+        // Lógica original: popula o filtro de diploma baseado na matéria.
         filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
         try {
             const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
@@ -1200,6 +1264,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         fetchAndRenderLaws();
     }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // =====================================================================
 
     async function updateTopicFilter(lawId) {
         const topicSelect = filterControls.topicFilter;
@@ -1381,6 +1448,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // =====================================================================
     }
     
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
+    // =====================================================================
+    // Altera o listener do filtro de MATÉRIA para resetar o de concurso
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
         if (subjectId === '') {
@@ -1389,15 +1460,15 @@ document.addEventListener('DOMContentLoaded', function() {
             lawsSection.style.opacity = '0';
         } 
         else {
-            if (lawsSection.style.display === 'none') {
-                initialPrompt.style.display = 'none';
-                lawsSection.style.display = 'block';
-                setTimeout(() => lawsSection.style.opacity = '1', 50);
-            }
+            showLawsSection();
         }
+        filterControls.concurso.value = 'all'; // <<< ADICIONADO
         filterControls.search.value = '';
-        updateDiplomaFilter(subjectId);
+        updateDiplomaFilter(subjectId, null);
     });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
+    // =====================================================================
 
     filterControls.diploma.addEventListener('change', async () => {
         filterControls.search.value = '';
@@ -1428,13 +1499,9 @@ document.addEventListener('DOMContentLoaded', function() {
     filterControls.favorites.addEventListener('change', () => {
         const isChecked = filterControls.favorites.checked;
         if (isChecked) {
-             if (lawsSection.style.display === 'none') {
-                initialPrompt.style.display = 'none';
-                lawsSection.style.display = 'block';
-                setTimeout(() => lawsSection.style.opacity = '1', 50);
-            }
+             showLawsSection();
         } 
-        else if (filterControls.subject.value === '') {
+        else if (filterControls.subject.value === '' && filterControls.concurso.value === 'all') {
              initialPrompt.style.display = 'block';
              lawsSection.style.display = 'none';
              lawsSection.style.opacity = '0';
@@ -1445,6 +1512,8 @@ document.addEventListener('DOMContentLoaded', function() {
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
+        
+        filterControls.concurso.value = 'all'; // <<< ADICIONADO
         filterControls.subject.value = hasFavorites ? '' : 'all';
         
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
@@ -1650,11 +1719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attachEventListeners();
     
     if (filterControls.subject.value === 'all') {
-         if (lawsSection.style.display === 'none') {
-            initialPrompt.style.display = 'none';
-            lawsSection.style.display = 'block';
-            setTimeout(() => lawsSection.style.opacity = '1', 50);
-        }
+         showLawsSection();
         fetchAndRenderLaws();
     }
 
