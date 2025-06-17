@@ -44,6 +44,10 @@
         <a href="{{ url_for('admin.manage_subjects') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded" title="Gerenciar Matérias">
             <i class="fas fa-tags mr-2"></i>Matérias
         </a>
+        
+        <a href="{{ url_for('admin.manage_concursos') }}" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded" title="Gerenciar Concursos">
+            <i class="fas fa-trophy mr-2"></i>Concursos
+        </a>
         <a href="{{ url_for('admin.manage_users') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" title="Gerenciar Usuários">
             <i class="fas fa-users-cog mr-2"></i>Usuários {% if pending_users_count > 0 %}<span class="ml-2 bg-red-600 text-red-100 text-xs font-bold rounded-full px-2 py-1">{{ pending_users_count }}</span>{% endif %}
         </a>
