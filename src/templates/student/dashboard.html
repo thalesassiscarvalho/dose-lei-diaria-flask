@@ -314,375 +314,296 @@
         padding: 0 0.5rem;
     }
 
-    /* ===================================================================== */
-    /* NOVO DESIGN DO SISTEMA DE FILTROS - MAIS MODERNO E ORGANIZADO */
-    /* ===================================================================== */
 
-    /* Container principal dos filtros com design moderno */
-    .modern-filter-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 1rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.25), 0 10px 10px -5px rgba(102, 126, 234, 0.04);
-        position: relative;
-        overflow: hidden;
-    }
+    /* Efeito de elevação adicionado ao container de filtro */
+    .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
+    .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
+    .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
+    .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    .custom-input::placeholder { color: #94a3b8; }
+    .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    select.custom-input { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+    
+    .accordion-item { border-radius: 0.5rem; overflow: hidden; margin-bottom: 0.75rem; background-color: #fff; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03); }
+    .accordion-header { padding: 1rem 1.5rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+    .accordion-header:hover { background-color: #f8fafc; }
+    .accordion-header .diploma-title { font-size: 1.125rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; }
+    .accordion-header .diploma-title .icon { margin-right: 0.75rem; color: #3b82f6; }
+    .accordion-header .diploma-progress { display: flex; align-items: center; gap: 0.75rem; width: 30%; }
+    .accordion-content { display: none; padding: 0.5rem 1.5rem 1.5rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #fdfdff; }
+    
+    .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
+    .topic-item:first-child { border-top: 1px solid #e5e7eb; }
+    .topic-item:last-child { border-bottom: none; }
+    .topic-item:hover { background-color: #f3f4f6; }
 
-    /* Efeito de overlay sutil */
-    .modern-filter-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        z-index: 1;
-    }
-
-    /* Conteúdo dos filtros */
-    .filter-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    /* Título da seção de filtros */
-    .filter-section-title {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .filter-section-title i {
-        margin-right: 0.75rem;
-        font-size: 1.75rem;
-        color: #fbbf24;
-    }
-
-    /* Container da busca principal */
-    .search-section {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        backdrop-filter: blur(10px);
-    }
-
-    /* Estilo da busca principal */
-    .search-wrapper {
-        position: relative;
-        margin-bottom: 1rem;
-    }
-
-    .search-label {
-        display: block;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-    }
-
-    .search-label i {
-        margin-right: 0.5rem;
-        color: #6366f1;
-        font-size: 1.1rem;
-    }
-
-    .modern-search-input {
-        width: 100%;
-        background-color: #f9fafb;
-        border: 2px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1rem 1rem 1rem 3rem;
-        font-size: 1rem;
-        color: #111827;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-
-    .modern-search-input:focus {
-        outline: none;
-        border-color: #6366f1;
+    .topic-title { display: flex; align-items: center; color: #334155; }
+    .topic-title .icon { margin-right: 0.75rem; color: #94a3b8; }
+    .topic-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .accordion-toggle-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
+    .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
+    .review-button { background-color: #6b7280; color: white; border: none; border-radius: 9999px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease; }
+    .review-button:hover { background-color: #4b5563; }
+    .search-wrapper { position: relative; }
+    .search-icon { position: absolute; top: 55%; left: 1rem; color: #94a3b8; transition: color 0.2s ease; }
+    .search-input-with-icon { padding-left: 2.75rem !important; }
+    .search-wrapper .search-input-with-icon:focus + .search-icon { color: #2563eb; }
+    .search-wrapper .search-input-with-icon:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .autocomplete-container { position: absolute; background-color: white; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
+    .autocomplete-item { padding: 0.75rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+    .autocomplete-item:hover { background-color: #f8fafc; }
+    .autocomplete-item-title { font-weight: 500; color: #1e293b; }
+    .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
+    
+    /* Efeito de elevação adicionado aos cards de favoritos */
+    .favorite-card {
         background-color: #ffffff;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        transform: translateY(-1px);
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        transition: all 0.3s ease;
     }
-
-    .modern-search-input::placeholder {
-        color: #9ca3af;
-        font-style: italic;
+    .favorite-card:hover {
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+        border-color: #d1d5db;
     }
-
-    .search-icon {
-        position: absolute;
-        top: 50%;
-        left: 1rem;
-        transform: translateY(-50%);
+    .favorite-card-header {
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        background-color: #f9fafb;
+    }
+    .favorite-card-header-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .favorite-card-header .toggle-icon {
+        transition: transform 0.3s ease;
         color: #6b7280;
-        font-size: 1.1rem;
-        transition: color 0.3s ease;
     }
-
-    .modern-search-input:focus + .search-icon {
-        color: #6366f1;
+    .favorite-card-header.open .toggle-icon {
+        transform: rotate(180deg);
     }
-
-    /* Checkbox de favoritos */
-    .favorites-checkbox {
+    .favorite-card-progress {
         display: flex;
         align-items: center;
-        justify-content: center;
-        background: rgba(99, 102, 241, 0.1);
-        border: 2px solid rgba(99, 102, 241, 0.2);
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    .favorite-card-progress .progress-percentage {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #3b82f6;
+        min-width: 40px;
+        text-align: right;
+    }
+    .favorite-card-body {
+        padding: 0; 
+        display: none;
     }
 
-    .favorites-checkbox:hover {
-        background: rgba(99, 102, 241, 0.15);
-        border-color: rgba(99, 102, 241, 0.3);
-    }
-
-    .favorites-checkbox input[type="checkbox"] {
-        margin-right: 0.5rem;
-        width: 1.25rem;
-        height: 1.25rem;
-        accent-color: #6366f1;
-    }
-
-    .favorites-checkbox label {
-        font-weight: 500;
-        color: #374151;
-        cursor: pointer;
-        margin: 0;
-    }
-
-    /* Seção de filtros organizados */
-    .filters-section {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        backdrop-filter: blur(10px);
-    }
-
-    /* Grid dos filtros */
-    .filters-grid {
+    .favorites-grid-container {
         display: grid;
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-
     @media (min-width: 768px) {
-        .filters-grid {
-            grid-template-columns: 2fr 3fr 1fr;
+        .favorites-grid-container {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    /* Grupos de filtros */
-    .filter-group {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+    .subject-accordion-item {
+        background-color: #fff;
         border-radius: 0.75rem;
-        padding: 1.25rem;
-        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
     }
-
-    .filter-group:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+    .subject-accordion-header {
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease;
     }
-
-    .filter-group-title {
-        font-size: 1rem;
+    .subject-accordion-header:hover {
+        background-color: #f9fafb;
+    }
+    .subject-accordion-header h3 {
+        font-size: 1.25rem;
         font-weight: 600;
         color: #1f2937;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e5e7eb;
     }
-
-    .filter-group-title i {
-        margin-right: 0.5rem;
-        color: #6366f1;
+    .subject-accordion-header .toggle-icon {
+        transition: transform 0.3s ease;
+        color: #3b82f6;
         font-size: 1.1rem;
     }
-
-    /* Inputs dos filtros */
-    .modern-filter-input {
-        width: 100%;
-        background-color: #ffffff;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
-        color: #111827;
-        transition: all 0.3s ease;
-        margin-bottom: 0.75rem;
-    }
-
-    .modern-filter-input:focus {
-        outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    .modern-filter-input:disabled {
-        background-color: #f3f4f6;
-        color: #9ca3af;
-        cursor: not-allowed;
-    }
-
-    /* Select customizado */
-    select.modern-filter-input {
-        background-image: url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'%3e%3c/svg%3e");
-        background-position: right 0.5rem center;
-        background-repeat: no-repeat;
-        background-size: 1.5em 1.5em;
-        padding-right: 2.5rem;
-        appearance: none;
-    }
-
-    /* Refinamento de filtros */
-    .refinement-section {
-        margin-top: 1rem;
-        padding-top: 1rem;
+    .subject-accordion-content {
+        display: none;
+        padding: 0.5rem 1.5rem 1.5rem 1.5rem;
         border-top: 1px solid #e5e7eb;
     }
-
-    .refinement-options {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
+    .subject-accordion-header.open .toggle-icon {
+        transform: rotate(180deg);
     }
 
-    .refinement-option {
+    /* MEU DIÁRIO (TodoItem) */
+    .todo-list-card {
+        background: linear-gradient(145deg, #e0ffe0, #f0fff0); /* Verde claro */
+        border-color: #a5d6a7;
+        border-left-color: #4caf50; /* Verde vibrante */
+        box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
+    }
+    .todo-list-card .stat-card-title i {
+        color: #388e3c; /* Verde escuro */
+        background-color: #e8f5e9;
+    }
+    .todo-list-card:hover {
+        border-color: #81c784;
+        box-shadow: 0 10px 20px -5px rgba(76, 175, 80, 0.15), 0 4px 6px -4px rgba(76, 175, 80, 0.1);
+    }
+
+    .todo-input-container {
         display: flex;
         align-items: center;
-        cursor: pointer;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
     }
 
-    .refinement-option input[type="radio"] {
-        margin-right: 0.5rem;
-        accent-color: #6366f1;
-    }
-
-    .refinement-option label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #374151;
-        cursor: pointer;
-        margin: 0;
-    }
-
-    /* Botão de limpar filtros */
-    .clear-filters-btn {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        cursor: pointer;
+    .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    .custom-input::placeholder { color: #94a3b8; }
+    .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    
+    .todo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e0ffe0; /* Linha mais suave */
         transition: all 0.3s ease;
-        box-shadow: 0 2px 4px -1px rgba(239, 68, 68, 0.25);
+        position: relative; /* Essencial para posicionamento do tooltip */
+    }
+    .todo-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .todo-item-content {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 100%;
+        flex-grow: 1;
+        cursor: pointer; /* Indica que o item é clicável */
+    }
+    .todo-item-content input[type="checkbox"] {
+        margin-right: 0.75rem;
+        /* Estilos básicos para o checkbox, o Tailwind sobrescreve a aparência padrão */
+        height: 1.25rem;
+        width: 1.25rem;
+        accent-color: #4caf50; /* Cor do checkmark */
+        cursor: pointer;
+    }
+    .todo-item-text {
+        font-size: 0.95rem;
+        color: #374151;
+        transition: color 0.3s ease;
+        white-space: nowrap; /* Garante que o texto não quebre linha */
+        overflow: hidden; /* Esconde o excesso */
+        text-overflow: ellipsis; /* Adiciona "..." */
+        max-width: calc(100% - 2.5rem); /* Ajusta largura para caber checkbox e margem */
+    }
+    .todo-item.completed .todo-item-text {
+        text-decoration: line-through;
+        color: #9ca3af; /* Cinza para itens concluídos */
+    }
+    .todo-actions {
+        flex-shrink: 0;
+        margin-left: 0.75rem;
+    }
+    .todo-delete-btn {
+        background: none;
+        border: none;
+        color: #ef4444; /* Vermelho para exclusão */
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: color 0.2s ease;
+    }
+    .todo-delete-btn:hover {
+        color: #dc2626;
+    }
+    /* Estilos para o input de adicionar tarefa */
+    .todo-input-container .custom-input {
+        flex-grow: 1;
+        border-color: #a5d6a7; /* Borda verde clara */
+    }
+    .todo-input-container .custom-input:focus {
+        border-color: #4caf50; /* Borda verde mais forte no focus */
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+    }
+    .todo-input-container .action-button {
+        background-color: #4caf50; /* Botão verde */
+    }
+    .todo-input-container .action-button:hover {
+        background-color: #388e3c; /* Verde mais escuro no hover */
     }
 
-    .clear-filters-btn:hover {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.25);
+    /* Estilo do tooltip para o texto completo da tarefa */
+    .todo-item-text-tooltip {
+        visibility: hidden;
+        width: 250px; 
+        background-color: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        text-align: left; 
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute; 
+        z-index: 10;
+        top: 100%; 
+        left: 0; 
+        transform: none; 
+        margin-top: 5px; 
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.8rem;
+        pointer-events: none; 
+        white-space: normal; 
+        word-wrap: break-word; 
     }
 
-    .clear-filters-btn i {
-        margin-right: 0.5rem;
-    }
-
-    /* Responsividade */
-    @media (max-width: 768px) {
-        .modern-filter-container {
-            padding: 1.5rem;
-        }
-        
-        .filter-section-title {
-            font-size: 1.25rem;
-        }
-        
-        .search-section,
-        .filters-section {
-            padding: 1rem;
-        }
-        
-        .refinement-options {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-    }
-
-    /* Animações */
-    @keyframes filterSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .filter-group {
-        animation: filterSlideIn 0.3s ease-out;
-    }
-
-    /* Estados de loading */
-    .loading-state {
-        opacity: 0.6;
-        pointer-events: none;
-        position: relative;
-    }
-
-    .loading-state::after {
+    .todo-item-text-tooltip::after {
         content: "";
         position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 20px;
-        height: 20px;
-        margin: -10px 0 0 -10px;
-        border: 2px solid #6366f1;
-        border-radius: 50%;
-        border-top-color: transparent;
-        animation: spin 1s linear infinite;
+        bottom: 100%; 
+        left: 20px; 
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent; 
     }
 
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
+    .todo-item-text:hover + .todo-item-text-tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+
+
+    @media (max-width: 768px) {
+        .todo-input-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .todo-input-container .action-button {
+            width: 100%;
         }
     }
 
-    /* ===================================================================== */
-    /* FIM DO NOVO DESIGN DO SISTEMA DE FILTROS */
-    /* ===================================================================== */
+    /* Fim dos estilos do Meu Diário */
 
     /* Estilos para ocultar/mostrar cards */
     .hidden-card-section {
@@ -721,6 +642,36 @@
     /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
     /* ===================================================================== */
+
+    /* ===================================================================== */
+    /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO (JUN/2025): NOVA ÁREA DE FILTRO >>> */
+    /* Agrupamento visual do combo Matéria + Lei */
+    .filter-duo {
+        display: grid;
+        grid-template-columns: 1fr; /* mobile */
+        gap: 1rem;
+    }
+    @media (min-width: 1024px) {
+        .filter-duo {
+            grid-template-columns: repeat(2, 1fr); /* lado-a-lado em telas grandes */
+        }
+    }
+
+    /* Destaque para o contêiner de concurso */
+    .filter-concurso {
+        border-left: 4px solid #3b82f6;
+        padding-left: 1rem;
+    }
+    
+    /* >>> NOVA REGRA DE ESTILO ADICIONADA AQUI <<< */
+    /* Destaque para o contêiner de Matéria e Lei */
+    .filter-materia-lei {
+        border-left: 4px solid #f97316; /* Laranja vibrante */
+        padding-left: 1rem;
+    }
+    /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
+    /* ===================================================================== */
+
 </style>
 {% endblock %}
 
@@ -884,124 +835,100 @@
         {% endif %}
     </div>
 
-    {# ===================================================================== #}
-    {# NOVO SISTEMA DE FILTROS MODERNO E ORGANIZADO #}
-    {# ===================================================================== #}
-    <div class="modern-filter-container">
-        <div class="filter-content">
-            <h2 class="filter-section-title">
-                <i class="fas fa-search"></i>
-                Sistema de Busca Inteligente
-            </h2>
-            
-            {# Seção de Busca Principal #}
-            <div class="search-section">
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end">
-                    <div class="lg:col-span-3">
-                        <label class="search-label">
-                            <i class="fas fa-search"></i>
-                            Busca Rápida e Inteligente
-                        </label>
-                        <div class="search-wrapper">
-                            <input type="text" id="search" name="search" placeholder="Digite o nome da matéria, lei ou artigo que você procura..." class="modern-search-input">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                        <div id="autocomplete-results" class="autocomplete-container"></div>
-                    </div>
-                    <div class="favorites-checkbox">
-                        <input type="checkbox" id="show_favorites" name="show_favorites">
-                        <label for="show_favorites">Apenas favoritas</label>
-                    </div>
+    <div class="filter-container">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+            <div class="md:col-span-2 relative">
+                <div class="relative search-wrapper">
+                    <label for="search" class="filter-label">Busca Rápida e Inteligente</label>
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search" name="search" placeholder="Buscar por matéria, lei ou artigo..." class="custom-input search-input-with-icon">
                 </div>
+                <div id="autocomplete-results" class="autocomplete-container"></div>
             </div>
+            <div class="flex items-end pb-2">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="show_favorites" name="show_favorites" class="h-4 w-4 rounded border-gray-300">
+                    <span class="ml-2 text-sm text-gray-700">Apenas favoritas</span>
+                </label>
+            </div>
+        </div>
+        <hr class="my-6 border-t border-gray-200">
+        {# ===================================================================== #}
+{# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+{# ===================================================================== #}
+<div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+    <div class="filter-concurso">
+        <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i> Filtrar por Concurso</label>
+        <select id="concurso_id" name="concurso_id" class="custom-input">
+            <option value="all" selected>-- Todos os Concursos --</option>
+            {% for concurso in concursos %}
+                <option value="{{ concurso.id }}">{{ concurso.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-            {# Seção de Filtros Organizados #}
-            <div class="filters-section">
-                <div class="filters-grid">
-                    {# Grupo 1: Filtro por Concurso (Separado) #}
-                    <div class="filter-group">
-                        <div class="filter-group-title">
-                            <i class="fas fa-trophy"></i>
-                            Concurso
-                        </div>
-                        <select id="concurso_id" name="concurso_id" class="modern-filter-input">
-                            <option value="all" selected>Todos os Concursos</option>
-                            {% for concurso in concursos %}
-                                <option value="{{ concurso.id }}">{{ concurso.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    {# Grupo 2: Matéria e Lei (Juntos) #}
-                    <div class="filter-group">
-                        <div class="filter-group-title">
-                            <i class="fas fa-book-open"></i>
-                            Matéria & Lei
-                        </div>
-                        <select id="subject_id" name="subject_id" class="modern-filter-input">
-                        {% if favorites_by_subject %}
-                            <option value="" selected>Favoritas</option>
-                            <option value="all">Todas as Matérias</option>
-                        {% else %}
-                            <option value="all" selected>Todas as Matérias</option>
-                        {% endif %}
-                        {% for subject in subjects %}
-                            <option value="{{ subject.id }}">{{ subject.name }}</option>
-                        {% endfor %}
-                        </select>
-                        
-                        <select id="diploma_id" name="diploma_id" class="modern-filter-input" disabled>
-                            <option value="">Selecione uma Matéria</option>
-                        </select>
-
-                        {# Refinamento #}
-                        <div class="refinement-section" id="refinement-wrapper" style="visibility: hidden;">
-                            <div class="refinement-options">
-                                <div class="refinement-option">
-                                    <input type="radio" name="refine_type" value="status" id="refine-status" checked>
-                                    <label for="refine-status">Por Status</label>
-                                </div>
-                                <div class="refinement-option">
-                                    <input type="radio" name="refine_type" value="topic" id="refine-topic">
-                                    <label for="refine-topic">Por Trecho</label>
-                                </div>
-                            </div>
-                            
-                            <div id="status-filter-wrapper">
-                                <select id="status_filter" name="status_filter" class="modern-filter-input">
-                                    <option value="">Todos os Status</option>
-                                    <option value="not_read">Não Lidas</option>
-                                    <option value="in_progress">Em Andamento</option>
-                                    <option value="completed">Concluídas</option>
-                                </select>
-                            </div>
-                            
-                            <div id="topic-filter-wrapper" style="display: none;">
-                                <select id="topic_filter" name="topic_filter" class="modern-filter-input" disabled>
-                                    <option value="">Selecione um Trecho</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {# Grupo 3: Ações #}
-                    <div class="filter-group">
-                        <div class="filter-group-title">
-                            <i class="fas fa-tools"></i>
-                            Ações
-                        </div>
-                        <button type="button" id="clear-filters-btn" class="clear-filters-btn">
-                            <i class="fas fa-eraser"></i>
-                            Limpar Filtros
-                        </button>
-                    </div>
-                </div>
+    <div class="filter-materia-lei">
+        <span class="filter-label block"><i class="fas fa-layer-group"></i> Matéria &amp; Lei</span>
+        <div class="filter-duo">
+            <div>
+                <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
+                <select id="subject_id" name="subject_id" class="custom-input">
+                    {% if favorites_by_subject %}
+                        <option value="" selected>-- Favoritas --</option>
+                        <option value="all">-- Todas as Matérias --</option>
+                    {% else %}
+                        <option value="all" selected>-- Todas as Matérias --</option>
+                    {% endif %}
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="diploma_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-gavel"></i> Lei</label>
+                <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
+                    <option value="">-- Selecione uma Matéria --</option>
+                </select>
             </div>
         </div>
     </div>
-    {# ===================================================================== #}
-    {# FIM DO NOVO SISTEMA DE FILTROS #}
-    {# ===================================================================== #}
+
+    <div id="refinement-wrapper" style="visibility: hidden;">
+        <label class="filter-label"><i class="fas fa-filter"></i> Refinar por</label>
+        <div class="flex items-center space-x-4 mb-2">
+            <label class="flex items-center text-sm cursor-pointer">
+                <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
+                <span class="ml-1.5">Status</span>
+            </label>
+            <label class="flex items-center text-sm cursor-pointer">
+                <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
+                <span class="ml-1.5">Trecho</span>
+            </label>
+        </div>
+        <div id="status-filter-wrapper">
+            <select id="status_filter" name="status_filter" class="custom-input">
+                <option value="">-- Todos os Status --</option>
+                <option value="not_read">Não Lidas</option>
+                <option value="in_progress">Em Andamento</option>
+                <option value="completed">Concluídas</option>
+            </select>
+        </div>
+        <div id="topic-filter-wrapper" style="display: none;">
+             <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
+                <option value="">-- Selecione um Trecho --</option>
+             </select>
+        </div>
+    </div>
+
+    <div class="flex items-end">
+        <label class="filter-label hidden lg:block">&nbsp;</label>
+        <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
+    </div>
+</div>
+{# ===================================================================== #}
+{# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
+{# ===================================================================== #}
+    </div>
 
     <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Legislações Disponíveis</h2>
@@ -1059,10 +986,6 @@
                                                             <span class="completed-badge">Concluída</span>
                                                         {% elif topic.is_in_progress %}
                                                             <span class="in-progress-badge">Em Andamento</span>
-                                                        {% else %}
-                                                            <i class="fas fa-book-reader mr-1"></i> Continuar
-                                                        {% else %}
-                                                            <i class="fas fa-book mr-1"></i> Começar
                                                         {% endif %}
                                                         <a href="{{ url_for('student.view_law', law_id=topic.id) }}" class="action-button">
                                                             {% if topic.is_completed %}
@@ -1113,289 +1036,584 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
-        concurso: document.getElementById('concurso_id'),
+        concurso: document.getElementById('concurso_id'), // <<< ADICIONADO
         subject: document.getElementById('subject_id'),
         diploma: document.getElementById('diploma_id'),
+        favorites: document.getElementById('show_favorites'),
+        clearButton: document.getElementById('clear-filters-btn'),
+        refinementWrapper: document.getElementById('refinement-wrapper'),
+        refineTypeRadios: document.querySelectorAll('input[name="refine_type"]'),
+        statusFilterWrapper: document.getElementById('status-filter-wrapper'),
+        topicFilterWrapper: document.getElementById('topic-filter-wrapper'),
         statusFilter: document.getElementById('status_filter'),
         topicFilter: document.getElementById('topic_filter'),
-        showFavorites: document.getElementById('show_favorites'),
-        clearBtn: document.getElementById('clear-filters-btn')
     };
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') ?.getAttribute('content');
+    let debounceTimer;
 
-    const refinementWrapper = document.getElementById('refinement-wrapper');
-    const statusFilterWrapper = document.getElementById('status-filter-wrapper');
-    const topicFilterWrapper = document.getElementById('topic-filter-wrapper');
-    const refineTypeRadios = document.querySelectorAll('input[name="refine_type"]');
-    
     const lawsSection = document.getElementById('laws-section');
-    const lawsContainer = document.getElementById('laws-accordion-container');
-    const autocompleteContainer = document.getElementById('autocomplete-results');
     const initialPrompt = document.getElementById('initial-prompt');
+    const accordionContainer = document.getElementById('laws-accordion-container');
+    
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
+    // =====================================================================
 
-    // --- FUNCIONALIDADES EXISTENTES (mantidas) ---
-    // Função para buscar e renderizar leis
-    async function fetchAndRenderLaws(filters) {
-        showLoadingState(lawsSection);
-        try {
-            const response = await fetch('/student/filter_laws', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(filters)
-            });
-            const data = await response.json();
-            renderLaws(data.laws);
-            if (data.laws.length > 0) {
-                fadeIn(lawsSection);
-                fadeOut(initialPrompt);
-            } else {
-                fadeOut(lawsSection);
-                fadeIn(initialPrompt);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar leis:', error);
-            Toastify({
-                text: 'Erro ao carregar leis. Tente novamente.',
-                duration: 3000,
-                close: true,
-                gravity: 'top',
-                position: 'right',
-                backgroundColor: 'linear-gradient(to right, #ff416c, #ff4b2b)',
-            }).showToast();
-        } finally {
-            hideLoadingState(lawsSection);
+    // Função auxiliar para mostrar a seção de leis
+    function showLawsSection() {
+        if (lawsSection.style.display === 'none') {
+            initialPrompt.style.display = 'none';
+            lawsSection.style.display = 'block';
+            setTimeout(() => lawsSection.style.opacity = '1', 50);
         }
     }
 
-    // Função para renderizar as leis
-    function renderLaws(laws) {
-        lawsContainer.innerHTML = '';
-        if (laws.length === 0) {
-            lawsContainer.innerHTML = '<p class="text-gray-500 italic text-center py-4">Nenhuma legislação encontrada com os filtros aplicados.</p>';
+    // Listener para o novo filtro de CONCURSO
+    filterControls.concurso.addEventListener('change', () => {
+        showLawsSection();
+        if (filterControls.concurso.value !== 'all') {
+            filterControls.subject.value = ''; // Reseta o filtro de matéria
+        }
+        updateDiplomaFilter(null, filterControls.concurso.value);
+    });
+
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO FILTRO DE CONCURSO >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
+    // =====================================================================
+    const newTodoItemInput = document.getElementById('new-todo-item');
+    const addTodoBtn = document.getElementById('add-todo-btn');
+    const todoListUl = document.getElementById('todo-list');
+    const noTodoItemsMessage = document.getElementById('no-todo-items-message');
+
+    const motivationDateElement = document.getElementById('motivation-date');
+    const motivationTextElement = document.getElementById('motivation-text');
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: ELEMENTOS DO MEU DIÁRIO E MOTIVAÇÃO >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
+    // =====================================================================
+    const favoritesTitleText = document.getElementById('favorites-title-text');
+    const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
+
+    if (editFavoritesTitleBtn) {
+        editFavoritesTitleBtn.addEventListener('click', function() {
+            const currentTitle = favoritesTitleText.textContent;
+            const newTitle = prompt("Digite o novo nome para esta seção:", currentTitle);
+
+            if (newTitle !== null && newTitle.trim() !== '') {
+                const finalTitle = newTitle.trim();
+                
+                favoritesTitleText.textContent = finalTitle;
+
+                fetch('/student/api/save_favorite_title', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ title: finalTitle })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Toastify({
+                            text: data.message || "Título atualizado com sucesso!",
+                            duration: 3000, close: true, gravity: "bottom", position: "right",
+                            style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
+                        }).showToast();
+                    } else {
+                        favoritesTitleText.textContent = currentTitle;
+                        Toastify({
+                            text: data.error || "Falha ao salvar o título.",
+                            duration: 3000, close: true, gravity: "bottom", position: "right",
+                            style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                        }).showToast();
+                    }
+                })
+                .catch(error => {
+                    favoritesTitleText.textContent = currentTitle;
+                    console.error('Erro de rede:', error);
+                    Toastify({
+                        text: "Erro de comunicação. Tente novamente.",
+                        duration: 3000, close: true, gravity: "bottom", position: "right",
+                        style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                    }).showToast();
+                });
+            }
+        });
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: LÓGICA DO TÍTULO DOS FAVORITOS (DATABASE) >>>
+    // =====================================================================
+
+
+    // =====================================================================
+    // <<< INÍCIO DA CORREÇÃO: LÓGICA DO BOTÃO OCULTAR/MOSTRAR CARDS >>>
+    // =====================================================================
+    const toggleCardsBtn = document.getElementById('toggle-cards-btn');
+    const cardsToToggle = [
+        document.getElementById('announcement-cards-section'),
+        document.querySelector('.todo-list-card'),
+        document.getElementById('recent-activities-card'),
+        document.getElementById('daily-motivation-card'),
+        document.getElementById('streak-card'),
+        document.getElementById('level-card'),
+        document.getElementById('achievements-card')
+    ];
+
+    function applyCardsVisibility(hidden) {
+        cardsToToggle.forEach(card => {
+            if (card) { // Esta verificação é importante caso um card não seja renderizado
+                if (hidden) {
+                    card.classList.add('hidden-card-section');
+                } else {
+                    card.classList.remove('hidden-card-section');
+                }
+            }
+        });
+        
+        if (hidden) {
+            toggleCardsBtn.innerHTML = '<i class="fas fa-eye mr-2"></i> Mostrar Cards';
+        } else {
+            toggleCardsBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i> Ocultar Cards';
+        }
+        // A fonte da verdade (localStorage) é sempre atualizada
+        localStorage.setItem('hideCards', hidden);
+    }
+
+    // Ao carregar a página, lê o estado do localStorage
+    const savedHideCardsPreference = localStorage.getItem('hideCards') === 'true';
+    applyCardsVisibility(savedHideCardsPreference);
+
+    // Adiciona o evento de clique ao botão
+    toggleCardsBtn.addEventListener('click', function() {
+        // Para decidir a próxima ação, lemos o estado ATUAL do localStorage
+        const isCurrentlyHidden = localStorage.getItem('hideCards') === 'true';
+        // A ação é sempre inverter o estado atual.
+        applyCardsVisibility(!isCurrentlyHidden);
+    });
+    // =====================================================================
+    // <<< FIM DA CORREÇÃO >>>
+    // =====================================================================
+
+
+    // --- FUNÇÕES DE LÓGICA DE FILTRAGEM ---
+    async function fetchAndRenderLaws() {
+        // =====================================================================
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // =====================================================================
+        const subjectId = filterControls.subject.value;
+        const concursoId = filterControls.concurso.value; // Pega o valor do novo filtro
+        const diplomaId = filterControls.diploma.value;
+        const showFavorites = filterControls.favorites.checked;
+        const refineType = document.querySelector('input[name="refine_type"]:checked').value;
+        
+        const isInitialState = !subjectId && !concursoId; // Modificado para checar concurso também
+        if (isInitialState && !showFavorites) {
+             accordionContainer.innerHTML = '';
+             return;
+        }
+
+        accordionContainer.innerHTML = '<p class="text-center py-8 text-gray-500">Carregando...</p>';
+
+        const params = new URLSearchParams();
+        if (showFavorites) params.append('show_favorites', 'true');
+
+        // ALTERADO: Adiciona o concursoId ou o subjectId aos parâmetros
+        if (concursoId && concursoId !== 'all') {
+            params.append('concurso_id', concursoId);
+        } else if (subjectId && subjectId !== 'all') {
+             params.append('subject_id', subjectId);
+        }
+        
+        if (diplomaId) {
+            params.append('diploma_id', diplomaId);
+            if (refineType === 'status') {
+                if (filterControls.statusFilter.value) {
+                    params.append('status_filter', filterControls.statusFilter.value);
+                }
+            } else {
+                if (filterControls.topicFilter.value) {
+                    params.append('topic_id', filterControls.topicFilter.value);
+                }
+            }
+        }
+        // =====================================================================
+        // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DA LÓGICA DE PARÂMETROS >>>
+        // =====================================================================
+        
+        try {
+            const response = await fetch(`/student/filter_laws?${params.toString()}`);
+            if (!response.ok) throw new Error('Falha na resposta do servidor.');
+            
+            const data = await response.json();
+            renderLaws(data.subjects_with_diplomas);
+        } catch (error) {
+            console.error('Erro ao buscar leis:', error);
+            accordionContainer.innerHTML = '<p class="text-center py-8 text-red-500">Ocorreu um erro ao carregar as legislações. Tente novamente.</p>';
+        }
+    }
+    
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // =====================================================================
+    async function updateDiplomaFilter(subjectId, concursoId) {
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
+        
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        filterControls.statusFilter.value = '';
+        await updateTopicFilter(null);
+
+        // Se um concurso foi selecionado, a gente não popula o filtro de diploma,
+        // apenas chama a renderização principal. O backend cuidará de tudo.
+        if (concursoId && concursoId !== 'all') {
+            fetchAndRenderLaws();
             return;
         }
 
-        laws.forEach(law => {
-            const accordionItem = document.createElement('div');
-            accordionItem.className = 'accordion-item';
-            accordionItem.innerHTML = `
-                <div class="accordion-header" data-diploma-id="${law.id}">
-                    <div class="diploma-title">
-                        <i class="fas fa-gavel icon"></i>
-                        ${law.title}
-                    </div>
-                    <div class="diploma-progress">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: ${law.progress}%;"></div>
-                        </div>
-                        <span class="text-sm font-semibold text-blue-600">${law.progress}%</span>
-                        <i class="fas fa-chevron-right accordion-toggle-icon"></i>
-                    </div>
-                </div>
-                <div class="accordion-content">
-                    <div class="space-y-2"></div>
-                </div>
-            `;
-            lawsContainer.appendChild(accordionItem);
-        });
+        // Se nenhuma matéria ou 'todas' foi selecionada (e nenhum concurso), limpa e renderiza.
+        if (!subjectId || subjectId === 'all') {
+            fetchAndRenderLaws();
+            return;
+        }
+        
+        // Lógica original: popula o filtro de diploma baseado na matéria.
+        filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
+        try {
+            const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
+            const laws = await response.json();
 
-        // Adicionar event listeners para os headers do acordeão
-        lawsContainer.querySelectorAll('.accordion-header').forEach(header => {
-            header.addEventListener('click', async function() {
-                const diplomaId = this.dataset.diplomaId;
-                const content = this.nextElementSibling.querySelector('div');
-                const toggleIcon = this.querySelector('.accordion-toggle-icon');
+            filterControls.diploma.innerHTML = '<option value="">-- Todas as Leis da Matéria --</option>';
+            laws.forEach(law => {
+                const option = new Option(law.title, law.id);
+                filterControls.diploma.appendChild(option);
+            });
+            filterControls.diploma.disabled = false;
+        } catch (error) {
+            console.error("Erro ao buscar leis:", error);
+            filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+        fetchAndRenderLaws();
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA FUNÇÃO updateDiplomaFilter >>>
+    // =====================================================================
 
+    async function updateTopicFilter(lawId) {
+        const topicSelect = filterControls.topicFilter;
+        topicSelect.innerHTML = '<option value="">-- Selecione um Trecho --</option>';
+        topicSelect.disabled = true;
+
+        if (!lawId) {
+            return;
+        }
+        
+        topicSelect.innerHTML = '<option value="">Carregando trechos...</option>';
+        try {
+            const response = await fetch(`/student/api/topics_for_law/${lawId}`);
+            if (!response.ok) throw new Error('Falha ao buscar trechos.');
+            const topics = await response.json();
+
+            topicSelect.innerHTML = '<option value="">-- Todos os Trechos --</option>';
+            topics.forEach(topic => {
+                const option = new Option(topic.title, topic.id);
+                topicSelect.appendChild(option);
+            });
+            topicSelect.disabled = false;
+        } catch (error) {
+            console.error("Erro ao buscar trechos:", error);
+            topicSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+    }
+
+    // =====================================================================
+    // <<< ALTERAÇÃO APLICADA AQUI: Função renderLaws foi reescrita para ordenar os resultados >>>
+    // =====================================================================
+    function renderLaws(subjects) {
+        if (Object.keys(subjects).length === 0) {
+            accordionContainer.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 italic">Nenhuma legislação encontrada com os filtros selecionados.</p></div>';
+            return;
+        }
+
+        let html = '';
+        // 1. Pega as chaves do objeto (nomes das matérias) e as ordena alfabeticamente
+        const sortedSubjectNames = Object.keys(subjects).sort((a, b) => a.localeCompare(b));
+
+        // Itera sobre as matérias já em ordem alfabética
+        for (const subjectName of sortedSubjectNames) {
+            // 2. Ordena as leis (diplomas) dentro de cada matéria pelo título
+            const sortedDiplomas = subjects[subjectName].sort((a, b) => a.title.localeCompare(b.title));
+
+            html += `
+            <div class="subject-accordion-item">
+                <div class="subject-accordion-header">
+                    <h3>${subjectName}</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="subject-accordion-content">
+                    ${sortedDiplomas.map(diploma => {
+                        const displayStyle = 'none';
+                        const iconRotation = 'rotate(0deg)';
+
+                        // 3. Ordena os tópicos (filtered_children) dentro de cada lei pelo título
+                        const sortedTopics = diploma.filtered_children.sort((a, b) => a.title.localeCompare(b.title));
+
+                        return `
+                        <div class="accordion-item mt-3 first:mt-0">
+                            <div class="accordion-header">
+                                <div class="diploma-title"><i class="fas fa-gavel icon"></i><span>${diploma.title}</span></div>
+                                <div class="diploma-progress">
+                                    <div class="progress-bar-container w-full"><div class="progress-bar-fill" style="width: ${diploma.progress_percentage || 0}%;"></div></div>
+                                    <span class="text-sm font-bold" style="color: #2563eb;">${Math.round(diploma.progress_percentage || 0)}%</span>
+                                    <i class="fas fa-chevron-right accordion-toggle-icon" style="transform: ${iconRotation};"></i>
+                                </div>
+                            </div>
+                            <div class="accordion-content" style="display: ${displayStyle};">
+                                ${sortedTopics.length > 0 ? sortedTopics.map(topic => renderTopicItem(topic)).join('') : '<p class="text-gray-500 italic text-center py-4">Nenhum tópico de estudo encontrado.</p>'}
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+        }
+        accordionContainer.innerHTML = html;
+        attachEventListeners();
+    }
+
+    function renderTopicItem(topic) {
+        let statusBadge = '';
+        if (topic.is_completed) statusBadge = '<span class="completed-badge">Concluída</span>';
+        else if (topic.is_in_progress) statusBadge = '<span class="in-progress-badge">Em Andamento</span>';
+
+        let actionButtonText = '';
+        if (topic.is_completed) actionButtonText = '<i class="fas fa-check-circle mr-1"></i> Revisar';
+        else if (topic.is_in_progress) actionButtonText = '<i class="fas fa-book-reader mr-1"></i> Continuar';
+        else actionButtonText = '<i class="fas fa-book mr-1"></i> Começar';
+
+        const reviewButton = topic.is_completed ? `
+            <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído">
+                <i class="fas fa-undo-alt"></i>
+            </button>` : '';
+        
+        const favoriteClass = topic.is_favorite ? 'favorited' : '';
+        const favoriteIcon = 'fas fa-star';
+        const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+
+        return `
+        <div class="topic-item" data-law-id="${topic.id}">
+            <div class="topic-title"><i class="fas fa-file-alt icon"></i><span>${topic.title}</span></div>
+            <div class="topic-actions">
+                ${statusBadge}
+                <a href="/student/law/${topic.id}" class="action-button">${actionButtonText}</a>
+                ${reviewButton}
+                <button type="button" class="favorite-btn js-favorite-btn ${favoriteClass}" data-law-id="${topic.id}" title="${favoriteTitle}">
+                    <i class="${favoriteIcon}"></i>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    function attachEventListeners() {
+        document.querySelectorAll('.subject-accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                this.classList.toggle('open');
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon');
                 if (content.style.display === 'block') {
                     content.style.display = 'none';
-                    this.classList.remove('open');
-                    toggleIcon.style.transform = 'rotate(0deg)';
+                    icon.style.transform = 'rotate(0deg)';
                 } else {
-                    // Carregar tópicos apenas uma vez
-                    if (content.children.length === 0) {
-                        try {
-                            const response = await fetch('/student/get_topics_by_diploma/'+ diplomaId);
-                            const data = await response.json();
-                            data.topics.sort((a, b) => a.title.localeCompare(b.title)); // Ordenar por título
-                            data.topics.forEach(topic => {
-                                const topicItem = document.createElement('div');
-                                topicItem.className = 'topic-item';
-                                topicItem.dataset.lawId = topic.id;
-                                topicItem.innerHTML = `
-                                    <div class="topic-title">
-                                        <i class="fas fa-file-alt icon"></i>
-                                        <span>${topic.title}</span>
-                                    </div>
-                                    <div class="topic-actions">
-                                        ${topic.is_completed ? '<span class="completed-badge">Concluída</span>' : ''}
-                                        ${topic.is_in_progress ? '<span class="in-progress-badge">Em Andamento</span>' : ''}
-                                        <a href="${topic.view_url}" class="action-button">
-                                            ${topic.is_completed ? '<i class="fas fa-check-circle mr-1"></i> Revisar' : ''}
-                                            ${topic.is_in_progress ? '<i class="fas fa-book-reader mr-1"></i> Continuar' : ''}
-                                            ${!topic.is_completed && !topic.is_in_progress ? '<i class="fas fa-book mr-1"></i> Começar' : ''}
-                                        </a>
-                                        ${topic.is_completed ? `<button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído">
-                                            <i class="fas fa-undo-alt"></i>
-                                        </button>` : ''}
-                                        <button type="button" class="favorite-btn js-favorite-btn ${topic.is_favorite ? 'favorited' : ''}" data-law-id="${topic.id}" title="${topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}">
-                                            <i class="fas fa-star"></i>
-                                        </button>
-                                    </div>
-                                `;
-                                content.appendChild(topicItem);
-                            });
-                            addFavoriteButtonListeners();
-                            addMarkIncompleteButtonListeners();
-                        } catch (error) {
-                            console.error('Erro ao carregar tópicos:', error);
-                            Toastify({
-                                text: 'Erro ao carregar tópicos. Tente novamente.',
-                                duration: 3000,
-                                close: true,
-                                gravity: 'top',
-                                position: 'right',
-                                backgroundColor: 'linear-gradient(to right, #ff416c, #ff4b2b)',
-                            }).showToast();
-                        }
-                    }
                     content.style.display = 'block';
-                    this.classList.add('open');
-                    toggleIcon.style.transform = 'rotate(90deg)';
+                    icon.style.transform = 'rotate(180deg)';
                 }
             });
         });
+        
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function(event) {
+                event.stopPropagation();
+                
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('.accordion-toggle-icon');
+                this.classList.toggle('open');
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.display = 'block';
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            });
+        });
+
+        document.querySelectorAll('.favorite-card-header').forEach(header => {
+            header.addEventListener('click', function() {
+                this.classList.toggle('open');
+                const body = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon');
+                if (body.style.display === 'block') {
+                    body.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    body.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
+        document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
+
+        // =====================================================================
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
+        // =====================================================================
+        // Anexa listeners para checkboxes e botões de exclusão dos itens existentes
+        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', handleToggleTodoItem);
+        });
+        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => {
+            button.addEventListener('click', handleDeleteTodoItem);
+        });
+        // =====================================================================
+        // <<< FIM DA IMPLEMENTAÇÃO: EVENT LISTENERS DO MEU DIÁRIO >>>
+        // =====================================================================
     }
-
-    // Função para aplicar filtros
-    function applyFilters() {
-        const filters = {
-            search_query: filterControls.search.value,
-            concurso_id: filterControls.concurso.value,
-            subject_id: filterControls.subject.value,
-            diploma_id: filterControls.diploma.value,
-            show_favorites: filterControls.showFavorites.checked
-        };
-
-        const selectedRefineType = document.querySelector('input[name="refine_type"]:checked');
-        if (selectedRefineType) {
-            if (selectedRefineType.value === 'status') {
-                filters.status_filter = filterControls.statusFilter.value;
-            } else if (selectedRefineType.value === 'topic') {
-                filters.topic_filter = filterControls.topicFilter.value;
-            }
+    
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
+    // =====================================================================
+    // Altera o listener do filtro de MATÉRIA para resetar o de concurso
+    filterControls.subject.addEventListener('change', () => {
+        const subjectId = filterControls.subject.value;
+        if (subjectId === '') {
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
+        } 
+        else {
+            showLawsSection();
         }
-        fetchAndRenderLaws(filters);
-    }
-
-    // Event Listeners para os controles de filtro
-    filterControls.search.addEventListener('input', applyFilters);
-    filterControls.concurso.addEventListener('change', applyFilters);
-    filterControls.subject.addEventListener('change', function() {
-        applyFilters();
-        const subjectId = this.value;
-        if (subjectId && subjectId !== 'all') {
-            // Habilitar e carregar diplomas
-            filterControls.diploma.disabled = false;
-            fetch('/student/get_diplomas_by_subject/'+ subjectId)
-                .then(response => response.json())
-                .then(data => {
-                    filterControls.diploma.innerHTML = '<option value="">-- Todas as Leis --</option>';
-                    data.diplomas.sort((a, b) => a.name.localeCompare(b.name)); // Ordenar por nome
-                    data.diplomas.forEach(diploma => {
-                        const option = document.createElement('option');
-                        option.value = diploma.id;
-                        option.textContent = diploma.name;
-                        filterControls.diploma.appendChild(option);
-                    });
-                    refinementWrapper.style.visibility = 'visible';
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar leis por matéria:', error);
-                    filterControls.diploma.innerHTML = '<option value="">Erro ao carregar</option>';
-                    refinementWrapper.style.visibility = 'hidden';
-                });
-        } else {
-            filterControls.diploma.disabled = true;
-            filterControls.diploma.innerHTML = '<option value="">Selecione uma Matéria</option>';
-            refinementWrapper.style.visibility = 'hidden';
-        }
-    });
-    filterControls.diploma.addEventListener('change', function() {
-        applyFilters();
-        const diplomaId = this.value;
-        if (diplomaId && diplomaId !== 'all') {
-            // Habilitar e carregar tópicos
-            filterControls.topicFilter.disabled = false;
-            fetch('/student/get_topics_by_diploma/'+ diplomaId)
-                .then(response => response.json())
-                .then(data => {
-                    filterControls.topicFilter.innerHTML = '<option value="">-- Todos os Trechos --</option>';
-                    data.topics.sort((a, b) => a.title.localeCompare(b.title)); // Ordenar por título
-                    data.topics.forEach(topic => {
-                        const option = document.createElement('option');
-                        option.value = topic.id;
-                        option.textContent = topic.title;
-                        filterControls.topicFilter.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar trechos por lei:', error);
-                    filterControls.topicFilter.innerHTML = '<option value="">Erro ao carregar</option>';
-                });
-        } else {
-            filterControls.topicFilter.disabled = true;
-            filterControls.topicFilter.innerHTML = '<option value="">Selecione um Trecho</option>';
-        }
-    });
-    filterControls.statusFilter.addEventListener('change', applyFilters);
-    filterControls.topicFilter.addEventListener('change', applyFilters);
-    filterControls.showFavorites.addEventListener('change', applyFilters);
-    filterControls.clearBtn.addEventListener('click', function() {
+        filterControls.concurso.value = 'all'; // <<< ADICIONADO
         filterControls.search.value = '';
-        filterControls.concurso.value = 'all';
-        filterControls.subject.value = filterControls.showFavorites.checked ? '' : 'all';
-        filterControls.diploma.value = '';
-        filterControls.diploma.disabled = true;
-        filterControls.statusFilter.value = '';
-        filterControls.topicFilter.value = '';
-        filterControls.topicFilter.disabled = true;
-        filterControls.showFavorites.checked = false;
-        document.getElementById('refine-status').checked = true; // Resetar para status
-        statusFilterWrapper.style.display = 'block';
-        topicFilterWrapper.style.display = 'none';
-        refinementWrapper.style.visibility = 'hidden';
-        applyFilters();
-        fadeOut(lawsSection);
-        fadeIn(initialPrompt);
+        updateDiplomaFilter(subjectId, null);
+    });
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: ATUALIZAÇÃO DO LISTENER DE MATÉRIA >>>
+    // =====================================================================
+
+    filterControls.diploma.addEventListener('change', async () => {
+        filterControls.search.value = '';
+        const diplomaId = filterControls.diploma.value;
+        filterControls.refinementWrapper.style.visibility = diplomaId ? 'visible' : 'hidden';
+        await updateTopicFilter(diplomaId);
+        fetchAndRenderLaws();
     });
 
-    // Autocomplete
-    let autocompleteTimeout;
-    filterControls.search.addEventListener('input', function() {
-        clearTimeout(autocompleteTimeout);
-        const query = this.value;
+    filterControls.refineTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            const isStatus = radio.value === 'status';
+            filterControls.statusFilterWrapper.style.display = isStatus ? 'block' : 'none';
+            filterControls.topicFilterWrapper.style.display = isStatus ? 'none' : 'block';
+            
+            if (isStatus) {
+                filterControls.topicFilter.value = '';
+            } else {
+                filterControls.statusFilter.value = '';
+            }
+            fetchAndRenderLaws();
+        });
+    });
+    
+    filterControls.statusFilter.addEventListener('change', fetchAndRenderLaws);
+    filterControls.topicFilter.addEventListener('change', fetchAndRenderLaws);
+    
+    filterControls.favorites.addEventListener('change', () => {
+        const isChecked = filterControls.favorites.checked;
+        if (isChecked) {
+             showLawsSection();
+        } 
+        else if (filterControls.subject.value === '' && filterControls.concurso.value === 'all') {
+             initialPrompt.style.display = 'block';
+             lawsSection.style.display = 'none';
+             lawsSection.style.opacity = '0';
+        }
+       fetchAndRenderLaws();
+    });
+
+    filterControls.clearButton.addEventListener('click', () => {
+        filterControls.search.value = '';
+        const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
+        
+        filterControls.concurso.value = 'all'; // <<< ADICIONADO
+        filterControls.subject.value = hasFavorites ? '' : 'all';
+        
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
+        filterControls.favorites.checked = false;
+        
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        document.querySelector('input[name="refine_type"][value="status"]').checked = true;
+        filterControls.statusFilterWrapper.style.display = 'block';
+        filterControls.topicFilterWrapper.style.display = 'none';
+        filterControls.statusFilter.value = '';
+        updateTopicFilter(null);
+
+        if (hasFavorites) {
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+            lawsSection.style.opacity = '0';
+            accordionContainer.innerHTML = '';
+        } else {
+            initialPrompt.style.display = 'block';
+            lawsSection.style.display = 'none';
+        }
+    });
+
+    const searchInput = document.getElementById('search');
+    const resultsContainer = document.getElementById('autocomplete-results');
+    let searchDebounceTimer;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        const query = searchInput.value;
+
         if (query.length < 3) {
-            autocompleteContainer.style.display = 'none';
+            resultsContainer.style.display = 'none';
             return;
         }
-        autocompleteTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch('/student/autocomplete_search?query=' + query);
-                const results = await response.json();
-                renderAutocomplete(results);
-            } catch (error) {
-                console.error('Erro no autocomplete:', error);
-            }
+        
+        filterControls.subject.value = 'all';
+        filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
+        filterControls.diploma.disabled = true;
+        filterControls.refinementWrapper.style.visibility = 'hidden';
+        
+        initialPrompt.style.display = 'none';
+        lawsSection.style.display = 'none';
+
+        searchDebounceTimer = setTimeout(() => {
+            fetch(`/student/api/autocomplete_search?q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderAutocompleteResults(data.results);
+                });
         }, 300);
     });
 
-    function renderAutocomplete(results) {
-        autocompleteContainer.innerHTML = '';
-        if (results.length === 0) {
-            autocompleteContainer.style.display = 'none';
+    function renderAutocompleteResults(results) {
+        if (!results || results.length === 0) {
+            resultsContainer.innerHTML = '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>';
+            resultsContainer.style.display = 'block';
             return;
         }
+
+        resultsContainer.innerHTML = '';
         results.forEach(item => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
@@ -1403,333 +1621,164 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span class="autocomplete-item-title">${item.title}</span>
                 <span class="autocomplete-item-category">${item.category}</span>
             `;
-            div.addEventListener('click', () => {
-                filterControls.search.value = item.title;
-                autocompleteContainer.style.display = 'none';
-                applyFilters();
-            });
-            autocompleteContainer.appendChild(div);
+            div.onclick = () => {
+                window.location.href = item.url;
+            };
+            resultsContainer.appendChild(div);
         });
-        autocompleteContainer.style.display = 'block';
+        resultsContainer.style.display = 'block';
     }
 
     document.addEventListener('click', function(event) {
-        if (!autocompleteContainer.contains(event.target) && event.target !== filterControls.search) {
-            autocompleteContainer.style.display = 'none';
+        const searchWrapper = document.querySelector('.search-wrapper');
+        if (searchWrapper && !searchWrapper.contains(event.target)) {
+            resultsContainer.style.display = 'none';
         }
     });
 
-    // Funcionalidade de Favoritos
-    function addFavoriteButtonListeners() {
-        document.querySelectorAll(".js-favorite-btn").forEach(btn => {
-            btn.addEventListener('click', function() {
-                const lawId = this.dataset.lawId;
-                const isFavorited = this.classList.contains('favorited');
-                fetch('/student/toggle_favorite/' + lawId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ is_favorite: !isFavorited })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.classList.toggle('favorited');
-                        this.title = this.classList.contains('favorited') ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
-                        Toastify({
-                            text: data.message,
-                            duration: 2000,
-                            close: true,
-                            gravity: 'top',
-                            position: 'right',
-                            backgroundColor: 'linear-gradient(to right, #00b09b, #96c93d)'
-                        }).showToast();
-                        // Atualizar a seção de favoritos se estiver visível
-                        if (document.getElementById('favorite-cards-container')) {
-                            // Idealmente, recarregar apenas a seção de favoritos ou atualizar dinamicamente
-                            // Para simplificar, pode-se recarregar a página ou os filtros
-                            applyFilters(); // Re-aplica os filtros para atualizar a lista, se necessário
-                        }
-                    } else {
-                        Toastify({
-                            text: data.message || 'Erro ao atualizar favorito.',
-                            duration: 3000,
-                            close: true,
-                            gravity: 'top',
-                            position: 'right',
-                            backgroundColor: 'linear-gradient(to right, #ff416c, #ff4b2b)'
-                        }).showToast();
-                    }
-                })
-                .catch(error => console.error('Erro ao favoritar:', error));
-            });
-        });
+    function setupDynamicPlaceholder() {
+        if (!searchInput) return;
+        const placeholders = [
+            "Busque por 'Código Penal'...", "Tente 'Direito Administrativo'...",
+            "Digite 'Art. 5º da Constituição'...", "Qual legislação você procura hoje?",
+            "Busque por Súmulas ou Tópicos..."
+        ];
+        let currentIndex = 0;
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % placeholders.length;
+            searchInput.placeholder = placeholders[currentIndex];
+        }, 3000);
     }
-    addFavoriteButtonListeners(); // Para os favoritos iniciais
+    setupDynamicPlaceholder();
 
-    // Marcar como não concluído
-    function addMarkIncompleteButtonListeners() {
-        document.querySelectorAll(".js-mark-incomplete-btn").forEach(btn => {
-            btn.addEventListener('click', function() {
-                const lawId = this.dataset.lawId;
-                fetch('/student/mark_law_incomplete/' + lawId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Toastify({
-                            text: 'Lei marcada como não concluída.',
-                            duration: 2000,
-                            backgroundColor: 'linear-gradient(to right, #00b09b, #96c93d)'
-                        }).showToast();
-                        // Atualizar a UI (remover badges, mudar botão, etc.)
-                        // Esta parte pode ser mais complexa dependendo de como a UI é estruturada
-                        applyFilters(); // Recarregar para refletir a mudança
-                    } else {
-                        Toastify({ text: 'Erro ao marcar como não concluída.', duration: 3000, backgroundColor: 'red' }).showToast();
-                    }
-                })
-                .catch(error => console.error('Erro ao marcar como não concluído:', error));
-            });
-        });
-    }
-    addMarkIncompleteButtonListeners();
-
-    // Acordeão para matérias favoritas
-    document.querySelectorAll(".subject-accordion-header").forEach(header => {
-        header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const icon = this.querySelector(".toggle-icon");
-            this.classList.toggle('open');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
-            icon.classList.toggle('fa-chevron-down');
-            icon.classList.toggle('fa-chevron-up');
-        });
-    });
-
-    // Acordeão para cards de favoritos dentro das matérias
-    document.querySelectorAll(".favorite-card-header").forEach(header => {
-        header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const icon = this.querySelector(".toggle-icon");
-            this.classList.toggle('open');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
-            icon.classList.toggle('fa-chevron-down');
-            icon.classList.toggle('fa-chevron-up');
-        });
-    });
-
-    // Editar título dos favoritos
-    const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
-    const favoritesTitleText = document.getElementById('favorites-title-text');
-    if (editFavoritesTitleBtn && favoritesTitleText) {
-        editFavoritesTitleBtn.addEventListener('click', function() {
-            const currentTitle = favoritesTitleText.textContent;
-            const newTitle = prompt('Digite o novo título para seus favoritos:', currentTitle);
-            if (newTitle && newTitle.trim() !== '') {
-                fetch('/student/update_custom_favorite_title', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ title: newTitle.trim() })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        favoritesTitleText.textContent = newTitle.trim();
-                        Toastify({ text: 'Título atualizado com sucesso!', duration: 2000, backgroundColor: '#4CAF50' }).showToast();
-                    } else {
-                        Toastify({ text: data.message || 'Erro ao atualizar título.', duration: 3000, backgroundColor: '#F44336' }).showToast();
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao atualizar título:', error);
-                    Toastify({ text: 'Erro de comunicação com o servidor.', duration: 3000, backgroundColor: '#F44336' }).showToast();
-                });
-            }
-        });
-    }
-
-    // Ocultar/Mostrar Cards
-    const toggleCardsBtn = document.getElementById('toggle-cards-btn');
-    const mainCardsGrid = document.getElementById('main-cards-grid');
-    const achievementsCard = document.getElementById('achievements-card');
-    const announcementSection = document.getElementById('announcement-cards-section');
-
-    if (toggleCardsBtn && mainCardsGrid && achievementsCard) {
-        let cardsVisible = localStorage.getItem('cardsVisible');
-        if (cardsVisible === null) cardsVisible = 'true';
-
-        function setCardsVisibility(visible) {
-            const displayStyle = visible ? 'grid' : 'none';
-            const displayBlock = visible ? 'block' : 'none';
-            const iconClassAdd = visible ? 'fa-eye-slash' : 'fa-eye';
-            const iconClassRemove = visible ? 'fa-eye' : 'fa-eye-slash';
-            const buttonText = visible ? 'Ocultar Cards' : 'Mostrar Cards';
-
-            mainCardsGrid.style.display = displayStyle;
-            achievementsCard.style.display = displayBlock;
-            if (announcementSection) announcementSection.style.display = displayBlock;
-            
-            toggleCardsBtn.innerHTML = `<i class="fas ${iconClassAdd} mr-2"></i> ${buttonText}`;
-            localStorage.setItem('cardsVisible', visible.toString());
-        }
-
-        setCardsVisibility(cardsVisible === 'true');
-
-        toggleCardsBtn.addEventListener('click', function() {
-            cardsVisible = localStorage.getItem('cardsVisible');
-            setCardsVisibility(cardsVisible !== 'true');
-        });
-    }
-
-    // Avisos - Marcar como visto
-    document.querySelectorAll(".mark-seen-checkbox").forEach(checkbox => {
+    document.querySelectorAll('.mark-seen-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const announcementItem = this.closest(".non-fixed-announcement-item");
-            const announcementId = announcementItem.dataset.announcementId;
-
-            if (this.checked) {
-                fetch('/student/mark_announcement_seen/' + announcementId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        announcementItem.classList.add('fade-out');
-                        Toastify({ text: 'Aviso marcado como visto.', duration: 1500, backgroundColor: '#4CAF50' }).showToast();
-                        // Remover o item do DOM após a animação
-                        announcementItem.addEventListener('animationend', function() {
-                            announcementItem.remove();
-                            // Verificar se ainda há avisos não fixos
-                            const container = document.getElementById('non-fixed-announcements-container');
-                            if (container && container.querySelectorAll(".non-fixed-announcement-item").length === 0) {
-                                container.remove();
-                            }
-                        });
-                    } else {
-                        this.checked = false; // Reverter o checkbox
-                        Toastify({ text: data.message || 'Erro ao marcar aviso.', duration: 3000, backgroundColor: '#F44336' }).showToast();
-                    }
-                })
-                .catch(error => {
-                    this.checked = false;
-                    console.error('Erro ao marcar aviso:', error);
-                    Toastify({ text: 'Erro de comunicação.', duration: 3000, backgroundColor: '#F44336' }).showToast();
-                });
-            }
+            this.disabled = true;
+            const announcementItem = this.closest('.non-fixed-announcement-item');
+            const announcementId = announcementItem.getAttribute('data-announcement-id');
+            const apiUrl = `/student/announcement/${announcementId}/mark_seen`;
+            fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    announcementItem.classList.add('fade-out');
+                    setTimeout(() => {
+                        announcementItem.remove();
+                        if (document.querySelectorAll('.non-fixed-announcement-item').length === 0) {
+                            document.getElementById('non-fixed-announcements-container')?.remove();
+                        }
+                    }, 500);
+                } else { this.checked = false; this.disabled = false; }
+            })
+            .catch(error => { console.error('Erro:', error); this.checked = false; this.disabled = false; });
         });
     });
 
-    // --- NOVA FUNCIONALIDADE: Alternância entre tipos de refinamento ---
-    refineTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'status') {
-                statusFilterWrapper.style.display = 'block';
-                topicFilterWrapper.style.display = 'none';
-                filterControls.topicFilter.disabled = true;
-                filterControls.statusFilter.disabled = false;
+    function handleFavoriteClick(event) {
+        const button = event.currentTarget;
+        button.disabled = true;
+        const lawId = button.dataset.lawId;
+        const icon = button.querySelector('i');
+        const topicItem = button.closest('.topic-item'); 
+        const topicTitle = topicItem ? topicItem.querySelector('.topic-title span').textContent : 'Item';
+
+        fetch(`/student/law/toggle_favorite/${lawId}`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            let notificationText = '';
+            if (data.favorited) {
+                button.classList.add('favorited');
+                icon.className = 'fas fa-star';
+                button.title = 'Remover dos Favoritos';
+                notificationText = `'${topicTitle}' adicionado aos favoritos!`;
             } else {
-                statusFilterWrapper.style.display = 'none';
-                topicFilterWrapper.style.display = 'block';
-                filterControls.statusFilter.disabled = true;
-                filterControls.topicFilter.disabled = false;
+                button.classList.remove('favorited');
+                icon.className = 'far fa-star';
+                button.title = 'Adicionar aos Favoritos';
+                notificationText = `'${topicTitle}' removido dos favoritos.`;
+                
+                if (button.closest('#initial-prompt')) {
+                    const topicToRemove = button.closest('.topic-item');
+                    if (topicToRemove) {
+                         const card = topicToRemove.closest('.favorite-card');
+                         topicToRemove.remove();
+                         if (!card.querySelector('.topic-item')) {
+                            const subjectContainer = card.closest('.subject-accordion-item');
+                            card.remove();
+                            if (!subjectContainer.querySelector('.favorite-card')) {
+                                subjectContainer.remove();
+                            }
+                            if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
+                                window.location.reload();
+                            }
+                         }
+                    }
+                } else if (filterControls.favorites.checked) {
+                    fetchAndRenderLaws();
+                }
             }
-            applyFilters(); // Aplicar filtros ao mudar o tipo de refinamento
+            Toastify({
+                text: notificationText, duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #1f2937, #374151)", borderRadius: "0.5rem" }
+            }).showToast();
+        })
+        .catch(error => console.error('Erro:', error))
+        .finally(() => { button.disabled = false; });
+    }
+
+    function handleMarkIncompleteClick(event) {
+        const buttonEl = event.currentTarget;
+        buttonEl.disabled = true;
+        const lawId = buttonEl.dataset.lawId;
+        fetch(`/student/law/review/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.new_status === 'em_andamento') {
+                 if (buttonEl.closest('#initial-prompt')) {
+                    window.location.reload();
+                } else {
+                    fetchAndRenderLaws();
+                }
+            } else {
+                alert('Erro ao atualizar o status: ' + (data.error || 'Desconhecido'));
+                buttonEl.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Ocorreu um erro de comunicação.');
+            buttonEl.disabled = false;
         });
-    });
-
-    // --- ANIMAÇÕES E EFEITOS VISUAIS ---
-    // Adicionar classe de loading durante filtros
-    function showLoadingState(element) {
-        if(element) element.classList.add('loading-state');
     }
 
-    function hideLoadingState(element) {
-        if(element) element.classList.remove('loading-state');
+    attachEventListeners();
+    
+    if (filterControls.subject.value === 'all') {
+         showLawsSection();
+        fetchAndRenderLaws();
     }
 
-    // Animação suave para mostrar/ocultar seções
-    function fadeIn(element) {
-        if (!element) return;
-        element.style.display = 'block';
-        element.style.opacity = '0';
-        setTimeout(() => {
-            element.style.opacity = '1';
-        }, 10);
-    }
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // =====================================================================
+    const MAX_TODO_ITEMS = 5; // Constante para o limite de tarefas
 
-    function fadeOut(element) {
-        if (!element) return;
-        element.style.opacity = '0';
-        setTimeout(() => {
-            element.style.display = 'none';
-        }, 300);
-    }
-
-    // --- MOTIVAÇÃO DIÁRIA ---
-    const motivationTexts = [
-        "O sucesso é a soma de pequenos esforços repetidos dia após dia.",
-        "Cada página estudada é um passo mais próximo do seu objetivo.",
-        "A persistência é o caminho do êxito.",
-        "Hoje é uma nova oportunidade de aprender algo novo.",
-        "O conhecimento é a única coisa que ninguém pode tirar de você.",
-        "Grandes conquistas começam com pequenas decisões.",
-        "Estude como se fosse viver para sempre.",
-        "O futuro pertence àqueles que se preparam hoje.",
-        "Cada dia de estudo é um investimento no seu futuro.",
-        "A disciplina é a ponte entre objetivos e conquistas."
-    ];
-
-    function setDailyMotivation() {
-        const motivationDateEl = document.getElementById('motivation-date');
-        const motivationTextEl = document.getElementById('motivation-text');
-        if (!motivationDateEl || !motivationTextEl) return;
-
-        const today = new Date();
-        const dateString = today.toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        
-        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
-        const motivationIndex = dayOfYear % motivationTexts.length;
-        
-        motivationDateEl.textContent = dateString;
-        motivationTextEl.textContent = motivationTexts[motivationIndex];
-    }
-
-    setDailyMotivation();
-
-    // --- TODO LIST FUNCTIONALITY ---
-    const todoList = document.getElementById('todo-list');
-    const newTodoItemInput = document.getElementById('new-todo-item');
-    const addTodoBtn = document.getElementById('add-todo-btn');
-    const noTodoItemsMessage = document.getElementById('no-todo-items-message');
-
+    // Função para renderizar um único item do diário
     function renderTodoItem(item) {
-        const li = document.createElement('li');
-        li.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
-        li.dataset.itemId = item.id;
-        li.innerHTML = `
+        const listItem = document.createElement('li');
+        listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
+        listItem.dataset.itemId = item.id;
+        
+        // Limita o texto visível para 40 caracteres e adiciona reticências
+        const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
+
+        listItem.innerHTML = `
             <label class="todo-item-content">
                 <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <span class="todo-item-text">${item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content}</span>
+                <span class="todo-item-text">${displayText}</span>
                 <span class="todo-item-text-tooltip">${item.content}</span>
             </label>
             <div class="todo-actions">
@@ -1739,141 +1788,353 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Event listener para marcar como completo/incompleto
-        li.querySelector(".todo-checkbox").addEventListener('change', function() {
-            updateTodoItem(item.id, { is_completed: this.checked });
-            li.classList.toggle('completed');
-        });
-
-        // Event listener para deletar
-        li.querySelector(".todo-delete-btn").addEventListener('click', function() {
-            deleteTodoItem(item.id, li);
-        });
-        return li;
+        // Adicionar event listeners para o novo item
+        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
+        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
+        return listItem;
     }
 
-    async function fetchTodoItems() {
-        try {
-            const response = await fetch('/student/get_todo_items');
-            const data = await response.json();
-            todoList.innerHTML = '';
-            if (data.items.length > 0) {
-                data.items.forEach(item => todoList.appendChild(renderTodoItem(item)));
-                if(noTodoItemsMessage) noTodoItemsMessage.style.display = 'none';
-            } else {
-                if(noTodoItemsMessage) noTodoItemsMessage.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Erro ao buscar tarefas:', error);
+    // Função para adicionar uma nova tarefa
+    addTodoBtn.addEventListener('click', async function() {
+        const content = newTodoItemInput.value.trim();
+        if (!content) {
+            Toastify({
+                text: "Por favor, digite o conteúdo da tarefa.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
+            return;
         }
-    }
 
-    async function addTodoItem(content) {
+        // Verifica se o limite de tarefas foi atingido
+        if (todoListUl.children.length >= MAX_TODO_ITEMS) {
+            Toastify({
+                text: `Você atingiu o limite de ${MAX_TODO_ITEMS} tarefas. Conclua ou exclua algumas para adicionar novas.`, duration: 5000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff9900, #ffba4d)", borderRadius: "0.5rem" } // Laranja para aviso
+            }).showToast();
+            return;
+        }
+
         try {
-            const response = await fetch('/student/add_todo_item', {
+            const response = await fetch('/student/api/todo_items', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ content: content })
             });
             const data = await response.json();
+
             if (data.success) {
-                todoList.appendChild(renderTodoItem(data.item));
-                newTodoItemInput.value = '';
-                if(noTodoItemsMessage) noTodoItemsMessage.style.display = 'none';
-                Toastify({ text: 'Tarefa adicionada!', duration: 2000, backgroundColor: '#4CAF50' }).showToast();
+                // Remover a mensagem "Nenhuma tarefa por enquanto" se ela existir
+                if (noTodoItemsMessage) {
+                    const existingNoItemsMessage = document.getElementById('no-todo-items-message');
+                    if (existingNoItemsMessage) {
+                        existingNoItemsMessage.remove();
+                    }
+                }
+                
+                // Renderizar e adicionar o novo item ao topo da lista
+                const newItem = renderTodoItem(data.todo_item);
+                todoListUl.prepend(newItem); // Adiciona no início da lista
+
+                newTodoItemInput.value = ''; // Limpa o input
+                Toastify({
+                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
+                }).showToast();
             } else {
-                Toastify({ text: data.message || 'Erro ao adicionar tarefa.', duration: 3000, backgroundColor: '#F44336' }).showToast();
+                Toastify({
+                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                }).showToast();
             }
         } catch (error) {
             console.error('Erro ao adicionar tarefa:', error);
+            Toastify({
+                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
         }
-    }
+    });
 
-    async function updateTodoItem(itemId, updates) {
+    // Função para alternar o status de uma tarefa
+    async function handleToggleTodoItem(event) {
+        const checkbox = event.currentTarget;
+        const listItem = checkbox.closest('.todo-item');
+        const itemId = listItem.dataset.itemId;
+
         try {
-            const response = await fetch(`/student/update_todo_item/${itemId}`, {
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(updates)
+                    'X-CSRFToken': csrfToken
+                }
             });
             const data = await response.json();
+
             if (data.success) {
-                Toastify({ text: 'Tarefa atualizada!', duration: 1500, backgroundColor: '#2196F3' }).showToast();
+                // Atualizar a classe CSS e o status do checkbox
+                if (data.todo_item.is_completed) {
+                    listItem.classList.add('completed');
+                } else {
+                    listItem.classList.remove('completed');
+                }
+                checkbox.checked = data.todo_item.is_completed;
+                
+                // Se o item foi concluído, movê-lo para o final da lista
+                if (data.todo_item.is_completed) {
+                    todoListUl.appendChild(listItem);
+                } else {
+                    // Se o item foi reaberto, reordenar a lista para manter os não-concluídos no topo
+                    await fetchAndRenderTodoItems(); // Refetch e re-renderiza para garantir a ordem
+                }
+
+                Toastify({
+                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
+                }).showToast();
             } else {
-                Toastify({ text: data.message || 'Erro ao atualizar tarefa.', duration: 3000, backgroundColor: '#F44336' }).showToast();
-                // Reverter a mudança na UI se necessário
-                fetchTodoItems(); 
+                checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
+                Toastify({
+                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                }).showToast();
             }
         } catch (error) {
-            console.error('Erro ao atualizar tarefa:', error);
-            fetchTodoItems();
+            console.error('Erro ao alternar status da tarefa:', error);
+            checkbox.checked = !checkbox.checked; // Reverter o estado do checkbox
+            Toastify({
+                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
         }
     }
 
-    async function deleteTodoItem(itemId, listItemElement) {
-        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    // Função para excluir uma tarefa
+    async function handleDeleteTodoItem(event) {
+        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
+            return;
+        }
+
+        const button = event.currentTarget;
+        const listItem = button.closest('.todo-item');
+        const itemId = listItem.dataset.itemId;
+
         try {
-            const response = await fetch(`/student/delete_todo_item/${itemId}`, {
-                method: 'POST',
+            const response = await fetch(`/student/api/todo_items/${itemId}`, {
+                method: 'DELETE',
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token() }}'
+                    'X-CSRFToken': csrfToken
                 }
             });
             const data = await response.json();
+
             if (data.success) {
-                listItemElement.remove();
-                if (todoList.children.length === 0 && noTodoItemsMessage) {
-                    noTodoItemsMessage.style.display = 'block';
+                listItem.remove(); // Remove o item da lista
+                if (todoListUl.children.length === 0) {
+                    // Se a lista ficar vazia, adiciona a mensagem de "nenhuma tarefa"
+                    const p = document.createElement('p');
+                    p.id = 'no-todo-items-message';
+                    p.className = 'text-gray-500 italic text-sm text-center py-4';
+                    p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                    todoListUl.appendChild(p);
                 }
-                Toastify({ text: 'Tarefa excluída!', duration: 2000, backgroundColor: '#FF9800' }).showToast();
+                Toastify({
+                    text: data.message, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #4caf50, #66bb6a)", borderRadius: "0.5rem" }
+                }).showToast();
             } else {
-                Toastify({ text: data.message || 'Erro ao excluir tarefa.', duration: 3000, backgroundColor: '#F44336' }).showToast();
+                Toastify({
+                    text: data.error, duration: 3000, close: true, gravity: "bottom", position: "right",
+                    style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+                }).showToast();
             }
         } catch (error) {
             console.error('Erro ao excluir tarefa:', error);
+            Toastify({
+                text: "Erro ao comunicar com o servidor.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
         }
     }
 
-    if (addTodoBtn) {
-        addTodoBtn.addEventListener('click', function() {
-            const content = newTodoItemInput.value.trim();
-            if (content) {
-                addTodoItem(content);
+    // Função para buscar e renderizar todos os itens do diário (útil após toggle)
+    async function fetchAndRenderTodoItems() {
+        try {
+            const response = await fetch('/student/api/todo_items');
+            const data = await response.json();
+
+            todoListUl.innerHTML = ''; // Limpa a lista atual
+
+            if (data.todo_items && data.todo_items.length > 0) {
+                // Ordena: não concluídos primeiro, depois concluídos. Dentro de cada grupo, por data de criação.
+                const sortedItems = data.todo_items.sort((a, b) => {
+                    if (a.is_completed === b.is_completed) {
+                        // Se o status é o mesmo, ordena por ID (ou outra propriedade de ordem, como timestamp)
+                        return a.id - b.id;
+                    }
+                    return a.is_completed ? 1 : -1; // Não concluído (-1) vem antes de concluído (1)
+                });
+
+                sortedItems.forEach(item => {
+                    todoListUl.appendChild(renderTodoItem(item));
+                });
+                // Remove a mensagem de "nenhuma tarefa" se ela existir
+                const existingNoItemsMessage = document.getElementById('no-todo-items-message');
+                if (existingNoItemsMessage) {
+                    existingNoItemsMessage.remove();
+                }
             } else {
-                Toastify({ text: 'Por favor, digite o conteúdo da tarefa.', duration: 2000, backgroundColor: '#FFC107' }).showToast();
+                // Adiciona a mensagem de "nenhuma tarefa" se a lista estiver vazia
+                const p = document.createElement('p');
+                p.id = 'no-todo-items-message';
+                p.className = 'text-gray-500 italic text-sm text-center py-4';
+                p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                todoListUl.appendChild(p);
             }
-        });
-    }
-    if (newTodoItemInput) {
-        newTodoItemInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                addTodoBtn.click();
-            }
-        });
-    }
-
-    // Carregar tarefas iniciais
-    if (todoList) {
-        fetchTodoItems();
+        } catch (error) {
+            console.error('Erro ao buscar itens do diário:', error);
+            Toastify({
+                text: "Erro ao carregar as tarefas do diário.", duration: 3000, close: true, gravity: "bottom", position: "right",
+                style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)", borderRadius: "0.5rem" }
+            }).showToast();
+        }
     }
 
-    // Inicializar filtros se houver parâmetros na URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('subject_id')) {
-        filterControls.subject.value = urlParams.get('subject_id');
-        // Disparar evento change para carregar diplomas e aplicar filtros
-        const event = new Event('change');
-        filterControls.subject.dispatchEvent(event);
+    // Chama a função para buscar e renderizar os itens do diário quando a página carrega
+    fetchAndRenderTodoItems();
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO MEU DIÁRIO (TodoItem) >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
+    // =====================================================================
+    function getDayOfYear(date) {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
     }
 
-    console.log('Dashboard melhorado e completo carregado com sucesso!');
+    function displayDailyMotivation() {
+        const today = new Date();
+        const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        const dayOfWeek = daysOfWeek[today.getDay()];
+        const dayOfMonth = today.getDate();
+        const month = months[today.getMonth()];
+        const year = today.getFullYear();
+
+        motivationDateElement.textContent = `${dayOfWeek}, ${dayOfMonth} de ${month} de ${year}`;
+
+        // Nova lista de frases motivacionais
+        const motivationalPhrases = [
+            "Não desista. O começo é sempre o mais difícil.",
+            "A persistência é o caminho do êxito.",
+            "O sucesso é a soma de pequenos esforços repetidos.",
+            "Caia sete vezes, levante-se oito.",
+            "Sua perseverança é a ponte entre seus sonhos e a realidade.",
+            "A força não vem da capacidade física, mas de uma vontade indomável.",
+            "Acredite no processo e na sua capacidade de superar.",
+            "Nunca subestime o poder de um pequeno passo.",
+            "Não importa a lentidão, desde que você não pare.",
+            "Seu esforço é o combustível do seu progresso.",
+            "A disciplina é a ponte entre metas e realizações.",
+            "Mantenha o foco, a força e a fé.",
+            "A determinação de hoje é a recompensa de amanhã.",
+            "O medo de falhar não pode ser maior que a vontade de crescer.",
+            "Sua disciplina nos estudos molda o seu destino.",
+            "O estudo é a chave que abre todas as portas do conhecimento.",
+            "Cada hora de estudo é um investimento no seu futuro.",
+            "Aprender é o único tesouro que a traça não rói e o ladrão não rouba.",
+            "Dedique-se aos estudos e veja a sua mente florescer.",
+            "A persistência nos estudos transforma sonhos em realidade.",
+            "Sua jornada de aprendizado é a sua maior aventura.",
+            "O estudo de hoje é a vitória de amanhã.",
+            "A cada nova lei compreendida, um novo horizonte se abre.",
+            "Permita que o conhecimento seja a sua bússola.",
+            "Não pare até se orgulhar do seu progresso.",
+            "O caminho do sucesso é pavimentado com estudo e dedicação.",
+            "A melhoria contínua começa com a vontade de aprender.",
+            "O que você aprende hoje, usa para sempre.",
+            "Estude como se fosse viver para sempre.",
+            "As leis são o alicerce da sociedade; seu estudo, o seu poder.",
+            "A mente que se abre a uma nova ideia jamais voltará ao seu tamanho original.",
+            "O estudo liberta, empodera e transforma.",
+            "Acredite que você pode, e você estará no meio do caminho.",
+            "Onde o foco vai, a energia flui.",
+            "Menos distrações, mais resultados.",
+            "Sua disciplina é a semente do seu sucesso.",
+            "Defina suas prioridades e foque nelas.",
+            "O foco transforma o comum em extraordinário.",
+            "A disciplina é a liberdade de ser quem você quer ser.",
+            "Organize-se para conquistar.",
+            "Seu foco determina sua realidade.",
+            "Não desvie do seu objetivo; ele te espera.",
+            "A disciplina é o caminho para a maestria.",
+            "Um passo de cada vez, com foco total.",
+            "Concentre-se no que importa e o resto se alinha.",
+            "O tempo é seu maior ativo; use-o com sabedoria.",
+            "Sua capacidade de focar define seus resultados.",
+            "A disciplina é o segredo dos grandes realizadores.",
+            "Mantenha os olhos no prêmio.",
+            "Acredite no seu potencial ilimitado de crescimento.",
+            "Cada desafio é uma oportunidade para evoluir.",
+            "Seu crescimento é um processo contínuo e maravilhoso.",
+            "Não tenha medo de recomeçar; tenha medo de não evoluir.",
+            "O único limite para o seu crescimento é a sua imaginação.",
+            "Evoluir é se tornar a melhor versão de si mesmo.",
+            "Sua jornada de crescimento é única e valiosa.",
+            "Pequenas mudanças diárias levam a grandes resultados.",
+            "Crescer dói, mas compensa.",
+            "A cada passo, você se aproxima de quem você quer ser.",
+            "O sucesso não é um destino, é uma jornada de crescimento constante.",
+            "Seu esforço de hoje é o seu triunfo de amanhã.",
+            "A cada dia, uma nova chance de ser melhor.",
+            "Aprenda com o passado, viva o presente e construa o futuro.",
+            "Sua resiliência define sua capacidade de crescer.",
+            "Abrace a imperfeição e celebre o progresso.",
+            "Sua mente é um jardim; cultive-a com bons pensamentos e muito aprendizado.",
+            "Você está crescendo, mesmo quando não percebe.",
+            "A resiliência é a arte de transformar a dor em poder.",
+            "A diferença entre o impossível e o possível reside na determinação.",
+            "Sua persistência é a sua maior aliada.",
+            "O futuro pertence àqueles que acreditam na beleza de seus sonhos.",
+            "Comece onde você está, use o que você tem, faça o que você pode.",
+            "Sua atitude determina sua altitude.",
+            "Grandes coisas nunca vêm de zonas de conforto.",
+            "A vida é sobre criar-se.",
+            "Abrace a jornada, celebre cada conquista.",
+            "Seja a luz que ilumina o seu próprio caminho.",
+            "Inspire-se e inspire os outros.",
+            "Sua história está sendo escrita a cada dia.",
+            "A felicidade está na jornada, não no destino.",
+            "Deixe sua paixão te guiar.",
+            "Viva o presente, planeje o futuro, aprenda com o passado.",
+            "Cada novo dia é uma nova chance de mudar.",
+            "A vida é um aprendizado contínuo.",
+            "Seja grato pelas pequenas vitórias.",
+            "O otimismo é a fé que leva à conquista.",
+            "Você é mais forte do que pensa.",
+            "A beleza do amanhã depende do que você faz hoje.",
+            "Faça do seu propósito a sua força.",
+            "Seja a mudança que você quer ver no mundo, começando por você.",
+            "O valor de uma pessoa não está na sua beleza, mas na sua coragem para lutar."
+        ];
+
+        const dayIndex = getDayOfYear(today) % motivationalPhrases.length;
+        motivationTextElement.textContent = motivationalPhrases[dayIndex];
+    }
+
+    // Chama a função para exibir a motivação diária ao carregar a página
+    displayDailyMotivation();
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÕES DO CARD MOTIVAÇÃO DIÁRIA >>>
+    // =====================================================================
 });
 </script>
 {% endblock %}
-
