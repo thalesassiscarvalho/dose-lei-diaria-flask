@@ -179,6 +179,24 @@ def autocomplete_search():
 
     return jsonify(results=unique_results[:7])
 
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: API para detalhes do concurso >>>
+# =====================================================================
+@student_bp.route("/api/concurso/<int:concurso_id>/details")
+@login_required
+def get_concurso_details(concurso_id):
+    """
+    Retorna detalhes de um concurso, como a URL do edital.
+    """
+    concurso = Concurso.query.get_or_404(concurso_id)
+    return jsonify(
+        success=True,
+        edital_url=concurso.edital_verticalizado_url
+    )
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
 def check_and_award_achievements(user):
     unlocked_achievements_objects = []
     all_achievements = Achievement.query.order_by(Achievement.points_threshold).all()
@@ -312,14 +330,7 @@ def dashboard():
     level_info = get_user_level_info(current_user.points)
     todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
     
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: Enviar o concurso padrão para o template >>>
-    # =====================================================================
-    # Pega o ID do concurso padrão do usuário. Será None se não houver um.
     default_concurso_id = current_user.default_concurso_id
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
-    # =====================================================================
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -337,13 +348,7 @@ def dashboard():
                            level_info=level_info,
                            todo_items=todo_items,
                            custom_favorite_title=current_user.favorite_label,
-                           # =====================================================================
-                           # <<< INÍCIO DA IMPLEMENTAÇÃO: Enviar o concurso padrão para o template >>>
-                           # =====================================================================
                            default_concurso_id=default_concurso_id
-                           # =====================================================================
-                           # <<< FIM DA IMPLEMENTAÇÃO >>>
-                           # =====================================================================
                            )
 
 
@@ -474,8 +479,6 @@ def view_law(law_id):
                            is_favorited=is_favorited, display_content=content_to_display,
                            banner_to_show=banner_to_show
                            )
-
-# ... (Restante do arquivo student.py sem alterações) ...
 
 @student_bp.route("/law/toggle_favorite/<int:law_id>", methods=["POST"])
 @login_required
