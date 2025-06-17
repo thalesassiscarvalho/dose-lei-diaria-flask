@@ -430,7 +430,7 @@ def filter_laws():
             }
             processed_diplomas.append(diploma_data)
 
-    subjects_with_ diplomas = {}
+    subjects_with_diplomas = {}
     for diploma_data in processed_diplomas:
         subject_name = diploma_data["subject_name"]
         if subject_name not in subjects_with_diplomas:
