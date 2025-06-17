@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Concurso - Admin{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-brand-purple">Editar Concurso</h1>
+    <a href="{{ url_for('admin.manage_concursos') }}" class="text-brand-purple hover:underline">
+        <i class="fas fa-arrow-left mr-1"></i> Voltar para a Lista
+    </a>
+</div>
+
+<div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+    <form method="POST" action="{{ url_for('admin.edit_concurso', concurso_id=concurso.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="mb-4">
+            <label for="name" class="block text-gray-700 text-sm font-bold mb-2">
+                Nome do Concurso
+            </label>
+            <input type="text" id="name" name="name" value="{{ concurso.name }}" required
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+        </div>
+
+        <div class="mb-6">
+            <label for="edital_url" class="block text-gray-700 text-sm font-bold mb-2">
+                URL do Edital Verticalizado (Excel)
+            </label>
+            <p class="text-xs text-gray-500 mb-1">Cole aqui o link público do arquivo hospedado no seu S3.</p>
+            <input type="url" id="edital_url" name="edital_url" value="{{ concurso.edital_verticalizado_url or '' }}" placeholder="https://seu-bucket.s3.amazonaws.com/..."
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+        </div>
+
+        <div class="flex items-center justify-end">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
