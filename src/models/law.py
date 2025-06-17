@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# NOVO: Importa a tabela de associação do arquivo concurso.py
+from src.models.concurso import concurso_law_association
 from src.models.user import db 
 from sqlalchemy.orm import backref
 
@@ -19,36 +21,32 @@ class Law(db.Model):
     audio_url = db.Column(db.String(500), nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
 
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
-    # =====================================================================
+    # --- FUNCIONALIDADE EXISTENTE: Explicação do Juridiquês ---
     juridiques_explanation = db.Column(db.Text, nullable=True)
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO: NOVO CAMPO NO MODELO >>>
-    # =====================================================================
 
-    # =====================================================================
-    # <<< INÍCIO DA CORREÇÃO DEFINITIVA >>>
-    # O parâmetro 'lazy="dynamic"' foi REMOVIDO da relação abaixo.
-    # Esta é a principal correção que resolve o conflito.
-    # =====================================================================
+    # --- FUNCIONALIDADE EXISTENTE: Relação com Tópicos Filhos (children) ---
     children = db.relationship('Law', 
                                backref=backref('parent', remote_side=[id]),
                                cascade="all, delete-orphan")
-    # =====================================================================
-    # <<< FIM DA CORREÇÃO DEFINITIVA >>>
-    # =====================================================================
 
+    # --- FUNCIONALIDADE EXISTENTE: Relação com Links Úteis ---
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
 
-    # =====================================================================
-    # <<< INÍCIO DA NOVA FUNCIONALIDADE: RELAÇÃO COM O BANNER >>>
-    # =====================================================================
-    # 'uselist=False' cria uma relação um-para-um (cada lei só pode ter um banner).
-    # 'cascade="all, delete-orphan"' garante que se a lei for deletada, o banner associado também será.
+    # --- FUNCIONALIDADE EXISTENTE: Relação com Banner ---
+    # Esta é a relação com o banner que você mencionou. Ela está mantida aqui.
     banner = db.relationship('LawBanner', backref='law', uselist=False, cascade="all, delete-orphan")
+    
     # =====================================================================
-    # <<< FIM DA NOVA FUNCIONALIDADE >>>
+    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Relação com Concursos >>>
+    # Esta é a única seção nova, que conecta a Lei aos Concursos.
+    # =====================================================================
+    concursos = db.relationship(
+        'Concurso',
+        secondary=concurso_law_association,
+        back_populates='laws'
+    )
+    # =====================================================================
+    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
     # =====================================================================
 
 
