@@ -1020,7 +1020,12 @@
                 <option value="{{ concurso.id }}">{{ concurso.name }}</option>
             {% endfor %}
         </select>
-    </div>
+        <div id="edital-button-container" class="mt-2">
+            <a href="#" id="download-edital-btn" class="action-button" style="display: none; background-color: #16a34a; width: 100%;" target="_blank">
+                <i class="fas fa-download mr-2"></i> Baixar Edital Verticalizado
+            </a>
+        </div>
+        </div>
 
     <div class="filter-materia-lei">
         <div class="filter-duo">
@@ -1215,6 +1220,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const setDefaultConcursoBtn = document.getElementById('set-default-concurso-btn');
     const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
     const defaultConcursoId = {{ default_concurso_id|tojson }};
+    
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para o botão de download do edital >>>
+    // =====================================================================
+    const editalButton = document.getElementById('download-edital-btn');
+
+    function checkEdital(concursoId) {
+        // Esconde o botão por padrão sempre que a função for chamada
+        if (editalButton) {
+            editalButton.style.display = 'none';
+        }
+
+        if (concursoId && concursoId !== 'all' && editalButton) {
+            fetch(`/student/api/concurso/${concursoId}/details`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.edital_url) {
+                        editalButton.href = data.edital_url;
+                        editalButton.style.display = 'inline-flex'; // Mostra o botão como flexível
+                    }
+                })
+                .catch(error => console.error('Erro ao buscar detalhes do edital:', error));
+        }
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO >>>
+    // =====================================================================
 
     function updateLawsTitle(concursoSelectElement) {
         const selectedOption = concursoSelectElement.options[concursoSelectElement.selectedIndex];
@@ -1282,6 +1314,10 @@ document.addEventListener('DOMContentLoaded', function() {
         showLawsSection();
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
+        
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: Chama a função para checar o edital >>>
+        checkEdital(filterControls.concurso.value);
+        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (filterControls.concurso.value !== 'all') {
             filterControls.subject.value = '';
@@ -1530,9 +1566,6 @@ document.addEventListener('DOMContentLoaded', function() {
         attachEventListeners();
     }
     
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO: FUNÇÃO DE RENDERIZAR ITEM DE LEI >>>
-    // =====================================================================
     function renderTopicItem(topic) {
         let statusBadge = '';
         if (topic.is_completed) {
@@ -1580,9 +1613,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>`;
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO: FUNÇÃO DE RENDERIZAR ITEM DE LEI >>>
-    // =====================================================================
 
     function attachEventListeners() {
         document.querySelectorAll('.subject-accordion-header, .accordion-header, .favorite-card-header').forEach(header => {
@@ -1622,6 +1652,10 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLawsTitle(filterControls.concurso);
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
+        
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
+        checkEdital(null);
+        // <<< FIM DA IMPLEMENTAÇÃO >>>
     });
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -1676,6 +1710,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
+        
+        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
+        checkEdital(null);
+        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (hasFavorites) {
             initialPrompt.style.display = 'block';
@@ -1841,6 +1879,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (filterControls.subject.value === 'all') {
             showLawsSection();
             fetchAndRenderLaws();
+        } else {
+            // <<< INÍCIO DA IMPLEMENTAÇÃO: Checa o edital no carregamento inicial se não houver concurso padrão >>>
+            checkEdital(filterControls.concurso.value);
+            // <<< FIM DA IMPLEMENTAÇÃO >>>
         }
         
         updateDefaultConcursoButtonState();
