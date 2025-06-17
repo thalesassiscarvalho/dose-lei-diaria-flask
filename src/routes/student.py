@@ -12,13 +12,7 @@ from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: IMPORTAR O MODELO CONCURSO >>>
-# =====================================================================
 from src.models.concurso import Concurso
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
@@ -238,14 +232,10 @@ def _calculate_user_streak(user: User) -> int:
             
     return streak_count
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO NA ROTA DO DASHBOARD >>>
-# =====================================================================
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
     subjects_for_filter = Subject.query.order_by(Subject.name).all()
-    # ALTERADO: Busca a lista de concursos para popular o novo filtro.
     concursos_for_filter = Concurso.query.order_by(Concurso.name).all()
     
     total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
@@ -321,8 +311,16 @@ def dashboard():
 
     level_info = get_user_level_info(current_user.points)
     todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
+    
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: Enviar o concurso padrão para o template >>>
+    # =====================================================================
+    # Pega o ID do concurso padrão do usuário. Será None se não houver um.
+    default_concurso_id = current_user.default_concurso_id
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
-    # ALTERADO: Adiciona `concursos=concursos_for_filter` ao render_template
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            concursos=concursos_for_filter,
@@ -338,20 +336,20 @@ def dashboard():
                            favorites_by_subject=favorites_by_subject,
                            level_info=level_info,
                            todo_items=todo_items,
-                           custom_favorite_title=current_user.favorite_label
+                           custom_favorite_title=current_user.favorite_label,
+                           # =====================================================================
+                           # <<< INÍCIO DA IMPLEMENTAÇÃO: Enviar o concurso padrão para o template >>>
+                           # =====================================================================
+                           default_concurso_id=default_concurso_id
+                           # =====================================================================
+                           # <<< FIM DA IMPLEMENTAÇÃO >>>
+                           # =====================================================================
                            )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: REESTRUTURAÇÃO DA ROTA DE FILTRAGEM >>>
-# =====================================================================
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
-    # Coleta todos os parâmetros de filtro da URL
     selected_concurso_id_str = request.args.get("concurso_id", "")
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
@@ -359,7 +357,6 @@ def filter_laws():
     selected_topic_id_str = request.args.get("topic_id", "")
     show_favorites = request.args.get("show_favorites", "false").lower() == 'true'
 
-    # Prepara dados do progresso do usuário para verificação de status
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.law_id: p.status for p in user_progress_records}
     completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
@@ -368,24 +365,18 @@ def filter_laws():
 
     diplomas_query = Law.query.filter(Law.parent_id.is_(None)).options(joinedload(Law.children), joinedload(Law.subject))
     
-    # Lógica de filtragem principal: decide se filtra por Concurso ou por Matéria
-    topic_ids_to_show = None # Usado para filtrar os tópicos se um concurso for selecionado
+    topic_ids_to_show = None
 
     if selected_concurso_id_str.isdigit():
-        # --- FILTRAGEM POR CONCURSO ---
         concurso = Concurso.query.get(int(selected_concurso_id_str))
         if concurso:
-            # Pega todos os tópicos (subleis) que pertencem a este concurso
             topics_in_concurso = concurso.laws.filter(Law.parent_id.isnot(None)).all()
             topic_ids_to_show = {topic.id for topic in topics_in_concurso}
             
-            # Pega os IDs únicos das leis-pai (diplomas) desses tópicos
             parent_ids = {topic.parent_id for topic in topics_in_concurso if topic.parent_id}
             
-            # A query principal agora busca apenas os diplomas que contêm os tópicos relevantes
             diplomas_query = diplomas_query.filter(Law.id.in_(parent_ids))
     else:
-        # --- FILTRAGEM POR MATÉRIA (lógica antiga) ---
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
             diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
@@ -394,15 +385,7 @@ def filter_laws():
     if selected_diploma_id:
         diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
 
-    # =====================================================================
-    # <<< INÍCIO DA CORREÇÃO >>>
-    # =====================================================================
-    # CORREÇÃO: Adicionado .join(Law.subject) para garantir que a tabela
-    # Subject esteja disponível para a cláusula order_by.
     all_diplomas = diplomas_query.join(Law.subject).order_by(Subject.name, Law.title).all()
-    # =====================================================================
-    # <<< FIM DA CORREÇÃO >>>
-    # =====================================================================
     
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
     
@@ -410,9 +393,7 @@ def filter_laws():
     for diploma in all_diplomas:
         children_to_display = []
         
-        # Determina quais tópicos (children) devem ser iterados
         children_iterator = diploma.children
-        # Se estamos filtrando por concurso, só iteramos sobre os tópicos daquele concurso
         if topic_ids_to_show is not None:
             children_iterator = [child for child in diploma.children if child.id in topic_ids_to_show]
 
@@ -449,7 +430,7 @@ def filter_laws():
             }
             processed_diplomas.append(diploma_data)
 
-    subjects_with_diplomas = {}
+    subjects_with_ diplomas = {}
     for diploma_data in processed_diplomas:
         subject_name = diploma_data["subject_name"]
         if subject_name not in subjects_with_diplomas:
@@ -457,10 +438,6 @@ def filter_laws():
         subjects_with_diplomas[subject_name].append(diploma_data)
         
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
-
 
 @student_bp.route("/law/<int:law_id>")
 @login_required
@@ -823,3 +800,37 @@ def delete_todo_item(item_id):
         db.session.rollback()
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: Nova rota para salvar o concurso padrão >>>
+# =====================================================================
+@student_bp.route("/api/set_default_concurso", methods=["POST"])
+@login_required
+def set_default_concurso():
+    data = request.get_json()
+    concurso_id_str = data.get('concurso_id')
+
+    try:
+        if concurso_id_str == 'clear':
+            current_user.default_concurso_id = None
+            message = "Filtro padrão removido com sucesso!"
+        elif concurso_id_str and concurso_id_str.isdigit():
+            concurso_id = int(concurso_id_str)
+            # Verifica se o concurso existe para evitar inconsistências
+            concurso = Concurso.query.get(concurso_id)
+            if not concurso:
+                return jsonify(success=False, error="Concurso não encontrado."), 404
+            current_user.default_concurso_id = concurso_id
+            message = "Concurso definido como padrão!"
+        else:
+            return jsonify(success=False, error="ID de concurso inválido."), 400
+
+        db.session.commit()
+        return jsonify(success=True, message=message)
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao definir concurso padrão para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao salvar a preferência."), 500
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
