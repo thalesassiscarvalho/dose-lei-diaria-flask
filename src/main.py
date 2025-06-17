@@ -25,6 +25,8 @@ from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
 
+import datetime
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__, 
@@ -35,10 +37,6 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 
-# =====================================================================
-# <<< CONFIGURAÇÃO CENTRALIZADA DO CSP - VERSÃO FINAL CORRIGIDA >>>
-# Adicionamos permissões para Font Awesome e Google Fonts
-# =====================================================================
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
@@ -48,7 +46,7 @@ app.config['CSP_POLICY'] = {
         'https://cdn.tailwindcss.com',
         'https://cdn.quilljs.com',
         'https://cdn.tiny.cloud',
-        'https://kit.fontawesome.com'  # NOVO: Para carregar o script do Font Awesome
+        'https://kit.fontawesome.com'
     ],
     'style-src': [
         "'self'",
@@ -57,14 +55,14 @@ app.config['CSP_POLICY'] = {
         'https://cdnjs.cloudflare.com',
         'https://cdn.quilljs.com',
         'https://cdn.tiny.cloud',
-        'https://fonts.googleapis.com', # NOVO: Para carregar os estilos das fontes do Google
-        'https://ka-f.fontawesome.com'  # NOVO: Para carregar os estilos do Font Awesome
+        'https://fonts.googleapis.com',
+        'https://ka-f.fontawesome.com'
     ],
     'font-src': [
         "'self'",
         'https://cdnjs.cloudflare.com',
-        'https://fonts.gstatic.com',    # NOVO: Para carregar os arquivos de fonte do Google
-        'https://ka-f.fontawesome.com'  # NOVO: Para carregar os arquivos de fonte do Font Awesome
+        'https://fonts.gstatic.com',
+        'https://ka-f.fontawesome.com'
     ],
     'img-src': [
         "'self'",
@@ -78,22 +76,16 @@ app.config['CSP_POLICY'] = {
     'connect-src': [
         "'self'",
         'https://cdn.tiny.cloud',
-        'https://ka-f.fontawesome.com'  # NOVO: Para o Font Awesome se conectar
+        'https://ka-f.fontawesome.com'
     ],
     'frame-ancestors': ["'none'"],
     'object-src': ["'none'"],
     'form-action': ["'self'"],
     'base-uri': ["'self'"]
 }
-# =====================================================================
-# <<< FIM DA CONFIGURAÇÃO CENTRALIZADA DO CSP >>>
-# =====================================================================
-
 
 db.init_app(app)
-
 migrate = Migrate(app, db)
-
 csrf = CSRFProtect()
 csrf.init_app(app)
 
@@ -136,8 +128,9 @@ def ensure_achievements_exist():
     else:
         logging.debug("All base achievements already exist.")
 
+# Bloco de inicialização com a indentação corrigida
 with app.app_context():
-   logging.info("Initializing database (manual checks)...")
+    logging.info("Initializing database (manual checks)...")
     try:
         db.create_all()
         logging.info("Database tables ensured (created if they didn't exist).")
@@ -189,12 +182,10 @@ def apply_csp(response):
     response.headers['Content-Security-Policy'] = csp_header_value
     return response
 
-
 # --- Register Blueprints ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp)
 app.register_blueprint(student_bp)
-
 
 # --- Main Routes ---
 @app.route('/')
@@ -209,7 +200,6 @@ def index():
             return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
 
-import datetime
 @app.context_processor
 def inject_now():
     return {'now': datetime.datetime.utcnow}
