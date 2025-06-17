@@ -662,6 +662,13 @@
         border-left: 4px solid #3b82f6;
         padding-left: 1rem;
     }
+    
+    /* >>> NOVA REGRA DE ESTILO ADICIONADA AQUI <<< */
+    /* Destaque para o contêiner de Matéria e Lei */
+    .filter-materia-lei {
+        border-left: 4px solid #f97316; /* Laranja vibrante */
+        padding-left: 1rem;
+    }
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
     /* ===================================================================== */
 
@@ -850,7 +857,6 @@
 {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
 {# ===================================================================== #}
 <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-    <!-- 1. Concurso separado -->
     <div class="filter-concurso">
         <label for="concurso_id" class="filter-label"><i class="fas fa-trophy"></i> Filtrar por Concurso</label>
         <select id="concurso_id" name="concurso_id" class="custom-input">
@@ -861,7 +867,8 @@
         </select>
     </div>
 
-    <div>
+    <div class="filter-materia-lei">
+        <span class="filter-label block"><i class="fas fa-layer-group"></i> Matéria &amp; Lei</span>
         <div class="filter-duo">
             <div>
                 <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
@@ -886,7 +893,6 @@
         </div>
     </div>
 
-    <!-- 3. Refinar por -->
     <div id="refinement-wrapper" style="visibility: hidden;">
         <label class="filter-label"><i class="fas fa-filter"></i> Refinar por</label>
         <div class="flex items-center space-x-4 mb-2">
@@ -914,7 +920,6 @@
         </div>
     </div>
 
-    <!-- 4. Limpar filtros -->
     <div class="flex items-end">
         <label class="filter-label hidden lg:block">&nbsp;</label>
         <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
