@@ -5,6 +5,22 @@
 {% endblock %}
 
 {% block head_extra %}
+<script src="https://cdn.tiny.cloud/1/i56ikys2e4xesbya3sxi1yscgh46yvqvlb17lc6vsva8pt2z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+  tinymce.init({
+    selector: '#content',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    height: 400,
+  });
+
+  tinymce.init({
+    selector: '#juridiques_content',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    height: 300,
+  });
+</script>
 <style>
     .link-group { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; padding: 0.75rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
     .link-group input { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
@@ -17,25 +33,6 @@
     .multiselect {
         height: 150px;
         background-color: white;
-    }
-
-    /* Estilos para o editor HTML view */
-    .html-editor-container {
-        border: 1px solid #ccc;
-        min-height: 400px; /* Ajuste conforme necessário */
-        display: none; /* Inicia oculto */
-        padding: 10px;
-        background-color: #f8f8f8;
-        font-family: monospace;
-        white-space: pre-wrap; /* Preserva espaços e quebras de linha */
-    }
-    .html-editor-container:focus {
-        outline: none;
-        border-color: #66afe9;
-        box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
-    }
-    .quill-editor-wrapper {
-        border: 1px solid #ccc; /* Adicione borda ao wrapper do Quill */
     }
 </style>
 {% endblock %}
@@ -103,45 +100,13 @@
     </div>
 
     <div class="mb-6">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="content-editor">Conteúdo:</label>
-        <div class="quill-editor-wrapper"> {# Wrapper para o Quill #}
-            <div id="toolbar-content">
-                <button class="ql-bold"></button>
-                <button class="ql-italic"></button>
-                <button class="ql-underline"></button>
-                <button class="ql-link"></button>
-                <button class="ql-image"></button>
-                <button class="ql-list" value="ordered"></button>
-                <button class="ql-list" value="bullet"></button>
-                <button class="ql-blockquote"></button>
-                <button class="ql-code-block"></button>
-                <button class="ql-button-html-content">HTML</button> {# Nosso botão HTML #}
-            </div>
-            <div id="content-editor" style="height: 400px;"></div> {# Div onde o Quill será inicializado #}
-        </div>
-        <textarea id="content" name="content" style="display:none;">{{ law.content | safe if law else '' }}</textarea> {# Textarea oculto para enviar o conteúdo #}
-        <textarea id="content-html-view" class="html-editor-container" style="height: 400px;" spellcheck="false"></textarea> {# Textarea para edição HTML #}
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="content">Conteúdo:</label>
+        <textarea id="content" name="content">{{ law.content | safe if law else '' }}</textarea>
     </div>
 
     <div class="mb-6">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="juridiques_content-editor">Entendendo o Juridiquês (Opcional):</label>
-        <div class="quill-editor-wrapper"> {# Wrapper para o Quill #}
-            <div id="toolbar-juridiques">
-                <button class="ql-bold"></button>
-                <button class="ql-italic"></button>
-                <button class="ql-underline"></button>
-                <button class="ql-link"></button>
-                <button class="ql-image"></button>
-                <button class="ql-list" value="ordered"></button>
-                <button class="ql-list" value="bullet"></button>
-                <button class="ql-blockquote"></button>
-                <button class="ql-code-block"></button>
-                <button class="ql-button-html-juridiques">HTML</button> {# Nosso botão HTML #}
-            </div>
-            <div id="juridiques_content-editor" style="height: 300px;"></div> {# Div onde o Quill será inicializado #}
-        </div>
-        <textarea id="juridiques_content" name="juridiques_explanation" style="display:none;">{{ law.juridiques_explanation | safe if law and law.juridiques_explanation else '' }}</textarea> {# Textarea oculto para enviar o conteúdo #}
-        <textarea id="juridiques_content-html-view" class="html-editor-container" style="height: 300px;" spellcheck="false"></textarea> {# Textarea para edição HTML #}
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="juridiques_content">Entendendo o Juridiquês (Opcional):</label>
+        <textarea id="juridiques_content" name="juridiques_explanation">{{ law.juridiques_explanation | safe if law and law.juridiques_explanation else '' }}</textarea>
     </div>
     
     <div class="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-md">
@@ -176,103 +141,25 @@
         <a href="{{ url_for('admin.content_management') }}" class="font-bold text-sm text-blue-500 hover:text-blue-800">Cancelar</a>
     </div>
 </form>
-{% endblock %} {# <-- FECHA O BLOCK CONTENT AQUI #}
 
-{# O SCRIPT BLOCK DEVE ESTAR AQUI, FORA DO BLOCK CONTENT #}
-{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Função para inicializar Quill e configurar o botão HTML ---
-        function setupQuillEditor(editorId, textareaId, htmlViewId, toolbarId, initialContent) {
-            var quillEditor = new Quill(`#${editorId}`, {
-                theme: 'snow',
-                modules: {
-                    toolbar: `#${toolbarId}` // Usar o toolbar personalizado
-                }
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    const addLinkBtn = document.getElementById('add-link-btn');
+    const linksContainer = document.getElementById('useful-links-container');
+    let linkIndex = linksContainer.getElementsByClassName('link-group').length;
 
-            var htmlViewTextarea = document.getElementById(htmlViewId);
-            var originalTextarea = document.getElementById(textareaId);
-            var editorContainer = document.getElementById(editorId);
-            var toolbarContainer = document.getElementById(toolbarId);
-            
-            // Define o conteúdo inicial no editor Quill
-            if (initialContent) {
-                quillEditor.clipboard.dangerouslyPasteHTML(initialContent);
-            }
-
-            // Encontra o botão HTML no toolbar e adiciona o evento de clique
-            // Note que o seletor mudou para `.ql-button-html-${editorId.replace('-editor', '')}`
-            // para que corresponda aos nomes dos botões no HTML
-            var htmlButton = toolbarContainer.querySelector(`.ql-button-html-${editorId.replace('-editor', '')}`);
-            if (htmlButton) {
-                htmlButton.addEventListener('click', function() {
-                    // Alternar visibilidade
-                    const isHtmlViewVisible = htmlViewTextarea.style.display === 'block';
-                    if (isHtmlViewVisible) {
-                        // Se HTML view estiver visível, voltar para Quill
-                        htmlViewTextarea.style.display = 'none';
-                        editorContainer.closest('.quill-editor-wrapper').style.display = 'block'; // Mostra o wrapper do Quill
-                        toolbarContainer.style.display = 'block'; // Mostra o toolbar
-
-                        // Copiar HTML do textarea de volta para o Quill
-                        quillEditor.clipboard.dangerouslyPasteHTML(htmlViewTextarea.value);
-                    } else {
-                        // Se Quill estiver visível, alternar para HTML view
-                        editorContainer.closest('.quill-editor-wrapper').style.display = 'none'; // Oculta o wrapper do Quill
-                        toolbarContainer.style.display = 'none'; // Oculta o toolbar
-                        htmlViewTextarea.style.display = 'block';
-
-                        // Copiar HTML do Quill para o textarea
-                        htmlViewTextarea.value = quillEditor.root.innerHTML;
-                    }
-                });
-            }
-
-            // Sincronizar o conteúdo do Quill/HTML View com o textarea oculto principal no submit do formulário
-            document.querySelector('form').addEventListener('submit', function() {
-                const isHtmlViewVisible = htmlViewTextarea.style.display === 'block';
-                if (isHtmlViewVisible) {
-                    originalTextarea.value = htmlViewTextarea.value;
-                } else {
-                    originalTextarea.value = quillEditor.root.innerHTML;
-                }
-            });
-        }
-
-        // --- Inicialização dos editores Quill ---
-        setupQuillEditor(
-            'content-editor', 
-            'content', 
-            'content-html-view', 
-            'toolbar-content', 
-            `{{ law.content | safe if law else '' }}`
-        );
-
-        setupQuillEditor(
-            'juridiques_content-editor', 
-            'juridiques_content', 
-            'juridiques_content-html-view', 
-            'toolbar-juridiques', 
-            `{{ law.juridiques_explanation | safe if law and law.juridiques_explanation else '' }}`
-        );
-
-        // --- Script para adicionar links úteis (mantido do seu código original) ---
-        const addLinkBtn = document.getElementById('add-link-btn');
-        const linksContainer = document.getElementById('useful-links-container');
-        let linkIndex = linksContainer.getElementsByClassName('link-group').length;
-
-        addLinkBtn.addEventListener('click', function() {
-            const newLinkGroup = document.createElement('div');
-            newLinkGroup.className = 'link-group';
-            newLinkGroup.innerHTML = `
-                <input name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
-                <input name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
-                <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
-            `;
-            linksContainer.appendChild(newLinkGroup);
-            linkIndex++;
-        });
+    addLinkBtn.addEventListener('click', function() {
+        const newLinkGroup = document.createElement('div');
+        newLinkGroup.className = 'link-group';
+        newLinkGroup.innerHTML = `
+            <input name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
+            <input name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
+            <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
+        `;
+        linksContainer.appendChild(newLinkGroup);
+        linkIndex++;
     });
+});
 </script>
+
 {% endblock %}
