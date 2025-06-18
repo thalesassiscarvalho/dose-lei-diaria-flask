@@ -6,8 +6,8 @@ class StudySession(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Chave estrangeira para o usuário
-    law_id = db.Column(db.Integer, db.ForeignKey('laws.id'), nullable=False)   # Chave estrangeira para a lei estudada
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False) # Chave estrangeira para a matéria (para facilitar a agregação)
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)   # Chave estrangeira para a lei estudada
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False) # Chave estrangeira para a matéria (para facilitar a agregação)
 
     start_time = db.Column(db.DateTime, nullable=True) # Hora de início da sessão (para cronômetro)
     end_time = db.Column(db.DateTime, nullable=True)   # Hora de fim da sessão (para cronômetro)
