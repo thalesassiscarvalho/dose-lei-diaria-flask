@@ -227,26 +227,14 @@
         display: none !important; /* Usar !important para garantir a sobreposição */
     }
 
-    /* --- INÍCIO DA ALTERAÇÃO: NOVO CONTÊINER PARA ALINHAR CRONÔMETRO E ÁUDIO --- */
-    .timer-audio-flex-container {
-        display: flex;
-        flex-direction: row; /* Para alinhar lado a lado */
-        justify-content: space-between; /* Espaço entre os itens */
-        align-items: flex-start; /* Alinha os itens pelo topo */
-        gap: 15px; /* Espaçamento entre os blocos */
-        margin-top: 15px; /* Espaço acima do container */
-        margin-bottom: 15px; /* Espaço abaixo do container */
-    }
-
     /* Estilos para o container do player de áudio */
     .audio-player-container {
-        flex: 1; /* Ocupa metade do espaço */
         background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
         border-radius: 0.5rem; /* Tailwind rounded-lg */
         padding: 1rem; /* Tailwind p-4 */
         border: 1px solid #e5e7eb; /* Tailwind gray-200 */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 0; /* Removido para o container flex gerenciar */
+        margin-bottom: 1.5rem; /* Reativado para ter espaço abaixo */
     }
     .dark-mode .audio-player-container {
         background-color: #1f2937;
@@ -256,7 +244,6 @@
     .audio-player-container audio {
         border-radius: 0.375rem; /* Tailwind rounded-md */
     }
-    /* --- FIM DA ALTERAÇÃO --- */
     
     /* Classe para ocultar conteúdo durante impressão */
     .print-hidden {
@@ -267,10 +254,11 @@
     .neural-waves-container {
         display: flex;
         justify-content: flex-start;
-        gap: 10px;
-        margin-top: 15px; /* Ajustado */
-        margin-bottom: 15px; /* Ajustado */
-        flex-wrap: wrap;
+        align-items: center; /* Alinha itens verticalmente ao centro */
+        gap: 15px; /* Ajustado para mais espaço entre os grupos */
+        margin-top: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap; /* Permite quebrar linha em telas menores */
     }
 
     .neural-wave-button {
@@ -896,19 +884,20 @@
     }
 
     .minimal-timer-container {
-        flex: 1; /* Ocupa metade do espaço */
+        /* flex: 1; Removido para controlar a largura com max-width */
         background-color: #f9fafb; 
         border: 1px solid #e5e7eb; 
         border-radius: 0.5rem;
         padding: 0.75rem 1rem;
         box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
         display: flex; /* Transforma o container em flex */
-        flex-direction: row; /* Alterado para horizontal (linha) */
+        flex-direction: row; /* Mantém todo o bloco horizontal */
         align-items: center; /* Centraliza verticalmente os itens */
         justify-content: space-between; /* Distribui o espaço entre os elementos */
         height: auto; 
         margin-bottom: 0; 
         gap: 10px; /* Espaçamento entre os principais grupos de elementos */
+        max-width: 400px; /* Adicionado para diminuir a largura do bloco do cronômetro */
     }
 
     /* Modo Noturno para o container do cronômetro */
@@ -1014,6 +1003,7 @@
             align-items: flex-start; /* Alinha à esquerda no mobile */
             padding: 0.75rem; 
             gap: 8px; /* Espaçamento entre grupos no mobile */
+            max-width: none; /* Remove a largura máxima no mobile */
         }
         .timer-display-group,
         .timer-controls-group,
@@ -1026,9 +1016,10 @@
             width: 70px; 
         }
 
-        .timer-audio-flex-container {
+        .neural-waves-container {
             flex-direction: column; /* Empilha no mobile */
-            gap: 15px; 
+            align-items: flex-start;
+            gap: 15px; /* Espaçamento entre os blocos empilhados */
         }
     }
     /* <<< FIM DA ALTERAÇÃO FINAL: ESTILOS PARA O CRONÔMETRO MINIMALISTA >>> */
@@ -1086,23 +1077,6 @@
     <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
     <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
     <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
-</div>
-<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
-
-<div class="timer-audio-flex-container">
-    {% if law.audio_url %}
-    <div class="audio-player-container">
-        <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
-        <audio controls controlslist="nodownload" class="w-full">
-            <source src="{{ law.audio_url }}" type="audio/mpeg">
-            Seu navegador não suporta o elemento de áudio.
-        </audio>
-    </div>
-    {% endif %}
 
     <div class="minimal-timer-container">
         <div class="timer-display-group">
@@ -1124,6 +1098,21 @@
         </div>
     </div>
 </div>
+<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
+
+{% if law.audio_url %}
+<div class="audio-player-container">
+    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
+    <audio controls controlslist="nodownload" class="w-full">
+        <source src="{{ law.audio_url }}" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
+    </audio>
+</div>
+{% endif %}
 
 {% if is_completed %}
 <div class="completed-banner" role="alert">
