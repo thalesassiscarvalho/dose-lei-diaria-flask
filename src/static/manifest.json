@@ -47,5 +47,39 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "id": "/",
+  "form_factor": ["wide", "narrow"],
+  "shortcuts": [
+    {
+      "name": "Meu Painel",
+      "short_name": "Painel",
+      "description": "Acessar o painel do aluno para continuar os estudos.",
+      "url": "/student/dashboard",
+      "icons": [{ "src": "/static/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Acessar a página de login.",
+      "url": "/auth/login",
+      "icons": [{ "src": "/static/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/screenshots/screenshot-desktop-1.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Visão geral do painel do aluno em desktop"
+    },
+    {
+      "src": "/static/screenshots/screenshot-mobile-1.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Visão geral do painel do aluno em mobile"
+    }
   ]
 }
