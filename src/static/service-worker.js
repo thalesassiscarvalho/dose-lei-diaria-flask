@@ -1,8 +1,11 @@
-const CACHE_NAME = 'lei-seca-v1'; // Nome do cache, mude-o a cada nova versão para forçar atualização
+const CACHE_NAME = 'lei-seca-v2'; // <<< ALTERAÇÃO AQUI >>> Mude o nome do cache para forçar a atualização!
+const OFFLINE_URL = '/static/offline.html'; // <<< ALTERAÇÃO AQUI >>> Adicione a URL da sua página offline
+
 const urlsToCache = [
     '/',
     '/auth/login',
     '/auth/signup',
+    OFFLINE_URL, // <<< ALTERAÇÃO AQUI >>> Adicione a página offline ao cache
     '/static/css/output.css',
     '/static/manifest.json',
     '/static/icons/icon-72x72.png',
@@ -13,15 +16,14 @@ const urlsToCache = [
     '/static/icons/icon-192x192.png',
     '/static/icons/icon-384x384.png',
     '/static/icons/icon-512x512.png',
-    '/static/logo_livro.webp', // Sua logo para o cabeçalho
+    '/static/logo_livro.webp',
+    '/favicon.ico', // Certifique-se de que o favicon também é cacheado
     // Adicione outras URLs estáticas importantes que você queira cachear
-    // Por exemplo, fontes do Google Fonts, Font Awesome CSS (se não for carregado via CDN com versionamento)
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
     'https://cdn.quilljs.com/1.3.6/quill.snow.css',
     'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2', // Exemplo de fonte do Font Awesome
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
-    // Adicione as URLs dos seus áudios se quiser que funcionem offline (considere o tamanho)
     'https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3',
     'https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3',
     'https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3',
@@ -36,6 +38,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('[Service Worker] Cacheando arquivos essenciais.');
+                // Adiciona todas as URLs para cache, incluindo a página offline
                 return cache.addAll(urlsToCache);
             })
             .catch(error => {
@@ -59,45 +62,45 @@ self.addEventListener('activate', event => {
             );
         }).then(() => {
             console.log('[Service Worker] Cache antigo limpo. Service Worker ativado.');
-            return self.clients.claim(); // Garante que o Service Worker assume o controle da página imediatamente
+            return self.clients.claim();
         })
     );
 });
 
 // Evento 'fetch': Intercepta requisições de rede
 self.addEventListener('fetch', event => {
-    // Ignorar requisições de API para garantir que o conteúdo dinâmico esteja sempre atualizado
+    // Ignorar requisições de API (JSON) e outros métodos que não sejam GET
     if (event.request.url.includes('/api/') || event.request.method !== 'GET') {
         return;
     }
 
+    // <<< ALTERAÇÃO AQUI >>>
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Cache hit - retorna a resposta do cache
-                if (response) {
-                    console.log(`[Service Worker] Servindo do cache: ${event.request.url}`);
-                    return response;
+        fetch(event.request) // Tenta buscar da rede primeiro (Network-first)
+            .then(networkResponse => {
+                // Se a requisição foi bem-sucedida, clona a resposta e a adiciona ao cache
+                if (networkResponse.ok) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseToCache);
+                    });
                 }
-
-                // Cache miss - tenta buscar da rede
-                console.log(`[Service Worker] Buscando da rede: ${event.request.url}`);
-                return fetch(event.request)
-                    .then(networkResponse => {
-                        // Se a requisição foi bem-sucedida, clona a resposta e a adiciona ao cache
-                        if (networkResponse.ok) {
-                            const responseToCache = networkResponse.clone();
-                            caches.open(CACHE_NAME).then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
+                return networkResponse;
+            })
+            .catch(() => {
+                // Se a requisição de rede falhou (offline ou erro), tenta buscar do cache
+                console.log(`[Service Worker] Rede falhou para: ${event.request.url}. Tentando cache...`);
+                return caches.match(event.request)
+                    .then(cachedResponse => {
+                        if (cachedResponse) {
+                            console.log(`[Service Worker] Servindo do cache: ${event.request.url}`);
+                            return cachedResponse;
                         }
-                        return networkResponse;
-                    })
-                    .catch(error => {
-                        console.error(`[Service Worker] Falha na requisição e sem cache para: ${event.request.url}`, error);
-                        // Você pode retornar uma página offline aqui se desejar
-                        // return caches.match('/offline.html'); 
+                        // Se não encontrou no cache, e não é uma requisição para a página offline, redireciona para a página offline
+                        console.log(`[Service Worker] Sem cache para: ${event.request.url}. Redirecionando para offline.html`);
+                        return caches.match(OFFLINE_URL);
                     });
             })
     );
+    // <<< FIM DA ALTERAÇÃO >>>
 });
