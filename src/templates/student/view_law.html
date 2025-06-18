@@ -624,6 +624,11 @@
     .dark-mode #sticky-action-bar label {
         color: #d1d5db;
     }
+    .dark-mode .manual-time-group input { /* Input de tempo manual no modo noturno */
+        background-color: #374151;
+        color: #e5e7eb;
+        border-color: #4b5563;
+    }
     .dark-mode #sticky-action-bar input[type="text"] {
         background-color: #374151;
         color: #e5e7eb;
@@ -886,6 +891,24 @@
         align-items: center;
     }
 
+    /* Contêiner que alinha ondas sonoras e cronômetro/player */
+    .main-controls-row {
+        display: flex;
+        flex-direction: column; /* Padrão em coluna para mobile */
+        gap: 1.5rem; /* Espaçamento entre grupos de controle */
+        margin-top: 1rem; /* Espaço após o título da lei */
+    }
+
+    @media (min-width: 768px) { /* A partir de tablet/desktop */
+        .main-controls-row {
+            flex-direction: row; /* Alinha em linha */
+            justify-content: space-between; /* Espaço entre as extremidades */
+            align-items: flex-start; /* Alinha no topo */
+            gap: 1rem; /* Reduz o gap quando em linha, para otimizar espaço */
+        }
+    }
+
+    /* Estilos para a seção do cronômetro */
     .minimal-timer-container {
         display: flex;
         flex-direction: column; /* Cronômetro e manual em coluna */
@@ -895,9 +918,9 @@
         border-radius: 0.5rem;
         padding: 0.75rem 1rem;
         box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-        /* Largura flexível para caber no espaço, mas sem ser muito grande */
         width: 100%; /* No mobile, ocupa 100% da largura do contêiner pai */
         max-width: 250px; /* Limite a largura para desktop */
+        flex-shrink: 0; /* Não permite que encolha */
     }
 
     /* Modo Noturno para o container do cronômetro */
@@ -1040,70 +1063,72 @@
         </h1>
     </div>
 
-    <div class="top-right-controls">
-        <div class="top-right-buttons">
-            <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
-                    data-law-id="{{ law.id }}"
-                    title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
-                <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
-            </button>
+    <div class="flex justify-end w-full sm:w-auto items-center space-x-3 sm:space-x-4">
+        <button type="button" class="favorite-btn js-favorite-btn {% if is_favorited %}favorited{% endif %}"
+                data-law-id="{{ law.id }}"
+                title="{% if is_favorited %}Remover dos Favoritos{% else %}Adicionar aos Favoritos{% endif %}">
+            <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
+        </button>
 
-            <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
-                <i class="fas fa-arrow-left"></i>
-                <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
-            </a>
+        <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
+            <i class="fas fa-arrow-left"></i>
+            <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-controls-row">
+    <div>
+        <div class="neural-waves-container">
+            <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
+            <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
+            <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
+            <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
+            <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
+        </div>
+        <audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
+        <audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
+        <audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
+        <audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
+        <audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
+
+        {% if law.audio_url %}
+        <div class="audio-player-container">
+            <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
+            <audio controls controlslist="nodownload" class="w-full">
+                <source src="{{ law.audio_url }}" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="minimal-timer-container">
+        <div class="timer-display-group">
+            <i class="fas fa-stopwatch timer-icon"></i>
+            <span id="timer-display">00:00:00</span>
+        </div>
+        
+        <div class="timer-controls-group">
+            <button id="start-timer-btn" class="btn-timer-icon btn-green" title="Iniciar Cronômetro"><i class="fas fa-play"></i></button>
+            <button id="pause-timer-btn" class="btn-timer-icon btn-yellow hidden" title="Pausar Cronômetro"><i class="fas fa-pause"></i></button>
+            <button id="reset-timer-btn" class="btn-timer-icon btn-red hidden" title="Reiniciar Cronômetro"><i class="fas fa-stop"></i></button>
+            <button id="save-timer-btn" class="btn-timer-icon btn-blue hidden" title="Salvar Sessão de Estudo"><i class="fas fa-save"></i></button>
         </div>
 
-        <div class="minimal-timer-container">
-            <div class="timer-display-group">
-                <i class="fas fa-stopwatch timer-icon"></i>
-                <span id="timer-display">00:00:00</span>
-            </div>
-            
-            <div class="timer-controls-group">
-                <button id="start-timer-btn" class="btn-timer-icon btn-green" title="Iniciar Cronômetro"><i class="fas fa-play"></i></button>
-                <button id="pause-timer-btn" class="btn-timer-icon btn-yellow hidden" title="Pausar Cronômetro"><i class="fas fa-pause"></i></button>
-                <button id="reset-timer-btn" class="btn-timer-icon btn-red hidden" title="Reiniciar Cronômetro"><i class="fas fa-stop"></i></button>
-                <button id="save-timer-btn" class="btn-timer-icon btn-blue hidden" title="Salvar Sessão de Estudo"><i class="fas fa-save"></i></button>
-            </div>
-
-            <div class="manual-time-group">
-                <input type="number" id="manual-hours-input" class="manual-input" placeholder="H" min="0" max="24" title="Horas">
-                <input type="number" id="manual-minutes-input" class="manual-input" placeholder="M" min="0" max="59" title="Minutos">
-                <button id="add-manual-time-btn" class="btn-timer-icon btn-purple" title="Adicionar Tempo Manualmente"><i class="fas fa-plus"></i></button>
-            </div>
+        <div class="manual-time-group">
+            <input type="number" id="manual-hours-input" class="manual-input" placeholder="H" min="0" max="24" title="Horas">
+            <input type="number" id="manual-minutes-input" class="manual-input" placeholder="M" min="0" max="59" title="Minutos">
+            <button id="add-manual-time-btn" class="btn-timer-icon btn-purple" title="Adicionar Tempo Manualmente"><i class="fas fa-plus"></i></button>
         </div>
     </div>
-    </div>
-
+</div>
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
     <div class="law-banner-content">
         <p><i class="fas fa-info-circle mr-2"></i> {{ banner_to_show.content }}</p>
     </div>
     <button id="dismiss-banner-btn" class="law-banner-dismiss-btn" title="Marcar como visto">&times;</button>
-</div>
-{% endif %}
-<div class="neural-waves-container">
-    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
-    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
-    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
-    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
-    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
-</div>
-<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
-
-{% if law.audio_url %}
-<div class="audio-player-container">
-    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
-    <audio controls controlslist="nodownload" class="w-full">
-        <source src="{{ law.audio_url }}" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
 </div>
 {% endif %}
 
