@@ -871,23 +871,22 @@
 
     {# ===================================================================== #}
     {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
+    {# As classes de grid foram ajustadas para o novo layout #}
     {# ===================================================================== #}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> 
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
         <div class="stat-card todo-list-card md:row-span-2"> 
-            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
+            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;"> {# Alterado de 'auto' para 'hidden' #}
-                {# Os itens serão carregados e renderizados via JavaScript #}
+            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;">
                 {% if todo_items %}
                     {% for item in todo_items %}
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                {# Modificação para limitar o texto e adicionar tooltip #}
                                 <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
                                 <span class="todo-item-text-tooltip">{{ item.content }}</span>
                             </label>
@@ -906,7 +905,7 @@
 
         {# Atividades Recentes (segunda coluna, primeira linha) #}
         {% if recent_activities %}
-        <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
+        <div class="stat-card recent-activities-card" id="recent-activities-card"> 
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
             <div class="flex flex-col space-y-2">
                 {% for activity in recent_activities %}
@@ -923,26 +922,16 @@
         </div>
         {% endif %}
 
-        {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
-        <div class="stat-card daily-motivation-card" id="daily-motivation-card"> {# Adicionado ID #}
+        {# Motivação Diária (terceira coluna, primeira linha) #}
+        <div class="stat-card daily-motivation-card" id="daily-motivation-card"> 
             <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
             <div id="motivation-date" class="motivation-date"></div>
             <p id="motivation-text" class="motivation-text"></p>
         </div>
 
-        {# Sequência de Estudos (segunda coluna, segunda linha) #}
-        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
-            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            {% if user_streak > 0 %}
-                <div class="streak-display">{{ user_streak }}</div>
-                <p class="streak-text">dias consecutivos!</p>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-            {% endif %}
-        </div>
-
-        {# Meu Nível (terceira coluna, segunda linha) #}
-        <div class="stat-card level-card" id="level-card"> {# Adicionado ID #}
+        {# Meu Nível (primeira coluna, segunda linha, mas visualmente abaixo do Post-It) #}
+        {# Este card foi movido para cá para ficar na mesma "coluna" lógica do Post-It, aproveitando o md:row-span-2 #}
+        <div class="stat-card level-card" id="level-card"> 
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
             <div class="level-info">
                 <i class="{{ level_info.current_level.icon }} level-icon"></i>
@@ -962,26 +951,40 @@
                 <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
             {% endif %}
         </div>
+
+        {# Medalhas e Feitos (segunda coluna, segunda linha) #}
+        {# Este card foi movido para cá para ficar ao lado do "Meu Nível" #}
+        <div class="stat-card achievements-card" id="achievements-card"> 
+            <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
+            {% if user_achievements %}
+                <div class="achievements-list">
+                    {% for achievement in user_achievements %}
+                        <span class="achievement-badge" title="{{ achievement.description }}">
+                            <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+            {% endif %}
+        </div>
+
+        {# Sequência de Estudos (terceira coluna, segunda linha) #}
+        {# Este card foi movido para a última posição disponível na grade #}
+        <div class="stat-card streak-card" id="streak-card"> 
+            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+            {% if user_streak > 0 %}
+                <div class="streak-display">{{ user_streak }}</div>
+                <p class="streak-text">dias consecutivos!</p>
+            {% else %}
+                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+            {% endif %}
+        </div>
     </div>
     {# ===================================================================== #}
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
     
-    <div class="stat-card achievements-card" id="achievements-card"> {# Adicionado ID #}
-        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
-        {% if user_achievements %}
-            <div class="achievements-list">
-                {% for achievement in user_achievements %}
-                    <span class="achievement-badge" title="{{ achievement.description }}">
-                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                    </span>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
-        {% endif %}
-    </div>
-
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
             <div class="md:col-span-2 relative">
