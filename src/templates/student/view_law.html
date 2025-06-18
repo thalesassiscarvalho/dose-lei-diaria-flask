@@ -1011,12 +1011,13 @@
             justify-content: flex-end; 
         }
         .minimal-timer-container {
-                flex-direction: column; /* Volta para coluna no mobile */
-                align-items: flex-start; /* Alinha à esquerda no mobile */
+                flex-direction: row; /* Alterado para ROW para manter em uma linha */
+                align-items: center; /* Centraliza verticalmente */
+                justify-content: space-between; /* Distribui os itens */
                 padding: 0.75rem; 
                 gap: 8px; /* Espaçamento entre grupos no mobile */
                 max-width: none; /* Remove a largura máxima no mobile */
-                /* Removido flex-wrap aqui, pois a direção é coluna */
+                flex-wrap: wrap; /* Permite quebra se a tela for muito pequena, mas a preferência é uma linha */
             }
         }
         .timer-display-group,
