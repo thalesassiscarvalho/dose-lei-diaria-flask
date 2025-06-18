@@ -176,7 +176,9 @@
         <a href="{{ url_for('admin.content_management') }}" class="font-bold text-sm text-blue-500 hover:text-blue-800">Cancelar</a>
     </div>
 </form>
+{% endblock %} {# <-- FECHA O BLOCK CONTENT AQUI #}
 
+{# O SCRIPT BLOCK DEVE ESTAR AQUI, FORA DO BLOCK CONTENT #}
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -200,6 +202,8 @@
             }
 
             // Encontra o botão HTML no toolbar e adiciona o evento de clique
+            // Note que o seletor mudou para `.ql-button-html-${editorId.replace('-editor', '')}`
+            // para que corresponda aos nomes dos botões no HTML
             var htmlButton = toolbarContainer.querySelector(`.ql-button-html-${editorId.replace('-editor', '')}`);
             if (htmlButton) {
                 htmlButton.addEventListener('click', function() {
