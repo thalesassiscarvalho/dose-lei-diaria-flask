@@ -937,6 +937,61 @@
     </audio>
 </div>
 {% endif %}
+
+<div class="study-timer-section bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
+    <h3 class="text-lg font-medium text-gray-800 mb-3"><i class="fas fa-clock mr-2"></i> Tempo de Estudo</h3>
+    
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div class="flex items-center bg-blue-50 text-blue-800 border border-blue-200 rounded-md px-3 py-2 text-xl font-bold">
+            <i class="fas fa-stopwatch mr-2 text-blue-500"></i>
+            <span id="timer-display">00:00:00</span>
+        </div>
+        
+        <div class="flex gap-2">
+            <button id="start-timer-btn" class="btn-timer bg-green-500 hover:bg-green-600 text-white"><i class="fas fa-play mr-2"></i> Iniciar</button>
+            <button id="pause-timer-btn" class="btn-timer bg-yellow-500 hover:bg-yellow-600 text-white hidden"><i class="fas fa-pause mr-2"></i> Pausar</button>
+            <button id="reset-timer-btn" class="btn-timer bg-red-500 hover:bg-red-600 text-white hidden"><i class="fas fa-stop mr-2"></i> Reiniciar</button>
+            <button id="save-timer-btn" class="btn-timer bg-blue-500 hover:bg-blue-600 text-white hidden"><i class="fas fa-save mr-2"></i> Salvar Sessão</button>
+        </div>
+    </div>
+    
+    <hr class="border-gray-200 my-4">
+    
+    <h4 class="text-md font-medium text-gray-700 mb-2"><i class="fas fa-edit mr-2"></i> Adicionar Tempo Manualmente</h4>
+    <div class="flex items-center gap-2">
+        <input type="number" id="manual-hours-input" class="w-20 form-input" placeholder="Horas" min="0" max="24">
+        <span class="text-gray-600">H</span>
+        <input type="number" id="manual-minutes-input" class="w-20 form-input" placeholder="Minutos" min="0" max="59">
+        <span class="text-gray-600">M</span>
+        <button id="add-manual-time-btn" class="btn-timer bg-purple-600 hover:bg-purple-700 text-white flex-grow"><i class="fas fa-plus mr-2"></i> Adicionar</button>
+    </div>
+</div>
+
+<style>
+    .study-timer-section .btn-timer {
+        padding: 0.6rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+    }
+    .study-timer-section .form-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .study-timer-section .form-input:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+    }
+</style>
 {% if is_completed %}
 <div class="completed-banner" role="alert">
     <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
@@ -1115,102 +1170,18 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // --- INÍCIO DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
-    const completeForm = document.getElementById('mark-complete-form');
-    if (completeForm) {
-        completeForm.addEventListener('submit', function(event) {
-            event.preventDefault(); 
-            
-            const url = this.action;
-            const csrfTokenInput = this.querySelector('input[name="csrf_token"]');
-            if (!csrfTokenInput) {
-                console.error("Token CSRF não encontrado no formulário!");
-                return;
-            }
-            const csrfToken = csrfTokenInput.value;
-
-            const button = this.querySelector('button[type="submit"]');
-            const originalButtonText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processando...';
-            button.disabled = true;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
-                        const ach = data.unlocked_achievements[0];
-                        Swal.fire({
-                            title: 'Conquista Desbloqueada!',
-                            html: `
-                                <i class="${ach.icon || 'fas fa-trophy'} fa-3x text-yellow-400 mb-4" style="display:inline-block;"></i>
-                                <h3 class="text-xl font-bold">${ach.name}</h3>
-                                <p class="text-gray-600 mt-2">${ach.description}</p>
-                            `,
-                            icon: 'success',
-                            confirmButtonText: 'Rumo à próxima!',
-                            customClass: {
-                                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-                            }
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    } else {
-                        window.location.reload();
-                    }
-                } else {
-                    Swal.fire({
-                        title: 'Erro!',
-                        text: data.error || 'Ocorreu um erro ao processar sua solicitação.',
-                        icon: 'error',
-                        customClass: {
-                            confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-                        }
-                    });
-                    button.innerHTML = originalButtonText;
-                    button.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Erro no fetch:', error);
-                Swal.fire({
-                    title: 'Erro de comunicação',
-                    text: 'Não foi possível se conectar ao servidor.',
-                    icon: 'error',
-                    customClass: {
-                        confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-                    }
-                });
-                button.innerHTML = originalButtonText;
-                button.disabled = false;
-            });
-        });
-    }
-    // --- FIM DA IMPLEMENTAÇÃO DA ANIMAÇÃO DE CONQUISTA ---
-
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
+    const subjectId = '{{ law.subject.id }}'; // Adicionado para uso no registro de tempo
 
-    // =================================================================
-    // <<< INÍCIO: CORREÇÃO DO BUG DE DESCRIÇÃO DUPLICADA >>>
-    // =================================================================
     function fixDuplicateDescription() {
         if (!lawContent) return;
-
         const templateDescriptionP = lawContent.querySelector('p.text-gray-600.italic.mb-6');
         if (!templateDescriptionP) return;
-
         const descriptionText = templateDescriptionP.textContent.trim();
         if (!descriptionText) return;
-
         let potentialDuplicate = templateDescriptionP.nextElementSibling;
         while (potentialDuplicate) {
             if (potentialDuplicate.tagName === 'P' && potentialDuplicate.innerHTML.trim().toLowerCase() === '&nbsp;') {
@@ -1223,20 +1194,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 potentialDuplicate.remove();
                 break; 
             }
-            if (potentialDuplicate.textContent.trim() !== '') {
-                break;
+            if (potentialDuplicate.textContent.trim() !== '' && potentialDuplicate.textContent.trim() !== descriptionText) {
+                break; // Stop if non-duplicate content is found
             }
             potentialDuplicate = potentialDuplicate.nextElementSibling;
         }
     }
     fixDuplicateDescription();
-    // =================================================================
-    // <<< FIM: CORREÇÃO DO BUG >>>
-    // =================================================================
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO 4/4: SCRIPT PARA DISPENSAR O BANNER >>>
-    // =====================================================================
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
 
@@ -1278,10 +1243,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO 4/4 >>>
-    // =====================================================================
-
 
     const progressBar = document.getElementById('reading-progress-bar');
     function updateProgressBar() {
@@ -1460,6 +1421,294 @@ document.addEventListener("DOMContentLoaded", function () {
         pageTop.scrollIntoView({ behavior: 'smooth' });
     });
 
+    // <<< INÍCIO DA NOVA FUNCIONALIDADE: Cronômetro e Registro Manual de Tempo >>>
+    const timerDisplay = document.getElementById('timer-display');
+    const startTimerBtn = document.getElementById('start-timer-btn');
+    const pauseTimerBtn = document.getElementById('pause-timer-btn');
+    const resetTimerBtn = document.getElementById('reset-timer-btn');
+    const saveTimerBtn = document.getElementById('save-timer-btn');
+    const manualHoursInput = document.getElementById('manual-hours-input');
+    const manualMinutesInput = document.getElementById('manual-minutes-input');
+    const addManualTimeBtn = document.getElementById('add-manual-time-btn');
+
+    let timerInterval;
+    let startTime;
+    let elapsedTime = 0; // Tempo acumulado em segundos
+    let currentSessionId = null; // ID da sessão de estudo no banco de dados
+
+    // Função para formatar o tempo para exibição (HH:MM:SS)
+    function formatTime(seconds) {
+        const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    // Função para renderizar o display do cronômetro
+    function renderTimer() {
+        timerDisplay.textContent = formatTime(elapsedTime);
+    }
+
+    // Função para registrar sync quando a requisição falha - REUTILIZADA DO Background Sync anterior
+    async function registerBackgroundSync(tag, requestUrl, requestOptions, successCallback, errorCallback) {
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            try {
+                // Tenta fazer a requisição imediatamente
+                const response = await fetch(requestUrl, requestOptions);
+                if (response.ok) {
+                    const data = await response.json(); // Tentar parsear JSON
+                    successCallback(data); // Passa os dados de sucesso para o callback
+                } else {
+                    // Se a requisição falhou, registra para sincronização em segundo plano
+                    console.warn(`[Background Sync] Requisição falhou (status ${response.status}). Registrando sync: ${tag}`);
+                    const swRegistration = await navigator.serviceWorker.ready;
+                    
+                    // Clona a requisição para armazenar no IndexedDB, pois o objeto Request não pode ser serializado diretamente
+                    const requestToStore = new Request(requestUrl, requestOptions);
+                    
+                    await swRegistration.active.postMessage({
+                        type: 'SAVE_REQUEST', // Mensagem para o Service Worker
+                        request: {
+                            url: requestToStore.url,
+                            method: requestToStore.method,
+                            headers: Array.from(requestToStore.headers.entries()),
+                            body: await requestToStore.text()
+                        },
+                        tag: tag
+                    });
+                    await swRegistration.sync.register(tag);
+                    Toastify({
+                        text: `Ação agendada! Será sincronizada quando a internet retornar.`,
+                        duration: 5000,
+                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } // Laranja para agendado
+                    }).showToast();
+                    if (errorCallback) errorCallback();
+                }
+            } catch (error) {
+                // Erro de rede (offline)
+                console.error(`[Background Sync] Erro de rede para requisição: ${requestUrl}`, error);
+                if (error.name === 'AbortError') { // Requisição abortada ao sair da página, não registrar sync
+                    console.log('Requisição abortada. Não registra sync.');
+                    if (errorCallback) errorCallback();
+                    return;
+                }
+                
+                // Se a requisição falhou por estar offline, registra para sincronização
+                console.warn(`[Background Sync] Offline. Registrando sync: ${tag}`);
+                const swRegistration = await navigator.serviceWorker.ready;
+                const requestToStore = new Request(requestUrl, requestOptions);
+                await swRegistration.active.postMessage({
+                    type: 'SAVE_REQUEST',
+                    request: {
+                        url: requestToStore.url,
+                        method: requestToStore.method,
+                        headers: Array.from(requestToStore.headers.entries()),
+                        body: await requestToStore.text()
+                    },
+                    tag: tag
+                });
+                await swRegistration.sync.register(tag);
+                Toastify({
+                    text: `Ação agendada! Será sincronizada quando a internet retornar.`,
+                    duration: 5000,
+                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } // Laranja para agendado
+                }).showToast();
+                if (errorCallback) errorCallback();
+            }
+        } else {
+            // Se o navegador não suporta Service Worker ou SyncManager, tenta normalmente
+            alert("Seu navegador não suporta sincronização em segundo plano. Por favor, verifique sua conexão.");
+            fetch(requestUrl, requestOptions)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) successCallback(data);
+                    else if (errorCallback) errorCallback();
+                })
+                .catch(() => {
+                    alert("Erro de conexão. Por favor, tente novamente quando estiver online.");
+                    if (errorCallback) errorCallback();
+                });
+        }
+    }
+
+
+    // Iniciar o cronômetro
+    async function startTimer() {
+        if (timerInterval) return; // Já está rodando
+
+        // Se é uma nova sessão (ou foi resetada para 0)
+        if (elapsedTime === 0) { 
+            startTime = Date.now(); // Marca o início real da contagem
+            currentSessionId = null; // Zera o ID da sessão para indicar nova sessão
+            console.log('[Cronômetro] Iniciando nova sessão de estudo...');
+        } else {
+            // Retomando de uma pausa
+            startTime = Date.now() - (elapsedTime * 1000); // Ajusta startTime para continuar a contagem
+            console.log('[Cronômetro] Retomando sessão de estudo...');
+        }
+
+        timerInterval = setInterval(() => {
+            elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            renderTimer();
+        }, 1000);
+
+        startTimerBtn.classList.add('hidden');
+        pauseTimerBtn.classList.remove('hidden');
+        resetTimerBtn.classList.add('hidden'); // Oculta reset quando em execução
+        saveTimerBtn.classList.add('hidden'); // Oculta salvar quando em execução
+    }
+
+    // Pausar o cronômetro
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('[Cronômetro] Pausado. Tempo atual:', formatTime(elapsedTime));
+
+        startTimerBtn.classList.remove('hidden');
+        pauseTimerBtn.classList.add('hidden');
+        resetTimerBtn.classList.remove('hidden'); // Mostra reset após pausa
+        saveTimerBtn.classList.remove('hidden'); // Mostra salvar após pausa
+    }
+
+    // Reiniciar o cronômetro (zera a contagem e a UI)
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        elapsedTime = 0;
+        currentSessionId = null; // Zera o ID da sessão
+        renderTimer();
+        console.log('[Cronômetro] Reiniciado.');
+
+        startTimerBtn.classList.remove('hidden');
+        pauseTimerBtn.classList.add('hidden');
+        resetTimerBtn.classList.add('hidden');
+        saveTimerBtn.classList.add('hidden');
+    }
+
+    // Salvar a sessão de estudo atual (do cronômetro)
+    async function saveCurrentStudySession() {
+        if (elapsedTime === 0) {
+            Toastify({ text: "A sessão de estudo está vazia.", duration: 3000 }).showToast();
+            return;
+        }
+
+        pauseTimer(); // Pausa antes de salvar
+
+        const requestUrl = '/student/api/study_sessions/record';
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId, // Passa o subjectId
+                duration_seconds: elapsedTime,
+                entry_type: 'auto',
+                start_time: new Date(startTime).toISOString(), // Converte para ISO string
+                end_time: new Date().toISOString() // Data/hora atual como fim
+            })
+        };
+
+        const originalSaveBtnText = saveTimerBtn.innerHTML;
+        saveTimerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        saveTimerBtn.disabled = true;
+
+        registerBackgroundSync(`sync-auto-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+            (data) => { // Sucesso
+                Toastify({ text: data.message || "Sessão de estudo salva com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                resetTimer(); // Zera o cronômetro após salvar com sucesso
+                saveTimerBtn.innerHTML = originalSaveBtnText;
+                saveTimerBtn.disabled = false;
+            },
+            () => { // Erro/Agendado
+                saveTimerBtn.innerHTML = originalSaveBtnText;
+                saveTimerBtn.disabled = false;
+                // Toastify já exibido pela registerBackgroundSync
+            }
+        );
+    }
+
+    // Adicionar tempo manualmente
+    async function addManualTime() {
+        const hours = parseInt(manualHoursInput.value) || 0;
+        const minutes = parseInt(manualMinutesInput.value) || 0;
+        const totalManualSeconds = (hours * 3600) + (minutes * 60);
+
+        if (totalManualSeconds <= 0) {
+            Toastify({ text: "Por favor, insira um tempo válido (horas ou minutos).", duration: 3000 }).showToast();
+            return;
+        }
+
+        const requestUrl = '/student/api/study_sessions/record';
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId, // Passa o subjectId
+                duration_seconds: totalManualSeconds,
+                entry_type: 'manual'
+            })
+        };
+
+        addManualTimeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Adicionando...';
+        addManualTimeBtn.disabled = true;
+
+        registerBackgroundSync(`sync-manual-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+            (data) => { // Sucesso
+                Toastify({ text: data.message || "Tempo manual adicionado com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                manualHoursInput.value = '';
+                manualMinutesInput.value = '';
+                addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
+                addManualTimeBtn.disabled = false;
+            },
+            () => { // Erro/Agendado
+                addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
+                addManualTimeBtn.disabled = false;
+                // Toastify já exibido pela registerBackgroundSync
+            }
+        );
+    }
+
+    // Event Listeners para os botões do cronômetro e formulário manual
+    startTimerBtn.addEventListener('click', startTimer);
+    pauseTimerBtn.addEventListener('click', pauseTimer);
+    resetTimerBtn.addEventListener('click', resetTimer);
+    saveTimerBtn.addEventListener('click', saveCurrentStudySession);
+    addManualTimeBtn.addEventListener('click', addManualTime);
+
+    // Lógica para salvar a sessão automaticamente ao sair da página ou fechar a aba
+    window.addEventListener('beforeunload', () => {
+        if (timerInterval && elapsedTime > 0) {
+            // Tenta salvar a sessão se o cronômetro estiver rodando e houver tempo
+            // Usa sendBeacon para enviar a requisição em segundo plano, não espera resposta
+            const requestUrl = '/student/api/study_sessions/record';
+            const data = JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId,
+                duration_seconds: elapsedTime,
+                entry_type: 'auto',
+                start_time: new Date(startTime).toISOString(),
+                end_time: new Date().toISOString()
+            });
+            navigator.sendBeacon(requestUrl, data);
+        }
+    });
+
+    // Pausar o cronômetro se a página não estiver visível
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && timerInterval) {
+            pauseTimer();
+            // Opcional: Se a sessão for muito longa em segundo plano, pode-se registrar aqui.
+        } else if (!document.hidden && !timerInterval && elapsedTime > 0) {
+            // Se a página volta a ser visível e o cronômetro estava pausado (e não foi resetado)
+            // Você pode decidir reiniciar automaticamente ou deixar o usuário iniciar
+            // startTimer(); // Descomente para reiniciar automaticamente
+        }
+    });
+
+    // <<< FIM DA NOVA FUNCIONALIDADE: Cronômetro e Registro Manual de Tempo >>>
+
+
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
             const lastReadArticle = lastReadArticleInput.value.trim();
@@ -1479,20 +1728,19 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append('last_read_article', lastReadArticle);
             formData.append('csrf_token', csrfToken);
 
-            fetch(`/student/save_last_read/${lawId}`, {
+            const requestUrl = `/student/save_last_read/${lawId}`;
+            const requestOptions = {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/x-www-form-urlencoded', 
                     'X-CSRFToken': csrfToken 
                 },
                 body: formData
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error(`Erro de rede: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            }).then(data => {
-                if (data.success) {
+            };
+            
+            registerBackgroundSync(`sync-save-bookmark-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+                (data) => { // Sucesso
+                    Toastify({ text: data.message || "Último artigo lido salvo com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
                     if (!messageDiv) {
@@ -1507,17 +1755,13 @@ document.addEventListener("DOMContentLoaded", function () {
                         saveBookmarkBtn.innerHTML = originalText;
                         saveBookmarkBtn.disabled = false;
                     }, 2000);
-                } else {
-                    alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
+                },
+                () => { // Erro/Agendado
                     saveBookmarkBtn.innerHTML = originalText;
                     saveBookmarkBtn.disabled = false;
+                    // Toastify já exibido pela registerBackgroundSync
                 }
-            }).catch(error => {
-                console.error("Erro ao salvar:", error);
-                alert("Erro de comunicação ao salvar.");
-                saveBookmarkBtn.innerHTML = originalText;
-                saveBookmarkBtn.disabled = false;
-            });
+            );
         });
     }
 
@@ -1572,24 +1816,39 @@ document.addEventListener("DOMContentLoaded", function () {
         const originalText = this.innerHTML;
         this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         this.disabled = true;
-        fetch(`/student/law/${lawId}/notes`, {
+
+        const requestUrl = `/student/law/${lawId}/notes`;
+        const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({ content: content })
-        }).then(r => r.json()).then(d => {
-            this.innerHTML = d.success ? '<i class="fas fa-check mr-2"></i> Salvo!' : '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
-            this.classList.toggle('bg-green-500', d.success);
-            this.classList.toggle('bg-red-500', !d.success);
-            setTimeout(() => {
-                this.innerHTML = originalText;
-                this.disabled = false;
-                this.classList.remove('bg-green-500', 'bg-red-500');
-            }, 2000);
-        }).catch(e => {
-            console.error("Erro ao salvar anotações gerais:", e);
-            this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Erro!';
-            this.disabled = false;
-        });
+        };
+
+        registerBackgroundSync(`sync-save-notes-${lawId}`, requestUrl, requestOptions,
+            (data) => { // Sucesso
+                Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                this.classList.toggle('bg-green-500', true);
+                this.classList.toggle('bg-blue-500', false); // Remove azul padrão se estava
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    this.classList.remove('bg-green-500');
+                    this.classList.add('bg-blue-500'); // Volta para azul padrão
+                }, 2000);
+            },
+            () => { // Erro/Agendado
+                this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Agendado!';
+                this.classList.toggle('bg-orange-500', true); // Cor de aviso para agendado
+                this.classList.toggle('bg-blue-500', false); // Remove azul padrão
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    this.classList.remove('bg-orange-500');
+                    this.classList.add('bg-blue-500');
+                }, 2000);
+            }
+        );
     });
     
     loadNotes();
@@ -1709,25 +1968,17 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         const contentToSave = clonedContent.innerHTML;
 
-        console.log("Salvando marcações...");
-        try {
-            const response = await fetch(`/student/law/${lawId}/save_markup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ content: contentToSave })
-            });
-            if (!response.ok) { throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`); }
-            const data = await response.json();
-            if (data.success) {
-                console.log("Marcações salvas com sucesso!");
-            } else {
-                console.error("Falha ao salvar marcações:", data.error);
-                alert("Ocorreu um erro ao salvar suas marcações. Tente novamente.");
-            }
-        } catch (error) {
-            console.error("Erro de rede ao salvar marcações:", error);
-            alert("Ocorreu um erro de comunicação ao salvar suas marcações.");
-        }
+        const requestUrl = `/student/law/${lawId}/save_markup`;
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ content: contentToSave })
+        };
+        
+        registerBackgroundSync(`sync-save-markup-${lawId}`, requestUrl, requestOptions,
+            (data) => { console.log("Marcações salvas com sucesso!", data); }, // Sucesso
+            () => { console.warn("Marcações agendadas para sincronização."); } // Erro/Agendado
+        );
     }
 
     if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
@@ -1757,19 +2008,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     
                     restoreLawBtn.disabled = true;
 
-                    fetch(`/student/law/${lawId}/restore`, {
+                    const requestUrl = `/student/law/${lawId}/restore`;
+                    const requestOptions = {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': csrfToken
                         }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
+                    };
+
+                    registerBackgroundSync(`sync-restore-law-${lawId}`, requestUrl, requestOptions,
+                        (data) => { // Sucesso
                             Swal.fire({
                                 title: 'Restaurada!',
-                                text: 'A lei foi restaurada com sucesso. A página será recarregada.',
+                                text: data.message || 'A lei foi restaurada com sucesso. A página será recarregada.',
                                 icon: 'success',
                                 customClass: {
                                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
@@ -1777,30 +2029,21 @@ document.addEventListener("DOMContentLoaded", function () {
                             }).then(() => {
                                 window.location.reload();
                             });
-                        } else {
+                        },
+                        () => { // Erro/Agendado
                             Swal.fire({
-                                title: 'Erro!',
-                                text: 'Ocorreu um erro ao restaurar a lei: ' + (data.error || 'Erro desconhecido.'),
-                                icon: 'error',
+                                title: 'Aguardando Sincronização!',
+                                text: 'A restauração foi agendada e será aplicada quando a internet retornar. A página será recarregada após a sincronização.',
+                                icon: 'info',
                                 customClass: {
                                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                                 }
                             });
-                            restoreLawBtn.disabled = false;
+                            // Recarrega a página imediatamente para o usuário ver o estado atualizado (sem as marcações)
+                            // Mesmo que a sincronização ocorra depois, a experiência visual é melhor
+                            window.location.reload();
                         }
-                    })
-                    .catch(error => {
-                        console.error('Erro de rede ao restaurar a lei:', error);
-                        Swal.fire({
-                            title: 'Erro de Comunicação',
-                            text: 'Não foi possível se conectar ao servidor para restaurar a lei.',
-                            icon: 'error',
-                            customClass: {
-                                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-                            }
-                        });
-                        restoreLawBtn.disabled = false;
-                    });
+                    );
                 }
             });
         });
@@ -1812,39 +2055,43 @@ document.addEventListener("DOMContentLoaded", function () {
             this.disabled = true;
             const lawTitle = '{{ law.title | e }}'; 
 
-            fetch(`/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`, {
+            const requestUrl = `/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`;
+            const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-            })
-            .then(response => response.json())
-            .then(data => {
-                this.classList.toggle('favorited', data.favorited);
-                this.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
-                this.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
+            };
 
-                const notificationText = data.favorited 
-                    ? `'${lawTitle}' adicionado aos favoritos!`
-                    : `'${lawTitle}' removido dos favoritos.`;
+            const button = this; // Referência ao botão para usar nos callbacks
 
-                Toastify({
-                    text: notificationText,
-                    duration: 3000,
-                    close: true,
-                    gravity: "bottom",
-                    position: "right",
-                    stopOnFocus: true,
-                    style: {
-                        background: "linear-gradient(to right, #1f2937, #374151)",
-                        borderRadius: "0.5rem"
-                    }
-                }).showToast();
+            registerBackgroundSync(`sync-favorite-${lawId}`, requestUrl, requestOptions,
+                (data) => { // Sucesso
+                    button.classList.toggle('favorited', data.favorited); // Inverte o estado visual
+                    button.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+                    button.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
 
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Ocorreu um erro ao favoritar a lei.');
-            })
-            .finally(() => { this.disabled = false; });
+                    const notificationText = data.favorited 
+                        ? `'${lawTitle}' adicionado aos favoritos!`
+                        : `'${lawTitle}' removido dos favoritos.`;
+
+                    Toastify({
+                        text: notificationText,
+                        duration: 3000,
+                        close: true,
+                        gravity: "bottom",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "linear-gradient(to right, #1f2937, #374151)",
+                            borderRadius: "0.5rem"
+                        }
+                    }).showToast();
+                    button.disabled = false; // Reabilita o botão
+                },
+                () => { // Erro/Agendado
+                    // O Toastify para agendamento já é exibido na função registerBackgroundSync
+                    button.disabled = false; // Reabilita o botão
+                }
+            );
         });
     }
 
@@ -1903,7 +2150,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            deleteComment(comment.id, commentDiv);
+            deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id); // Passa anchor_paragraph_id
         });
         anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
         const icon = anchorElement.parentNode.querySelector('.comment-icon');
@@ -1914,49 +2161,92 @@ document.addEventListener("DOMContentLoaded", function () {
         const content = modalTextarea.value.trim();
         if (!content) return;
         
+        const originalSaveBtnText = modalSaveBtn.innerHTML;
+        modalSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        modalSaveBtn.disabled = true;
+
         if (currentEditingCommentId) { 
-            try {
-                const response = await fetch(`/student/comments/${currentEditingCommentId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ content: content })
-                });
-                const data = await response.json();
-                if (data.success) {
+            const requestUrl = `/student/comments/${currentEditingCommentId}`;
+            const requestOptions = {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ content: content })
+            };
+            
+            registerBackgroundSync(`sync-update-comment-${currentEditingCommentId}`, requestUrl, requestOptions,
+                (data) => { // Sucesso
                     const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
-                    if (commentDiv) { commentDiv.querySelector('p').innerHTML = data.comment.content.replace(/\n/g, '<br>'); }
+                    if (commentDiv) { commentDiv.querySelector('p').innerHTML = content.replace(/\n/g, '<br>'); }
                     closeCommentModal();
-                } else { alert('Erro ao atualizar anotação: ' + data.error); }
-            } catch (error) { alert('Erro de comunicação com o servidor.'); }
+                    Toastify({ text: data.message || "Anotação atualizada!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
+                },
+                () => { // Erro/Agendado
+                    // Toastify já exibido pela registerBackgroundSync
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
+                    closeCommentModal(); // Fecha o modal, a sincronização ocorrerá em segundo plano
+                }
+            );
         } else { 
             if (!currentAnchorId) return;
-            try {
-                const response = await fetch(`/student/law/${lawId}/comments`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    displayComment(data.comment);
+            const requestUrl = `/student/law/${lawId}/comments`;
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+            };
+
+            registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions,
+                (data) => { // Sucesso
+                    // Para criar comentários, vamos fazer um fetch explícito após o sucesso do sync
+                    // para pegar o ID real do comentário e exibi-lo corretamente.
+                    fetch(requestUrl, requestOptions) // Faz o fetch REAL para pegar o ID gerado pelo DB
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                displayComment(data.comment);
+                                closeCommentModal();
+                                Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                                modalSaveBtn.innerHTML = originalSaveBtnText;
+                                modalSaveBtn.disabled = false;
+                            } else {
+                                alert('Erro ao salvar anotação: ' + data.error);
+                                modalSaveBtn.innerHTML = originalSaveBtnText;
+                                modalSaveBtn.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro no fetch pós-sincronização para criação de comentário:', error);
+                            alert('Erro de comunicação para criar anotação.');
+                            modalSaveBtn.innerHTML = originalSaveBtnText;
+                            modalSaveBtn.disabled = false;
+                        });
+                },
+                () => { // Erro/Agendado
+                    // Toastify já exibido pela registerBackgroundSync
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
                     closeCommentModal();
-                } else { alert('Erro ao salvar anotação: ' + data.error); }
-            } catch (error) { alert('Erro de comunicação com o servidor.'); }
+                }
+            );
         }
     }
     
-    async function deleteComment(commentId, commentElement) {
+    async function deleteComment(commentId, commentElement, anchorParagraphId) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
-        try {
-            const response = await fetch(`/student/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            const data = await response.json();
-            if (data.success) {
-                const anchorId = commentElement.previousElementSibling.id;
+        
+        const requestUrl = `/student/comments/${commentId}`;
+        const requestOptions = {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': csrfToken }
+        };
+
+        registerBackgroundSync(`sync-delete-comment-${commentId}`, requestUrl, requestOptions,
+            (data) => { // Sucesso
                 commentElement.remove();
-                const anchorElement = document.getElementById(anchorId);
+                const anchorElement = document.getElementById(anchorParagraphId);
                 if (anchorElement && anchorElement.parentNode) {
                     const remainingComments = anchorElement.parentNode.querySelectorAll('.comment-display').length;
                     if (remainingComments === 0) {
@@ -1964,8 +2254,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (icon) icon.classList.remove('has-comment');
                     }
                 }
-            } else { alert('Erro ao excluir anotação: ' + data.error); }
-        } catch (error) { alert('Erro de comunicação com o servidor.'); }
+                Toastify({ text: data.message || "Anotação excluída!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            },
+            () => { // Erro/Agendado
+                // Toastify já exibido pela registerBackgroundSync
+            }
+        );
     }
 
     async function initCommentSystem() {
