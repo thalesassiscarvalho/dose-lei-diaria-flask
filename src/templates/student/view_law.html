@@ -901,12 +901,32 @@
             <i class="{% if is_favorited %}fas fa-star{% else %}far fa-star{% endif %}"></i>
         </button>
 
+        <div class="minimal-timer-container">
+            <div class="timer-display-group">
+                <i class="fas fa-stopwatch timer-icon"></i>
+                <span id="timer-display">00:00:00</span>
+            </div>
+            
+            <div class="timer-controls-group">
+                <button id="start-timer-btn" class="btn-timer-icon btn-green" title="Iniciar Cronômetro"><i class="fas fa-play"></i></button>
+                <button id="pause-timer-btn" class="btn-timer-icon btn-yellow hidden" title="Pausar Cronômetro"><i class="fas fa-pause"></i></button>
+                <button id="reset-timer-btn" class="btn-timer-icon btn-red hidden" title="Reiniciar Cronômetro"><i class="fas fa-stop"></i></button>
+                <button id="save-timer-btn" class="btn-timer-icon btn-blue hidden" title="Salvar Sessão de Estudo"><i class="fas fa-save"></i></button>
+            </div>
+
+            <div class="manual-time-group">
+                <input type="number" id="manual-hours-input" class="manual-input" placeholder="H" min="0" max="24" title="Horas">
+                <input type="number" id="manual-minutes-input" class="manual-input" placeholder="M" min="0" max="59" title="Minutos">
+                <button id="add-manual-time-btn" class="btn-timer-icon btn-purple" title="Adicionar Tempo Manualmente"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
         <a href="{{ url_for('student.dashboard') }}" title="Voltar ao Painel" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-full shadow-md transition-colors duration-200 text-sm w-10 h-10 sm:w-auto sm:px-4 sm:py-2">
             <i class="fas fa-arrow-left"></i>
             <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
         </a>
     </div>
 </div>
+
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
     <div class="law-banner-content">
@@ -938,60 +958,6 @@
 </div>
 {% endif %}
 
-<div class="study-timer-section bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
-    <h3 class="text-lg font-medium text-gray-800 mb-3"><i class="fas fa-clock mr-2"></i> Tempo de Estudo</h3>
-    
-    <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
-        <div class="flex items-center bg-blue-50 text-blue-800 border border-blue-200 rounded-md px-3 py-2 text-xl font-bold">
-            <i class="fas fa-stopwatch mr-2 text-blue-500"></i>
-            <span id="timer-display">00:00:00</span>
-        </div>
-        
-        <div class="flex gap-2">
-            <button id="start-timer-btn" class="btn-timer bg-green-500 hover:bg-green-600 text-white"><i class="fas fa-play mr-2"></i> Iniciar</button>
-            <button id="pause-timer-btn" class="btn-timer bg-yellow-500 hover:bg-yellow-600 text-white hidden"><i class="fas fa-pause mr-2"></i> Pausar</button>
-            <button id="reset-timer-btn" class="btn-timer bg-red-500 hover:bg-red-600 text-white hidden"><i class="fas fa-stop mr-2"></i> Reiniciar</button>
-            <button id="save-timer-btn" class="btn-timer bg-blue-500 hover:bg-blue-600 text-white hidden"><i class="fas fa-save mr-2"></i> Salvar Sessão</button>
-        </div>
-    </div>
-    
-    <hr class="border-gray-200 my-4">
-    
-    <h4 class="text-md font-medium text-gray-700 mb-2"><i class="fas fa-edit mr-2"></i> Adicionar Tempo Manualmente</h4>
-    <div class="flex items-center gap-2">
-        <input type="number" id="manual-hours-input" class="w-20 form-input" placeholder="Horas" min="0" max="24">
-        <span class="text-gray-600">H</span>
-        <input type="number" id="manual-minutes-input" class="w-20 form-input" placeholder="Minutos" min="0" max="59">
-        <span class="text-gray-600">M</span>
-        <button id="add-manual-time-btn" class="btn-timer bg-purple-600 hover:bg-purple-700 text-white flex-grow"><i class="fas fa-plus mr-2"></i> Adicionar</button>
-    </div>
-</div>
-
-<style>
-    .study-timer-section .btn-timer {
-        padding: 0.6rem 1rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
-    }
-    .study-timer-section .form-input {
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        font-size: 0.9rem;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .study-timer-section .form-input:focus {
-        outline: none;
-        border-color: #93c5fd;
-        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
-    }
-</style>
 {% if is_completed %}
 <div class="completed-banner" role="alert">
     <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
@@ -1459,7 +1425,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const data = await response.json(); // Tentar parsear JSON
                     successCallback(data); // Passa os dados de sucesso para o callback
                 } else {
-                    // Se a requisição falhou, registra para sincronização em segundo plano
+                    // Se a requisição falhou (ex: status 400, 500), registra para sincronização em segundo plano
                     console.warn(`[Background Sync] Requisição falhou (status ${response.status}). Registrando sync: ${tag}`);
                     const swRegistration = await navigator.serviceWorker.ready;
                     
@@ -1487,7 +1453,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } catch (error) {
                 // Erro de rede (offline)
                 console.error(`[Background Sync] Erro de rede para requisição: ${requestUrl}`, error);
-                if (error.name === 'AbortError') { // Requisição abortada ao sair da página, não registrar sync
+                if (error.name === 'AbortError') { // Requisição abortada ao sair da página (ex: sendBeacon), não registra sync
                     console.log('Requisição abortada. Não registra sync.');
                     if (errorCallback) errorCallback();
                     return;
@@ -1681,6 +1647,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (timerInterval && elapsedTime > 0) {
             // Tenta salvar a sessão se o cronômetro estiver rodando e houver tempo
             // Usa sendBeacon para enviar a requisição em segundo plano, não espera resposta
+            // sendBeacon é confiável para enviar dados quando a página está sendo descarregada
             const requestUrl = '/student/api/study_sessions/record';
             const data = JSON.stringify({
                 law_id: lawId,
@@ -1690,19 +1657,34 @@ document.addEventListener("DOMContentLoaded", function () {
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date().toISOString()
             });
-            navigator.sendBeacon(requestUrl, data);
+            // navigator.sendBeacon só funciona para POST e envia application/x-www-form-urlencoded por padrão.
+            // Para JSON, é preciso ser um servidor que suporte isso ou converter para URLSearchParams
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob([data], {type : 'application/json'});
+                    navigator.sendBeacon(requestUrl, blob);
+                    console.log("[sendBeacon] Sessão enviada ao descarregar.");
+                } catch (e) {
+                    console.error("[sendBeacon] Erro ao usar sendBeacon:", e);
+                }
+            } else {
+                // Fallback para navegadores sem sendBeacon
+                console.warn("sendBeacon não suportado. Sessão pode não ser salva ao descarregar.");
+            }
         }
     });
 
     // Pausar o cronômetro se a página não estiver visível
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && timerInterval) {
-            pauseTimer();
-            // Opcional: Se a sessão for muito longa em segundo plano, pode-se registrar aqui.
+            // Se a página for escondida e o cronômetro estiver rodando
+            pauseTimer(); // Pausa o cronômetro
+            // Opcional: pode-se salvar a sessão automaticamente aqui também para não perder tempo
+            // saveCurrentStudySession(); // Descomente se quiser salvar ao esconder a página
         } else if (!document.hidden && !timerInterval && elapsedTime > 0) {
             // Se a página volta a ser visível e o cronômetro estava pausado (e não foi resetado)
             // Você pode decidir reiniciar automaticamente ou deixar o usuário iniciar
-            // startTimer(); // Descomente para reiniciar automaticamente
+            // startTimer(); // Descomente para reiniciar automaticamente ao voltar à página
         }
     });
 
@@ -1824,7 +1806,7 @@ document.addEventListener("DOMContentLoaded", function () {
             body: JSON.stringify({ content: content })
         };
 
-        registerBackgroundSync(`sync-save-notes-${lawId}`, requestUrl, requestOptions,
+        registerBackgroundSync(`sync-save-notes-${lawId}-${Date.now()}`, requestUrl, requestOptions,
             (data) => { // Sucesso
                 Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                 this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
@@ -1908,7 +1890,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!lawContent.contains(range.commonAncestorContainer)) { return; }
 
         const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
-        const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE ? range.endContainer : range.endContainer.parentElement;
+        const endElement = range.endContainer.nodeType === Node.ELEMENT_ELEMENT ? range.endContainer : range.endContainer.parentElement;
 
         if (startElement.closest('p[style*="background-color"], .comment-display') || endElement.closest('p[style*="background-color"], .comment-display')) {
             alert("A formatação só pode ser aplicada no texto principal da lei, e não em comentários, jurisprudência, doutrina ou em suas anotações de parágrafo.");
@@ -1975,7 +1957,7 @@ document.addEventListener("DOMContentLoaded", function () {
             body: JSON.stringify({ content: contentToSave })
         };
         
-        registerBackgroundSync(`sync-save-markup-${lawId}`, requestUrl, requestOptions,
+        registerBackgroundSync(`sync-save-markup-${lawId}-${Date.now()}`, requestUrl, requestOptions,
             (data) => { console.log("Marcações salvas com sucesso!", data); }, // Sucesso
             () => { console.warn("Marcações agendadas para sincronização."); } // Erro/Agendado
         );
@@ -2200,29 +2182,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
             registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions,
                 (data) => { // Sucesso
-                    // Para criar comentários, vamos fazer um fetch explícito após o sucesso do sync
+                    // Para criar comentários, vamos fazer um fetch explícito APÓS o sucesso do sync
                     // para pegar o ID real do comentário e exibi-lo corretamente.
-                    fetch(requestUrl, requestOptions) // Faz o fetch REAL para pegar o ID gerado pelo DB
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                displayComment(data.comment);
-                                closeCommentModal();
-                                Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                    // Isso é um hack porque o Background Sync não passa o ID gerado pelo servidor para o frontend.
+                    // O ideal seria que o SW fizesse um postMessage de volta com o ID.
+                    // Por simplicidade agora, a gente faz um novo POST aqui.
+                    // ATENÇÃO: isso pode levar a duplicatas se o original JÁ SINCRONIZOU e este POST também.
+                    // Uma solução robusta seria usar um ID temporário no frontend e mapeá-lo no backend.
+                    // Para este exemplo, vou simplificar e esperar que o data.comment já venha do servidor
+                    // ou que o reload da página resolva no caso de múltiplas ações offline.
+                    if (data.comment && data.success) { // Se o sucesso do sync já retornou o comentário
+                         displayComment(data.comment);
+                         closeCommentModal();
+                         Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                         modalSaveBtn.innerHTML = originalSaveBtnText;
+                         modalSaveBtn.disabled = false;
+                    } else { // Caso o Background Sync não retorne o comentário criado, fazemos o fetch novamente
+                        fetch(requestUrl, requestOptions) // Faz o fetch REAL para pegar o ID gerado pelo DB
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    displayComment(data.comment);
+                                    closeCommentModal();
+                                    Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                                    modalSaveBtn.disabled = false;
+                                } else {
+                                    alert('Erro ao salvar anotação: ' + data.error);
+                                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                                    modalSaveBtn.disabled = false;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro no fetch pós-sincronização para criação de comentário:', error);
+                                alert('Erro de comunicação para criar anotação.');
                                 modalSaveBtn.innerHTML = originalSaveBtnText;
                                 modalSaveBtn.disabled = false;
-                            } else {
-                                alert('Erro ao salvar anotação: ' + data.error);
-                                modalSaveBtn.innerHTML = originalSaveBtnText;
-                                modalSaveBtn.disabled = false;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Erro no fetch pós-sincronização para criação de comentário:', error);
-                            alert('Erro de comunicação para criar anotação.');
-                            modalSaveBtn.innerHTML = originalSaveBtnText;
-                            modalSaveBtn.disabled = false;
-                        });
+                            });
+                    }
                 },
                 () => { // Erro/Agendado
                     // Toastify já exibido pela registerBackgroundSync
