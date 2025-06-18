@@ -2,7 +2,7 @@
   "name": "Estudo da Lei Seca",
   "short_name": "Lei Seca",
   "description": "Seu guia completo para o estudo de leis.",
-  "start_url": "/auth/login",  
+  "start_url": "/",  
   "display": "standalone",
   "background_color": "#f0f7ff",
   "theme_color": "#2563eb",
@@ -48,7 +48,7 @@
       "type": "image/png"
     }
   ],
-  "id": "/auth/login", # <<< IMPORTANTE: Mude o ID para corresponder ao start_url para iOS
+  "id": "/",
   "form_factor": ["wide", "narrow"],
   "shortcuts": [
     {
