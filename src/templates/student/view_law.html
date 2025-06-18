@@ -21,7 +21,7 @@
         width: 0%; /* Começa com 0 */
         transition: width 0.1s linear; /* Transição suave */
     }
-    /* --- FIM: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
+    /* --- FIM: ESTILO PARA BARRA DE PROGREÇO DE LEITURA --- */
 
     /* --- INÍCIO: ESTILO PARA DESTAQUE DO ARTIGO ENCONTRADO --- */
     .highlight-article {
@@ -250,12 +250,12 @@
         display: none !important;
     }
 
-    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+    /* INÍCIO DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS E CRONÔMETRO */
     .neural-waves-container {
         display: flex;
-        justify-content: flex-start;
+        justify-content: space-between; /* Espaçamento entre as ondas e o cronômetro */
         align-items: center; /* Alinha itens verticalmente ao centro */
-        gap: 15px; /* Ajustado para mais espaço entre os grupos */
+        gap: 15px; /* Espaço entre os botões de onda */
         margin-top: 15px;
         margin-bottom: 15px;
         flex-wrap: wrap; /* Permite quebrar linha em telas menores */
@@ -381,7 +381,7 @@
         .neural-wave-button i { font-size: 18px; }
         .neural-wave-button .tooltip { width: 200px; max-width: 200px; font-size: 11px; }
     }
-    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS */
+    /* FIM DOS ESTILOS PARA OS BOTÕES DE ONDAS NEURAIS E CRONÔMETRO */
 
     /* INÍCIO DOS ESTILOS PARA O EDITOR DE ANOTAÇÕES GERAIS */
     .notes-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -883,8 +883,18 @@
         align-items: center;
     }
 
+    /* Ajustes para o contêiner das ondas e do cronômetro */
+    .neural-waves-container {
+        display: flex;
+        justify-content: space-between; /* Empurra o cronômetro para a direita */
+        align-items: center; /* Alinha itens verticalmente ao centro */
+        gap: 15px; /* Espaço entre os botões de onda */
+        margin-top: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap; /* Permite quebrar linha em telas menores */
+    }
+
     .minimal-timer-container {
-        /* flex: 1; Removido para controlar a largura com max-width */
         background-color: #f9fafb; 
         border: 1px solid #e5e7eb; 
         border-radius: 0.5rem;
@@ -897,7 +907,8 @@
         height: auto; 
         margin-bottom: 0; 
         gap: 10px; /* Espaçamento entre os principais grupos de elementos */
-        max-width: 400px; /* Adicionado para diminuir a largura do bloco do cronômetro */
+        /* Reduzindo a largura máxima para compactar o cronômetro */
+        max-width: 350px; /* Ajustado para deixar mais compacto */
     }
 
     /* Modo Noturno para o container do cronômetro */
@@ -1072,11 +1083,13 @@
 {% endif %}
 
 <div class="neural-waves-container">
-    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
-    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
-    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
-    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
-    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
+    <div class="flex flex-wrap items-center gap-2"> {# Container para os botões de ondas para controle de espaçamento #}
+        <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
+        <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
+        <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
+        <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
+        <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
+    </div>
 
     <div class="minimal-timer-container">
         <div class="timer-display-group">
