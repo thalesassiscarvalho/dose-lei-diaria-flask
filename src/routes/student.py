@@ -13,6 +13,7 @@ from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
 from src.models.concurso import Concurso
+from src.models.study import StudySession # <<< ADICIONADO: Importa o modelo StudySession
 import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
@@ -836,4 +837,132 @@ def set_default_concurso():
         return jsonify(success=False, error="Erro interno ao salvar a preferência."), 500
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: Rotas para o Cronômetro e Registro de Tempo >>>
+# =====================================================================
+
+@student_bp.route("/api/study_sessions/record", methods=["POST"])
+@login_required
+def record_study_session():
+    """
+    Registra uma sessão de estudo (automática ou manual).
+    Espera JSON com law_id, duration_seconds, entry_type,
+    e opcionalmente start_time, end_time para tipo 'auto'.
+    """
+    data = request.get_json()
+    
+    law_id = data.get('law_id')
+    duration_seconds = data.get('duration_seconds')
+    entry_type = data.get('entry_type', 'auto') # Padrão 'auto'
+
+    if not law_id or duration_seconds is None:
+        return jsonify(success=False, error="law_id e duration_seconds são obrigatórios."), 400
+    
+    # Validação básica
+    try:
+        law_id = int(law_id)
+        duration_seconds = int(duration_seconds)
+    except ValueError:
+        return jsonify(success=False, error="law_id e duration_seconds devem ser números inteiros."), 400
+    
+    if duration_seconds <= 0:
+        return jsonify(success=False, error="A duração da sessão deve ser maior que zero."), 400
+
+    law = Law.query.get(law_id)
+    if not law:
+        return jsonify(success=False, error="Lei não encontrada."), 404
+
+    # Determinar subject_id
+    subject_id = law.subject_id
+    if not subject_id:
+        return jsonify(success=False, error="A lei não está associada a uma matéria."), 400
+    
+    start_time = None
+    end_time = None
+    if entry_type == 'auto':
+        # Para sessões automáticas, esperamos start_time e end_time
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+        try:
+            # Assumindo que os timestamps vêm em formato ISO (ex: "2025-06-18T10:30:00.000Z")
+            start_time = datetime.datetime.fromisoformat(start_time_str.replace('Z', '+00:00')) if start_time_str else None
+            end_time = datetime.datetime.fromisoformat(end_time_str.replace('Z', '+00:00')) if end_time_str else None
+        except ValueError:
+            return jsonify(success=False, error="Formato de data/hora inválido para start_time ou end_time."), 400
+        
+        if not start_time or not end_time:
+            return jsonify(success=False, error="start_time e end_time são obrigatórios para sessões automáticas."), 400
+        
+        # Opcional: Re-validar duration_seconds com base em start/end_time
+        calculated_duration = (end_time - start_time).total_seconds()
+        if abs(calculated_duration - duration_seconds) > 5: # Pequena margem de erro
+            logging.warning(f"Duração calculada ({calculated_duration}) difere da enviada ({duration_seconds}) para user {current_user.id}, law {law_id}.")
+            duration_seconds = int(calculated_duration) # Usar a calculada para maior precisão
+
+    try:
+        new_session = StudySession(
+            user_id=current_user.id,
+            law_id=law_id,
+            subject_id=subject_id,
+            duration_seconds=duration_seconds,
+            entry_type=entry_type,
+            start_time=start_time,
+            end_time=end_time,
+            recorded_at=datetime.datetime.utcnow() # Data de registro da ação
+        )
+        db.session.add(new_session)
+        
+        # Opcional: Atualizar a StudyActivity para streak quando uma sessão é registrada
+        _record_study_activity(current_user)
+
+        db.session.commit()
+        return jsonify(success=True, message="Sessão de estudo registrada com sucesso!")
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao registrar sessão de estudo para user {current_user.id}, law {law_id}: {e}")
+        return jsonify(success=False, error="Erro interno ao registrar sessão de estudo."), 500
+
+@student_bp.route("/api/study_stats", methods=["GET"])
+@login_required
+def get_study_stats():
+    """
+    Retorna estatísticas de tempo de estudo por matéria para o usuário atual.
+    """
+    study_data = db.session.query(
+        Subject.name,
+        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
+    ).join(Subject, StudySession.subject_id == Subject.id)\
+     .filter(StudySession.user_id == current_user.id)\
+     .group_by(Subject.name)\
+     .order_by(Subject.name)\
+     .all()
+    
+    stats_by_subject = []
+    total_study_seconds = 0
+    for subject_name, duration_seconds in study_data:
+        total_study_seconds += duration_seconds
+        hours = duration_seconds // 3600
+        minutes = (duration_seconds % 3600) // 60
+        seconds = duration_seconds % 60
+        stats_by_subject.append({
+            'subject_name': subject_name,
+            'total_seconds': duration_seconds,
+            'formatted_duration': f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+        })
+    
+    total_hours = total_study_seconds // 3600
+    total_minutes = (total_study_seconds % 3600) // 60
+
+    return jsonify(success=True, 
+                   stats_by_subject=stats_by_subject,
+                   total_study_seconds=total_study_seconds,
+                   total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
+                )
+
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO: Rotas para o Cronômetro e Registro de Tempo >>>
 # =====================================================================
