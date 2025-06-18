@@ -16,10 +16,13 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 load_dotenv()
 
+# --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
 from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
+from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
+# --- FIM DA IMPORTAÇÃO ADICIONADA ---
 
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
