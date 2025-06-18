@@ -226,19 +226,37 @@
     .conteudo-oculto {
         display: none !important; /* Usar !important para garantir a sobreposição */
     }
+
+    /* --- INÍCIO DA ALTERAÇÃO: NOVO CONTÊINER PARA ALINHAR CRONÔMETRO E ÁUDIO --- */
+    .timer-audio-flex-container {
+        display: flex;
+        flex-direction: row; /* Para alinhar lado a lado */
+        justify-content: space-between; /* Espaço entre os itens */
+        align-items: flex-start; /* Alinha os itens pelo topo */
+        gap: 15px; /* Espaçamento entre os blocos */
+        margin-top: 15px; /* Espaço acima do container */
+        margin-bottom: 15px; /* Espaço abaixo do container */
+    }
+
     /* Estilos para o container do player de áudio */
     .audio-player-container {
+        flex: 1; /* Ocupa metade do espaço */
         background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
         border-radius: 0.5rem; /* Tailwind rounded-lg */
         padding: 1rem; /* Tailwind p-4 */
         border: 1px solid #e5e7eb; /* Tailwind gray-200 */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 1.5rem; /* Equivalente a my-4 ou mb-6 */
+        margin-bottom: 0; /* Removido para o container flex gerenciar */
+    }
+    .dark-mode .audio-player-container {
+        background-color: #1f2937;
+        border-color: #374151;
     }
 
     .audio-player-container audio {
         border-radius: 0.375rem; /* Tailwind rounded-md */
     }
+    /* --- FIM DA ALTERAÇÃO --- */
     
     /* Classe para ocultar conteúdo durante impressão */
     .print-hidden {
@@ -550,7 +568,7 @@
     .dark-mode .bookmark-section,
     .dark-mode .notes-container,
     .dark-mode .comment-modal-content,
-    .dark-mode .audio-player-container,
+    .dark-mode .audio-player-container, /* Adicionado para modo noturno */
     .dark-mode .juridiques-container,
     .dark-mode .links-container /* Adicionado para modo noturno */
     {
@@ -647,15 +665,6 @@
         color: #d1d5db;
         border-color: #4b5563;
     }
-
-    /* Player de Áudio */
-    .dark-mode .audio-player-container {
-        background-color: #1f2937;
-        border-color: #374151;
-    }
-     .dark-mode .audio-player-container h4 {
-        color: #d1d5db;
-     }
 
     /* Modal de anotação */
     .dark-mode .comment-modal-content {
@@ -887,17 +896,18 @@
     }
 
     .minimal-timer-container {
-        display: flex;
-        flex-direction: column; /* Cronômetro e manual em coluna */
-        align-items: flex-start; /* Alinha os elementos do cronômetro à esquerda */
+        flex: 1; /* Ocupa metade do espaço */
         background-color: #f9fafb; /* gray-50 */
         border: 1px solid #e5e7eb; /* gray-200 */
         border-radius: 0.5rem;
         padding: 0.75rem 1rem;
         box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-        /* Largura flexível para caber no espaço, mas sem ser muito grande */
-        width: auto; /* Deixado como auto para se ajustar ao conteúdo */
-        max-width: none; /* Remove a restrição de max-width */
+        /* Removido max-width, width: 100% no mobile, alinhado à esquerda */
+        display: flex; /* Transforma o container em flex */
+        flex-direction: column; /* Conteúdo interno em coluna por padrão */
+        align-items: flex-start; /* Alinha os elementos internos à esquerda */
+        height: auto; /* Garante que a altura se ajuste ao conteúdo */
+        margin-bottom: 0; /* Removido para o container flex gerenciar */
     }
 
     /* Modo Noturno para o container do cronômetro */
@@ -927,6 +937,7 @@
         display: flex;
         gap: 5px;
         justify-content: flex-start; /* Alinha os botões à esquerda */
+        flex-wrap: wrap; /* Permite que os botões quebrem linha */
         width: 100%; /* Ocupa toda a largura disponível */
         margin-bottom: 8px; /* Espaço entre os controles do cronômetro e a entrada manual */
     }
@@ -966,6 +977,7 @@
         display: flex;
         align-items: center;
         gap: 5px;
+        flex-wrap: wrap; /* Permite que os inputs quebrem linha */
         width: 100%; /* Para que os inputs ocupem o espaço e o botão fique ao lado */
         justify-content: flex-start; /* Alinha o grupo à esquerda */
     }
@@ -1017,6 +1029,11 @@
         .manual-input {
             width: 70px; /* Um pouco maior no mobile se preferir */
         }
+
+        .timer-audio-flex-container {
+            flex-direction: column; /* Empilha no mobile */
+            gap: 15px; /* Espaçamento entre os blocos empilhados */
+        }
     }
     /* <<< FIM DA ALTERAÇÃO: ESTILOS PARA O CRONÔMETRO MINIMALISTA >>> */
 
@@ -1055,28 +1072,8 @@
                 <span class="hidden sm:inline sm:ml-2">Voltar ao Painel</span>
             </a>
         </div>
-
-        <div class="minimal-timer-container">
-            <div class="timer-display-group">
-                <i class="fas fa-stopwatch timer-icon"></i>
-                <span id="timer-display">00:00:00</span>
-            </div>
-            
-            <div class="timer-controls-group">
-                <button id="start-timer-btn" class="btn-timer-icon btn-green" title="Iniciar Cronômetro"><i class="fas fa-play"></i></button>
-                <button id="pause-timer-btn" class="btn-timer-icon btn-yellow hidden" title="Pausar Cronômetro"><i class="fas fa-pause"></i></button>
-                <button id="reset-timer-btn" class="btn-timer-icon btn-red hidden" title="Reiniciar Cronômetro"><i class="fas fa-stop"></i></button>
-                <button id="save-timer-btn" class="btn-timer-icon btn-blue hidden" title="Salvar Sessão de Estudo"><i class="fas fa-save"></i></button>
-            </div>
-
-            <div class="manual-time-group">
-                <input type="number" id="manual-hours-input" class="manual-input" placeholder="H" min="0" max="24" title="Horas">
-                <input type="number" id="manual-minutes-input" class="manual-input" placeholder="M" min="0" max="59" title="Minutos">
-                <button id="add-manual-time-btn" class="btn-timer-icon btn-purple" title="Adicionar Tempo Manualmente"><i class="fas fa-plus"></i></button>
-            </div>
-        </div>
     </div>
-    </div>
+</div>
 
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
@@ -1086,6 +1083,7 @@
     <button id="dismiss-banner-btn" class="law-banner-dismiss-btn" title="Marcar como visto">&times;</button>
 </div>
 {% endif %}
+
 <div class="neural-waves-container">
     <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
     <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
@@ -1099,15 +1097,37 @@
 <audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
 <audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
 
-{% if law.audio_url %}
-<div class="audio-player-container">
-    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
-    <audio controls controlslist="nodownload" class="w-full">
-        <source src="{{ law.audio_url }}" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
+<div class="timer-audio-flex-container">
+    {% if law.audio_url %}
+    <div class="audio-player-container">
+        <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
+        <audio controls controlslist="nodownload" class="w-full">
+            <source src="{{ law.audio_url }}" type="audio/mpeg">
+            Seu navegador não suporta o elemento de áudio.
+        </audio>
+    </div>
+    {% endif %}
+
+    <div class="minimal-timer-container">
+        <div class="timer-display-group">
+            <i class="fas fa-stopwatch timer-icon"></i>
+            <span id="timer-display">00:00:00</span>
+        </div>
+        
+        <div class="timer-controls-group">
+            <button id="start-timer-btn" class="btn-timer-icon btn-green" title="Iniciar Cronômetro"><i class="fas fa-play"></i></button>
+            <button id="pause-timer-btn" class="btn-timer-icon btn-yellow hidden" title="Pausar Cronômetro"><i class="fas fa-pause"></i></button>
+            <button id="reset-timer-btn" class="btn-timer-icon btn-red hidden" title="Reiniciar Cronômetro"><i class="fas fa-stop"></i></button>
+            <button id="save-timer-btn" class="btn-timer-icon btn-blue hidden" title="Salvar Sessão de Estudo"><i class="fas fa-save"></i></button>
+        </div>
+
+        <div class="manual-time-group">
+            <input type="number" id="manual-hours-input" class="manual-input" placeholder="H" min="0" max="24" title="Horas">
+            <input type="number" id="manual-minutes-input" class="manual-input" placeholder="M" min="0" max="59" title="Minutos">
+            <button id="add-manual-time-btn" class="btn-timer-icon btn-purple" title="Adicionar Tempo Manualmente"><i class="fas fa-plus"></i></button>
+        </div>
+    </div>
 </div>
-{% endif %}
 
 {% if is_completed %}
 <div class="completed-banner" role="alert">
