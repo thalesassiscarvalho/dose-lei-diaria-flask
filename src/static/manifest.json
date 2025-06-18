@@ -33,6 +33,12 @@
       "type": "image/png"
     },
     {
+      "src": "/static/icons/icon-180x180.png", {# Adicionado este para o iOS #}
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple touch icon" {# Indica que é para o touch icon do iOS #}
+    },
+    {
       "src": "/static/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
