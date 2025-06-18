@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import or_, func # ADICIONADO: Importe func do sqlalchemy
+from sqlalchemy import or_, func # <<< ALTERADO: Adicionado 'func'
 from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import datetime
@@ -62,6 +62,12 @@ def _humanize_time_delta(dt):
             return "1 minuto atrás"
         return f"{int(minutes)} minutos atrás"
     return "agora mesmo"
+
+# Função auxiliar para formatar segundos em horas e minutos
+def _format_duration(total_seconds):
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    return f"{int(hours)} horas e {int(minutes)} minutos"
 
 LEVELS = [
     {"name": "Novato", "min_points": 0, "icon": "fas fa-seedling"},
@@ -333,6 +339,53 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
+    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Dados para os cards de Estudo >>>
+    # Tempo Total Acumulado
+    total_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
+                                    .filter_by(user_id=current_user.id).scalar() or 0
+    formatted_total_study = _format_duration(total_study_seconds)
+
+    # Tempo de Estudo na Última Semana
+    one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
+    weekly_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
+                                     .filter_by(user_id=current_user.id)\
+                                     .filter(StudySession.recorded_at >= one_week_ago).scalar() or 0
+    formatted_weekly_study = _format_duration(weekly_study_seconds)
+
+    # Tempo de Estudo Hoje
+    today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    daily_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
+                                    .filter_by(user_id=current_user.id)\
+                                    .filter(StudySession.recorded_at >= today_start).scalar() or 0
+    # Para o tempo de hoje, pode ser mais granular (apenas minutos, se menos de uma hora)
+    formatted_daily_study = f"{int(daily_study_seconds // 60)} minutos" if daily_study_seconds >= 60 else f"{int(daily_study_seconds)} segundos"
+    if daily_study_seconds == 0:
+        formatted_daily_study = "0 minutos"
+
+    # Estatísticas por Matéria
+    study_by_subject_data = db.session.query(
+        Subject.name,
+        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
+    ).join(StudySession, StudySession.subject_id == Subject.id)\
+     .filter(StudySession.user_id == current_user.id)\
+     .group_by(Subject.name)\
+     .order_by(func.sum(StudySession.duration_seconds).desc())\
+     .all()
+    
+    most_studied_subject = None
+    study_data_for_chart = [] # Para o gráfico
+    if study_by_subject_data:
+        most_studied_subject = {
+            'name': study_by_subject_data[0][0],
+            'duration': _format_duration(study_by_subject_data[0][1])
+        }
+        for subject_name, duration_seconds in study_by_subject_data:
+            study_data_for_chart.append({
+                'name': subject_name,
+                'duration_seconds': duration_seconds
+            })
+    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            concursos=concursos_for_filter,
@@ -349,7 +402,14 @@ def dashboard():
                            level_info=level_info,
                            todo_items=todo_items,
                            custom_favorite_title=current_user.favorite_label,
-                           default_concurso_id=default_concurso_id
+                           default_concurso_id=default_concurso_id,
+                           # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Passa os dados de estudo para o template >>>
+                           total_study_formatted=formatted_total_study,
+                           weekly_study_formatted=formatted_weekly_study,
+                           daily_study_formatted=formatted_daily_study,
+                           most_studied_subject=most_studied_subject,
+                           study_data_for_chart=study_data_for_chart
+                           # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
                            )
 
 
@@ -932,107 +992,36 @@ def get_study_stats():
     """
     Retorna estatísticas de tempo de estudo por matéria para o usuário atual.
     """
-    
-    # Tempo Total Acumulado (All-time)
-    total_study_seconds_all_time = db.session.query(
-        func.sum(StudySession.duration_seconds)
-    ).filter(StudySession.user_id == current_user.id).scalar() or 0
-
-    total_hours_all_time = total_study_seconds_all_time // 3600
-    total_minutes_all_time = (total_study_seconds_all_time % 3600) // 60
-
-    # Tempo de Estudo Hoje
-    today = datetime.date.today()
-    start_of_today = datetime.datetime.combine(today, datetime.time.min)
-    end_of_today = datetime.datetime.combine(today, datetime.time.max)
-
-    study_today_seconds = db.session.query(
-        func.sum(StudySession.duration_seconds)
-    ).filter(
-        StudySession.user_id == current_user.id,
-        StudySession.recorded_at >= start_of_today,
-        StudySession.recorded_at <= end_of_today
-    ).scalar() or 0
-
-    hours_today = study_today_seconds // 3600
-    minutes_today = (study_today_seconds % 3600) // 60
-    # Não vamos formatar segundos para o dashboard, apenas minutos e horas
-    formatted_study_today = f"{int(hours_today)}h {int(minutes_today)}m"
-    if hours_today == 0 and minutes_today == 0 and study_today_seconds > 0:
-        formatted_study_today = "< 1m" # Para exibir se for menos de 1 minuto
-
-
-    # Tempo de Estudo na Última Semana (Últimos 7 dias, incluindo hoje)
-    seven_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
-    study_last_7_days_seconds = db.session.query(
-        func.sum(StudySession.duration_seconds)
-    ).filter(
-        StudySession.user_id == current_user.id,
-        StudySession.recorded_at >= seven_days_ago
-    ).scalar() or 0
-
-    hours_last_7_days = study_last_7_days_seconds // 3600
-    minutes_last_7_days = (study_last_7_days_seconds % 3600) // 60
-    formatted_study_last_7_days = f"{int(hours_last_7_days)}h {int(minutes_last_7_days)}m"
-    if hours_last_7_days == 0 and minutes_last_7_days == 0 and study_last_7_days_seconds > 0:
-        formatted_study_last_7_days = "< 1m"
-
-    # Tempo de Estudo no Último Mês (Últimos 30 dias, incluindo hoje)
-    thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
-    study_last_30_days_seconds = db.session.query(
-        func.sum(StudySession.duration_seconds)
-    ).filter(
-        StudySession.user_id == current_user.id,
-        StudySession.recorded_at >= thirty_days_ago
-    ).scalar() or 0
-    
-    hours_last_30_days = study_last_30_days_seconds // 3600
-    minutes_last_30_days = (study_last_30_days_seconds % 3600) // 60
-    formatted_study_last_30_days = f"{int(hours_last_30_days)}h {int(minutes_last_30_days)}m"
-    if hours_last_30_days == 0 and minutes_last_30_days == 0 and study_last_30_days_seconds > 0:
-        formatted_study_last_30_days = "< 1m"
-
-    # Estatísticas por Matéria
-    study_data_by_subject = db.session.query(
+    study_data = db.session.query(
         Subject.name,
         func.sum(StudySession.duration_seconds).label('total_duration_seconds')
     ).join(Subject, StudySession.subject_id == Subject.id)\
      .filter(StudySession.user_id == current_user.id)\
      .group_by(Subject.name)\
-     .order_by(func.sum(StudySession.duration_seconds).desc())\
+     .order_by(Subject.name)\
      .all()
     
     stats_by_subject = []
-    most_studied_subject = {"name": "N/A", "formatted_duration": "0h 0m"}
+    total_study_seconds = 0
+    for subject_name, duration_seconds in study_data:
+        total_study_seconds += duration_seconds
+        hours = duration_seconds // 3600
+        minutes = (duration_seconds % 3600) // 60
+        seconds = duration_seconds % 60
+        stats_by_subject.append({
+            'subject_name': subject_name,
+            'total_seconds': duration_seconds,
+            'formatted_duration': f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+        })
+    
+    total_hours = total_study_seconds // 3600
+    total_minutes = (total_study_seconds % 3600) // 60
 
-    if study_data_by_subject:
-        # A primeira matéria na lista ordenada por duração descendente é a mais estudada
-        top_subject = study_data_by_subject[0]
-        most_studied_subject['name'] = top_subject.name
-        most_studied_subject['formatted_duration'] = f"{int(top_subject.total_duration_seconds // 3600)}h {int((top_subject.total_duration_seconds % 3600) // 60)}m"
-        
-        for subject_name, duration_seconds in study_data_by_subject:
-            hours = duration_seconds // 3600
-            minutes = (duration_seconds % 3600) // 60
-            stats_by_subject.append({
-                'subject_name': subject_name,
-                'total_seconds': duration_seconds,
-                'formatted_duration': f"{int(hours)}h {int(minutes)}m"
-            })
-
-    return jsonify(
-        success=True, 
-        total_study_seconds_all_time=total_study_seconds_all_time,
-        total_formatted_duration_all_time=f"{int(total_hours_all_time)}h {int(total_minutes_all_time)}m",
-        study_today_seconds=study_today_seconds,
-        formatted_study_today=formatted_study_today,
-        study_last_7_days_seconds=study_last_7_days_seconds,
-        formatted_study_last_7_days=formatted_study_last_7_days,
-        study_last_30_days_seconds=study_last_30_days_seconds,
-        formatted_study_last_30_days=formatted_study_last_30_days,
-        stats_by_subject=stats_by_subject,
-        most_studied_subject=most_studied_subject
-    )
+    return jsonify(success=True, 
+                   stats_by_subject=stats_by_subject,
+                   total_study_seconds=total_study_seconds,
+                   total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
+                )
 
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO: Rotas para o Cronômetro e Registro de Tempo >>>
