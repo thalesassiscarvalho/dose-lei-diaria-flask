@@ -230,23 +230,23 @@
     /* --- INÍCIO DA ALTERAÇÃO: NOVO CONTÊINER PARA ALINHAR CRONÔMETRO E ÁUDIO --- */
     .timer-audio-flex-container {
         display: flex;
-        flex-direction: column; /* Agora a coluna é o padrão para empilhar */
-        justify-content: space-between; 
-        align-items: flex-start; 
-        gap: 15px; 
-        margin-top: 15px; 
-        margin-bottom: 15px; 
+        flex-direction: row; /* Para alinhar lado a lado */
+        justify-content: space-between; /* Espaço entre os itens */
+        align-items: flex-start; /* Alinha os itens pelo topo */
+        gap: 15px; /* Espaçamento entre os blocos */
+        margin-top: 15px; /* Espaço acima do container */
+        margin-bottom: 15px; /* Espaço abaixo do container */
     }
 
     /* Estilos para o container do player de áudio */
     .audio-player-container {
-        width: 100%; /* Ocupa 100% da largura */
+        flex: 1; /* Ocupa metade do espaço */
         background-color: #f9fafb; /* Tailwind gray-50 - um pouco mais claro */
         border-radius: 0.5rem; /* Tailwind rounded-lg */
         padding: 1rem; /* Tailwind p-4 */
         border: 1px solid #e5e7eb; /* Tailwind gray-200 */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm mais suave */
-        margin-bottom: 0; 
+        margin-bottom: 0; /* Removido para o container flex gerenciar */
     }
     .dark-mode .audio-player-container {
         background-color: #1f2937;
@@ -895,35 +895,20 @@
         align-items: center;
     }
 
-    /* Container flex para os botões de ondas neurais e o cronômetro */
-    .waves-timer-container {
-        display: flex;
-        flex-direction: row; /* Alinha lado a lado */
-        flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
-        gap: 15px; /* Espaçamento entre as seções */
-        align-items: center; /* Alinha verticalmente no centro */
-        margin-top: 15px;
-        margin-bottom: 15px;
-    }
-
     .minimal-timer-container {
-        /* Removido flex: 1 para o cronômetro ter largura mais controlada */
+        flex: 1; /* Ocupa metade do espaço */
         background-color: #f9fafb; 
         border: 1px solid #e5e7eb; 
         border-radius: 0.5rem;
         padding: 0.75rem 1rem;
         box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        justify-content: space-between; 
+        display: flex; /* Transforma o container em flex */
+        flex-direction: row; /* Alterado para horizontal (linha) */
+        align-items: center; /* Centraliza verticalmente os itens */
+        justify-content: space-between; /* Distribui o espaço entre os elementos */
         height: auto; 
         margin-bottom: 0; 
-        gap: 10px; 
-        /* Largura ajustada para o cronômetro não quebrar linha facilmente */
-        min-width: 320px; /* Largura mínima para evitar quebra de linha prematura */
-        flex-grow: 1; /* Permite que cresça, mas com min-width */
-        flex-shrink: 1; /* Permite que encolha */
+        gap: 10px; /* Espaçamento entre os principais grupos de elementos */
     }
 
     /* Modo Noturno para o container do cronômetro */
@@ -1024,39 +1009,27 @@
         .top-right-buttons {
             justify-content: flex-end; 
         }
-        .waves-timer-container {
-            flex-direction: column; /* Empilha no mobile */
-            align-items: flex-start; /* Alinha à esquerda no mobile */
-            gap: 15px; 
-        }
-        .neural-waves-container {
-            justify-content: flex-start;
-            width: 100%; /* Ocupa largura total no mobile */
-        }
         .minimal-timer-container {
-            flex-direction: column; 
-            align-items: flex-start; 
+            flex-direction: column; /* Volta para coluna no mobile */
+            align-items: flex-start; /* Alinha à esquerda no mobile */
             padding: 0.75rem; 
-            gap: 8px; 
-            width: 100%; /* Ocupa largura total no mobile */
-            min-width: unset; /* Remove largura mínima no mobile */
+            gap: 8px; /* Espaçamento entre grupos no mobile */
         }
         .timer-display-group,
         .timer-controls-group,
         .manual-time-group {
-            justify-content: flex-start; 
-            flex-wrap: wrap; 
+            justify-content: flex-start; /* Alinha à esquerda */
+            flex-wrap: wrap; /* Permite quebrar linha para ajustar no mobile */
             width: 100%;
         }
         .manual-input {
             width: 70px; 
         }
 
-        /* Removido timer-audio-flex-container, pois a nova estrutura o substitui */
-        /* .timer-audio-flex-container {
-            flex-direction: column; 
+        .timer-audio-flex-container {
+            flex-direction: column; /* Empilha no mobile */
             gap: 15px; 
-        } */
+        }
     }
     /* <<< FIM DA ALTERAÇÃO FINAL: ESTILOS PARA O CRONÔMETRO MINIMALISTA >>> */
 
@@ -1107,24 +1080,29 @@
 </div>
 {% endif %}
 
-{% if law.audio_url %}
-<div class="audio-player-container">
-    <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
-    <audio controls controlslist="nodownload" class="w-full">
-        <source src="{{ law.audio_url }}" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
+<div class="neural-waves-container">
+    <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
+    <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
+    <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
+    <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
+    <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
 </div>
-{% endif %}
+<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
+<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
 
-<div class="waves-timer-container">
-    <div class="neural-waves-container">
-        <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
-        <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
-        <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
-        <button class="neural-wave-button wave-classical" data-wave="classical" aria-label="Música Clássica"><i class="fas fa-music"></i><span class="tooltip">Música Clássica <br>Promove concentração elevada e processamento cognitivo aprimorado</span></button>
-        <button class="neural-wave-button wave-white-noise" data-wave="white-noise" aria-label="Ruído Branco"><i class="fas fa-volume-up"></i><span class="tooltip">Ruído Branco <br>Bloqueia distrações externas e mantém o foco sustentado</span></button>
+<div class="timer-audio-flex-container">
+    {% if law.audio_url %}
+    <div class="audio-player-container">
+        <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center"><i class="fas fa-headphones-alt mr-2"></i> Ouvir a Lei:</h4>
+        <audio controls controlslist="nodownload" class="w-full">
+            <source src="{{ law.audio_url }}" type="audio/mpeg">
+            Seu navegador não suporta o elemento de áudio.
+        </audio>
     </div>
+    {% endif %}
 
     <div class="minimal-timer-container">
         <div class="timer-display-group">
@@ -1146,13 +1124,6 @@
         </div>
     </div>
 </div>
-
-<audio id="audio-alpha" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/alpha_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-beta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/beta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-theta" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/theta_wave.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-classical" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/classical_music.mp3" preload="none" loop style="display: none;"></audio>
-<audio id="audio-white-noise" src="https://audios-estudoleieca.s3.us-west-2.amazonaws.com/white_noise.mp3" preload="none" loop style="display: none;"></audio>
-
 
 {% if is_completed %}
 <div class="completed-banner" role="alert">
