@@ -1311,7 +1311,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
-    const subjectId = '{{ law.subject.id }}'; // Adicionado para uso no registro de tempo
+    const subjectId = {{ law.subject_id | tojson }}; // Alterado para uso no registro de tempo
 
     function fixDuplicateDescription() {
         if (!lawContent) return;
