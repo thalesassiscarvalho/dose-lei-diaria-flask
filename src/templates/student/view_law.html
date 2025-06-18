@@ -1011,26 +1011,23 @@
             justify-content: flex-end; 
         }
         .minimal-timer-container {
-                flex-direction: row; /* Alterado para ROW para manter em uma linha */
-                align-items: center; /* Centraliza verticalmente */
-                justify-content: space-between; /* Distribui os itens */
-                padding: 0.75rem; 
-                gap: 8px; /* Espaçamento entre grupos no mobile */
-                max-width: none; /* Remove a largura máxima no mobile */
-                flex-wrap: wrap; /* Permite quebra se a tela for muito pequena, mas a preferência é uma linha */
-            }
+            flex-direction: column; /* Volta para coluna no mobile */
+            align-items: flex-start; /* Alinha à esquerda no mobile */
+            padding: 0.75rem; 
+            gap: 8px; /* Espaçamento entre grupos no mobile */
+            max-width: none; /* Remove a largura máxima no mobile */
         }
         .timer-display-group,
         .timer-controls-group,
         .manual-time-group {
-            /* Removido o width: 100% para que os itens se ajustem na linha */
             justify-content: flex-start; /* Alinha à esquerda */
-            flex-wrap: nowrap; /* Garante que os botões/inputs não quebrem linha dentro do próprio grupo */
-            min-width: fit-content; /* Permite que o grupo ocupe apenas o espaço necessário */
+            flex-wrap: wrap; /* Permite quebrar linha para ajustar no mobile */
+            width: 100%;
         }
         .manual-input {
-            width: 50px; /* Reduz a largura dos inputs para caber melhor */
+            width: 70px; 
         }
+
         .neural-waves-container {
             flex-direction: column; /* Empilha no mobile */
             align-items: flex-start;
