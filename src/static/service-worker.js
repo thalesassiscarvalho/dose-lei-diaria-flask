@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lei-seca-v4'; // <<< ALTERAÇÃO AQUI >>> Mude o nome do cache para forçar a atualização!
+const CACHE_NAME = 'lei-seca-v5'; // <<< ALTERAÇÃO AQUI >>> Mude o nome do cache para forçar a atualização!
 const OFFLINE_URL = '/static/offline.html'; // <<< ALTERAÇÃO AQUI >>> Adicione a URL da sua página offline
 
 const urlsToCache = [
