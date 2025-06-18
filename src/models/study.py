@@ -5,7 +5,7 @@ class StudySession(db.Model):
     __tablename__ = 'study_sessions' # Nome da tabela no banco de dados
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Chave estrangeira para o usuário
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Chave estrangeira para o usuário
     law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)   # Chave estrangeira para a lei estudada
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False) # Chave estrangeira para a matéria (para facilitar a agregação)
 
