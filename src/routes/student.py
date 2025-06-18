@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import or_, func # <<< ALTERADO: Adicionado 'func'
+from sqlalchemy import or_, func
 from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import datetime
@@ -13,7 +13,7 @@ from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.comment import UserComment
 from src.models.concurso import Concurso
-from src.models.study import StudySession # <<< ADICIONADO: Importa o modelo StudySession
+from src.models.study import StudySession
 import logging
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
@@ -186,9 +186,6 @@ def autocomplete_search():
 
     return jsonify(results=unique_results[:7])
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: API para detalhes do concurso >>>
-# =====================================================================
 @student_bp.route("/api/concurso/<int:concurso_id>/details")
 @login_required
 def get_concurso_details(concurso_id):
@@ -200,9 +197,6 @@ def get_concurso_details(concurso_id):
         success=True,
         edital_url=concurso.edital_verticalizado_url
     )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 def check_and_award_achievements(user):
     unlocked_achievements_objects = []
@@ -339,7 +333,6 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
-    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Dados para os cards de Estudo >>>
     # Tempo Total Acumulado
     total_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                     .filter_by(user_id=current_user.id).scalar() or 0
@@ -384,7 +377,6 @@ def dashboard():
                 'name': subject_name,
                 'duration_seconds': duration_seconds
             })
-    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
 
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
@@ -403,13 +395,11 @@ def dashboard():
                            todo_items=todo_items,
                            custom_favorite_title=current_user.favorite_label,
                            default_concurso_id=default_concurso_id,
-                           # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Passa os dados de estudo para o template >>>
                            total_study_formatted=formatted_total_study,
                            weekly_study_formatted=formatted_weekly_study,
                            daily_study_formatted=formatted_daily_study,
                            most_studied_subject=most_studied_subject,
                            study_data_for_chart=study_data_for_chart
-                           # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
                            )
 
 
@@ -865,9 +855,6 @@ def delete_todo_item(item_id):
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: Nova rota para salvar o concurso padrão >>>
-# =====================================================================
 @student_bp.route("/api/set_default_concurso", methods=["POST"])
 @login_required
 def set_default_concurso():
@@ -895,14 +882,7 @@ def set_default_concurso():
         db.session.rollback()
         logging.error(f"Erro ao definir concurso padrão para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao salvar a preferência."), 500
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
-
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: Rotas para o Cronômetro e Registro de Tempo >>>
-# =====================================================================
 
 @student_bp.route("/api/study_sessions/record", methods=["POST"])
 @login_required
@@ -935,10 +915,17 @@ def record_study_session():
     if not law:
         return jsonify(success=False, error="Lei não encontrada."), 404
 
-    # Determinar subject_id
+    # --- INÍCIO DA ALTERAÇÃO ---
+    # Captura o subject_id diretamente do objeto 'law' que acabamos de buscar.
+    # Isso garante que sempre teremos o subject_id correto associado à lei,
+    # independentemente de como ele foi passado no frontend (ou se foi omitido).
     subject_id = law.subject_id
+    # Se, por algum motivo, a lei não tiver uma matéria associada (o que é raro para leis de estudo),
+    # você pode decidir retornar um erro ou associá-la a um subject_id padrão/nulo, dependendo do seu modelo de dados.
     if not subject_id:
-        return jsonify(success=False, error="A lei não está associada a uma matéria."), 400
+        # Se for um erro esperado para o seu sistema, descomente e ajuste a mensagem
+        return jsonify(success=False, error="A lei não está associada a uma matéria válida. Não é possível registrar o tempo de estudo."), 400
+    # --- FIM DA ALTERAÇÃO ---
     
     start_time = None
     end_time = None
@@ -948,6 +935,7 @@ def record_study_session():
         end_time_str = data.get('end_time')
         try:
             # Assumindo que os timestamps vêm em formato ISO (ex: "2025-06-18T10:30:00.000Z")
+            # Ajusta para aceitar o 'Z' indicando UTC e converter corretamente para datetime
             start_time = datetime.datetime.fromisoformat(start_time_str.replace('Z', '+00:00')) if start_time_str else None
             end_time = datetime.datetime.fromisoformat(end_time_str.replace('Z', '+00:00')) if end_time_str else None
         except ValueError:
@@ -966,7 +954,7 @@ def record_study_session():
         new_session = StudySession(
             user_id=current_user.id,
             law_id=law_id,
-            subject_id=subject_id,
+            subject_id=subject_id, # Usando o subject_id obtido do objeto 'law'
             duration_seconds=duration_seconds,
             entry_type=entry_type,
             start_time=start_time,
@@ -1022,7 +1010,3 @@ def get_study_stats():
                    total_study_seconds=total_study_seconds,
                    total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
                 )
-
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO: Rotas para o Cronômetro e Registro de Tempo >>>
-# =====================================================================
