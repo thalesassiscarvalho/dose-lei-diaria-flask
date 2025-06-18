@@ -204,6 +204,12 @@ def index():
             return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
 
+# Adicione esta rota para servir o favicon.ico
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 @app.context_processor
 def inject_now():
     return {'now': datetime.datetime.utcnow}
