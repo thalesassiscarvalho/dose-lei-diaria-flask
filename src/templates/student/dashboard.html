@@ -401,7 +401,7 @@
     .search-input-with-icon { padding-left: 2.75rem !important; }
     .search-wrapper .search-input-with-icon:focus + .search-icon { color: #2563eb; }
     .search-wrapper .search-input-with-icon:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-    .autocomplete-container { position: absolute; background-color: white; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
+    .autocomplete-container { position: absolute; background-color: white; border: 1.2px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
     .autocomplete-item { padding: 0.75rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
     .autocomplete-item:hover { background-color: #f8fafc; }
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
@@ -819,6 +819,137 @@
     /* <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
     /* ===================================================================== */
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
+    /* ===================================================================== */
+
+    /* Card de Tempo Total de Estudo */
+    .study-time-summary-card {
+        background: linear-gradient(145deg, #e3f2fd, #e0f2f7); /* Azul claro suave */
+        border-color: #90caf9;
+        border-left-color: #2196f3; /* Azul primário */
+        box-shadow: 0 4px 8px -2px rgba(33, 150, 243, 0.1), 0 2px 4px -2px rgba(33, 150, 243, 0.07);
+    }
+    .study-time-summary-card .stat-card-title i {
+        color: #1976d2; /* Azul escuro */
+        background-color: #bbdefb;
+    }
+    .study-time-summary-card .time-value {
+        font-size: 1.8rem; /* Tamanho maior para os valores principais */
+        font-weight: 700;
+        color: #1565c0; /* Azul mais escuro para o tempo */
+    }
+    .study-time-summary-card .time-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #42a5f5; /* Azul médio */
+    }
+    .study-time-summary-card:hover {
+        border-color: #64b5f6;
+        box-shadow: 0 10px 20px -5px rgba(33, 150, 243, 0.15), 0 4px 6px -4px rgba(33, 150, 243, 0.1);
+    }
+
+    /* Card de Estatísticas por Matéria */
+    .subject-stats-card {
+        background: linear-gradient(145deg, #e8f5e9, #f0fcf2); /* Verde claro suave */
+        border-color: #a5d6a7;
+        border-left-color: #4caf50; /* Verde primário */
+        box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
+    }
+    .subject-stats-card .stat-card-title i {
+        color: #388e3c; /* Verde escuro */
+        background-color: #c8e6c9;
+    }
+    .subject-stats-card .most-studied-subject {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2e7d32; /* Verde mais escuro */
+        margin-bottom: 0.5rem;
+    }
+    .subject-stats-card .most-studied-duration {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1b5e20; /* Verde ainda mais escuro */
+    }
+    .subject-stats-card .subject-list-item {
+        font-size: 0.9rem;
+        color: #4caf50;
+        margin-bottom: 0.25rem;
+    }
+    .subject-stats-card:hover {
+        border-color: #81c784;
+        box-shadow: 0 10px 20px -5px rgba(76, 175, 80, 0.15), 0 4px 6px -4px rgba(76, 175, 80, 0.1);
+    }
+    
+    /* Ajustes para o grid principal para acomodar 2x3 ou 3x2, mantendo o Post-It fixo */
+    @media (min-width: 768px) {
+        /* Grid para telas médias e maiores, 3 colunas */
+        #main-cards-grid {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, auto); /* Duas linhas de altura automática */
+        }
+        
+        /* Posicionamento do Post-It na primeira coluna, ocupando duas linhas */
+        .todo-list-card {
+            grid-column: 1; /* Primeira coluna */
+            grid-row: 1 / span 2; /* Ocupa da linha 1 até o final da linha 2 */
+        }
+
+        /* Posicionamento dos novos cards e dos existentes para preencher o espaço */
+        .study-time-summary-card {
+            grid-column: 2; /* Segunda coluna */
+            grid-row: 1; /* Primeira linha */
+        }
+
+        .subject-stats-card {
+            grid-column: 3; /* Terceira coluna */
+            grid-row: 1; /* Primeira linha */
+        }
+
+        .recent-activities-card {
+            grid-column: 2; /* Segunda coluna */
+            grid-row: 2; /* Segunda linha */
+        }
+
+        .daily-motivation-card {
+            grid-column: 3; /* Terceira coluna */
+            grid-row: 2; /* Segunda linha */
+        }
+
+        /* Os cards Streak e Level movem-se para baixo para manter o layout */
+        .streak-card {
+            grid-column: span 1; /* Ocupa 1 coluna */
+            grid-row: auto; /* Padrão de fluxo (abaixo dos demais cards) */
+        }
+
+        .level-card {
+            grid-column: span 1; /* Ocupa 1 coluna */
+            grid-row: auto; /* Padrão de fluxo */
+        }
+    }
+
+    /* Em telas pequenas (mobile), todos os cards voltam a empilhar normalmente */
+    @media (max-width: 767px) {
+        #main-cards-grid {
+            grid-template-columns: 1fr; /* Apenas uma coluna */
+            grid-template-rows: auto; /* Altura automática */
+        }
+        .todo-list-card,
+        .study-time-summary-card,
+        .subject-stats-card,
+        .recent-activities-card,
+        .daily-motivation-card,
+        .streak-card,
+        .level-card {
+            grid-column: auto; /* Volta ao comportamento padrão de coluna */
+            grid-row: auto; /* Volta ao comportamento padrão de linha */
+        }
+    }
+
+    /* ===================================================================== */
+    /* <<< FIM DA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
+    /* ===================================================================== */
+
 </style>
 {% endblock %}
 
@@ -904,7 +1035,41 @@
             </ul>
         </div>
 
-        {# Atividades Recentes (segunda coluna, primeira linha) #}
+        {# NOVO CARD: Tempo Total de Estudo #}
+        <div class="stat-card study-time-summary-card" id="study-time-summary-card">
+            <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo de Estudo</h2>
+            <div class="flex flex-col items-center justify-center h-full">
+                <div class="text-center mb-4">
+                    <p class="time-label">Total Acumulado:</p>
+                    <p id="total-study-time" class="time-value">--h --m</p>
+                </div>
+                <div class="flex justify-around w-full">
+                    <div class="text-center">
+                        <p class="time-label">Hoje:</p>
+                        <p id="study-today-time" class="time-value text-green-600">--h --m</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="time-label">Últimos 7 Dias:</p>
+                        <p id="study-last-7-days-time" class="time-value text-purple-600">--h --m</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# NOVO CARD: Estatísticas por Matéria #}
+        <div class="stat-card subject-stats-card" id="subject-stats-card">
+            <h2 class="stat-card-title"><i class="fas fa-book-reader"></i> Estatísticas por Matéria</h2>
+            <div class="flex flex-col items-center justify-center h-full">
+                <p class="most-studied-subject">Matéria Mais Estudada:</p>
+                <p id="most-studied-subject-name" class="most-studied-duration">Carregando...</p>
+                <p id="most-studied-subject-duration" class="text-gray-600 mt-1">--h --m</p>
+                <button id="view-all-subject-stats-btn" class="action-button mt-4 px-3 py-1.5 text-sm" style="background-color: #4caf50;">
+                    <i class="fas fa-list-ul mr-2"></i> Ver Todas
+                </button>
+            </div>
+        </div>
+
+        {# Atividades Recentes (segunda coluna, segunda linha) #}
         {% if recent_activities %}
         <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
@@ -923,15 +1088,26 @@
         </div>
         {% endif %}
 
-        {# Motivação Diária (terceira coluna, primeira linha) #}
+        {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
         <div class="stat-card daily-motivation-card" id="daily-motivation-card"> {# Adicionado ID #}
             <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
             <div id="motivation-date" class="motivation-date"></div>
             <p id="motivation-text" class="motivation-text"></p>
         </div>
 
-        {# Meu Nível (segunda coluna, segunda linha - NOVA POSIÇÃO) #}
-        <div class="stat-card level-card" id="level-card">
+        {# Sequência de Estudos (segunda coluna, segunda linha) #}
+        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
+            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
+            {% if user_streak > 0 %}
+                <div class="streak-display">{{ user_streak }}</div>
+                <p class="streak-text">dias consecutivos!</p>
+            {% else %}
+                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+            {% endif %}
+        </div>
+
+        {# Meu Nível (terceira coluna, segunda linha) #}
+        <div class="stat-card level-card" id="level-card"> {# Adicionado ID #}
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
             <div class="level-info">
                 <i class="{{ level_info.current_level.icon }} level-icon"></i>
@@ -951,38 +1127,26 @@
                 <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
             {% endif %}
         </div>
-
-        {# Medalhas e Feitos (terceira coluna, segunda linha - NOVA POSIÇÃO) #}
-        <div class="stat-card achievements-card" id="achievements-card">
-            <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
-            {% if user_achievements %}
-                <div class="achievements-list">
-                    {% for achievement in user_achievements %}
-                        <span class="achievement-badge" title="{{ achievement.description }}">
-                            <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                        </span>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
-            {% endif %}
-        </div>
-        
-        {# Sequência de Estudos (Ficará na última posição disponível da segunda linha do grid, que seria a 3ª coluna, 2ª linha. Ocupará o espaço vazio que sobrou.) #}
-        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
-            <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            {% if user_streak > 0 %}
-                <div class="streak-display">{{ user_streak }}</div>
-                <p class="streak-text">dias consecutivos!</p>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-            {% endif %}
-        </div>
     </div>
     {# ===================================================================== #}
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
     
+    <div class="stat-card achievements-card" id="achievements-card"> {# Adicionado ID #}
+        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
+        {% if user_achievements %}
+            <div class="achievements-list">
+                {% for achievement in user_achievements %}
+                    <span class="achievement-badge" title="{{ achievement.description }}">
+                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+        {% endif %}
+    </div>
+
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
             <div class="md:col-span-2 relative">
@@ -1342,6 +1506,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationTextElement = document.getElementById('motivation-text');
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
+    
+    // Elementos dos novos cards de estatísticas de estudo
+    const totalStudyTimeElement = document.getElementById('total-study-time');
+    const studyTodayTimeElement = document.getElementById('study-today-time');
+    const studyLast7DaysTimeElement = document.getElementById('study-last-7-days-time');
+    const mostStudiedSubjectNameElement = document.getElementById('most-studied-subject-name');
+    const mostStudiedSubjectDurationElement = document.getElementById('most-studied-subject-duration');
+    const viewAllSubjectStatsBtn = document.getElementById('view-all-subject-stats-btn');
+
 
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
@@ -1384,7 +1557,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('daily-motivation-card'),
         document.getElementById('streak-card'),
         document.getElementById('level-card'),
-        document.getElementById('achievements-card')
+        document.getElementById('achievements-card'),
+        // Adicionados os novos cards para serem controlados pelo botão
+        document.getElementById('study-time-summary-card'),
+        document.getElementById('subject-stats-card')
     ];
 
     function applyCardsVisibility(hidden) {
@@ -1890,6 +2066,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderTodoItems();
         displayDailyMotivation();
         setupDynamicPlaceholder();
+        fetchAndDisplayStudyStats(); // CHAMADA PARA CARREGAR AS ESTATÍSTICAS DE ESTUDO
     }
     
     async function fetchAndRenderTodoItems() {
@@ -1992,6 +2169,58 @@ document.addEventListener('DOMContentLoaded', function() {
         const dayIndex = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) % motivationalPhrases.length;
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
+
+    // =====================================================================
+    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO PARA BUSCAR E EXIBIR ESTATÍSTICAS DE ESTUDO >>>
+    // =====================================================================
+    async function fetchAndDisplayStudyStats() {
+        try {
+            const response = await fetch('/student/api/study_stats');
+            const data = await response.json();
+            if (data.success) {
+                totalStudyTimeElement.textContent = data.total_formatted_duration_all_time;
+                studyTodayTimeElement.textContent = data.formatted_study_today;
+                studyLast7DaysTimeElement.textContent = data.formatted_study_last_7_days;
+
+                // Estatística da matéria mais estudada
+                mostStudiedSubjectNameElement.textContent = data.most_studied_subject.name;
+                mostStudiedSubjectDurationElement.textContent = data.most_studied_subject.formatted_duration;
+
+                // Para o botão "Ver Todas", podemos criar um modal ou redirecionar para uma página de estatísticas mais detalhadas
+                // Por enquanto, farei um alert simples com as informações completas
+                viewAllSubjectStatsBtn.addEventListener('click', () => {
+                    let subjectStatsText = "Estatísticas por Matéria:\n\n";
+                    if (data.stats_by_subject.length > 0) {
+                        data.stats_by_subject.forEach(stat => {
+                            subjectStatsText += `${stat.subject_name}: ${stat.formatted_duration}\n`;
+                        });
+                    } else {
+                        subjectStatsText += "Nenhum estudo registrado por matéria ainda.";
+                    }
+                    alert(subjectStatsText);
+                });
+
+
+            } else {
+                console.error('Erro ao carregar estatísticas de estudo:', data.error);
+                totalStudyTimeElement.textContent = '--h --m';
+                studyTodayTimeElement.textContent = '--h --m';
+                studyLast7DaysTimeElement.textContent = '--h --m';
+                mostStudiedSubjectNameElement.textContent = 'N/A';
+                mostStudiedSubjectDurationElement.textContent = '--h --m';
+            }
+        } catch (error) {
+            console.error('Erro de rede ao carregar estatísticas de estudo:', error);
+            totalStudyTimeElement.textContent = '--h --m';
+            studyTodayTimeElement.textContent = '--h --m';
+            studyLast7DaysTimeElement.textContent = '--h --m';
+            mostStudiedSubjectNameElement.textContent = 'N/A';
+            mostStudiedSubjectDurationElement.textContent = '--h --m';
+        }
+    }
+    // =====================================================================
+    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÃO PARA BUSCAR E EXIBIR ESTATÍSTICAS DE ESTUDO >>>
+    // =====================================================================
     
     initializeDashboard();
 });
