@@ -401,7 +401,7 @@
     .search-input-with-icon { padding-left: 2.75rem !important; }
     .search-wrapper .search-input-with-icon:focus + .search-icon { color: #2563eb; }
     .search-wrapper .search-input-with-icon:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-    .autocomplete-container { position: absolute; background-color: white; border: 1.2px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
+    .autocomplete-container { position: absolute; background-color: white; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 1000; width: 100%; max-height: 400px; overflow-y: auto; display: none; }
     .autocomplete-item { padding: 0.75rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
     .autocomplete-item:hover { background-color: #f8fafc; }
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
@@ -820,135 +820,66 @@
     /* ===================================================================== */
 
     /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
+    /* <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
     /* ===================================================================== */
+    /* Estilos para o card de Tempo Total de Estudo */
+    .total-study-time-card {
+        background: linear-gradient(145deg, #e0f2f7, #f0faff); /* Azul claro */
+        border-color: #81d4fa;
+        border-left-color: #03a9f4; /* Azul vibrante */
+        box-shadow: 0 4px 8px -2px rgba(3, 169, 244, 0.1), 0 2px 4px -2px rgba(3, 169, 244, 0.07);
+    }
+    .total-study-time-card .stat-card-title i {
+        color: #0288d1; /* Azul escuro */
+        background-color: #e3f2fd;
+    }
+    .total-study-time-card:hover {
+        border-color: #4fc3f7;
+        box-shadow: 0 10px 20px -5px rgba(3, 169, 244, 0.15), 0 4px 6px -4px rgba(3, 169, 244, 0.1);
+    }
+    .study-time-info {
+        font-size: 1rem;
+        color: #1c5e7f;
+        margin-bottom: 0.5rem;
+    }
+    .study-time-today {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0288d1;
+    }
 
-    /* Card de Tempo Total de Estudo */
-    .study-time-summary-card {
-        background: linear-gradient(145deg, #e3f2fd, #e0f2f7); /* Azul claro suave */
-        border-color: #90caf9;
-        border-left-color: #2196f3; /* Azul primário */
-        box-shadow: 0 4px 8px -2px rgba(33, 150, 243, 0.1), 0 2px 4px -2px rgba(33, 150, 243, 0.07);
-    }
-    .study-time-summary-card .stat-card-title i {
-        color: #1976d2; /* Azul escuro */
-        background-color: #bbdefb;
-    }
-    .study-time-summary-card .time-value {
-        font-size: 1.8rem; /* Tamanho maior para os valores principais */
-        font-weight: 700;
-        color: #1565c0; /* Azul mais escuro para o tempo */
-    }
-    .study-time-summary-card .time-label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #42a5f5; /* Azul médio */
-    }
-    .study-time-summary-card:hover {
-        border-color: #64b5f6;
-        box-shadow: 0 10px 20px -5px rgba(33, 150, 243, 0.15), 0 4px 6px -4px rgba(33, 150, 243, 0.1);
-    }
-
-    /* Card de Estatísticas por Matéria */
+    /* Estilos para o card de Estatística por Matéria */
     .subject-stats-card {
-        background: linear-gradient(145deg, #e8f5e9, #f0fcf2); /* Verde claro suave */
+        background: linear-gradient(145deg, #e8f5e9, #f5fcf5); /* Verde claro */
         border-color: #a5d6a7;
-        border-left-color: #4caf50; /* Verde primário */
+        border-left-color: #4caf50; /* Verde vibrante */
         box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
     }
     .subject-stats-card .stat-card-title i {
         color: #388e3c; /* Verde escuro */
-        background-color: #c8e6c9;
-    }
-    .subject-stats-card .most-studied-subject {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #2e7d32; /* Verde mais escuro */
-        margin-bottom: 0.5rem;
-    }
-    .subject-stats-card .most-studied-duration {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1b5e20; /* Verde ainda mais escuro */
-    }
-    .subject-stats-card .subject-list-item {
-        font-size: 0.9rem;
-        color: #4caf50;
-        margin-bottom: 0.25rem;
+        background-color: #e8f5e9;
     }
     .subject-stats-card:hover {
         border-color: #81c784;
         box-shadow: 0 10px 20px -5px rgba(76, 175, 80, 0.15), 0 4px 6px -4px rgba(76, 175, 80, 0.1);
     }
-    
-    /* Ajustes para o grid principal para acomodar 2x3 ou 3x2, mantendo o Post-It fixo */
-    @media (min-width: 768px) {
-        /* Grid para telas médias e maiores, 3 colunas */
-        #main-cards-grid {
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(2, auto); /* Duas linhas de altura automática */
-        }
-        
-        /* Posicionamento do Post-It na primeira coluna, ocupando duas linhas */
-        .todo-list-card {
-            grid-column: 1; /* Primeira coluna */
-            grid-row: 1 / span 2; /* Ocupa da linha 1 até o final da linha 2 */
-        }
-
-        /* Posicionamento dos novos cards e dos existentes para preencher o espaço */
-        .study-time-summary-card {
-            grid-column: 2; /* Segunda coluna */
-            grid-row: 1; /* Primeira linha */
-        }
-
-        .subject-stats-card {
-            grid-column: 3; /* Terceira coluna */
-            grid-row: 1; /* Primeira linha */
-        }
-
-        .recent-activities-card {
-            grid-column: 2; /* Segunda coluna */
-            grid-row: 2; /* Segunda linha */
-        }
-
-        .daily-motivation-card {
-            grid-column: 3; /* Terceira coluna */
-            grid-row: 2; /* Segunda linha */
-        }
-
-        /* Os cards Streak e Level movem-se para baixo para manter o layout */
-        .streak-card {
-            grid-column: span 1; /* Ocupa 1 coluna */
-            grid-row: auto; /* Padrão de fluxo (abaixo dos demais cards) */
-        }
-
-        .level-card {
-            grid-column: span 1; /* Ocupa 1 coluna */
-            grid-row: auto; /* Padrão de fluxo */
-        }
+    .most-studied-text {
+        font-size: 0.95rem;
+        color: #1b5e20;
+        margin-bottom: 0.75rem;
     }
-
-    /* Em telas pequenas (mobile), todos os cards voltam a empilhar normalmente */
-    @media (max-width: 767px) {
-        #main-cards-grid {
-            grid-template-columns: 1fr; /* Apenas uma coluna */
-            grid-template-rows: auto; /* Altura automática */
-        }
-        .todo-list-card,
-        .study-time-summary-card,
-        .subject-stats-card,
-        .recent-activities-card,
-        .daily-motivation-card,
-        .streak-card,
-        .level-card {
-            grid-column: auto; /* Volta ao comportamento padrão de coluna */
-            grid-row: auto; /* Volta ao comportamento padrão de linha */
-        }
+    .chart-container {
+        position: relative;
+        height: 200px; /* Altura fixa para o gráfico */
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
+    /* ===================================================================== */
+    /* <<< FIM DA NOVA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
+    /* ===================================================================== */
 
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
-    /* ===================================================================== */
 
 </style>
 {% endblock %}
@@ -1035,41 +966,7 @@
             </ul>
         </div>
 
-        {# NOVO CARD: Tempo Total de Estudo #}
-        <div class="stat-card study-time-summary-card" id="study-time-summary-card">
-            <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo de Estudo</h2>
-            <div class="flex flex-col items-center justify-center h-full">
-                <div class="text-center mb-4">
-                    <p class="time-label">Total Acumulado:</p>
-                    <p id="total-study-time" class="time-value">--h --m</p>
-                </div>
-                <div class="flex justify-around w-full">
-                    <div class="text-center">
-                        <p class="time-label">Hoje:</p>
-                        <p id="study-today-time" class="time-value text-green-600">--h --m</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="time-label">Últimos 7 Dias:</p>
-                        <p id="study-last-7-days-time" class="time-value text-purple-600">--h --m</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# NOVO CARD: Estatísticas por Matéria #}
-        <div class="stat-card subject-stats-card" id="subject-stats-card">
-            <h2 class="stat-card-title"><i class="fas fa-book-reader"></i> Estatísticas por Matéria</h2>
-            <div class="flex flex-col items-center justify-center h-full">
-                <p class="most-studied-subject">Matéria Mais Estudada:</p>
-                <p id="most-studied-subject-name" class="most-studied-duration">Carregando...</p>
-                <p id="most-studied-subject-duration" class="text-gray-600 mt-1">--h --m</p>
-                <button id="view-all-subject-stats-btn" class="action-button mt-4 px-3 py-1.5 text-sm" style="background-color: #4caf50;">
-                    <i class="fas fa-list-ul mr-2"></i> Ver Todas
-                </button>
-            </div>
-        </div>
-
-        {# Atividades Recentes (segunda coluna, segunda linha) #}
+        {# Atividades Recentes (segunda coluna, primeira linha) #}
         {% if recent_activities %}
         <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
@@ -1127,6 +1024,28 @@
                 <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
             {% endif %}
         </div>
+
+        {# NOVO CARD: Tempo Total de Estudo #}
+        <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
+            <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
+            <p class="study-time-info">Você já estudou <strong>{{ total_study_formatted }}</strong>.</p>
+            <p class="study-time-info">Nesta semana, você dedicou <strong>{{ weekly_study_formatted }}</strong> aos estudos.</p>
+            <p class="study-time-today">Hoje você já estudou <strong>{{ daily_study_formatted }}</strong>.</p>
+        </div>
+
+        {# NOVO CARD: Estatística por Matéria #}
+        <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
+            <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
+            {% if most_studied_subject %}
+                <p class="most-studied-text">Sua matéria mais estudada é <strong>{{ most_studied_subject.name }}</strong> com <strong>{{ most_studied_subject.duration }}</strong>.</p>
+                <div class="chart-container">
+                    <canvas id="subjectStudyChart"></canvas>
+                </div>
+            {% else %}
+                <p class="text-gray-500 italic mt-2 text-center">Comece a estudar para ver suas estatísticas aqui!</p>
+            {% endif %}
+        </div>
+
     </div>
     {# ===================================================================== #}
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
@@ -1356,6 +1275,8 @@
 {% block scripts %}
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+{# <<< NOVO: Importa a biblioteca Chart.js para gráficos >>> #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1506,15 +1427,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationTextElement = document.getElementById('motivation-text');
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
-    
-    // Elementos dos novos cards de estatísticas de estudo
-    const totalStudyTimeElement = document.getElementById('total-study-time');
-    const studyTodayTimeElement = document.getElementById('study-today-time');
-    const studyLast7DaysTimeElement = document.getElementById('study-last-7-days-time');
-    const mostStudiedSubjectNameElement = document.getElementById('most-studied-subject-name');
-    const mostStudiedSubjectDurationElement = document.getElementById('most-studied-subject-duration');
-    const viewAllSubjectStatsBtn = document.getElementById('view-all-subject-stats-btn');
-
 
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
@@ -1558,9 +1470,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('streak-card'),
         document.getElementById('level-card'),
         document.getElementById('achievements-card'),
-        // Adicionados os novos cards para serem controlados pelo botão
-        document.getElementById('study-time-summary-card'),
+        // <<< NOVO: Adiciona os novos cards ao array de elementos a serem ocultados/mostrados >>>
+        document.getElementById('total-study-time-card'),
         document.getElementById('subject-stats-card')
+        // <<< FIM NOVO >>>
     ];
 
     function applyCardsVisibility(hidden) {
@@ -2066,7 +1979,9 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderTodoItems();
         displayDailyMotivation();
         setupDynamicPlaceholder();
-        fetchAndDisplayStudyStats(); // CHAMADA PARA CARREGAR AS ESTATÍSTICAS DE ESTUDO
+        // <<< NOVO: Inicializa o gráfico de estudo por matéria >>>
+        initializeSubjectStudyChart();
+        // <<< FIM NOVO >>>
     }
     
     async function fetchAndRenderTodoItems() {
@@ -2169,58 +2084,106 @@ document.addEventListener('DOMContentLoaded', function() {
         const dayIndex = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) % motivationalPhrases.length;
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
+    
+    // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Lógica para o gráfico de pizza de estudo por matéria >>>
+    let subjectStudyChart = null;
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO PARA BUSCAR E EXIBIR ESTATÍSTICAS DE ESTUDO >>>
-    // =====================================================================
-    async function fetchAndDisplayStudyStats() {
-        try {
-            const response = await fetch('/student/api/study_stats');
-            const data = await response.json();
-            if (data.success) {
-                totalStudyTimeElement.textContent = data.total_formatted_duration_all_time;
-                studyTodayTimeElement.textContent = data.formatted_study_today;
-                studyLast7DaysTimeElement.textContent = data.formatted_study_last_7_days;
+    function initializeSubjectStudyChart() {
+        const ctx = document.getElementById('subjectStudyChart');
+        const studyData = {{ study_data_for_chart | tojson }};
 
-                // Estatística da matéria mais estudada
-                mostStudiedSubjectNameElement.textContent = data.most_studied_subject.name;
-                mostStudiedSubjectDurationElement.textContent = data.most_studied_subject.formatted_duration;
-
-                // Para o botão "Ver Todas", podemos criar um modal ou redirecionar para uma página de estatísticas mais detalhadas
-                // Por enquanto, farei um alert simples com as informações completas
-                viewAllSubjectStatsBtn.addEventListener('click', () => {
-                    let subjectStatsText = "Estatísticas por Matéria:\n\n";
-                    if (data.stats_by_subject.length > 0) {
-                        data.stats_by_subject.forEach(stat => {
-                            subjectStatsText += `${stat.subject_name}: ${stat.formatted_duration}\n`;
-                        });
-                    } else {
-                        subjectStatsText += "Nenhum estudo registrado por matéria ainda.";
-                    }
-                    alert(subjectStatsText);
-                });
-
-
-            } else {
-                console.error('Erro ao carregar estatísticas de estudo:', data.error);
-                totalStudyTimeElement.textContent = '--h --m';
-                studyTodayTimeElement.textContent = '--h --m';
-                studyLast7DaysTimeElement.textContent = '--h --m';
-                mostStudiedSubjectNameElement.textContent = 'N/A';
-                mostStudiedSubjectDurationElement.textContent = '--h --m';
+        if (!ctx || studyData.length === 0) {
+            if (ctx) { // Se o canvas existe mas não há dados, garante que não mostra um gráfico vazio
+                ctx.style.display = 'none'; 
             }
-        } catch (error) {
-            console.error('Erro de rede ao carregar estatísticas de estudo:', error);
-            totalStudyTimeElement.textContent = '--h --m';
-            studyTodayTimeElement.textContent = '--h --m';
-            studyLast7DaysTimeElement.textContent = '--h --m';
-            mostStudiedSubjectNameElement.textContent = 'N/A';
-            mostStudiedSubjectDurationElement.textContent = '--h --m';
+            return;
+        } else {
+            ctx.style.display = 'block';
         }
+
+        const labels = studyData.map(item => item.name);
+        const data = studyData.map(item => item.duration_seconds);
+
+        const backgroundColors = [
+            'rgba(255, 99, 132, 0.7)', // Red
+            'rgba(54, 162, 235, 0.7)', // Blue
+            'rgba(255, 206, 86, 0.7)', // Yellow
+            'rgba(75, 192, 192, 0.7)', // Green
+            'rgba(153, 102, 255, 0.7)',// Purple
+            'rgba(255, 159, 64, 0.7)', // Orange
+            'rgba(199, 199, 199, 0.7)',// Grey
+            'rgba(83, 102, 255, 0.7)', // Indigo
+            'rgba(201, 203, 207, 0.7)' // Light Grey
+        ];
+        const borderColors = [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(199, 199, 199, 1)',
+            'rgba(83, 102, 255, 1)',
+            'rgba(201, 203, 207, 1)'
+        ];
+
+        if (subjectStudyChart) {
+            subjectStudyChart.destroy(); // Destrói a instância anterior do gráfico se existir
+        }
+
+        subjectStudyChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right', // Posição da legenda à direita
+                        labels: {
+                            color: '#4b5563', // Cor do texto da legenda
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    const totalSeconds = context.parsed;
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                    const seconds = totalSeconds % 60;
+                                    
+                                    let timeString = '';
+                                    if (hours > 0) timeString += `${hours}h `;
+                                    if (minutes > 0) timeString += `${minutes}m `;
+                                    if (seconds > 0 || (hours === 0 && minutes === 0)) timeString += `${seconds}s`; // Mostrar segundos se for muito pouco tempo
+                                    
+                                    label += timeString.trim();
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO: FUNÇÃO PARA BUSCAR E EXIBIR ESTATÍSTICAS DE ESTUDO >>>
-    // =====================================================================
+    // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
     
     initializeDashboard();
 });
