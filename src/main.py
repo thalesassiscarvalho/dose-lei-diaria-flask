@@ -21,7 +21,7 @@ from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
+from src.models.study import StudySession 
 # --- FIM DA IMPORTAÇÃO ADICIONADA ---
 
 from src.routes.auth import auth_bp
@@ -44,55 +44,55 @@ app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
         "'self'",
-        "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
-        'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
+        "'unsafe-inline'", 
+        'https://cdn.jsdelivr.net', 
         'https://cdn.tailwindcss.com',
-        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
-        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
+        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
         'https://kit.fontawesome.com',
-        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir o CKEditor 5
+        'https://cdn.ckeditor.com' 
     ],
     'style-src': [
         "'self'",
-        "'unsafe-inline'", # Necessário para estilos inline
-        'https://cdn.jsdelivr.net', # Para Toastify CSS
-        'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
-        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
-        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
+        "'unsafe-inline'", 
+        'https://cdn.jsdelivr.net', 
+        'https://cdnjs.cloudflare.com', 
+        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
         'https://fonts.googleapis.com',
         'https://ka-f.fontawesome.com',
-        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir os estilos do CKEditor 5
+        'https://cdn.ckeditor.com' 
     ],
     'font-src': [
         "'self'",
-        'https://cdnjs.cloudflare.com', # Para Font Awesome webfonts
+        'https://cdnjs.cloudflare.com', 
         'https://fonts.gstatic.com',
         'https://ka-f.fontawesome.com'
     ],
     'img-src': [
         "'self'",
-        'data:', # Permite imagens base64
-        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
-        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir imagens do CKEditor 5 (se ele usar CDN para ícones, etc.)
+        'data:', 
+        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        'https://cdn.ckeditor.com' 
     ],
     'media-src': [
         "'self'",
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Para os arquivos de áudio das ondas neurais
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' 
     ],
     'connect-src': [
         "'self'",
-        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
+        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
         'https://ka-f.fontawesome.com',
-        'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
-        'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
-        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com', # Adicionado para os áudios das ondas neurais (fetch)
-        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir conexões do CKEditor 5 (para plugins, etc.)
+        'https://cdn.jsdelivr.net', 
+        'https://cdnjs.cloudflare.com', 
+        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com', 
+        'https://cdn.ckeditor.com' 
     ],
-    'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
-    'object-src': ["'none'"], # Impede a carga de plugins como Flash
-    'form-action': ["'self'"], # Restringe URLs que podem ser usadas como destinos para envios de formulário
-    'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
+    'frame-ancestors': ["'none'"], 
+    'object-src': ["'none'"], 
+    'form-action': ["'self'"], 
+    'base-uri': ["'self'"] 
 }
 
 db.init_app(app)
