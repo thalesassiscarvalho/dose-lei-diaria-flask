@@ -1025,24 +1025,26 @@
             {% endif %}
         </div>
 
-        {# INÍCIO DA ALTERAÇÃO: CARD DE MEDALHAS E FEITOS MOVIDO PARA CIMA, OCUPANDO 3 COLUNAS #}
-        <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
-            <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
-            {% if user_achievements %}
-                <div class="achievements-list">
-                    {% for achievement in user_achievements %}
-                        <span class="achievement-badge" title="{{ achievement.description }}">
-                            <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                        </span>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
-            {% endif %}
-        </div>
-        {# FIM DA ALTERAÇÃO #}
+    </div>
 
-        {# NOVO CARD: Tempo Total de Estudo #}
+    {# Medalhas e Feitos (agora acima dos cards de tempo e estatística, ocupando todas as colunas) #}
+    <div class="stat-card achievements-card md:col-span-3" id="achievements-card"> {# Adicionado ID e classe para ocupar 3 colunas #}
+        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
+        {% if user_achievements %}
+            <div class="achievements-list">
+                {% for achievement in user_achievements %}
+                    <span class="achievement-badge" title="{{ achievement.description }}">
+                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="study-stats-cards-grid"> {# Novo grid para os cards de estudo #}
+        {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
             <p class="study-time-info">Você já estudou <strong>{{ total_study_formatted }}</strong>.</p>
@@ -1050,7 +1052,7 @@
             <p class="study-time-today">Hoje você já estudou <strong>{{ daily_study_formatted }}</strong>.</p>
         </div>
 
-        {# NOVO CARD: Estatística por Matéria #}
+        {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
         <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
             {% if most_studied_subject %}
@@ -1062,7 +1064,6 @@
                 <p class="text-gray-500 italic mt-2 text-center">Comece a estudar para ver suas estatísticas aqui!</p>
             {% endif %}
         </div>
-
     </div>
     {# ===================================================================== #}
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
@@ -2043,7 +2044,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         try {
-            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ is_completed: checkbox.checked }) });
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } });
             const data = await response.json();
             if (data.success) {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
