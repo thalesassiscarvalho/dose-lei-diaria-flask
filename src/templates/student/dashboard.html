@@ -1043,14 +1043,14 @@
         {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <p class="study-time-info mb-8">
+            <p class="study-time-info">
                 <strong>Estudo Total<strong>: {{ total_study_formatted }} no total! Parabéns!
             </p>
-            <p class="study-time-info mb-8">
-                Estudo Semanal: Você dedicou <strong>{{ weekly_study_formatted }}</strong> aos estudos nesta semana.
+            <p class="study-time-info">
+                <strong>Estudo Semanal</strong>: {{ weekly_study_formatted }} nesta semana.
             </p>
             <p class="study-time-today">
-                Estudo Hoje: Você já estudou <strong>{{ daily_study_formatted }}</strong>.
+               <strong>Estudo Hoje<strong>: Você já estudou {{ daily_study_formatted }}.
             </p>
             </div>
 
