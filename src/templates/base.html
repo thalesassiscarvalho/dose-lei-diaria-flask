@@ -286,9 +286,6 @@
 
     {# Novo bloco para scripts no final do body #}
     {% block custom_scripts %}
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
-    {% endblock %}
-
     <script>
         // Desabilita o clique com o botão direito
         document.addEventListener('contextmenu', function(e) {
@@ -332,5 +329,6 @@
             });
         }
     </script>
-    </body>
+    {% endblock %}
+</body>
 </html>
