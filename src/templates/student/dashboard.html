@@ -1043,14 +1043,18 @@
         {% endif %}
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="study-stats-cards-grid"> {# Novo grid para os cards de estudo #}
-        {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
-        <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
-            <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <p class="study-time-info">Você já estudou <strong>{{ total_study_formatted }}</strong>.</p>
-            <p class="study-time-info">Nesta semana, você dedicou <strong>{{ weekly_study_formatted }}</strong> aos estudos.</p>
-            <p class="study-time-today">Hoje você já estudou <strong>{{ daily_study_formatted }}</strong>.</p>
-        </div>
+    <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
+        <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
+        <p class="study-time-info mb-3" style="color: #0288d1;">
+            <strong>Estudo Total:</strong> Você já estudou <strong>{{ total_study_formatted }}</strong> no total! Parabéns!
+        </p>
+        <p class="study-time-info mb-3" style="color: #388e3c;">
+            <strong>Estudo Semanal:</strong> Você dedicou <strong>{{ weekly_study_formatted }}</strong> aos estudos nesta semana.
+        </p>
+        <p class="study-time-today" style="color: #673ab7;">
+            <strong>Estudo Hoje:</strong> Você já estudou <strong>{{ daily_study_formatted }}</strong>.
+        </p>
+    </div>
 
         {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
         <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
