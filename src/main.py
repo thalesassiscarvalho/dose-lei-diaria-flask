@@ -21,7 +21,7 @@ from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.study import StudySession 
+from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
 # --- FIM DA IMPORTAÇÃO ADICIONADA ---
 
 from src.routes.auth import auth_bp
@@ -44,55 +44,51 @@ app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
         "'self'",
-        "'unsafe-inline'", 
-        'https://cdn.jsdelivr.net', 
+        "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
+        'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
         'https://cdn.tailwindcss.com',
-        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
-        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
-        'https://kit.fontawesome.com',
-        'https://cdn.ckeditor.com' 
+        'https://cdn.quilljs.com',
+        'https://cdn.tiny.cloud',
+        'https://kit.fontawesome.com'
     ],
     'style-src': [
         "'self'",
-        "'unsafe-inline'", 
-        'https://cdn.jsdelivr.net', 
-        'https://cdnjs.cloudflare.com', 
-        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
-        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        "'unsafe-inline'", # Necessário para estilos inline
+        'https://cdn.jsdelivr.net', # Para Toastify CSS
+        'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
+        'https://cdn.quilljs.com', # Para Quill CSS
+        'https://cdn.tiny.cloud',
         'https://fonts.googleapis.com',
-        'https://ka-f.fontawesome.com',
-        'https://cdn.ckeditor.com' 
+        'https://ka-f.fontawesome.com'
     ],
     'font-src': [
         "'self'",
-        'https://cdnjs.cloudflare.com', 
+        'https://cdnjs.cloudflare.com', # Para Font Awesome webfonts
         'https://fonts.gstatic.com',
         'https://ka-f.fontawesome.com'
     ],
     'img-src': [
         "'self'",
-        'data:', 
-        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
-        'https://cdn.ckeditor.com' 
+        'data:', # Permite imagens base64
+        'https://cdn.tiny.cloud'
     ],
     'media-src': [
         "'self'",
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' 
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Para os arquivos de áudio das ondas neurais
     ],
     'connect-src': [
         "'self'",
-        # 'https://cdn.tiny.cloud', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
+        'https://cdn.tiny.cloud',
         'https://ka-f.fontawesome.com',
-        'https://cdn.jsdelivr.net', 
-        'https://cdnjs.cloudflare.com', 
-        # 'https://cdn.quilljs.com', # REMOVIDO PARA SEMPRE, SE NÃO FOR USAR MAIS
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com', 
-        'https://cdn.ckeditor.com' 
+        'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
+        'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
+        'https://cdn.quilljs.com', # Adicionado para Quill CSS (fetch)
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Adicionado para os áudios das ondas neurais (fetch)
     ],
-    'frame-ancestors': ["'none'"], 
-    'object-src': ["'none'"], 
-    'form-action': ["'self'"], 
-    'base-uri': ["'self'"] 
+    'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
+    'object-src': ["'none'"], # Impede a carga de plugins como Flash
+    'form-action': ["'self'"], # Restringe URLs que podem ser usadas como destinos para envios de formulário
+    'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
 }
 
 db.init_app(app)
