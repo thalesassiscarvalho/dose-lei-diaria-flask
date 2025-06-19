@@ -47,19 +47,21 @@ app.config['CSP_POLICY'] = {
         "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
         'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
         'https://cdn.tailwindcss.com',
-        'https://cdn.quilljs.com',
-        'https://cdn.tiny.cloud',
-        'https://kit.fontawesome.com'
+        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
+        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
+        'https://kit.fontawesome.com',
+        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir o CKEditor 5
     ],
     'style-src': [
         "'self'",
         "'unsafe-inline'", # Necessário para estilos inline
         'https://cdn.jsdelivr.net', # Para Toastify CSS
         'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
-        'https://cdn.quilljs.com', # Para Quill CSS
-        'https://cdn.tiny.cloud',
+        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
+        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
         'https://fonts.googleapis.com',
-        'https://ka-f.fontawesome.com'
+        'https://ka-f.fontawesome.com',
+        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir os estilos do CKEditor 5
     ],
     'font-src': [
         "'self'",
@@ -70,7 +72,8 @@ app.config['CSP_POLICY'] = {
     'img-src': [
         "'self'",
         'data:', # Permite imagens base64
-        'https://cdn.tiny.cloud'
+        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
+        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir imagens do CKEditor 5 (se ele usar CDN para ícones, etc.)
     ],
     'media-src': [
         "'self'",
@@ -78,12 +81,13 @@ app.config['CSP_POLICY'] = {
     ],
     'connect-src': [
         "'self'",
-        'https://cdn.tiny.cloud',
+        # 'https://cdn.tiny.cloud', # REMOVIDO: Se não for mais usar TinyMCE
         'https://ka-f.fontawesome.com',
         'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
         'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
-        'https://cdn.quilljs.com', # Adicionado para Quill CSS (fetch)
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Adicionado para os áudios das ondas neurais (fetch)
+        # 'https://cdn.quilljs.com', # REMOVIDO: Se não for mais usar Quill
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com', # Adicionado para os áudios das ondas neurais (fetch)
+        'https://cdn.ckeditor.com' # ADICIONE ESTA LINHA para permitir conexões do CKEditor 5 (para plugins, etc.)
     ],
     'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
     'object-src': ["'none'"], # Impede a carga de plugins como Flash
