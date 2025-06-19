@@ -828,10 +828,10 @@
         border-color: #81d4fa;
         border-left-color: #03a9f4; /* Azul vibrante */
         box-shadow: 0 4px 8px -2px rgba(3, 169, 244, 0.1), 0 2px 4px -2px rgba(3, 169, 244, 0.07);
-        /* Alterações para o espaçamento vertical */
+        /* Garante que o card ocupe o espaço disponível verticalmente */
         display: flex;
         flex-direction: column;
-        justify-content: space-around; /* Distribui o espaço igualmente */
+        justify-content: space-around; /* Distribui o conteúdo verticalmente */
     }
     .total-study-time-card .stat-card-title i {
         color: #0288d1; /* Azul escuro */
@@ -841,25 +841,52 @@
         border-color: #4fc3f7;
         box-shadow: 0 10px 20px -5px rgba(3, 169, 244, 0.15), 0 4px 6px -4px rgba(3, 169, 244, 0.1);
     }
-    /* Estilos individuais para cada linha de tempo */
-    .total-time-display {
-        font-size: 1.1rem; /* Um pouco maior */
-        color: #0d47a1; /* Azul bem escuro */
-        margin-bottom: 0.75rem; /* Espaçamento entre os itens */
-        font-weight: 500;
+    /* Remover estilos antigos de .study-time-info e .study-time-today */
+    .study-time-info, .study-time-today {
+        margin-bottom: 0; /* Remove a margem inferior padrão */
+        font-size: inherit; /* Garante que o font-size seja controlado pelas novas classes */
     }
-    .weekly-time-display {
-        font-size: 1.1rem; /* Um pouco maior */
-        color: #1b5e20; /* Verde escuro */
-        margin-bottom: 0.75rem; /* Espaçamento entre os itens */
-        font-weight: 500;
+
+    /* Novos estilos para cada item de tempo de estudo */
+    .study-time-item {
+        display: flex;
+        justify-content: space-between; /* Alinha label à esquerda e valor à direita */
+        align-items: center;
+        padding: 0.4rem 0; /* Espaçamento vertical entre os itens */
+        border-bottom: 1px dashed rgba(3, 169, 244, 0.2); /* Linha tracejada suave */
     }
-    .daily-time-display {
-        font-size: 1.25rem; /* Ainda maior para o tempo de hoje */
-        color: #ef6c00; /* Laranja vibrante */
-        font-weight: 700; /* Mais negrito */
+    .study-time-item:last-child {
+        border-bottom: none; /* Remove a borda do último item */
     }
-    /* Fim dos estilos individuais para cada linha de tempo */
+
+    .study-time-label {
+        font-size: 0.95rem; /* Tamanho da fonte para os rótulos */
+        font-weight: 700; /* Títulos em negrito */
+        color: #1c5e7f; /* Cor azul escuro para os rótulos */
+        flex-shrink: 0; /* Impede o rótulo de encolher */
+        margin-right: 1rem; /* Espaço entre o rótulo e o valor */
+    }
+
+    .study-time-value {
+        font-size: 1.1rem; /* Tamanho da fonte para os valores */
+        font-weight: 600; /* Valores em negrito */
+        flex-grow: 1; /* Permite que o valor ocupe o espaço restante */
+        text-align: right; /* Alinha o valor à direita */
+    }
+
+    /* Cores específicas para cada valor de tempo */
+    .study-time-total-value {
+        color: #0288d1; /* Azul vibrante */
+    }
+
+    .study-time-weekly-value {
+        color: #388e3c; /* Verde */
+    }
+
+    .study-time-daily-value {
+        color: #ef6c00; /* Laranja/âmbar */
+    }
+
 
     /* Estilos para o card de Estatística por Matéria */
     .subject-stats-card {
@@ -1060,17 +1087,20 @@
         {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            {# >>> INÍCIO DA ALTERAÇÃO NO HTML DO CARD TEMPO TOTAL DE ESTUDO <<< #}
-            <div class="total-time-display">
-                <span class="font-bold">Total:</span> {{ total_study_formatted }}
+            <div class="flex-grow flex flex-col justify-around"> {# Adiciona flex-grow e flex-col para espaçamento vertical #}
+                <div class="study-time-item">
+                    <span class="study-time-label">Total:</span>
+                    <span class="study-time-value study-time-total-value">{{ total_study_formatted }}</span>
+                </div>
+                <div class="study-time-item">
+                    <span class="study-time-label">Semanal:</span>
+                    <span class="study-time-value study-time-weekly-value">{{ weekly_study_formatted }}</span>
+                </div>
+                <div class="study-time-item">
+                    <span class="study-time-label">Hoje:</span>
+                    <span class="study-time-value study-time-daily-value">{{ daily_study_formatted }}</span>
+                </div>
             </div>
-            <div class="weekly-time-display">
-                <span class="font-bold">Semanal:</span> {{ weekly_study_formatted }}
-            </div>
-            <div class="daily-time-display">
-                <span class="font-bold">Hoje:</span> {{ daily_study_formatted }}
-            </div>
-            {# >>> FIM DA ALTERAÇÃO NO HTML DO CARD TEMPO TOTAL DE ESTUDO <<< #}
         </div>
 
         {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
@@ -2065,17 +2095,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         try {
-            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } });
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ 'is_completed': checkbox.checked }) });
             const data = await response.json();
             if (data.success) {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
                 checkbox.checked = data.todo_item.is_completed;
-                if (data.todo_item.is_completed) todoListUl.appendChild(listItem);
-                else await fetchAndRenderTodoItems();
+                if (data.todo_item.is_completed) {
+                    // Move to the end if completed
+                    todoListUl.appendChild(listItem);
+                } else {
+                    // Re-sort if uncompleted to put it back at the top
+                    await fetchAndRenderTodoItems(); 
+                }
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-            } else checkbox.checked = !checkbox.checked;
-        } catch (error) { checkbox.checked = !checkbox.checked; }
+            } else { 
+                checkbox.checked = !checkbox.checked; // Revert checkbox state
+                Toastify({ text: "Não foi possível atualizar a tarefa.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+            }
+        } catch (error) { 
+            console.error('Erro ao alternar tarefa:', error);
+            checkbox.checked = !checkbox.checked; // Revert checkbox state on error
+            Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+        }
     }
+
 
     async function handleDeleteTodoItem(event) {
         if (!confirm('Tem certeza?')) return;
