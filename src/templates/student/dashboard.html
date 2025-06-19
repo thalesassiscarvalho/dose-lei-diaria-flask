@@ -293,10 +293,6 @@
         color: #8e24aa; /* Roxo escuro para o ícone */
         background-color: #fce4ec; /* Fundo do ícone mais claro */
     }
-    .daily-motivation-card:hover {
-        border-color: #be93d8; /* Borda ao hover */
-        box-shadow: 0 10px 20px -5px rgba(171, 71, 188, 0.15), 0 4px 6px -4px rgba(171, 71, 188, 0.1);
-    }
     .motivation-date {
         font-size: 0.9rem;
         font-weight: 500;
@@ -1098,7 +1094,7 @@
                 </div>
                 <div class="study-time-item">
                     <span class="study-time-label">Hoje:</span>
-                    <span id="daily-study-time-value" class="study-time-value study-time-daily-value"></span>{# Modificado para ser atualizado via JS #}
+                    <span id="daily-study-time-value" class="study-time-value study-time-daily-value">Carregando...</span>{# Modificado para ser atualizado via JS #}
                 </div>
             </div>
         </div>
@@ -1329,7 +1325,7 @@
 {% block scripts %}
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-{# <<< NOVO: Importa a biblioteca Chart.js para gráficos >>> #}
+{# Importa a biblioteca Chart.js para gráficos #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
@@ -1361,13 +1357,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
     const defaultConcursoId = {{ default_concurso_id|tojson }};
     
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para o botão de download do edital >>>
-    // =====================================================================
     const editalButton = document.getElementById('download-edital-btn');
 
     function checkEdital(concursoId) {
-        // Esconde o botão por padrão sempre que a função for chamada
         if (editalButton) {
             editalButton.style.display = 'none';
         }
@@ -1378,15 +1370,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success && data.edital_url) {
                         editalButton.href = data.edital_url;
-                        editalButton.style.display = 'inline-flex'; // Mostra o botão como flexível
+                        editalButton.style.display = 'inline-flex';
                     }
                 })
                 .catch(error => console.error('Erro ao buscar detalhes do edital:', error));
         }
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO >>>
-    // =====================================================================
 
     function updateLawsTitle(concursoSelectElement) {
         const selectedOption = concursoSelectElement.options[concursoSelectElement.selectedIndex];
@@ -1455,9 +1444,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
         
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Chama a função para checar o edital >>>
         checkEdital(filterControls.concurso.value);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (filterControls.concurso.value !== 'all') {
             filterControls.subject.value = '';
@@ -1481,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationTextElement = document.getElementById('motivation-text');
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
-    const dailyStudyTimeValue = document.getElementById('daily-study-time-value'); // Novo elemento para o tempo de estudo diário
+    const dailyStudyTimeValue = document.getElementById('daily-study-time-value');
 
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
@@ -1525,10 +1512,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('streak-card'),
         document.getElementById('level-card'),
         document.getElementById('achievements-card'),
-        // <<< NOVO: Adiciona os novos cards ao array de elementos a serem ocultados/mostrados >>>
-        document.getElementById('total-study-time-card'),
+        document.getElementById('total-study-time-card'), // Adicionado o card de Tempo Total de Estudo
         document.getElementById('subject-stats-card')
-        // <<< FIM NOVO >>>
     ];
 
     function applyCardsVisibility(hidden) {
@@ -1798,9 +1783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
         
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
     });
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -1856,9 +1839,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
         
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (hasFavorites) {
             initialPrompt.style.display = 'block';
@@ -2033,49 +2014,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             timeString += `${minutes} minuto${minutes > 1 ? 's' : ''}`;
         }
-        if (hours === 0 && minutes === 0) { // If less than a minute, show seconds or default to 0 minutes
-            // The backend provides 'daily_study_formatted' as a string, typically in minutes if less than an hour.
-            // If it comes as raw seconds, this conversion handles it. For now, rely on backend's minutes for small values.
-            return `${Math.round(totalSeconds / 60)} minuto${Math.round(totalSeconds / 60) > 1 ? 's' : ''}`;
+        if (hours === 0 && minutes === 0) { // If less than a minute, show only minutes (even if 0 for consistency)
+            return `${minutes} minuto${minutes > 1 ? 's' : ''}`;
         }
         return timeString.trim();
     }
 
-    async function initializeDashboard() {
-        attachEventListeners();
-        
-        if (defaultConcursoId) {
-            filterControls.concurso.value = defaultConcursoId;
-            filterControls.concurso.dispatchEvent(new Event('change'));
-        } else if (filterControls.subject.value === 'all') {
-            showLawsSection();
-            fetchAndRenderLaws();
-        } else {
-            checkEdital(filterControls.concurso.value);
-        }
-        
-        updateDefaultConcursoButtonState();
-        fetchAndRenderTodoItems();
-        displayDailyMotivation();
-        setupDynamicPlaceholder();
-        initializeSubjectStudyChart();
-
-        // Fetch daily study time from an API endpoint if not directly available
-        // Assuming your backend has an endpoint like '/student/api/daily_study_time'
-        try {
-            const response = await fetch('/student/api/daily_study_time');
-            const data = await response.json();
-            if (data.success && data.daily_study_seconds !== undefined) {
-                dailyStudyTimeValue.textContent = formatTime(data.daily_study_seconds);
-            } else {
-                dailyStudyTimeValue.textContent = "N/A"; // Or a default message
-            }
-        } catch (error) {
-            console.error('Erro ao buscar tempo de estudo diário:', error);
-            dailyStudyTimeValue.textContent = "Erro ao carregar";
-        }
-    }
-    
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -2190,7 +2134,6 @@ document.addEventListener('DOMContentLoaded', function() {
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
     
-    // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Lógica para o gráfico de pizza de estudo por matéria >>>
     let subjectStudyChart = null;
 
     function initializeSubjectStudyChart() {
@@ -2198,7 +2141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const studyData = {{ study_data_for_chart | tojson }};
 
         if (!ctx || studyData.length === 0) {
-            if (ctx) { // Se o canvas existe mas não há dados, garante que não mostra um gráfico vazio
+            if (ctx) { 
                 ctx.style.display = 'none'; 
             }
             return;
@@ -2233,7 +2176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
 
         if (subjectStudyChart) {
-            subjectStudyChart.destroy(); // Destrói a instância anterior do gráfico se existir
+            subjectStudyChart.destroy();
         }
 
         subjectStudyChart = new Chart(ctx, {
@@ -2252,9 +2195,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'right', // Posição da legenda à direita
+                        position: 'right',
                         labels: {
-                            color: '#4b5563', // Cor do texto da legenda
+                            color: '#4b5563',
                             font: {
                                 size: 12
                             }
@@ -2276,7 +2219,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     let timeString = '';
                                     if (hours > 0) timeString += `${hours}h `;
                                     if (minutes > 0) timeString += `${minutes}m `;
-                                    if (seconds > 0 || (hours === 0 && minutes === 0)) timeString += `${seconds}s`; // Mostrar segundos se for muito pouco tempo
+                                    if (seconds > 0 || (hours === 0 && minutes === 0)) timeString += `${seconds}s`;
                                     
                                     label += timeString.trim();
                                 }
@@ -2288,7 +2231,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
     
     initializeDashboard();
 });
