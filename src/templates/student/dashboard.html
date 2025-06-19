@@ -1025,7 +1025,7 @@
             {% endif %}
         </div>
 
-        {# MOVIDO E ALTERADO PARA OCUPAR TODAS AS COLUNAS #}
+        {# INÍCIO DA ALTERAÇÃO: CARD DE MEDALHAS E FEITOS MOVIDO PARA CIMA, OCUPANDO 3 COLUNAS #}
         <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
             <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
             {% if user_achievements %}
@@ -1040,6 +1040,7 @@
                 <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
             {% endif %}
         </div>
+        {# FIM DA ALTERAÇÃO #}
 
         {# NOVO CARD: Tempo Total de Estudo #}
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
@@ -1067,9 +1068,6 @@
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
     
-    {# REMOVIDO: O card "Medalhas e Feitos" foi movido para dentro do grid principal acima #}
-    {# <div class="stat-card achievements-card" id="achievements-card"> ... </div> #}
-
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
             <div class="md:col-span-2 relative">
@@ -2045,26 +2043,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         try {
-            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ is_completed: checkbox.checked }) }); // Passa o estado do checkbox
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ is_completed: checkbox.checked }) });
             const data = await response.json();
             if (data.success) {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
                 checkbox.checked = data.todo_item.is_completed;
-                // Se a tarefa foi concluída, move-a para o final da lista (ou reordena)
-                if (data.todo_item.is_completed) {
-                    todoListUl.appendChild(listItem); 
-                } else {
-                    // Se foi desmarcada, re-renderiza para que volte à posição correta (não concluída)
-                    await fetchAndRenderTodoItems();
-                }
+                if (data.todo_item.is_completed) todoListUl.appendChild(listItem);
+                else await fetchAndRenderTodoItems();
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-            } else {
-                checkbox.checked = !checkbox.checked; // Reverte o estado do checkbox se a API falhar
-            }
-        } catch (error) { 
-            console.error('Erro ao alternar tarefa:', error);
-            checkbox.checked = !checkbox.checked; // Reverte o estado do checkbox em caso de erro de rede
-        }
+            } else checkbox.checked = !checkbox.checked;
+        } catch (error) { checkbox.checked = !checkbox.checked; }
     }
 
     async function handleDeleteTodoItem(event) {
