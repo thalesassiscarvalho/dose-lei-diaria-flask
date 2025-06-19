@@ -152,10 +152,11 @@
 {% endblock %}
 
 {% block custom_scripts %}
-{# Inclua o script do CKEditor e seu script de inicialização AQUI #}
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
+{# Inclua o script do CKEditor com 'defer' e seu script de inicialização usando 'window.load' #}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js" defer></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Mude de DOMContentLoaded para window.load
+window.addEventListener('load', function() {
     const addLinkBtn = document.getElementById('add-link-btn');
     const linksContainer = document.getElementById('useful-links-container');
     let linkIndex = linksContainer.getElementsByClassName('link-group').length;
