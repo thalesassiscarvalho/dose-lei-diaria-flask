@@ -156,7 +156,12 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js" defer></script>
 <script>
 // Mude de DOMContentLoaded para window.load
+// Adicione um console.log no início para rastrear a execução
+console.log('Script de inicialização add_edit_law.html carregado.');
+
 window.addEventListener('load', function() {
+    console.log('Evento window.load disparado.');
+
     const addLinkBtn = document.getElementById('add-link-btn');
     const linksContainer = document.getElementById('useful-links-container');
     let linkIndex = linksContainer.getElementsByClassName('link-group').length;
@@ -175,8 +180,10 @@ window.addEventListener('load', function() {
 
     // Função para inicializar o CKEditor 5
     function initializeCKEditor(elementId, height) {
+        console.log(`Tentando inicializar CKEditor para #${elementId}...`);
         // Certifique-se de que ClassicEditor está definido antes de tentar usá-lo
         if (typeof ClassicEditor !== 'undefined') {
+            console.log(`ClassicEditor DEFINIDO para #${elementId}.`);
             ClassicEditor
                 .create( document.querySelector( '#' + elementId ), {
                     toolbar: {
