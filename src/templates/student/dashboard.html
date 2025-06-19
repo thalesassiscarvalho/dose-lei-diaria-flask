@@ -293,6 +293,10 @@
         color: #8e24aa; /* Roxo escuro para o ícone */
         background-color: #fce4ec; /* Fundo do ícone mais claro */
     }
+    .daily-motivation-card:hover {
+        border-color: #be93d8; /* Borda ao hover */
+        box-shadow: 0 10px 20px -5px rgba(171, 71, 188, 0.15), 0 4px 6px -4px rgba(171, 71, 188, 0.1);
+    }
     .motivation-date {
         font-size: 0.9rem;
         font-weight: 500;
@@ -1043,16 +1047,10 @@
         {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <p class="study-time-info">
-                <strong>Estudo Total<strong>: {{ total_study_formatted }} no total! Parabéns!
-            </p>
-            <p class="study-time-info">
-                <strong>Estudo Semanal</strong>: {{ weekly_study_formatted }} nesta semana.
-            </p>
-            <p class="study-time-today">
-               <strong>Estudo Hoje<strong>: Você já estudou {{ daily_study_formatted }}.
-            </p>
-            </div>
+            <p class="study-time-info">Você já estudou <strong>{{ total_study_formatted }}</strong>.</p>
+            <p class="study-time-info">Nesta semana, você dedicou <strong>{{ weekly_study_formatted }}</strong> aos estudos.</p>
+            <p class="study-time-today">Hoje você já estudou <strong>{{ daily_study_formatted }}</strong>.</p>
+        </div>
 
         {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
         <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
