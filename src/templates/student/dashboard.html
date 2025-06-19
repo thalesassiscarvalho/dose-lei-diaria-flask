@@ -75,6 +75,8 @@
     .checkmark:after { content: ""; position: absolute; display: none; }
     .mark-seen-checkbox:checked ~ .checkmark:after { display: block; }
     .mark-seen-checkbox-container .checkmark:after { left: 0.45rem; top: 0.2rem; width: 0.35rem; height: 0.7rem; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .mark-seen-checkbox-container .tooltip { visibility: hidden; width: 120px; background-color: rgba(0, 0, 0, 0.8); color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; }
+    .mark-seen-checkbox-container:hover .tooltip { visibility: visible; opacity: 1; }
     @keyframes fadeOut { from { opacity: 1; height: auto; } to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border-width: 0; } }
     .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
     
@@ -914,44 +916,33 @@
         justify-content: center;
         align-items: center;
     }
-
-    /* INÍCIO: Novos estilos para os botões de filtro do gráfico */
-    .chart-filter-buttons {
+    /* Estilo para a mensagem quando não há dados de estudo */
+    .no-data-message {
         display: flex;
-        justify-content: center; /* Centraliza os botões */
-        gap: 0.5rem; /* Espaço entre os botões */
-        margin-top: 1rem; /* Espaço acima dos botões */
-        margin-bottom: 1rem; /* Espaço abaixo dos botões e acima do texto */
-        flex-wrap: wrap; /* Permite que os botões quebrem linha em telas pequenas */
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem;
+        height: 100%; /* Garante que o contêiner ocupa a altura total do card */
+        color: #6b7280;
     }
 
-    .chart-filter-buttons button {
-        background-color: #e8f5e9; /* Fundo mais claro, para contraste */
-        color: #388e3c; /* Texto verde escuro */
-        border: 1px solid #a5d6a7; /* Borda verde clara */
-        padding: 0.4rem 0.8rem;
-        border-radius: 0.5rem;
+    .no-data-message i {
+        font-size: 2.5rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+
+    .no-data-message p {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-data-message small {
         font-size: 0.85rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        flex-grow: 1; /* Permite que os botões se expandam um pouco */
-        min-width: 90px; /* Garante que o texto não quebre demais */
+        color: #9ca3af;
     }
-
-    .chart-filter-buttons button:hover {
-        background-color: #dcedc8; /* Verde mais claro no hover */
-        border-color: #81c784;
-        color: #1b5e20; /* Texto mais escuro no hover */
-    }
-
-    .chart-filter-buttons button.active {
-        background-color: #4caf50; /* Verde vibrante quando ativo */
-        color: white; /* Texto branco */
-        border-color: #388e3c;
-        box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3); /* Sombra para o botão ativo */
-    }
-    /* FIM: Novos estilos para os botões de filtro do gráfico */
 
     /* ===================================================================== */
     /* <<< FIM DA NOVA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
@@ -1143,21 +1134,21 @@
         {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
         <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
-            {# INÍCIO: Novos botões de filtro para o gráfico #}
-            <div class="chart-filter-buttons">
-                <button data-time-range="total" class="active">Total</button>
-                <button data-time-range="weekly">Últimos 7 Dias</button>
-                <button data-time-range="monthly">Últimos 30 Dias</button>
-            </div>
-            {# FIM: Novos botões de filtro para o gráfico #}
-
             {% if most_studied_subject %}
-                <p class="most-studied-text" id="most-studied-text">Sua matéria mais estudada é <strong>{{ most_studied_subject.name }}</strong> com <strong>{{ most_studied_subject.duration }}</strong>.</p>
+                <p class="most-studied-text">Sua matéria mais estudada é <strong>{{ most_studied_subject.name }}</strong> com <strong>{{ most_studied_subject.duration }}</strong>.</p>
                 <div class="chart-container">
                     <canvas id="subjectStudyChart"></canvas>
                 </div>
             {% else %}
-                <p class="text-gray-500 italic mt-2 text-center" id="no-study-data-message">Comece a estudar para ver suas estatísticas aqui!</p>
+                {# MENSAGEM MELHORADA QUANDO NÃO HÁ DADOS #}
+                <div class="no-data-message">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Parece que você ainda não tem estatísticas de estudo!</p>
+                    <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
+                    <a href="{{ url_for('student.laws') }}" class="action-button mt-4">
+                        <i class="fas fa-book-reader mr-2"></i> Começar a Estudar
+                    </a>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -2078,7 +2069,7 @@ document.addEventListener('DOMContentLoaded', function() {
         displayDailyMotivation();
         setupDynamicPlaceholder();
         // <<< NOVO: Inicializa o gráfico de estudo por matéria >>>
-        initializeSubjectStudyChart('total'); // Inicializa com 'total' por padrão
+        initializeSubjectStudyChart();
         // <<< FIM NOVO >>>
     }
     
@@ -2198,82 +2189,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Lógica para o gráfico de pizza de estudo por matéria >>>
     let subjectStudyChart = null;
-    const chartFilterButtons = document.querySelectorAll('.chart-filter-buttons button');
-    const mostStudiedTextElement = document.getElementById('most-studied-text');
-    const noStudyDataMessageElement = document.getElementById('no-study-data-message');
 
-    // Mapeamento dos dados do template para variáveis JS
-    const allStudyData = {
-        total: {{ study_data_for_chart | tojson }},
-        weekly: {{ weekly_study_data_for_chart | tojson }},
-        monthly: {{ monthly_study_data_for_chart | tojson }}
-    };
-    const mostStudiedSubjectData = {
-        total: {
-            name: "{{ most_studied_subject.name if most_studied_subject else '' }}",
-            duration: "{{ most_studied_subject.duration if most_studied_subject else '' }}"
-        },
-        weekly: {
-            name: "{{ most_studied_subject_weekly.name if most_studied_subject_weekly else '' }}",
-            duration: "{{ most_studied_subject_weekly.duration if most_studied_subject_weekly else '' }}"
-        },
-        monthly: {
-            name: "{{ most_studied_subject_monthly.name if most_studied_subject_monthly else '' }}",
-            duration: "{{ most_studied_subject_monthly.duration if most_studied_subject_monthly else '' }}"
-        }
-    };
-
-    function formatDuration(totalSeconds) {
-        if (totalSeconds === 0) return "0s";
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        
-        let timeString = '';
-        if (hours > 0) timeString += `${hours}h `;
-        if (minutes > 0) timeString += `${minutes}m `;
-        if (seconds > 0 || (hours === 0 && minutes === 0 && totalSeconds > 0)) timeString += `${seconds}s`; // Mostrar segundos se for muito pouco tempo mas > 0
-        
-        return timeString.trim();
-    }
-
-
-    function initializeSubjectStudyChart(timeRange) {
+    function initializeSubjectStudyChart() {
         const ctx = document.getElementById('subjectStudyChart');
-        const currentStudyData = allStudyData[timeRange];
+        const studyData = {{ study_data_for_chart | tojson }};
+        const chartContainer = document.querySelector('.subject-stats-card .chart-container');
+        const noDataMessage = document.querySelector('.subject-stats-card .no-data-message');
 
-        // Atualiza a mensagem "Sua matéria mais estudada é..."
-        if (mostStudiedTextElement) {
-            const currentMostStudied = mostStudiedSubjectData[timeRange];
-            if (currentMostStudied && currentMostStudied.name) {
-                mostStudiedTextElement.textContent = `Sua matéria mais estudada ${timeRange === 'total' ? 'no TOTAL' : (timeRange === 'weekly' ? 'nos ÚLTIMOS 7 DIAS' : 'nos ÚLTIMOS 30 DIAS')} é ${currentMostStudied.name} com ${currentMostStudied.duration}.`;
-                mostStudiedTextElement.style.display = 'block';
-            } else {
-                mostStudiedTextElement.style.display = 'none';
-            }
-        }
-        
-        // Exibe ou oculta a mensagem "Comece a estudar..."
-        if (noStudyDataMessageElement) {
-            if (!currentStudyData || currentStudyData.length === 0) {
-                noStudyDataMessageElement.style.display = 'block';
-                if (ctx) ctx.style.display = 'none'; // Garante que o canvas está oculto se não há dados
-            } else {
-                noStudyDataMessageElement.style.display = 'none';
-                if (ctx) ctx.style.display = 'block';
-            }
-        }
+        if (!ctx) return; // Garante que o canvas existe
 
-        if (!ctx || !currentStudyData || currentStudyData.length === 0) {
-            if (subjectStudyChart) {
-                subjectStudyChart.destroy();
-                subjectStudyChart = null;
-            }
+        if (studyData.length === 0) {
+            // Se não há dados, esconde o canvas e mostra a mensagem
+            ctx.style.display = 'none';
+            if (noDataMessage) noDataMessage.style.display = 'flex';
             return;
+        } else {
+            // Se há dados, mostra o canvas e esconde a mensagem
+            ctx.style.display = 'block';
+            if (noDataMessage) noDataMessage.style.display = 'none';
         }
 
-        const labels = currentStudyData.map(item => item.name);
-        const data = currentStudyData.map(item => item.duration_seconds);
+        const labels = studyData.map(item => item.name);
+        const data = studyData.map(item => item.duration_seconds);
+        const totalDuration = data.reduce((sum, current) => sum + current, 0);
 
         const backgroundColors = [
             'rgba(255, 99, 132, 0.7)', // Red
@@ -2323,7 +2261,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             color: '#4b5563', // Cor do texto da legenda
                             font: {
                                 size: 12
-                            }
+                            },
+                            // Ajuste para telas menores
+                            boxWidth: 20, // Largura da caixa de cor da legenda
+                            padding: 10 // Preenchimento entre os itens da legenda
                         }
                     },
                     tooltip: {
@@ -2334,25 +2275,64 @@ document.addEventListener('DOMContentLoaded', function() {
                                     label += ': ';
                                 }
                                 if (context.parsed !== null) {
-                                    label += formatDuration(context.parsed);
+                                    const rawValue = context.parsed;
+                                    const percentage = (rawValue / totalDuration * 100).toFixed(1); // Calcula o percentual
+
+                                    const hours = Math.floor(rawValue / 3600);
+                                    const minutes = Math.floor((rawValue % 3600) / 60);
+                                    const seconds = rawValue % 60;
+                                    
+                                    let timeString = '';
+                                    if (hours > 0) timeString += `${hours}h `;
+                                    if (minutes > 0) timeString += `${minutes}m `;
+                                    // Adiciona segundos apenas se não houver horas ou minutos, ou se for zero
+                                    if (seconds > 0 || (hours === 0 && minutes === 0 && seconds === 0)) {
+                                        timeString += `${seconds}s`;
+                                    }
+                                    
+                                    label += `${timeString.trim()} (${percentage}%)`; // Inclui tempo formatado e percentual
                                 }
                                 return label;
                             }
                         }
                     }
+                },
+                // Ajustes para responsividade do gráfico
+                layout: {
+                    padding: {
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0
+                    }
                 }
             }
         });
-    }
 
-    chartFilterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            chartFilterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            const timeRange = this.dataset.timeRange;
-            initializeSubjectStudyChart(timeRange);
-        });
-    });
+        // Ajuste da legenda para telas menores
+        const legendContainer = chartContainer.querySelector('.chartjs-legend'); // Classe gerada pelo Chart.js
+        if (legendContainer) {
+            const mediaQuery = window.matchMedia('(max-width: 768px)');
+            const handleMediaQueryChange = (e) => {
+                if (e.matches) {
+                    // Telas pequenas: posicionar legenda abaixo, centralizado
+                    subjectStudyChart.options.plugins.legend.position = 'bottom';
+                    subjectStudyChart.options.plugins.legend.align = 'center';
+                    subjectStudyChart.options.plugins.legend.labels.boxWidth = 10;
+                    subjectStudyChart.options.plugins.legend.labels.padding = 5;
+                } else {
+                    // Telas grandes: posicionar legenda à direita
+                    subjectStudyChart.options.plugins.legend.position = 'right';
+                    subjectStudyChart.options.plugins.legend.align = 'center'; // Padrão
+                    subjectStudyChart.options.plugins.legend.labels.boxWidth = 20;
+                    subjectStudyChart.options.plugins.legend.labels.padding = 10;
+                }
+                subjectStudyChart.update();
+            };
+            mediaQuery.addEventListener('change', handleMediaQueryChange);
+            handleMediaQueryChange(mediaQuery); // Chama na inicialização
+        }
+    }
     // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
     
     initializeDashboard();
