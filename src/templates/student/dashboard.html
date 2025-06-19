@@ -1098,7 +1098,7 @@
                 </div>
                 <div class="study-time-item">
                     <span class="study-time-label">Hoje:</span>
-                    <span class="study-time-value study-time-daily-value">{{ daily_study_formatted }}</span>
+                    <span id="daily-study-time-value" class="study-time-value study-time-daily-value"></span>{# Modificado para ser atualizado via JS #}
                 </div>
             </div>
         </div>
@@ -1481,6 +1481,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationTextElement = document.getElementById('motivation-text');
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
+    const dailyStudyTimeValue = document.getElementById('daily-study-time-value'); // Novo elemento para o tempo de estudo diário
 
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
@@ -2014,7 +2015,33 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => buttonEl.disabled = false);
     }
     
-    function initializeDashboard() {
+    // Helper function to format seconds into "X horas e Y minutos"
+    function formatTime(totalSeconds) {
+        if (totalSeconds === 0) {
+            return "0 minutos";
+        }
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+        let timeString = '';
+        if (hours > 0) {
+            timeString += `${hours} hora${hours > 1 ? 's' : ''}`;
+        }
+        if (minutes > 0) {
+            if (hours > 0) {
+                timeString += ` e `;
+            }
+            timeString += `${minutes} minuto${minutes > 1 ? 's' : ''}`;
+        }
+        if (hours === 0 && minutes === 0) { // If less than a minute, show seconds or default to 0 minutes
+            // The backend provides 'daily_study_formatted' as a string, typically in minutes if less than an hour.
+            // If it comes as raw seconds, this conversion handles it. For now, rely on backend's minutes for small values.
+            return `${Math.round(totalSeconds / 60)} minuto${Math.round(totalSeconds / 60) > 1 ? 's' : ''}`;
+        }
+        return timeString.trim();
+    }
+
+    async function initializeDashboard() {
         attachEventListeners();
         
         if (defaultConcursoId) {
@@ -2024,18 +2051,29 @@ document.addEventListener('DOMContentLoaded', function() {
             showLawsSection();
             fetchAndRenderLaws();
         } else {
-            // <<< INÍCIO DA IMPLEMENTAÇÃO: Checa o edital no carregamento inicial se não houver concurso padrão >>>
             checkEdital(filterControls.concurso.value);
-            // <<< FIM DA IMPLEMENTAÇÃO >>>
         }
         
         updateDefaultConcursoButtonState();
         fetchAndRenderTodoItems();
         displayDailyMotivation();
         setupDynamicPlaceholder();
-        // <<< NOVO: Inicializa o gráfico de estudo por matéria >>>
         initializeSubjectStudyChart();
-        // <<< FIM NOVO >>>
+
+        // Fetch daily study time from an API endpoint if not directly available
+        // Assuming your backend has an endpoint like '/student/api/daily_study_time'
+        try {
+            const response = await fetch('/student/api/daily_study_time');
+            const data = await response.json();
+            if (data.success && data.daily_study_seconds !== undefined) {
+                dailyStudyTimeValue.textContent = formatTime(data.daily_study_seconds);
+            } else {
+                dailyStudyTimeValue.textContent = "N/A"; // Or a default message
+            }
+        } catch (error) {
+            console.error('Erro ao buscar tempo de estudo diário:', error);
+            dailyStudyTimeValue.textContent = "Erro ao carregar";
+        }
     }
     
     async function fetchAndRenderTodoItems() {
