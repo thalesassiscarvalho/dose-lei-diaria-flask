@@ -9,15 +9,15 @@
 <script>
   tinymce.init({
     selector: '#content',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect code', /* Adicione 'code' aqui */
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat | code', /* Adicione '| code' aqui para o botão no toolbar */
     height: 400,
   });
 
   tinymce.init({
     selector: '#juridiques_content',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange formatpainter pageembed permanentpen powerpaste advtable advcode editimage tableofcontents footnotes mergetags autocorrect code', /* Adicione 'code' aqui */
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat | code', /* Adicione '| code' aqui para o botão no toolbar */
     height: 300,
   });
 </script>
@@ -28,7 +28,7 @@
     .delete-link-btn:hover { background-color: #dc2626; }
     .add-link-btn { background-color: #10b981; color: white; font-weight: bold; padding: 0.5rem 0.75rem; border-radius: 0.375rem; cursor: pointer; border: none; }
     .add-link-btn:hover { background-color: #059669; }
-    
+
     /* Estilo para o campo de seleção múltipla */
     .multiselect {
         height: 150px;
@@ -42,7 +42,7 @@
 
 <form method="POST" action="{% if law %}{{ url_for('admin.edit_law', law_id=law.id) }}{% else %}{{ url_for('admin.add_law') }}{% endif %}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    
+
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Título:</label>
         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="title" name="title" type="text" placeholder="Ex: Constituição Federal ou Art. 1º a 4º" value="{{ law.title if law else '' }}" required>
@@ -57,7 +57,7 @@
             {% endfor %}
         </select>
     </div>
-    
+
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="concursos">Concursos (Opcional):</label>
         <select id="concursos" name="concursos" multiple class="shadow border rounded w-full py-2 px-3 text-gray-700 multiselect">
@@ -108,7 +108,7 @@
         <label class="block text-gray-700 text-sm font-bold mb-2" for="juridiques_content">Entendendo o Juridiquês (Opcional):</label>
         <textarea id="juridiques_content" name="juridiques_explanation">{{ law.juridiques_explanation | safe if law and law.juridiques_explanation else '' }}</textarea>
     </div>
-    
+
     <div class="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-md">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="banner_content">
             Banner de Aviso da Lei (Opcional)
@@ -152,14 +152,4 @@ document.addEventListener('DOMContentLoaded', function() {
         const newLinkGroup = document.createElement('div');
         newLinkGroup.className = 'link-group';
         newLinkGroup.innerHTML = `
-            <input name="link-${linkIndex}-title" type="text" placeholder="Título do Link" required>
-            <input name="link-${linkIndex}-url" type="url" placeholder="https://exemplo.com" required>
-            <button type="button" class="delete-link-btn" onclick="this.parentElement.remove()">X</button>
-        `;
-        linksContainer.appendChild(newLinkGroup);
-        linkIndex++;
-    });
-});
-</script>
-
-{% endblock %}
+            <input name="link-<span class="math-inline">\{linkIndex\}\-title" type\="text" placeholder\="Título do Link" required\>
