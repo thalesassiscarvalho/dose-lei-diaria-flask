@@ -486,68 +486,128 @@
     .subject-accordion-header.open .toggle-icon {
         transform: rotate(180deg);
     }
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO CSS: CARD "LEMBRETES E METAS" >>> */
+    /* ===================================================================== */
 
     .todo-list-card {
-        background: linear-gradient(145deg, #e0ffe0, #f0fff0);
-        border-color: #a5d6a7;
-        border-left-color: #4caf50;
-        box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
+        background: linear-gradient(145deg, #f3f4f6, #ffffff);
+        border-color: #d1d5db;
+        border-left-color: #6b7280;
+        box-shadow: 0 4px 8px -2px rgba(107, 114, 128, 0.1), 0 2px 4px -2px rgba(107, 114, 128, 0.07);
     }
     .todo-list-card .stat-card-title i {
-        color: #388e3c;
-        background-color: #e8f5e9;
+        color: #4b5563;
+        background-color: #e5e7eb;
     }
     .todo-list-card:hover {
-        border-color: #81c784;
-        box-shadow: 0 10px 20px -5px rgba(76, 175, 80, 0.15), 0 4px 6px -4px rgba(76, 175, 80, 0.1);
+        border-color: #9ca3af;
+        box-shadow: 0 10px 20px -5px rgba(107, 114, 128, 0.15), 0 4px 6px -4px rgba(107, 114, 128, 0.1);
     }
-
     .todo-input-container {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 0.75rem;
         margin-bottom: 1rem;
     }
-
+    .todo-input-main {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .todo-category-selector {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.25rem;
+        background-color: #e5e7eb;
+        border-radius: 0.5rem;
+    }
+    .todo-category-selector label {
+        padding: 0.3rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #4b5563;
+    }
+    .todo-category-selector input[type="radio"] {
+        display: none;
+    }
+    .todo-category-selector input[type="radio"]:checked + label {
+        background-color: #fff;
+        color: #1f2937;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .todo-filters {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .todo-filter-btn {
+        background-color: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .todo-filter-btn:hover {
+        background-color: #e5e7eb;
+    }
+    .todo-filter-btn.active {
+        background-color: #6b7280;
+        color: #ffffff;
+        border-color: #6b7280;
+    }
     .todo-item {
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Alinhado ao topo para o texto que quebra linha */
         justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px dashed #e0ffe0;
+        padding: 0.85rem 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
         transition: all 0.3s ease;
         position: relative;
     }
     .todo-item:last-child {
         border-bottom: none;
-        padding-bottom: 0;
     }
     .todo-item-content {
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Alinhado ao topo */
         flex-grow: 1;
+        gap: 0.75rem;
         cursor: pointer;
     }
     .todo-item-content input[type="checkbox"] {
-        margin-right: 0.75rem;
-        height: 1.25rem;
-        width: 1.25rem;
-        accent-color: #4caf50;
+        margin-top: 0.2rem; /* Alinha o checkbox com a primeira linha do texto */
+        height: 1.1rem;
+        width: 1.1rem;
+        flex-shrink: 0;
+        accent-color: #4b5563;
         cursor: pointer;
     }
     .todo-item-text {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #374151;
         transition: color 0.3s ease;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: calc(100% - 2.5rem);
+        word-break: break-word; /* Permite que o texto quebre */
     }
     .todo-item.completed .todo-item-text {
         text-decoration: line-through;
         color: #9ca3af;
     }
+    .todo-item .category-icon {
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .todo-item .category-icon.lembrete-icon { color: #3b82f6; } /* Azul */
+    .todo-item .category-icon.meta-icon { color: #16a34a; }   /* Verde */
+    
     .todo-actions {
         flex-shrink: 0;
         margin-left: 0.75rem;
@@ -557,7 +617,7 @@
         border: none;
         color: #ef4444;
         cursor: pointer;
-        font-size: 1.1rem;
+        font-size: 1rem;
         transition: color 0.2s ease;
     }
     .todo-delete-btn:hover {
@@ -565,67 +625,39 @@
     }
     .todo-input-container .custom-input {
         flex-grow: 1;
-        border-color: #a5d6a7;
+        border-color: #d1d5db;
     }
     .todo-input-container .custom-input:focus {
-        border-color: #4caf50;
-        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+        border-color: #6b7280;
+        box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
     }
     .todo-input-container .action-button {
-        background-color: #4caf50;
+        background-color: #4b5563;
     }
     .todo-input-container .action-button:hover {
-        background-color: #388e3c;
+        background-color: #374151;
     }
 
-    .todo-item-text-tooltip {
-        visibility: hidden;
-        width: 250px;
-        background-color: rgba(0, 0, 0, 0.85);
-        color: #fff;
-        text-align: left;
-        border-radius: 6px;
-        padding: 8px 12px;
-        position: absolute;
-        z-index: 10;
-        top: 100%;
-        left: 0;
-        transform: none;
-        margin-top: 5px;
-        opacity: 0;
-        transition: opacity 0.3s;
-        font-size: 0.8rem;
-        pointer-events: none;
-        white-space: normal;
-        word-wrap: break-word;
+    /* Oculta itens que não correspondem ao filtro */
+    .todo-item.hidden-by-filter {
+        display: none;
     }
 
-    .todo-item-text-tooltip::after {
-        content: "";
-        position: absolute;
-        bottom: 100%;
-        left: 20px;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent;
-    }
-
-    .todo-item-text:hover + .todo-item-text-tooltip {
-        visibility: visible;
-        opacity: 1;
-    }
-
-
+    /* Removido o tooltip que não estava sendo usado, simplificando o CSS */
+    
     @media (max-width: 768px) {
-        .todo-input-container {
+        .todo-input-main {
             flex-direction: column;
             align-items: stretch;
         }
-        .todo-input-container .action-button {
+        .todo-input-main .action-button {
             width: 100%;
         }
     }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO CSS >>> */
+    /* ===================================================================== */
+
 
     .hidden-card-section {
         display: none;
@@ -922,15 +954,31 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid">
         <div class="stat-card todo-list-card md:row-span-2">
-            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2>
-            <div class="todo-input-container">
-                <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
-                <button id="add-todo-btn" class="action-button">Adicionar</button>
-            </div>
-            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: auto;">
-            </ul>
-        </div>
+            <h2 class="stat-card-title"><i class="fas fa-tasks"></i> Lembretes e Metas</h2>
 
+            <div class="todo-input-container">
+                <div class="todo-category-selector">
+                    <input type="radio" id="category-lembrete" name="todo_category" value="lembrete" checked>
+                    <label for="category-lembrete"><i class="fas fa-lightbulb mr-1"></i> Lembrete</label>
+                    
+                    <input type="radio" id="category-meta" name="todo_category" value="meta">
+                    <label for="category-meta"><i class="fas fa-bullseye mr-1"></i> Meta</label>
+                </div>
+                <div class="todo-input-main">
+                    <input type="text" id="new-todo-item" placeholder="Adicionar lembrete ou meta..." class="custom-input">
+                    <button id="add-todo-btn" class="action-button">Adicionar</button>
+                </div>
+            </div>
+
+            <div class="todo-filters">
+                <button class="todo-filter-btn active" data-filter="all">Todos</button>
+                <button class="todo-filter-btn" data-filter="lembrete">Lembretes</button>
+                <button class="todo-filter-btn" data-filter="meta">Metas</button>
+            </div>
+
+            <ul id="todo-list" class="flex-grow" style="max-height: 400px; overflow-y: auto;">
+                </ul>
+        </div>
         {% if recent_activities %}
         <div class="stat-card recent-activities-card" id="recent-activities-card">
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
@@ -1377,16 +1425,21 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => lawsSection.style.opacity = '1', 50);
         }
     }
-
+    
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: LÓGICA DO CARD "LEMBRETES E METAS" >>>
+    // =====================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
-    const noTodoItemsMessage = document.getElementById('no-todo-items-message');
+    const todoFilterBtns = document.querySelectorAll('.todo-filter-btn');
+    let currentTodoFilter = 'all';
+
     const motivationDateElement = document.getElementById('motivation-date');
     const motivationTextElement = document.getElementById('motivation-text');
     const favoritesTitleText = document.getElementById('favorites-title-text');
     const editFavoritesTitleBtn = document.getElementById('edit-favorites-title-btn');
-
+    
     if (editFavoritesTitleBtn) {
         editFavoritesTitleBtn.addEventListener('click', function() {
             const currentTitle = favoritesTitleText.textContent;
@@ -1677,8 +1730,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
         document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
-        todoListUl.querySelectorAll('.todo-checkbox').forEach(checkbox => checkbox.addEventListener('change', handleToggleTodoItem));
-        todoListUl.querySelectorAll('.todo-delete-btn').forEach(button => button.addEventListener('click', handleDeleteTodoItem));
+        
+        // Event listeners de ToDo são anexados quando os itens são renderizados
     }
 
     filterControls.subject.addEventListener('change', () => {
@@ -1901,14 +1954,52 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(() => buttonEl.disabled = false);
     }
+    
+    // Função para aplicar o filtro atual aos itens da lista
+    function applyTodoFilter() {
+        const items = todoListUl.querySelectorAll('.todo-item');
+        let hasVisibleItems = false;
+        items.forEach(item => {
+            const itemCategory = item.dataset.category;
+            if (currentTodoFilter === 'all' || itemCategory === currentTodoFilter) {
+                item.classList.remove('hidden-by-filter');
+                hasVisibleItems = true;
+            } else {
+                item.classList.add('hidden-by-filter');
+            }
+        });
+
+        // Mostra ou oculta a mensagem de "nenhum item"
+        const noItemsMessage = todoListUl.querySelector('#no-todo-items-message');
+        if (noItemsMessage) {
+            noItemsMessage.style.display = hasVisibleItems ? 'none' : 'block';
+            if (!hasVisibleItems) {
+                if (currentTodoFilter === 'all') {
+                    noItemsMessage.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
+                } else {
+                    noItemsMessage.textContent = `Nenhum item na categoria "${currentTodoFilter}"`;
+                }
+            }
+        }
+    }
+
+    // Adiciona evento aos botões de filtro
+    todoFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            todoFilterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTodoFilter = this.dataset.filter;
+            applyTodoFilter();
+        });
+    });
 
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
             const data = await response.json();
             todoListUl.innerHTML = '';
-            if (data.todo_items && data.todo_items.length > 0) {
-                const sortedItems = data.todo_items.sort((a, b) => a.is_completed - b.is_completed || a.id - b.id);
+            if (data.success && data.todo_items && data.todo_items.length > 0) {
+                const sortedItems = data.todo_items.sort((a, b) => a.is_completed - b.is_completed || new Date(b.created_at) - new Date(a.created_at));
                 sortedItems.forEach(item => todoListUl.appendChild(renderTodoItem(item)));
             } else {
                 const p = document.createElement('p');
@@ -1917,8 +2008,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
                 todoListUl.appendChild(p);
             }
+            applyTodoFilter(); // Aplica o filtro após renderizar
         } catch (error) {
-            console.error('Erro ao buscar itens do diário:', error);
+            console.error('Erro ao buscar itens:', error);
+            todoListUl.innerHTML = '<p class="text-red-500 italic text-sm text-center py-4">Erro ao carregar os itens.</p>';
         }
     }
 
@@ -1926,9 +2019,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const listItem = document.createElement('li');
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
         listItem.dataset.itemId = item.id;
-        const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
+        listItem.dataset.category = item.category;
 
-        listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
+        const categoryIconClass = item.category === 'meta' ? 'fa-bullseye' : 'fa-lightbulb';
+        const categoryIconColorClass = item.category === 'meta' ? 'meta-icon' : 'lembrete-icon';
+        const categoryTitle = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+
+        listItem.innerHTML = `
+            <div class="todo-item-content">
+                <i class="fas ${categoryIconClass} category-icon ${categoryIconColorClass}" title="${categoryTitle}"></i>
+                <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
+                <span class="todo-item-text">${item.content}</span>
+            </div>
+            <div class="todo-actions">
+                <button type="button" class="todo-delete-btn" title="Excluir item">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
 
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
@@ -1938,52 +2046,88 @@ document.addEventListener('DOMContentLoaded', function() {
     addTodoBtn.addEventListener('click', async function() {
         const content = newTodoItemInput.value.trim();
         if (!content) return;
-        if (todoListUl.children.length >= 5) {
-            Toastify({ text: "Você atingiu o limite de 5 tarefas.", duration: 5000 }).showToast();
-            return;
-        }
+
+        // Pega a categoria selecionada
+        const category = document.querySelector('input[name="todo_category"]:checked').value;
+
         try {
-            const response = await fetch('/student/api/todo_items', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content }) });
+            const response = await fetch('/student/api/todo_items', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
+                body: JSON.stringify({ content, category }) // Envia a categoria
+            });
             const data = await response.json();
             if (data.success) {
                 document.getElementById('no-todo-items-message')?.remove();
-                todoListUl.prepend(renderTodoItem(data.todo_item));
+                
+                const newItemElement = renderTodoItem(data.todo_item);
+                
+                // Adiciona o novo item no topo da lista
+                todoListUl.prepend(newItemElement);
+                
                 newTodoItemInput.value = '';
+                newTodoItemInput.focus();
+                
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                applyTodoFilter(); // Re-aplica o filtro
+            } else {
+                Toastify({ text: data.error, duration: 5000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
-        } catch (error) { console.error('Erro ao adicionar tarefa:', error); }
+        } catch (error) { 
+            console.error('Erro ao adicionar item:', error); 
+            Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+        }
+    });
+    
+    // Permite adicionar com a tecla Enter
+    newTodoItemInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Impede o comportamento padrão do Enter
+            addTodoBtn.click();
+        }
     });
 
     async function handleToggleTodoItem(event) {
         const checkbox = event.currentTarget;
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
+        
+        // Desabilita interações temporariamente
+        checkbox.disabled = true;
+
         try {
-            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ 'is_completed': checkbox.checked }) });
+            const response = await fetch(`/student/api/todo_items/${itemId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }});
             const data = await response.json();
             if (data.success) {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
                 checkbox.checked = data.todo_item.is_completed;
-                if (data.todo_item.is_completed) {
-                    todoListUl.appendChild(listItem);
-                } else {
-                    await fetchAndRenderTodoItems();
-                }
+
+                // Re-ordena a lista para manter os concluídos no final
+                const allItems = Array.from(todoListUl.querySelectorAll('.todo-item'));
+                allItems.sort((a, b) => {
+                    const aCompleted = a.classList.contains('completed');
+                    const bCompleted = b.classList.contains('completed');
+                    return aCompleted - bCompleted;
+                });
+                allItems.forEach(item => todoListUl.appendChild(item));
+                
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
             } else {
-                checkbox.checked = !checkbox.checked;
-                Toastify({ text: "Não foi possível atualizar a tarefa.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+                checkbox.checked = !checkbox.checked; // Reverte a mudança visual
+                Toastify({ text: "Não foi possível atualizar o item.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
         } catch (error) {
-            console.error('Erro ao alternar tarefa:', error);
+            console.error('Erro ao alternar item:', error);
             checkbox.checked = !checkbox.checked;
             Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+        } finally {
+            checkbox.disabled = false; // Reabilita o checkbox
         }
     }
 
 
     async function handleDeleteTodoItem(event) {
-        if (!confirm('Tem certeza?')) return;
+        if (!confirm('Tem certeza que deseja excluir este item?')) return;
         const button = event.currentTarget;
         const listItem = button.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
@@ -2000,9 +2144,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     todoListUl.appendChild(p);
                 }
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            } else {
+                Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
-        } catch (error) { console.error('Erro ao excluir tarefa:', error); }
+        } catch (error) { 
+            console.error('Erro ao excluir item:', error); 
+            Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
+        }
     }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO JAVASCRIPT >>>
+    // =====================================================================
+    
 
     function displayDailyMotivation() {
         const today = new Date();
@@ -2088,9 +2241,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: Tooltip do Gráfico de Atividade Semanal >>>
-    // =====================================================================
     let streakChart = null;
 
     function initializeStreakChart() {
@@ -2163,9 +2313,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO JAVASCRIPT >>>
-    // =====================================================================
 
     function initializeDashboard() {
         attachEventListeners();
