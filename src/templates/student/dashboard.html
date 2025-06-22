@@ -577,7 +577,6 @@
         align-items: flex-start; /* Alinhado ao topo */
         flex-grow: 1;
         gap: 0.75rem;
-        cursor: pointer;
     }
     .todo-item-content input[type="checkbox"] {
         margin-top: 0.2rem; /* Alinha o checkbox com a primeira linha do texto */
@@ -893,6 +892,131 @@
         color: #9ca3af;
     }
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO CSS: VINCULAR LEI AOS LEMBRETES >>> */
+    /* ===================================================================== */
+    .attach-law-btn {
+        background-color: #93c5fd; /* Azul 300 */
+        color: #1e40af; /* Azul 800 */
+        padding: 0;
+        width: 38px; /* Largura fixa para ser quadrado */
+        height: 38px;
+        flex-shrink: 0;
+    }
+    .attach-law-btn:hover {
+        background-color: #60a5fa; /* Azul 400 */
+    }
+    .attach-law-btn.active {
+        background-color: #3b82f6; /* Azul 500 */
+        color: white;
+    }
+    .attached-law-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #dbeafe; /* Azul 100 */
+        color: #1e40af; /* Azul 800 */
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+    }
+    .attached-law-info strong {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+    .remove-attached-law-btn {
+        background: none;
+        border: none;
+        color: #1e40af;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0 0.25rem;
+        font-size: 1.25rem;
+    }
+    .todo-item-link {
+        color: #1d4ed8; /* Azul 700 */
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .todo-item-link:hover {
+        text-decoration: underline;
+    }
+    .todo-item-link i {
+        font-size: 0.7rem;
+        margin-left: 0.3rem;
+        color: #60a5fa; /* Azul 400 */
+    }
+
+    /* Estilos para o Modal de Busca */
+    .law-search-modal {
+        display: none; /* Inicia oculto */
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 2rem;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .modal-close-btn {
+        color: #aaa;
+        position: absolute;
+        top: 0.5rem;
+        right: 1rem;
+        font-size: 28px;
+        font-weight: bold;
+        background: none;
+        border: none;
+    }
+    .modal-close-btn:hover,
+    .modal-close-btn:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .law-search-results {
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+    }
+    .law-search-results .result-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .law-search-results .result-item:last-child {
+        border-bottom: none;
+    }
+    .law-search-results .result-item:hover {
+        background-color: #f1f1f1;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO CSS >>> */
+    /* ===================================================================== */
+
+
 </style>
 {% endblock %}
 
@@ -956,10 +1080,16 @@
                 </div>
                 <div class="todo-input-main">
                     <input type="text" id="new-todo-item" placeholder="Adicionar lembrete ou meta..." class="custom-input">
+                    <button id="attach-law-btn" class="action-button attach-law-btn" title="Anexar um tópico de estudo">
+                        <i class="fas fa-link"></i>
+                    </button>
                     <button id="add-todo-btn" class="action-button">Adicionar</button>
                 </div>
+                 <div id="attached-law-info" class="attached-law-info" style="display: none;">
+                    <span>Anexado: <strong id="attached-law-name"></strong></span>
+                    <button id="remove-attached-law-btn" class="remove-attached-law-btn" title="Remover anexo">&times;</button>
+                </div>
             </div>
-
             <div class="todo-filters">
                 <button class="todo-filter-btn active" data-filter="all">Todos</button>
                 <button class="todo-filter-btn" data-filter="lembrete">Lembretes</button>
@@ -1279,6 +1409,17 @@
             </div>
         {% endif %}
         </div>
+</div>
+
+<div id="law-search-modal" class="law-search-modal" style="display: none;">
+    <div class="modal-content">
+        <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Anexar Tópico de Estudo</h3>
+        <p class="text-sm text-gray-600 mb-4">Busque por um tópico de lei para vincular ao seu lembrete ou meta.</p>
+        <input type="text" id="law-search-input" class="custom-input w-full" placeholder="Digite para buscar um tópico...">
+        <div id="law-search-results" class="law-search-results">
+            </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -1935,6 +2076,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => buttonEl.disabled = false);
     }
     
+    // ===============================================================================================
+    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: VINCULAR LEI AOS LEMBRETES >>>
+    // ===============================================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
@@ -1944,6 +2088,94 @@ document.addEventListener('DOMContentLoaded', function() {
     const motivationDateElement = document.getElementById('motivation-date');
     const motivationTextElement = document.getElementById('motivation-text');
     
+    const attachLawBtn = document.getElementById('attach-law-btn');
+    const lawSearchModal = document.getElementById('law-search-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const lawSearchInput = document.getElementById('law-search-input');
+    const lawSearchResultsDiv = document.getElementById('law-search-results');
+    const attachedLawInfoDiv = document.getElementById('attached-law-info');
+    const attachedLawNameSpan = document.getElementById('attached-law-name');
+    const removeAttachedLawBtn = document.getElementById('remove-attached-law-btn');
+    
+    let attachedLawId = null;
+    let lawSearchDebounceTimer;
+
+    // Abrir o modal
+    attachLawBtn.addEventListener('click', () => {
+        lawSearchModal.style.display = 'flex';
+        lawSearchInput.focus();
+    });
+
+    // Fechar o modal
+    function closeModal() {
+        lawSearchModal.style.display = 'none';
+        lawSearchInput.value = '';
+        lawSearchResultsDiv.innerHTML = '';
+    }
+    modalCloseBtn.addEventListener('click', closeModal);
+    lawSearchModal.addEventListener('click', (e) => {
+        if (e.target === lawSearchModal) {
+            closeModal();
+        }
+    });
+
+    // Buscar tópicos de lei no modal
+    lawSearchInput.addEventListener('input', () => {
+        clearTimeout(lawSearchDebounceTimer);
+        const query = lawSearchInput.value.trim();
+
+        if (query.length < 3) {
+            lawSearchResultsDiv.innerHTML = '';
+            return;
+        }
+
+        lawSearchResultsDiv.innerHTML = '<p class="text-center p-4">Buscando...</p>';
+        lawSearchDebounceTimer = setTimeout(() => {
+            // Usamos o type=topic para buscar apenas tópicos específicos
+            fetch(`/student/api/autocomplete_search?q=${query}&type=topic`)
+                .then(response => response.json())
+                .then(data => {
+                    lawSearchResultsDiv.innerHTML = '';
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(topic => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'result-item';
+                            resultItem.textContent = topic.title;
+                            resultItem.dataset.lawId = topic.id;
+                            resultItem.dataset.lawTitle = topic.title;
+                            lawSearchResultsDiv.appendChild(resultItem);
+                        });
+                    } else {
+                        lawSearchResultsDiv.innerHTML = '<p class="text-center p-4 text-gray-500">Nenhum tópico encontrado.</p>';
+                    }
+                });
+        }, 400);
+    });
+
+    // Selecionar um tópico da busca
+    lawSearchResultsDiv.addEventListener('click', (e) => {
+        if (e.target.classList.contains('result-item')) {
+            attachedLawId = e.target.dataset.lawId;
+            const lawTitle = e.target.dataset.lawTitle;
+
+            attachedLawNameSpan.textContent = lawTitle;
+            attachedLawInfoDiv.style.display = 'flex';
+            attachLawBtn.classList.add('active'); // Destaca o botão de anexo
+
+            closeModal();
+        }
+    });
+    
+    // Remover o anexo
+    function removeAttachment() {
+        attachedLawId = null;
+        attachedLawInfoDiv.style.display = 'none';
+        attachedLawNameSpan.textContent = '';
+        attachLawBtn.classList.remove('active');
+    }
+    removeAttachedLawBtn.addEventListener('click', removeAttachment);
+
+
     // Função para aplicar o filtro atual aos itens da lista
     function applyTodoFilter() {
         const items = todoListUl.querySelectorAll('.todo-item');
@@ -1958,7 +2190,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Mostra ou oculta a mensagem de "nenhum item"
         const noItemsMessage = todoListUl.querySelector('#no-todo-items-message');
         if (noItemsMessage) {
             noItemsMessage.style.display = hasVisibleItems ? 'none' : 'block';
@@ -1997,7 +2228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 p.textContent = 'Nenhuma tarefa por enquanto. Adicione uma!';
                 todoListUl.appendChild(p);
             }
-            applyTodoFilter(); // Aplica o filtro após renderizar
+            applyTodoFilter(); 
         } catch (error) {
             console.error('Erro ao buscar itens:', error);
             todoListUl.innerHTML = '<p class="text-red-500 italic text-sm text-center py-4">Erro ao carregar os itens.</p>';
@@ -2013,12 +2244,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const categoryIconClass = item.category === 'meta' ? 'fa-bullseye' : 'fa-lightbulb';
         const categoryIconColorClass = item.category === 'meta' ? 'meta-icon' : 'lembrete-icon';
         const categoryTitle = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+        
+        let contentHtml;
+        if (item.law_id && item.law_url) {
+            // Se tiver uma lei anexada, cria um link
+            contentHtml = `
+                <a href="${item.law_url}" class="todo-item-link" title="Ir para: ${item.law_title}">
+                    ${item.content}
+                    <i class="fas fa-external-link-alt"></i>
+                </a>`;
+        } else {
+            // Senão, apenas o texto normal
+            contentHtml = `<span>${item.content}</span>`;
+        }
 
         listItem.innerHTML = `
             <div class="todo-item-content">
                 <i class="fas ${categoryIconClass} category-icon ${categoryIconColorClass}" title="${categoryTitle}"></i>
                 <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <span class="todo-item-text">${item.content}</span>
+                <div class="todo-item-text">${contentHtml}</div>
             </div>
             <div class="todo-actions">
                 <button type="button" class="todo-delete-btn" title="Excluir item">
@@ -2026,6 +2270,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
+
+        // Adiciona evento de clique no container do texto para ativar o checkbox (melhora UX)
+        const contentContainer = listItem.querySelector('.todo-item-content');
+        contentContainer.addEventListener('click', (e) => {
+            // Evita ativar o checkbox se o clique for no próprio link
+            if (e.target.tagName !== 'A' && e.target.tagName !== 'I') {
+                const checkbox = contentContainer.querySelector('.todo-checkbox');
+                checkbox.checked = !checkbox.checked;
+                // Dispara o evento 'change' manualmente para acionar a lógica de conclusão
+                checkbox.dispatchEvent(new Event('change'));
+            }
+        });
 
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
@@ -2037,20 +2293,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!content) return;
 
         const category = document.querySelector('input[name="todo_category"]:checked').value;
+        const requestBody = {
+            content: content,
+            category: category,
+            law_id: attachedLawId // Adiciona o ID da lei anexada (pode ser null)
+        };
 
         try {
             const response = await fetch('/student/api/todo_items', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
-                body: JSON.stringify({ content, category }) 
+                body: JSON.stringify(requestBody) 
             });
             const data = await response.json();
             if (data.success) {
                 document.getElementById('no-todo-items-message')?.remove();
                 const newItemElement = renderTodoItem(data.todo_item);
                 todoListUl.prepend(newItemElement);
+                
+                // Limpa o estado após adicionar
                 newTodoItemInput.value = '';
+                removeAttachment(); 
                 newTodoItemInput.focus();
+                
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #2563eb, #3b82f6)" } }).showToast();
                 applyTodoFilter();
             } else {
@@ -2069,9 +2334,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ===============================================================================================
-    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: ALERTA DE META CONCLUÍDA >>>
-    // ===============================================================================================
     async function handleToggleTodoItem(event) {
         const checkbox = event.currentTarget;
         const listItem = checkbox.closest('.todo-item');
@@ -2090,7 +2352,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const itemCategory = listItem.dataset.category;
 
                 if (isCompleting && itemCategory === 'meta') {
-                    // Mensagem especial para META CONCLUÍDA
                     Toastify({
                         text: "🏆 Parabéns! Meta concluída com sucesso! Continue assim!",
                         duration: 5000,
@@ -2098,15 +2359,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         position: "center", 
                         stopOnFocus: true, 
                         style: {
-                            background: "linear-gradient(to right, #16a34a, #4ade80)", // Verde vibrante
+                            background: "linear-gradient(to right, #16a34a, #4ade80)",
                             fontSize: "1rem",
                             borderRadius: "8px",
                             boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)"
                         },
-                        escapeMarkup: false // Necessário para renderizar o emoji 🏆
+                        escapeMarkup: false
                     }).showToast();
                 } else {
-                    // Mensagem padrão para outras ações (concluir lembrete, reabrir item)
                     Toastify({ 
                         text: data.message, 
                         duration: 3000, 
@@ -2114,7 +2374,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).showToast();
                 }
 
-                // Re-ordena a lista para manter os concluídos no final
                 const allItems = Array.from(todoListUl.querySelectorAll('.todo-item'));
                 allItems.sort((a, b) => {
                     const aCompleted = a.classList.contains('completed');
@@ -2124,7 +2383,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 allItems.forEach(item => todoListUl.appendChild(item));
                 
             } else {
-                checkbox.checked = !checkbox.checked; // Reverte a mudança visual
+                checkbox.checked = !checkbox.checked;
                 Toastify({ text: "Não foi possível atualizar o item.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
         } catch (error) {
@@ -2132,13 +2391,9 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.checked = !checkbox.checked;
             Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
         } finally {
-            checkbox.disabled = false; // Reabilita o checkbox
+            checkbox.disabled = false;
         }
     }
-    // ===============================================================================================
-    // <<< FIM DA ALTERAÇÃO JAVASCRIPT >>>
-    // ===============================================================================================
-
 
     async function handleDeleteTodoItem(event) {
         if (!confirm('Tem certeza que deseja excluir este item?')) return;
