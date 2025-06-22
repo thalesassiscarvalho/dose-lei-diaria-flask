@@ -4,10 +4,6 @@
 
 {% block head_extra %}
 <style>
-    /* ===================================================================== */
-    /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO >>> */
-    /* ===================================================================== */
-
     /* Estilos Gerais (sem alterações) */
     .law-card { transition: all 0.3s ease; background-color: #FFFFFF; border: 1px solid #dbeafe; color: #374151; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; border-radius: 0.75rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); position: relative; }
     .law-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05); border-color: #93c5fd; }
@@ -30,12 +26,11 @@
     .rich-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin: 0.5rem 0; color: #4b5563; }
     .announcement-container { margin-bottom: 2rem; transition: all 0.3s ease; }
 
-    /* Efeito de elevação adicionado aos cards de aviso */
     .fixed-announcement-box {
-        background-color: #fee2e2; /* Cor de fundo vermelho claro */
-        border: 1px solid #fca5a5; /* Borda vermelha mais escura */
-        border-left: 4px solid #ef4444; /* Borda esquerda vermelha vibrante */
-        color: #991b1b; /* Cor do texto vermelho escuro */
+        background-color: #fee2e2;
+        border: 1px solid #fca5a5;
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
         padding: 1.25rem;
         border-radius: 0.75rem;
         margin-bottom: 1.5rem;
@@ -51,14 +46,14 @@
         margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
-        color: #991b1b; /* Cor do título vermelho escuro */
+        color: #991b1b;
     }
     .fixed-announcement-box h2 i {
         margin-right: 0.75rem;
-        color: #ef4444; /* Cor do ícone vermelho vibrante */
+        color: #ef4444;
         font-size: 1.25rem;
     }
-    .fixed-announcement-item { padding: 0.75rem 0; border-top: 1px dashed rgba(252, 165, 165, 0.7); transition: all 0.3s ease; } /* Borda tracejada vermelha */
+    .fixed-announcement-item { padding: 0.75rem 0; border-top: 1px dashed rgba(252, 165, 165, 0.7); transition: all 0.3s ease; }
     .fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
     .fixed-announcement-item:last-child { padding-bottom: 0; }
     .announcement-box h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; color: #92400E; }
@@ -88,8 +83,8 @@
         padding: 0.65rem 0.85rem;
         border-radius: 0.5rem;
         transition: background-color 0.2s ease, border-color 0.2s ease;
-        border: 1px solid #dbeafe; /* Borda sutil para combinar com o fundo */
-        background-color: #ffffff; /* Fundo branco para os links se destacarem */
+        border: 1px solid #dbeafe;
+        background-color: #ffffff;
         text-decoration: none;
     }
     .compact-activity-link:hover {
@@ -118,11 +113,10 @@
         white-space: nowrap;
     }
 
-    /* Estilo base para todos os cards, com a nova sombra para elevação */
     .stat-card {
         background-color: #ffffff;
         border: 1px solid #e5e7eb;
-        border-left: 4px solid; /* Adiciona a borda esquerda */
+        border-left: 4px solid;
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
@@ -130,30 +124,26 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        position: relative; /* Necessário para o border-left */
-        overflow: hidden; /* Garante que a sombra não vaze */
+        position: relative;
+        overflow: hidden;
     }
-    /* Efeito de hover aprimorado para todos os cards */
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
-        border-color: #93c5fd; /* Manter a cor da borda ao hover para consistência */
+        border-color: #93c5fd;
     }
 
     .stat-card-title { display: flex; align-items: center; font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
     .stat-card-title i { margin-right: 0.75rem; font-size: 1.25rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
 
-    /* Cores e estilos específicos para cada tipo de card, seguindo a nova paleta */
-
-    /* Atividades Recentes */
     .recent-activities-card {
-        background-color: #f8f8f8; /* Cinza claro */
+        background-color: #f8f8f8;
         border-color: #e0e0e0;
-        border-left-color: #9e9e9e; /* Cinza médio */
+        border-left-color: #9e9e9e;
         box-shadow: 0 4px 8px -2px rgba(158, 158, 158, 0.1), 0 2px 4px -2px rgba(158, 158, 158, 0.07);
     }
     .recent-activities-card .stat-card-title i {
-        color: #757575; /* Cinza escuro */
+        color: #757575;
         background-color: #eeeeee;
     }
     .recent-activities-card:hover {
@@ -165,36 +155,30 @@
     /* <<< INÍCIO DA ALTERAÇÃO DE ESTILO: AJUSTE DO CARD DE SEQUÊNCIA >>> */
     /* ===================================================================== */
     .streak-card {
-        /* Remove o alinhamento centralizado para permitir o fluxo de cima para baixo */
-        /* text-align: center; */
-        /* justify-content: center; */
-
-        /* Adiciona flexbox para controlar o layout interno */
         display: flex;
         flex-direction: column;
-        justify-content: space-between; /* Empurra o título para cima e o gráfico para baixo */
-
-        background: linear-gradient(145deg, #fff3e0, #fff9f0); /* Laranja/âmbar claro */
+        justify-content: space-between;
+        background: linear-gradient(145deg, #fff3e0, #fff9f0);
         border-color: #ffcc80;
-        border-left-color: #ff9800; /* Laranja vibrante */
+        border-left-color: #ff9800;
         box-shadow: 0 4px 8px -2px rgba(255, 152, 0, 0.1), 0 2px 4px -2px rgba(255, 152, 0, 0.07);
-        min-height: 220px; /* Garante altura mínima para o gráfico */
+        min-height: 220px;
     }
     .streak-card .stat-card-title {
-        justify-content: center; /* Mantém o título centralizado */
+        justify-content: center;
         margin-bottom: 0.5rem;
     }
     .streak-card .stat-card-title i {
-        color: #f57c00; /* Laranja escuro */
+        color: #f57c00;
         background-color: #fff9e6;
     }
     .streak-display-container {
-        text-align: center; /* Centraliza o número da sequência e o texto */
+        text-align: center;
     }
     .streak-display {
         font-size: 2.75rem;
         font-weight: 800;
-        color: #ef6c00; /* Laranja ainda mais escuro */
+        color: #ef6c00;
         line-height: 1;
         margin-top: 0.5rem;
     }
@@ -210,25 +194,24 @@
     }
     .streak-chart-container {
         width: 100%;
-        height: 80px; /* Altura fixa para o gráfico de barras */
+        height: 80px;
         margin-top: 1rem;
     }
     /* ===================================================================== */
     /* <<< FIM DA ALTERAÇÃO DE ESTILO >>> */
     /* ===================================================================== */
 
-    /* Meu Nível */
     .level-card {
-        background: linear-gradient(145deg, #e0f7fa, #f0fcfe); /* Ciano claro */
+        background: linear-gradient(145deg, #e0f7fa, #f0fcfe);
         border: 1px solid #80deea;
-        border-left: 4px solid #00bcd4; /* Ciano vibrante, borda mais grossa */
+        border-left: 4px solid #00bcd4;
         display: flex;
         flex-direction: column;
         justify-content: center;
         box-shadow: 0 4px 8px -2px rgba(0, 188, 212, 0.1), 0 2px 4px -2px rgba(0, 188, 212, 0.07);
     }
     .level-card .stat-card-title i {
-        color: #00838f; /* Ciano escuro */
+        color: #00838f;
         background-color: #e0f7fa;
     }
     .level-info {
@@ -279,15 +262,14 @@
         box-shadow: 0 10px 20px -5px rgba(0, 188, 212, 0.15), 0 4px 6px -4px rgba(0, 188, 212, 0.1);
     }
 
-    /* Medalhas e Feitos */
     .achievements-card {
-        background: linear-gradient(145deg, #ede7f6, #f8f5fb); /* Violeta/lilás claro */
+        background: linear-gradient(145deg, #ede7f6, #f8f5fb);
         border-color: #b39ddb;
-        border-left-color: #673ab7; /* Violeta vibrante */
+        border-left-color: #673ab7;
         box-shadow: 0 4px 8px -2px rgba(103, 58, 183, 0.1), 0 2px 4px -2px rgba(103, 58, 183, 0.07);
     }
     .achievements-card .stat-card-title i {
-        color: #512da8; /* Violeta escuro */
+        color: #512da8;
         background-color: #f3e5f5;
     }
     .achievements-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
@@ -296,11 +278,10 @@
         box-shadow: 0 10px 20px -5px rgba(103, 58, 183, 0.15), 0 4px 6px -4px rgba(103, 58, 183, 0.1);
     }
 
-    /* Card de Motivação Diária (Novo) */
     .daily-motivation-card {
-        background: linear-gradient(145deg, #f3e5f5, #fcf8fc); /* Roxo claro para o fundo */
-        border-color: #ce93d8; /* Borda roxa clara */
-        border-left-color: #ab47bc; /* Borda esquerda roxa vibrante */
+        background: linear-gradient(145deg, #f3e5f5, #fcf8fc);
+        border-color: #ce93d8;
+        border-left-color: #ab47bc;
         box-shadow: 0 4px 8px -2px rgba(171, 71, 188, 0.1), 0 2px 4px -2px rgba(171, 71, 188, 0.07);
         text-align: center;
         display: flex;
@@ -312,23 +293,23 @@
         margin-bottom: 0.5rem;
     }
     .daily-motivation-card .stat-card-title i {
-        color: #8e24aa; /* Roxo escuro para o ícone */
-        background-color: #fce4ec; /* Fundo do ícone mais claro */
+        color: #8e24aa;
+        background-color: #fce4ec;
     }
     .daily-motivation-card:hover {
-        border-color: #be93d8; /* Borda ao hover */
+        border-color: #be93d8;
         box-shadow: 0 10px 20px -5px rgba(171, 71, 188, 0.15), 0 4px 6px -4px rgba(171, 71, 188, 0.1);
     }
     .motivation-date {
         font-size: 0.9rem;
         font-weight: 500;
-        color: #8e24aa; /* Cor da data */
+        color: #8e24aa;
         margin-bottom: 0.75rem;
     }
     .motivation-text {
-        font-size: 1.15rem; /* Frase um pouco maior */
+        font-size: 1.15rem;
         font-style: italic;
-        color: #7b1fa2; /* Roxo mais escuro para a frase */
+        color: #7b1fa2;
         flex-grow: 1;
         display: flex;
         align-items: center;
@@ -336,8 +317,6 @@
         padding: 0 0.5rem;
     }
 
-
-    /* Efeito de elevação adicionado ao container de filtro */
     .filter-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05); }
     .filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
     .filter-label i { color: #64748b; margin-right: 0.5rem; width: 16px; text-align: center; display: inline-block; }
@@ -359,28 +338,21 @@
     .topic-item:last-child { border-bottom: none; }
     .topic-item:hover { background-color: #f3f4f6; }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA IMPLEMENTAÇÃO: LISTA DE LEIS MAIS LEGÍVEL >>> */
-    /* ===================================================================== */
-
-    /* Estilo para intercalar cores de fundo nos itens de tópico (efeito zebra) */
     .topic-item:nth-child(even) {
-        background-color: #e5e7eb; /* Cinza muito claro para linhas pares */
+        background-color: #e5e7eb;
     }
 
-    /* Garante que o hover sempre se sobreponha à cor da linha */
     .topic-item:hover {
         background-color: #f3f4f6;
     }
 
-    /* Contêiner do título do tópico */
     .topic-info {
         display: flex;
         align-items: center;
         color: #334155;
         font-weight: 500;
-        flex-grow: 1; /* Permite que o título ocupe o espaço disponível */
-        margin-right: 1rem; /* Espaço entre o título e os botões */
+        flex-grow: 1;
+        margin-right: 1rem;
     }
 
     .topic-info .icon {
@@ -388,31 +360,24 @@
         color: #94a3b8;
     }
 
-    /* Novo contêiner para status e ações, para melhor controle do alinhamento */
     .topic-status-and-actions {
         display: flex;
         align-items: center;
-        justify-content: flex-end; /* Alinha tudo à direita */
-        flex-shrink: 0; /* Impede que o container encolha */
+        justify-content: flex-end;
+        flex-shrink: 0;
     }
 
-    /* Container do status para garantir largura fixa e alinhar botões */
     .status-badge-container {
-        min-width: 110px; /* Largura mínima para caber "Em Andamento" confortavelmente */
+        min-width: 110px;
         text-align: right;
-        margin-right: 0.75rem; /* Espaço entre o status (se houver) e os botões */
+        margin-right: 0.75rem;
     }
 
-    /* Container apenas para os botões */
     .main-actions {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-
-    /* ===================================================================== */
-    /* <<< FIM DA IMPLEMENTAÇÃO: LISTA DE LEIS MAIS LEGÍVEL >>> */
-    /* ===================================================================== */
 
     .accordion-toggle-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
     .accordion-header.open .accordion-toggle-icon { transform: rotate(90deg); }
@@ -429,7 +394,6 @@
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
     .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
 
-    /* Efeito de elevação adicionado aos cards de favoritos */
     .favorite-card {
         background-color: #ffffff;
         border-radius: 0.75rem;
@@ -529,15 +493,14 @@
         transform: rotate(180deg);
     }
 
-    /* MEU DIÁRIO (TodoItem) */
     .todo-list-card {
-        background: linear-gradient(145deg, #e0ffe0, #f0fff0); /* Verde claro */
+        background: linear-gradient(145deg, #e0ffe0, #f0fff0);
         border-color: #a5d6a7;
-        border-left-color: #4caf50; /* Verde vibrante */
+        border-left-color: #4caf50;
         box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
     }
     .todo-list-card .stat-card-title i {
-        color: #388e3c; /* Verde escuro */
+        color: #388e3c;
         background-color: #e8f5e9;
     }
     .todo-list-card:hover {
@@ -552,18 +515,14 @@
         margin-bottom: 1rem;
     }
 
-    .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-    .custom-input::placeholder { color: #94a3b8; }
-    .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
-
     .todo-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0.75rem 0;
-        border-bottom: 1px dashed #e0ffe0; /* Linha mais suave */
+        border-bottom: 1px dashed #e0ffe0;
         transition: all 0.3s ease;
-        position: relative; /* Essencial para posicionamento do tooltip */
+        position: relative;
     }
     .todo-item:last-child {
         border-bottom: none;
@@ -573,28 +532,27 @@
         display: flex;
         align-items: center;
         flex-grow: 1;
-        cursor: pointer; /* Indica que o item é clicável */
+        cursor: pointer;
     }
     .todo-item-content input[type="checkbox"] {
         margin-right: 0.75rem;
-        /* Estilos básicos para o checkbox, o Tailwind sobrescreve a aparência padrão */
         height: 1.25rem;
         width: 1.25rem;
-        accent-color: #4caf50; /* Cor do checkmark */
+        accent-color: #4caf50;
         cursor: pointer;
     }
     .todo-item-text {
         font-size: 0.95rem;
         color: #374151;
         transition: color 0.3s ease;
-        white-space: nowrap; /* Garante que o texto não quebre linha */
-        overflow: hidden; /* Esconde o excesso */
-        text-overflow: ellipsis; /* Adiciona "..." */
-        max-width: calc(100% - 2.5rem); /* Ajusta largura para caber checkbox e margem */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100% - 2.5rem);
     }
     .todo-item.completed .todo-item-text {
         text-decoration: line-through;
-        color: #9ca3af; /* Cinza para itens concluídos */
+        color: #9ca3af;
     }
     .todo-actions {
         flex-shrink: 0;
@@ -603,7 +561,7 @@
     .todo-delete-btn {
         background: none;
         border: none;
-        color: #ef4444; /* Vermelho para exclusão */
+        color: #ef4444;
         cursor: pointer;
         font-size: 1.1rem;
         transition: color 0.2s ease;
@@ -611,23 +569,21 @@
     .todo-delete-btn:hover {
         color: #dc2626;
     }
-    /* Estilos para o input de adicionar tarefa */
     .todo-input-container .custom-input {
         flex-grow: 1;
-        border-color: #a5d6a7; /* Borda verde clara */
+        border-color: #a5d6a7;
     }
     .todo-input-container .custom-input:focus {
-        border-color: #4caf50; /* Borda verde mais forte no focus */
+        border-color: #4caf50;
         box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
     }
     .todo-input-container .action-button {
-        background-color: #4caf50; /* Botão verde */
+        background-color: #4caf50;
     }
     .todo-input-container .action-button:hover {
-        background-color: #388e3c; /* Verde mais escuro no hover */
+        background-color: #388e3c;
     }
 
-    /* Estilo do tooltip para o texto completo da tarefa */
     .todo-item-text-tooltip {
         visibility: hidden;
         width: 250px;
@@ -677,9 +633,6 @@
         }
     }
 
-    /* Fim dos estilos do Meu Diário */
-
-    /* Estilos para ocultar/mostrar cards */
     .hidden-card-section {
         display: none;
     }
@@ -691,11 +644,10 @@
         .accordion-header .diploma-progress { display: none; }
     }
 
-    /* INÍCIO: Estilo para o botão de editar título dos favoritos */
     #edit-favorites-title-btn {
         background: none;
         border: none;
-        color: #9ca3af; /* Cinza claro */
+        color: #9ca3af;
         cursor: pointer;
         margin-left: 0.75rem;
         font-size: 0.9rem;
@@ -708,99 +660,76 @@
         transition: all 0.2s ease;
     }
     #edit-favorites-title-btn:hover {
-        color: #4b5563; /* Cinza mais escuro */
-        background-color: #f3f4f6; /* Fundo cinza claro no hover */
+        color: #4b5563;
+        background-color: #f3f4f6;
     }
-    /* FIM: Estilo para o botão de editar título dos favoritos */
 
-    /* ===================================================================== */
-    /* <<< FIM DAS ALTERAÇÕES DE ESTILO >>> */
-    /* ===================================================================== */
-
-    /* ===================================================================== */
-    /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO (JUN/2025): NOVA ÁREA DE FILTRO >>> */
-    /* ===================================================================== */
-
-    /* Agrupamento visual do combo Matéria + Lei */
     .filter-duo {
         display: grid;
-        grid-template-columns: 1fr; /* mobile */
+        grid-template-columns: 1fr;
         gap: 1rem;
     }
     @media (min-width: 1024px) {
         .filter-duo {
-            grid-template-columns: repeat(2, 1fr); /* lado-a-lado em telas grandes */
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    /* Destaque para o contêiner de concurso */
     .filter-concurso {
         border-left: 4px solid #3b82f6;
         padding-left: 1rem;
-        position: relative; /* Necessário para posicionar o botão de pino */
+        position: relative;
     }
 
-    /* Destaque para o contêiner de Matéria e Lei */
     .filter-materia-lei {
-        border-left: 4px solid #f97316; /* Laranja vibrante */
+        border-left: 4px solid #f97316;
         padding-left: 1rem;
     }
 
-    /* --- INÍCIO: Estilos para o botão de Definir Concurso Padrão --- */
     #set-default-concurso-btn {
-        display: none; /* Começa oculto */
+        display: none;
         position: absolute;
         top: 0;
         right: 0;
         background: none;
         border: none;
         cursor: pointer;
-        color: #9ca3af; /* Cinza claro, indicando inativo */
+        color: #9ca3af;
         font-size: 1rem;
         padding: 0.25rem;
         transition: color 0.2s ease, transform 0.2s ease;
     }
     #set-default-concurso-btn:hover {
-        color: #3b82f6; /* Azul no hover */
+        color: #3b82f6;
         transform: scale(1.1);
     }
     #set-default-concurso-btn.active {
-        color: #3b82f6; /* Azul quando ativo */
+        color: #3b82f6;
     }
     #remove-default-concurso-btn {
-        display: none; /* Começa oculto */
-        color: #ef4444; /* Vermelho */
+        display: none;
+        color: #ef4444;
         margin-left: 4px;
         font-weight: bold;
     }
     #set-default-concurso-btn.active + #remove-default-concurso-btn {
-        display: inline; /* Mostra o "X" quando o pino está ativo */
+        display: inline;
     }
-    /* --- FIM: Estilos para o botão --- */
 
-    /* ===================================================================== */
-    /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
-    /* ===================================================================== */
-
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
-    /* ===================================================================== */
     @media (max-width: 768px) {
-        /* Altera o item principal para empilhar os elementos verticalmente */
         .topic-item {
-            flex-direction: column; /* A mágica acontece aqui: muda a direção para vertical */
-            align-items: flex-start; /* Alinha tudo à esquerda */
-            gap: 0.75rem; /* Cria um espaço entre a área do título e a área dos botões */
-            padding: 1rem; /* Adiciona mais respiro interno */
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
         }
 
-        /* Garante que o contêiner do título ocupe toda a largura */
         .topic-item .topic-info {
             display: flex;
             align-items: center;
             width: 100%;
             color: #334155;
-            font-weight: 600; /* Deixa o título um pouco mais forte */
+            font-weight: 600;
         }
 
         .topic-item .topic-info .icon {
@@ -808,117 +737,100 @@
             color: #94a3b8;
         }
 
-        /* Nova div que agrupa a linha de baixo (status e ações) */
         .topic-item .topic-status-and-actions {
             display: flex;
-            justify-content: space-between; /* Empurra o status para a esquerda e as ações para a direita */
+            justify-content: space-between;
             align-items: center;
-            width: 100%; /* Ocupa toda a largura do card */
+            width: 100%;
             padding-top: 0.5rem;
-            border-top: 1px solid #f3f4f6; /* Adiciona uma linha sutil de separação */
+            border-top: 1px solid #f3f4f6;
         }
 
-        /* Nova div que agrupa os botões principais */
         .topic-status-and-actions .main-actions {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* Espaço entre o botão de ação e a estrela de favorito */
+            gap: 0.5rem;
         }
 
-        /* Ajusta o botão de ação principal para telas menores */
         .topic-status-and-actions .action-button {
             font-size: 0.8rem;
-            padding: 0.4rem 0.8rem; /* Diminui um pouco o botão */
+            padding: 0.4rem 0.8rem;
         }
 
-        /* Garante que os ícones dos botões fiquem alinhados */
         .topic-status-and-actions .action-button i,
         .topic-status-and-actions .review-button i {
             margin-right: 0.3rem;
         }
     }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
-    /* ===================================================================== */
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
-    /* ===================================================================== */
-    /* Estilos para o card de Tempo Total de Estudo */
     .total-study-time-card {
-        background: linear-gradient(145deg, #e0f2f7, #f0faff); /* Azul claro */
+        background: linear-gradient(145deg, #e0f2f7, #f0faff);
         border-color: #81d4fa;
-        border-left-color: #03a9f4; /* Azul vibrante */
+        border-left-color: #03a9f4;
         box-shadow: 0 4px 8px -2px rgba(3, 169, 244, 0.1), 0 2px 4px -2px rgba(3, 169, 244, 0.07);
-        /* Garante que o card ocupe o espaço disponível verticalmente */
         display: flex;
         flex-direction: column;
-        justify-content: space-around; /* Distribui o conteúdo verticalmente */
+        justify-content: space-around;
     }
     .total-study-time-card .stat-card-title i {
-        color: #0288d1; /* Azul escuro */
+        color: #0288d1;
         background-color: #e3f2fd;
     }
     .total-study-time-card:hover {
         border-color: #4fc3f7;
         box-shadow: 0 10px 20px -5px rgba(3, 169, 244, 0.15), 0 4px 6px -4px rgba(3, 169, 244, 0.1);
     }
-    /* Remover estilos antigos de .study-time-info e .study-time-today */
     .study-time-info, .study-time-today {
-        margin-bottom: 0; /* Remove a margem inferior padrão */
-        font-size: inherit; /* Garante que o font-size seja controlado pelas novas classes */
+        margin-bottom: 0;
+        font-size: inherit;
     }
 
-    /* Novos estilos para cada item de tempo de estudo */
     .study-time-item {
         display: flex;
-        justify-content: space-between; /* Alinha label à esquerda e valor à direita */
+        justify-content: space-between;
         align-items: center;
-        padding: 0.4rem 0; /* Espaçamento vertical entre os itens */
-        border-bottom: 1px dashed rgba(3, 169, 244, 0.2); /* Linha tracejada suave */
+        padding: 0.4rem 0;
+        border-bottom: 1px dashed rgba(3, 169, 244, 0.2);
     }
     .study-time-item:last-child {
-        border-bottom: none; /* Remove a borda do último item */
+        border-bottom: none;
     }
 
     .study-time-label {
-        font-size: 0.95rem; /* Tamanho da fonte para os rótulos */
-        font-weight: 700; /* Títulos em negrito */
-        color: #1c5e7f; /* Cor azul escuro para os rótulos */
-        flex-shrink: 0; /* Impede o rótulo de encolher */
-        margin-right: 1rem; /* Espaço entre o rótulo e o valor */
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1c5e7f;
+        flex-shrink: 0;
+        margin-right: 1rem;
     }
 
     .study-time-value {
-        font-size: 1.1rem; /* Tamanho da fonte para os valores */
-        font-weight: 600; /* Valores em negrito */
-        flex-grow: 1; /* Permite que o valor ocupe o espaço restante */
-        text-align: right; /* Alinha o valor à direita */
+        font-size: 1.1rem;
+        font-weight: 600;
+        flex-grow: 1;
+        text-align: right;
     }
 
-    /* Cores específicas para cada valor de tempo */
     .study-time-total-value {
-        color: #0288d1; /* Azul vibrante */
+        color: #0288d1;
     }
 
     .study-time-weekly-value {
-        color: #388e3c; /* Verde */
+        color: #388e3c;
     }
 
     .study-time-daily-value {
-        color: #ef6c00; /* Laranja/âmbar */
+        color: #ef6c00;
     }
 
-
-    /* Estilos para o card de Estatística por Matéria */
     .subject-stats-card {
-        background: linear-gradient(145deg, #e8f5e9, #f5fcf5); /* Verde claro */
+        background: linear-gradient(145deg, #e8f5e9, #f5fcf5);
         border-color: #a5d6a7;
-        border-left-color: #4caf50; /* Verde vibrante */
+        border-left-color: #4caf50;
         box-shadow: 0 4px 8px -2px rgba(76, 175, 80, 0.1), 0 2px 4px -2px rgba(76, 175, 80, 0.07);
     }
     .subject-stats-card .stat-card-title i {
-        color: #388e3c; /* Verde escuro */
+        color: #388e3c;
         background-color: #e8f5e9;
     }
     .subject-stats-card:hover {
@@ -932,13 +844,12 @@
     }
     .chart-container {
         position: relative;
-        height: 200px; /* Altura fixa para o gráfico */
+        height: 200px;
         width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    /* Estilo para a mensagem quando não há dados de estudo */
     .no-data-message {
         display: flex;
         flex-direction: column;
@@ -946,7 +857,7 @@
         justify-content: center;
         text-align: center;
         padding: 1rem;
-        height: 100%; /* Garante que o contêiner ocupa a altura total do card */
+        height: 100%;
         color: #6b7280;
     }
 
@@ -966,26 +877,20 @@
         color: #9ca3af;
     }
 
-    /* ===================================================================== */
-    /* <<< FIM DA NOVA IMPLEMENTAÇÃO: ESTILOS PARA NOVOS CARDS DE ESTUDO >>> */
-    /* ===================================================================== */
-
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex items-center justify-between"> {# Adiciona um contêiner flex para o título e o botão #}
+    <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold text-gray-800">Meu Painel</h1>
-        {# Botão de Ocultar Cards - Adicionado aqui #}
         <button id="toggle-cards-btn" class="action-button">
             <i class="fas fa-eye-slash mr-2"></i> Ocultar Cards
         </button>
     </div>
 
     {% if fixed_announcements or non_fixed_announcements %}
-    <div class="announcement-section" id="announcement-cards-section"> {# Adicionado ID para a seção de avisos #}
+    <div class="announcement-section" id="announcement-cards-section">
         {% if fixed_announcements %}
         <div class="announcement-container">
             <div class="fixed-announcement-box">
@@ -1021,25 +926,19 @@
     </div>
     {% endif %}
 
-    {# ===================================================================== #}
-    {# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
-        {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid">
         <div class="stat-card todo-list-card md:row-span-2">
-            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
+            <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2>
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: auto;"> {# Alterado de 'hidden' para 'auto' #}
-                {# Os itens serão carregados e renderizados via JavaScript #}
+            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: auto;">
                 {% if todo_items %}
                     {% for item in todo_items %}
                         <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
                             <label class="todo-item-content">
                                 <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                {# Modificação para limitar o texto e adicionar tooltip #}
                                 <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
                                 <span class="todo-item-text-tooltip">{{ item.content }}</span>
                             </label>
@@ -1056,9 +955,8 @@
             </ul>
         </div>
 
-        {# Atividades Recentes (segunda coluna, primeira linha) #}
         {% if recent_activities %}
-        <div class="stat-card recent-activities-card" id="recent-activities-card"> {# Adicionado ID #}
+        <div class="stat-card recent-activities-card" id="recent-activities-card">
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
             <div class="flex flex-col space-y-2">
                 {% for activity in recent_activities %}
@@ -1075,26 +973,28 @@
         </div>
         {% endif %}
 
-        {# Motivação Diária (NOVO CARD - terceira coluna, primeira linha) #}
-        <div class="stat-card daily-motivation-card" id="daily-motivation-card"> {# Adicionado ID #}
+        <div class="stat-card daily-motivation-card" id="daily-motivation-card">
             <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
             <div id="motivation-date" class="motivation-date"></div>
             <p id="motivation-text" class="motivation-text"></p>
         </div>
 
-        {# Sequência de Estudos (segunda coluna, segunda linha) #}
-        <div class="stat-card streak-card" id="streak-card"> {# Adicionado ID #}
+        <div class="stat-card streak-card" id="streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            {% if user_streak > 0 %}
-                <div class="streak-display">{{ user_streak }}</div>
-                <p class="streak-text">dias consecutivos!</p>
-            {% else %}
-                <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-            {% endif %}
+            <div class="streak-display-container">
+                {% if user_streak > 0 %}
+                    <div class="streak-display">{{ user_streak }}</div>
+                    <p class="streak-text">dias consecutivos!</p>
+                {% else %}
+                    <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+                {% endif %}
+            </div>
+            <div class="streak-chart-container">
+                <canvas id="streakChart"></canvas>
+            </div>
         </div>
 
-        {# Meu Nível (terceira coluna, segunda linha) #}
-        <div class="stat-card level-card" id="level-card"> {# Adicionado ID #}
+        <div class="stat-card level-card" id="level-card">
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
             <div class="level-info">
                 <i class="{{ level_info.current_level.icon }} level-icon"></i>
@@ -1117,8 +1017,7 @@
 
     </div>
 
-    {# Medalhas e Feitos (agora acima dos cards de tempo e estatística, ocupando todas as colunas) #}
-    <div class="stat-card achievements-card md:col-span-3" id="achievements-card"> {# Adicionado ID e classe para ocupar 3 colunas #}
+    <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
         {% if user_achievements %}
             <div class="achievements-list">
@@ -1133,11 +1032,10 @@
         {% endif %}
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="study-stats-cards-grid"> {# Novo grid para os cards de estudo #}
-        {# NOVO CARD: Tempo Total de Estudo (mantém a ocupação de 1 coluna) #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="study-stats-cards-grid">
         <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <div class="flex-grow flex flex-col justify-around"> {# Adiciona flex-grow e flex-col para espaçamento vertical #}
+            <div class="flex-grow flex flex-col justify-around">
                 <div class="study-time-item">
                     <span class="study-time-label">Total:</span>
                     <span class="study-time-value study-time-total-value">{{ total_study_formatted }}</span>
@@ -1153,7 +1051,6 @@
             </div>
         </div>
 
-        {# NOVO CARD: Estatística por Matéria (mantém a ocupação de 2 colunas) #}
         <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
             {% if most_studied_subject %}
@@ -1162,22 +1059,15 @@
                     <canvas id="subjectStudyChart"></canvas>
                 </div>
             {% else %}
-                {# MENSAGEM MELHORADA QUANDO NÃO HÁ DADOS #}
                 <div class="no-data-message">
                     <i class="fas fa-chart-bar"></i>
                     <p>Parece que você ainda não tem estatísticas de estudo!</p>
                     <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
-                    <a href="{{ url_for('student.laws') }}" class="action-button mt-4">
-                        <i class="fas fa-book-reader mr-2"></i> Começar a Estudar
-                    </a>
                 </div>
             {% endif %}
         </div>
     </div>
-    {# ===================================================================== #}
-    {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
-    {# ===================================================================== #}
-
+    
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
             <div class="md:col-span-2 relative">
@@ -1196,93 +1086,87 @@
             </div>
         </div>
         <hr class="my-6 border-t border-gray-200">
-        {# ===================================================================== #}
-{# <<< INÍCIO DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
-{# ===================================================================== #}
-<div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-    <div class="filter-concurso">
-        <label for="concurso_id" class="filter-label">
-            <i class="fas fa-trophy"></i> Filtrar por Concurso
-            <button id="set-default-concurso-btn" title="Definir como filtro padrão">
-                <i class="fas fa-thumbtack"></i>
-            </button>
-            <button id="remove-default-concurso-btn" title="Remover filtro padrão">
-                &times;
-            </button>
-        </label>
-        <select id="concurso_id" name="concurso_id" class="custom-input">
-            <option value="all" selected>-- Todos os Concursos --</option>
-            {% for concurso in concursos %}
-                <option value="{{ concurso.id }}">{{ concurso.name }}</option>
-            {% endfor %}
-        </select>
-        <div id="edital-button-container" class="mt-2">
-            <a href="#" id="download-edital-btn" class="action-button" style="display: none; background-color: #3b82f6; width: 100%;" target="_blank">
-                <i class="fas fa-download mr-2"></i> Baixar Edital Verticalizado
-            </a>
-        </div>
-        </div>
-
-    <div class="filter-materia-lei">
-        <div class="filter-duo">
-            <div>
-                <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
-                <select id="subject_id" name="subject_id" class="custom-input">
-                    {% if favorites_by_subject %}
-                        <option value="" selected>-- Favoritas --</option>
-                        <option value="all">-- Todas as Matérias --</option>
-                    {% else %}
-                        <option value="all" selected>-- Todas as Matérias --</option>
-                    {% endif %}
-                    {% for subject in subjects %}
-                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+        <div id="filter-controls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+            <div class="filter-concurso">
+                <label for="concurso_id" class="filter-label">
+                    <i class="fas fa-trophy"></i> Filtrar por Concurso
+                    <button id="set-default-concurso-btn" title="Definir como filtro padrão">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                    <button id="remove-default-concurso-btn" title="Remover filtro padrão">
+                        &times;
+                    </button>
+                </label>
+                <select id="concurso_id" name="concurso_id" class="custom-input">
+                    <option value="all" selected>-- Todos os Concursos --</option>
+                    {% for concurso in concursos %}
+                        <option value="{{ concurso.id }}">{{ concurso.name }}</option>
                     {% endfor %}
                 </select>
-            </div>
-            <div>
-                <label for="diploma_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-gavel"></i> Lei</label>
-                <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
-                    <option value="">-- Selecione uma Matéria --</option>
-                </select>
-            </div>
-        </div>
-    </div>
+                <div id="edital-button-container" class="mt-2">
+                    <a href="#" id="download-edital-btn" class="action-button" style="display: none; background-color: #3b82f6; width: 100%;" target="_blank">
+                        <i class="fas fa-download mr-2"></i> Baixar Edital Verticalizado
+                    </a>
+                </div>
+                </div>
 
-    <div id="refinement-wrapper" style="visibility: hidden;">
-        <label class="filter-label"><i class="fas fa-filter"></i> Refinar por</label>
-        <div class="flex items-center space-x-4 mb-2">
-            <label class="flex items-center text-sm cursor-pointer">
-                <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
-                <span class="ml-1.5">Status</span>
-            </label>
-            <label class="flex items-center text-sm cursor-pointer">
-                <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
-                <span class="ml-1.5">Trecho</span>
-            </label>
-        </div>
-        <div id="status-filter-wrapper">
-            <select id="status_filter" name="status_filter" class="custom-input">
-                <option value="">-- Todos os Status --</option>
-                <option value="not_read">Não Lidas</option>
-                <option value="in_progress">Em Andamento</option>
-                <option value="completed">Concluídas</option>
-            </select>
-        </div>
-        <div id="topic-filter-wrapper" style="display: none;">
-             <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
-                <option value="">-- Selecione um Trecho --</option>
-             </select>
-        </div>
-    </div>
+            <div class="filter-materia-lei">
+                <div class="filter-duo">
+                    <div>
+                        <label for="subject_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-book-open"></i> Matéria</label>
+                        <select id="subject_id" name="subject_id" class="custom-input">
+                            {% if favorites_by_subject %}
+                                <option value="" selected>-- Favoritas --</option>
+                                <option value="all">-- Todas as Matérias --</option>
+                            {% else %}
+                                <option value="all" selected>-- Todas as Matérias --</option>
+                            {% endif %}
+                            {% for subject in subjects %}
+                                <option value="{{ subject.id }}">{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="diploma_id" class="filter-label text-xs lg:text-sm"><i class="fas fa-gavel"></i> Lei</label>
+                        <select id="diploma_id" name="diploma_id" class="custom-input" disabled>
+                            <option value="">-- Selecione uma Matéria --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-    <div class="flex items-end">
-        <label class="filter-label hidden lg:block">&nbsp;</label>
-        <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
-    </div>
-</div>
-{# ===================================================================== #}
-{# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÕES DO HTML DO FILTRO >>> #}
-{# ===================================================================== #}
+            <div id="refinement-wrapper" style="visibility: hidden;">
+                <label class="filter-label"><i class="fas fa-filter"></i> Refinar por</label>
+                <div class="flex items-center space-x-4 mb-2">
+                    <label class="flex items-center text-sm cursor-pointer">
+                        <input type="radio" name="refine_type" value="status" class="h-4 w-4" checked>
+                        <span class="ml-1.5">Status</span>
+                    </label>
+                    <label class="flex items-center text-sm cursor-pointer">
+                        <input type="radio" name="refine_type" value="topic" class="h-4 w-4">
+                        <span class="ml-1.5">Trecho</span>
+                    </label>
+                </div>
+                <div id="status-filter-wrapper">
+                    <select id="status_filter" name="status_filter" class="custom-input">
+                        <option value="">-- Todos os Status --</option>
+                        <option value="not_read">Não Lidas</option>
+                        <option value="in_progress">Em Andamento</option>
+                        <option value="completed">Concluídas</option>
+                    </select>
+                </div>
+                <div id="topic-filter-wrapper" style="display: none;">
+                     <select id="topic_filter" name="topic_filter" class="custom-input" disabled>
+                        <option value="">-- Selecione um Trecho --</option>
+                     </select>
+                </div>
+            </div>
+
+            <div class="flex items-end">
+                <label class="filter-label hidden lg:block">&nbsp;</label>
+                <button type="button" id="clear-filters-btn" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-md text-sm text-gray-600 bg-white hover:bg-gray-50">Limpar Filtros</button>
+            </div>
+        </div>
     </div>
 
     <div id="laws-section" style="display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
@@ -1387,12 +1271,10 @@
 {% block scripts %}
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-{# <<< NOVO: Importa a biblioteca Chart.js para gráficos >>> #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- ELEMENTOS DO DOM ---
     const filterControls = {
         search: document.getElementById('search'),
         concurso: document.getElementById('concurso_id'),
@@ -1419,13 +1301,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
     const defaultConcursoId = {{ default_concurso_id|tojson }};
 
-    // =====================================================================
-    // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para o botão de download do edital >>>
-    // =====================================================================
     const editalButton = document.getElementById('download-edital-btn');
 
     function checkEdital(concursoId) {
-        // Esconde o botão por padrão sempre que a função for chamada
         if (editalButton) {
             editalButton.style.display = 'none';
         }
@@ -1436,15 +1314,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success && data.edital_url) {
                         editalButton.href = data.edital_url;
-                        editalButton.style.display = 'inline-flex'; // Mostra o botão como flexível
+                        editalButton.style.display = 'inline-flex';
                     }
                 })
                 .catch(error => console.error('Erro ao buscar detalhes do edital:', error));
         }
     }
-    // =====================================================================
-    // <<< FIM DA IMPLEMENTAÇÃO >>>
-    // =====================================================================
 
     function updateLawsTitle(concursoSelectElement) {
         const selectedOption = concursoSelectElement.options[concursoSelectElement.selectedIndex];
@@ -1512,10 +1387,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLawsSection();
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
-
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Chama a função para checar o edital >>>
         checkEdital(filterControls.concurso.value);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (filterControls.concurso.value !== 'all') {
             filterControls.subject.value = '';
@@ -1547,9 +1419,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (newTitle !== null && newTitle.trim() !== '') {
                 const finalTitle = newTitle.trim();
-
                 favoritesTitleText.textContent = finalTitle;
-
                 fetch('/student/api/save_favorite_title', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
@@ -1582,9 +1452,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('streak-card'),
         document.getElementById('level-card'),
         document.getElementById('achievements-card'),
-        // <<< NOVO: Adiciona o grid dos cards de estudo para ser ocultado/mostrado >>>
         document.getElementById('study-stats-cards-grid')
-        // <<< FIM NOVO >>>
     ];
 
     function applyCardsVisibility(hidden) {
@@ -1597,7 +1465,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-
+        
         if (hidden) {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye mr-2"></i> Mostrar Cards';
         } else {
@@ -1793,7 +1661,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const favoriteIcon = 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
 
-        // Nova estrutura HTML que usa os novos contêineres para alinhamento.
         return `
         <div class="topic-item" data-law-id="${topic.id}">
             <div class="topic-info">
@@ -1853,10 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLawsTitle(filterControls.concurso);
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
-
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
     });
 
     filterControls.diploma.addEventListener('change', async () => {
@@ -1894,27 +1758,20 @@ document.addEventListener('DOMContentLoaded', function() {
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
-
         filterControls.concurso.value = 'all';
         filterControls.subject.value = hasFavorites ? '' : 'all';
-
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.favorites.checked = false;
-
         filterControls.refinementWrapper.style.visibility = 'hidden';
         document.querySelector('input[name="refine_type"][value="status"]').checked = true;
         filterControls.statusFilterWrapper.style.display = 'block';
         filterControls.topicFilterWrapper.style.display = 'none';
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
-
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
-
-        // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
-        // <<< FIM DA IMPLEMENTAÇÃO >>>
 
         if (hasFavorites) {
             initialPrompt.style.display = 'block';
@@ -1981,7 +1838,6 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.placeholder = placeholders[currentIndex];
         }, 3000);
     }
-    setupDynamicPlaceholder();
 
     document.querySelectorAll('.mark-seen-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -2071,30 +1927,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => buttonEl.disabled = false);
     }
 
-    function initializeDashboard() {
-        attachEventListeners();
-
-        if (defaultConcursoId) {
-            filterControls.concurso.value = defaultConcursoId;
-            filterControls.concurso.dispatchEvent(new Event('change'));
-        } else if (filterControls.subject.value === 'all') {
-            showLawsSection();
-            fetchAndRenderLaws();
-        } else {
-            // <<< INÍCIO DA IMPLEMENTAÇÃO: Checa o edital no carregamento inicial se não houver concurso padrão >>>
-            checkEdital(filterControls.concurso.value);
-            // <<< FIM DA IMPLEMENTAÇÃO >>>
-        }
-
-        updateDefaultConcursoButtonState();
-        fetchAndRenderTodoItems();
-        displayDailyMotivation();
-        setupDynamicPlaceholder();
-        // <<< NOVO: Inicializa o gráfico de estudo por matéria >>>
-        initializeSubjectStudyChart();
-        // <<< FIM NOVO >>>
-    }
-
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -2158,20 +1990,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
                 checkbox.checked = data.todo_item.is_completed;
                 if (data.todo_item.is_completed) {
-                    // Move to the end if completed
                     todoListUl.appendChild(listItem);
                 } else {
-                    // Re-sort if uncompleted to put it back at the top
                     await fetchAndRenderTodoItems();
                 }
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
             } else {
-                checkbox.checked = !checkbox.checked; // Revert checkbox state
+                checkbox.checked = !checkbox.checked;
                 Toastify({ text: "Não foi possível atualizar a tarefa.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
         } catch (error) {
             console.error('Erro ao alternar tarefa:', error);
-            checkbox.checked = !checkbox.checked; // Revert checkbox state on error
+            checkbox.checked = !checkbox.checked;
             Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
         }
     }
@@ -2209,28 +2039,25 @@ document.addEventListener('DOMContentLoaded', function() {
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
 
-    // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Lógica para o gráfico de pizza de estudo por matéria >>>
     let subjectStudyChart = null;
 
     function initializeSubjectStudyChart() {
         const ctx = document.getElementById('subjectStudyChart');
-        const studyData = {{ study_data_for_chart | tojson }};
+        const studyData = {{ study_data_for_chart | tojson|safe }};
         const chartContainer = document.querySelector('.subject-stats-card .chart-container');
         const noDataMessage = document.querySelector('.subject-stats-card .no-data-message');
 
-        if (!ctx) return; // Garante que o canvas existe
+        if (!ctx) return;
 
         if (studyData.length === 0) {
-            // Se não há dados, esconde o canvas e mostra a mensagem
             ctx.style.display = 'none';
             if (noDataMessage) noDataMessage.style.display = 'flex';
-            if (chartContainer) chartContainer.style.height = 'auto'; // Ajusta a altura
+            if (chartContainer) chartContainer.style.height = 'auto';
             return;
         } else {
-            // Se há dados, mostra o canvas e esconde a mensagem
             ctx.style.display = 'block';
             if (noDataMessage) noDataMessage.style.display = 'none';
-            if (chartContainer) chartContainer.style.height = '200px'; // Restaura a altura
+            if (chartContainer) chartContainer.style.height = '200px';
         }
 
         const labels = studyData.map(item => item.name);
@@ -2238,126 +2065,139 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalDuration = data.reduce((sum, current) => sum + current, 0);
 
         const backgroundColors = [
-            'rgba(255, 99, 132, 0.7)', // Red
-            'rgba(54, 162, 235, 0.7)', // Blue
-            'rgba(255, 206, 86, 0.7)', // Yellow
-            'rgba(75, 192, 192, 0.7)', // Green
-            'rgba(153, 102, 255, 0.7)',// Purple
-            'rgba(255, 159, 64, 0.7)', // Orange
-            'rgba(199, 199, 199, 0.7)',// Grey
-            'rgba(83, 102, 255, 0.7)', // Indigo
-            'rgba(201, 203, 207, 0.7)' // Light Grey
+            'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)', 'rgba(83, 102, 255, 0.7)', 'rgba(201, 203, 207, 0.7)'
         ];
         const borderColors = [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-            'rgba(199, 199, 199, 1)',
-            'rgba(83, 102, 255, 1)',
-            'rgba(201, 203, 207, 1)'
+            'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+            'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(201, 203, 207, 1)'
         ];
 
         if (subjectStudyChart) {
-            subjectStudyChart.destroy(); // Destrói a instância anterior do gráfico se existir
+            subjectStudyChart.destroy();
         }
 
         subjectStudyChart = new Chart(ctx, {
             type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: backgroundColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
-                }]
-            },
+            data: { labels: labels, datasets: [{ data: data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'right', // Posição da legenda à direita
-                        labels: {
-                            color: '#4b5563', // Cor do texto da legenda
-                            font: {
-                                size: 12
-                            },
-                            // Ajuste para telas menores
-                            boxWidth: 20, // Largura da caixa de cor da legenda
-                            padding: 10 // Preenchimento entre os itens da legenda
-                        }
-                    },
+                    legend: { position: 'right', labels: { color: '#4b5563', font: { size: 12 }, boxWidth: 20, padding: 10 } },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                                if (label) { label += ': '; }
                                 if (context.parsed !== null) {
                                     const rawValue = context.parsed;
-                                    const percentage = (rawValue / totalDuration * 100).toFixed(1); // Calcula o percentual
-
+                                    const percentage = (rawValue / totalDuration * 100).toFixed(1);
                                     const hours = Math.floor(rawValue / 3600);
                                     const minutes = Math.floor((rawValue % 3600) / 60);
-                                    const seconds = rawValue % 60;
-
                                     let timeString = '';
                                     if (hours > 0) timeString += `${hours}h `;
                                     if (minutes > 0) timeString += `${minutes}m `;
-                                    // Adiciona segundos apenas se não houver horas ou minutos, ou se for zero
-                                    if (seconds > 0 || (hours === 0 && minutes === 0 && seconds === 0)) {
-                                        timeString += `${seconds}s`;
-                                    }
-
-                                    label += `${timeString.trim()} (${percentage}%)`; // Inclui tempo formatado e percentual
+                                    if (timeString === '') timeString = `${rawValue % 60}s`;
+                                    label += `${timeString.trim()} (${percentage}%)`;
                                 }
                                 return label;
                             }
                         }
                     }
                 },
-                // Ajustes para responsividade do gráfico
-                layout: {
-                    padding: {
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        bottom: 0
+                layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } }
+            }
+        });
+    }
+
+    // =====================================================================
+    // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: LÓGICA DO GRÁFICO DE ATIVIDADE SEMANAL >>>
+    // =====================================================================
+    let streakChart = null;
+
+    function initializeStreakChart() {
+        const ctx = document.getElementById('streakChart');
+        if (!ctx) return;
+
+        const weeklyData = {{ weekly_activity_data|tojson|safe }};
+
+        const labels = weeklyData.map(item => item.label);
+        const dataInMinutes = weeklyData.map(item => item.minutes);
+
+        if (streakChart) {
+            streakChart.destroy();
+        }
+
+        streakChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Minutos Estudados',
+                    data: dataInMinutes,
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + ' minutos';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#ef6c00' }
+                    },
+                    y: {
+                        display: false,
+                        beginAtZero: true
                     }
                 }
             }
         });
-
-        // Ajuste da legenda para telas menores
-        const legendContainer = chartContainer.querySelector('.chartjs-legend'); // Classe gerada pelo Chart.js
-        if (legendContainer) {
-            const mediaQuery = window.matchMedia('(max-width: 768px)');
-            const handleMediaQueryChange = (e) => {
-                if (e.matches) {
-                    // Telas pequenas: posicionar legenda abaixo, centralizado
-                    subjectStudyChart.options.plugins.legend.position = 'bottom';
-                    subjectStudyChart.options.plugins.legend.align = 'center';
-                    subjectStudyChart.options.plugins.legend.labels.boxWidth = 10;
-                    subjectStudyChart.options.plugins.legend.labels.padding = 5;
-                } else {
-                    // Telas grandes: posicionar legenda à direita
-                    subjectStudyChart.options.plugins.legend.position = 'right';
-                    subjectStudyChart.options.plugins.legend.align = 'center'; // Padrão
-                    subjectStudyChart.options.plugins.legend.labels.boxWidth = 20;
-                    subjectStudyChart.options.plugins.legend.labels.padding = 10;
-                }
-                subjectStudyChart.update();
-            };
-            mediaQuery.addEventListener('change', handleMediaQueryChange);
-            handleMediaQueryChange(mediaQuery); // Chama na inicialização
-        }
     }
+    // =====================================================================
     // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+    // =====================================================================
+
+    function initializeDashboard() {
+        attachEventListeners();
+        if (defaultConcursoId) {
+            filterControls.concurso.value = defaultConcursoId;
+            filterControls.concurso.dispatchEvent(new Event('change'));
+        } else if (filterControls.subject.value === 'all') {
+            showLawsSection();
+            fetchAndRenderLaws();
+        } else {
+            checkEdital(filterControls.concurso.value);
+        }
+        updateDefaultConcursoButtonState();
+        fetchAndRenderTodoItems();
+        displayDailyMotivation();
+        setupDynamicPlaceholder();
+        initializeSubjectStudyChart();
+        // <<< CHAMA A FUNÇÃO PARA INICIALIZAR O NOVO GRÁFICO >>>
+        initializeStreakChart();
+    }
 
     initializeDashboard();
 });
