@@ -31,32 +31,32 @@
     .announcement-container { margin-bottom: 2rem; transition: all 0.3s ease; }
 
     /* Efeito de elevação adicionado aos cards de aviso */
-    .fixed-announcement-box { 
+    .fixed-announcement-box {
         background-color: #fee2e2; /* Cor de fundo vermelho claro */
         border: 1px solid #fca5a5; /* Borda vermelha mais escura */
         border-left: 4px solid #ef4444; /* Borda esquerda vermelha vibrante */
         color: #991b1b; /* Cor do texto vermelho escuro */
-        padding: 1.25rem; 
-        border-radius: 0.75rem; 
-        margin-bottom: 1.5rem; 
-        box-shadow: 0 4px 8px -2px rgba(239, 68, 68, 0.1), 0 2px 4px -2px rgba(239, 68, 68, 0.07); 
-        position: relative; 
-        overflow: hidden; 
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 8px -2px rgba(239, 68, 68, 0.1), 0 2px 4px -2px rgba(239, 68, 68, 0.07);
+        position: relative;
+        overflow: hidden;
     }
     .announcement-box { background-color: #FEF9C3; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; color: #92400E; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 8px -2px rgba(245, 158, 11, 0.1), 0 2px 4px -2px rgba(245, 158, 11, 0.07); position: relative; overflow: hidden; transition: all 0.3s ease; }
 
-    .fixed-announcement-box h2 { 
-        font-size: 1.1rem; 
-        font-weight: 600; 
-        margin-bottom: 0.5rem; 
-        display: flex; 
-        align-items: center; 
+    .fixed-announcement-box h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
         color: #991b1b; /* Cor do título vermelho escuro */
     }
-    .fixed-announcement-box h2 i { 
-        margin-right: 0.75rem; 
+    .fixed-announcement-box h2 i {
+        margin-right: 0.75rem;
         color: #ef4444; /* Cor do ícone vermelho vibrante */
-        font-size: 1.25rem; 
+        font-size: 1.25rem;
     }
     .fixed-announcement-item { padding: 0.75rem 0; border-top: 1px dashed rgba(252, 165, 165, 0.7); transition: all 0.3s ease; } /* Borda tracejada vermelha */
     .fixed-announcement-item:first-child { border-top: none; padding-top: 0; }
@@ -79,7 +79,7 @@
     .mark-seen-checkbox-container:hover .tooltip { visibility: visible; opacity: 1; }
     @keyframes fadeOut { from { opacity: 1; height: auto; } to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border-width: 0; } }
     .fade-out { animation: fadeOut 0.5s ease forwards; overflow: hidden; }
-    
+
     .recent-activities-card .stat-card-title {
         margin-bottom: 0.75rem;
     }
@@ -161,21 +161,35 @@
         box-shadow: 0 10px 20px -5px rgba(158, 158, 158, 0.15), 0 4px 6px -4px rgba(158, 158, 158, 0.1);
     }
 
-    /* Sequência de Estudos */
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO DE ESTILO: AJUSTE DO CARD DE SEQUÊNCIA >>> */
+    /* ===================================================================== */
     .streak-card {
-        text-align: center;
-        justify-content: center;
+        /* Remove o alinhamento centralizado para permitir o fluxo de cima para baixo */
+        /* text-align: center; */
+        /* justify-content: center; */
+
+        /* Adiciona flexbox para controlar o layout interno */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Empurra o título para cima e o gráfico para baixo */
+
         background: linear-gradient(145deg, #fff3e0, #fff9f0); /* Laranja/âmbar claro */
         border-color: #ffcc80;
         border-left-color: #ff9800; /* Laranja vibrante */
         box-shadow: 0 4px 8px -2px rgba(255, 152, 0, 0.1), 0 2px 4px -2px rgba(255, 152, 0, 0.07);
+        min-height: 220px; /* Garante altura mínima para o gráfico */
     }
     .streak-card .stat-card-title {
-        justify-content: center;
+        justify-content: center; /* Mantém o título centralizado */
+        margin-bottom: 0.5rem;
     }
     .streak-card .stat-card-title i {
         color: #f57c00; /* Laranja escuro */
         background-color: #fff9e6;
+    }
+    .streak-display-container {
+        text-align: center; /* Centraliza o número da sequência e o texto */
     }
     .streak-display {
         font-size: 2.75rem;
@@ -194,6 +208,14 @@
         border-color: #ffb74d;
         box-shadow: 0 10px 20px -5px rgba(255, 152, 0, 0.15), 0 4px 6px -4px rgba(255, 152, 0, 0.1);
     }
+    .streak-chart-container {
+        width: 100%;
+        height: 80px; /* Altura fixa para o gráfico de barras */
+        margin-top: 1rem;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO DE ESTILO >>> */
+    /* ===================================================================== */
 
     /* Meu Nível */
     .level-card {
@@ -256,7 +278,7 @@
         border-color: #4dd0e1;
         box-shadow: 0 10px 20px -5px rgba(0, 188, 212, 0.15), 0 4px 6px -4px rgba(0, 188, 212, 0.1);
     }
-    
+
     /* Medalhas e Feitos */
     .achievements-card {
         background: linear-gradient(145deg, #ede7f6, #f8f5fb); /* Violeta/lilás claro */
@@ -323,7 +345,7 @@
     .custom-input::placeholder { color: #94a3b8; }
     .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
     select.custom-input { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
-    
+
     .accordion-item { border-radius: 0.5rem; overflow: hidden; margin-bottom: 0.75rem; background-color: #fff; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03); }
     .accordion-header { padding: 1rem 1.5rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
     .accordion-header:hover { background-color: #f8fafc; }
@@ -331,7 +353,7 @@
     .accordion-header .diploma-title .icon { margin-right: 0.75rem; color: #3b82f6; }
     .accordion-header .diploma-progress { display: flex; align-items: center; gap: 0.75rem; width: 30%; }
     .accordion-content { display: none; padding: 0.5rem 1.5rem 1.5rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #fdfdff; }
-    
+
     .topic-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
     .topic-item:first-child { border-top: 1px solid #e5e7eb; }
     .topic-item:last-child { border-bottom: none; }
@@ -406,7 +428,7 @@
     .autocomplete-item:hover { background-color: #f8fafc; }
     .autocomplete-item-title { font-weight: 500; color: #1e293b; }
     .autocomplete-item-category { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; color: #1e40af; background-color: #dbeafe; }
-    
+
     /* Efeito de elevação adicionado aos cards de favoritos */
     .favorite-card {
         background-color: #ffffff;
@@ -454,7 +476,7 @@
         text-align: right;
     }
     .favorite-card-body {
-        padding: 0; 
+        padding: 0;
         display: none;
     }
 
@@ -533,7 +555,7 @@
     .custom-input { width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; color: #1e2937; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     .custom-input::placeholder { color: #94a3b8; }
     .custom-input:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
-    
+
     .todo-item {
         display: flex;
         align-items: center;
@@ -608,35 +630,35 @@
     /* Estilo do tooltip para o texto completo da tarefa */
     .todo-item-text-tooltip {
         visibility: hidden;
-        width: 250px; 
+        width: 250px;
         background-color: rgba(0, 0, 0, 0.85);
         color: #fff;
-        text-align: left; 
+        text-align: left;
         border-radius: 6px;
         padding: 8px 12px;
-        position: absolute; 
+        position: absolute;
         z-index: 10;
-        top: 100%; 
-        left: 0; 
-        transform: none; 
-        margin-top: 5px; 
+        top: 100%;
+        left: 0;
+        transform: none;
+        margin-top: 5px;
         opacity: 0;
         transition: opacity 0.3s;
         font-size: 0.8rem;
-        pointer-events: none; 
-        white-space: normal; 
-        word-wrap: break-word; 
+        pointer-events: none;
+        white-space: normal;
+        word-wrap: break-word;
     }
 
     .todo-item-text-tooltip::after {
         content: "";
         position: absolute;
-        bottom: 100%; 
-        left: 20px; 
+        bottom: 100%;
+        left: 20px;
         margin-left: -5px;
         border-width: 5px;
         border-style: solid;
-        border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent; 
+        border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent;
     }
 
     .todo-item-text:hover + .todo-item-text-tooltip {
@@ -668,7 +690,7 @@
         .fixed-announcement-box h2, .announcement-box h2 { font-size: 1.1rem; }
         .accordion-header .diploma-progress { display: none; }
     }
-    
+
     /* INÍCIO: Estilo para o botão de editar título dos favoritos */
     #edit-favorites-title-btn {
         background: none;
@@ -698,7 +720,7 @@
     /* ===================================================================== */
     /* <<< INÍCIO DAS ALTERAÇÕES DE ESTILO (JUN/2025): NOVA ÁREA DE FILTRO >>> */
     /* ===================================================================== */
-    
+
     /* Agrupamento visual do combo Matéria + Lei */
     .filter-duo {
         display: grid;
@@ -717,7 +739,7 @@
         padding-left: 1rem;
         position: relative; /* Necessário para posicionar o botão de pino */
     }
-    
+
     /* Destaque para o contêiner de Matéria e Lei */
     .filter-materia-lei {
         border-left: 4px solid #f97316; /* Laranja vibrante */
@@ -759,7 +781,7 @@
     /* ===================================================================== */
     /* <<< FIM DAS ALTERAÇÕES DE ESTILO (JUN/2025) >>> */
     /* ===================================================================== */
-    
+
     /* ===================================================================== */
     /* <<< INÍCIO DA ALTERAÇÃO PARA VISUALIZAÇÃO MOBILE >>> */
     /* ===================================================================== */
@@ -795,14 +817,14 @@
             padding-top: 0.5rem;
             border-top: 1px solid #f3f4f6; /* Adiciona uma linha sutil de separação */
         }
-        
+
         /* Nova div que agrupa os botões principais */
         .topic-status-and-actions .main-actions {
             display: flex;
             align-items: center;
             gap: 0.5rem; /* Espaço entre o botão de ação e a estrela de favorito */
         }
-        
+
         /* Ajusta o botão de ação principal para telas menores */
         .topic-status-and-actions .action-button {
             font-size: 0.8rem;
@@ -1004,13 +1026,13 @@
     {# ===================================================================== #}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="main-cards-grid"> {# Adicionado ID para o grid principal dos cards #}
         {# Meu Diário (primeira coluna, ocupa 2 linhas) #}
-        <div class="stat-card todo-list-card md:row-span-2"> 
+        <div class="stat-card todo-list-card md:row-span-2">
             <h2 class="stat-card-title"><i class="fas fa-sticky-note"></i> Post-It</h2> {# Alterado o nome do card e o ícone #}
             <div class="todo-input-container">
                 <input type="text" id="new-todo-item" placeholder="Adicionar nova tarefa..." class="custom-input">
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
-            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: hidden;"> {# Alterado de 'auto' para 'hidden' #}
+            <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: auto;"> {# Alterado de 'hidden' para 'auto' #}
                 {# Os itens serão carregados e renderizados via JavaScript #}
                 {% if todo_items %}
                     {% for item in todo_items %}
@@ -1155,7 +1177,7 @@
     {# ===================================================================== #}
     {# <<< FIM DA IMPLEMENTAÇÃO: ALTERAÇÃO DA ESTRUTURA DOS CARDS >>> #}
     {# ===================================================================== #}
-    
+
     <div class="filter-container">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6">
             <div class="md:col-span-2 relative">
@@ -1269,7 +1291,7 @@
     </div>
 
     <div id="initial-prompt">
-    
+
         {% if favorites_by_subject %}
             <div class="text-center mb-10">
                 <h2 class="text-2xl font-semibold text-gray-800 flex items-center justify-center">
@@ -1311,7 +1333,7 @@
                                                         <i class="fas fa-file-alt icon"></i>
                                                         <span>{{ topic.title }}</span>
                                                     </div>
-                                                    
+
                                                     <div class="topic-status-and-actions">
                                                         <div class="status-badge-container">
                                                             {% if topic.is_completed %}
@@ -1392,11 +1414,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const lawsSectionTitle = document.getElementById('laws-section-title');
     const initialPrompt = document.getElementById('initial-prompt');
     const accordionContainer = document.getElementById('laws-accordion-container');
-    
+
     const setDefaultConcursoBtn = document.getElementById('set-default-concurso-btn');
     const removeDefaultConcursoBtn = document.getElementById('remove-default-concurso-btn');
     const defaultConcursoId = {{ default_concurso_id|tojson }};
-    
+
     // =====================================================================
     // <<< INÍCIO DA IMPLEMENTAÇÃO: Lógica para o botão de download do edital >>>
     // =====================================================================
@@ -1490,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLawsSection();
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
-        
+
         // <<< INÍCIO DA IMPLEMENTAÇÃO: Chama a função para checar o edital >>>
         checkEdital(filterControls.concurso.value);
         // <<< FIM DA IMPLEMENTAÇÃO >>>
@@ -1525,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (newTitle !== null && newTitle.trim() !== '') {
                 const finalTitle = newTitle.trim();
-                
+
                 favoritesTitleText.textContent = finalTitle;
 
                 fetch('/student/api/save_favorite_title', {
@@ -1561,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('level-card'),
         document.getElementById('achievements-card'),
         // <<< NOVO: Adiciona o grid dos cards de estudo para ser ocultado/mostrado >>>
-        document.getElementById('study-stats-cards-grid') 
+        document.getElementById('study-stats-cards-grid')
         // <<< FIM NOVO >>>
     ];
 
@@ -1575,7 +1597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         if (hidden) {
             toggleCardsBtn.innerHTML = '<i class="fas fa-eye mr-2"></i> Mostrar Cards';
         } else {
@@ -1598,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const diplomaId = filterControls.diploma.value;
         const showFavorites = filterControls.favorites.checked;
         const refineType = document.querySelector('input[name="refine_type"]:checked').value;
-        
+
         const isInitialState = !subjectId && (concursoId === 'all' || !concursoId);
         if (isInitialState && !showFavorites) {
              accordionContainer.innerHTML = '';
@@ -1615,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (subjectId && subjectId !== 'all') {
              params.append('subject_id', subjectId);
         }
-        
+
         if (diplomaId) {
             params.append('diploma_id', diplomaId);
             if (refineType === 'status') {
@@ -1628,11 +1650,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         try {
             const response = await fetch(`/student/filter_laws?${params.toString()}`);
             if (!response.ok) throw new Error('Falha na resposta do servidor.');
-            
+
             const data = await response.json();
             renderLaws(data.subjects_with_diplomas);
         } catch (error) {
@@ -1640,11 +1662,11 @@ document.addEventListener('DOMContentLoaded', function() {
             accordionContainer.innerHTML = '<p class="text-center py-8 text-red-500">Ocorreu um erro ao carregar as legislações. Tente novamente.</p>';
         }
     }
-    
+
     async function updateDiplomaFilter(subjectId, concursoId) {
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
-        
+
         filterControls.refinementWrapper.style.visibility = 'hidden';
         filterControls.statusFilter.value = '';
         await updateTopicFilter(null);
@@ -1658,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchAndRenderLaws();
             return;
         }
-        
+
         filterControls.diploma.innerHTML = '<option value="">Carregando leis...</option>';
         try {
             const response = await fetch(`/student/api/laws_for_subject/${subjectId}`);
@@ -1683,7 +1705,7 @@ document.addEventListener('DOMContentLoaded', function() {
         topicSelect.disabled = true;
 
         if (!lawId) return;
-        
+
         topicSelect.innerHTML = '<option value="">Carregando trechos...</option>';
         try {
             const response = await fetch(`/student/api/topics_for_law/${lawId}`);
@@ -1744,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', function() {
         accordionContainer.innerHTML = html;
         attachEventListeners();
     }
-    
+
     function renderTopicItem(topic) {
         let statusBadge = '';
         if (topic.is_completed) {
@@ -1766,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="button" class="review-button js-mark-incomplete-btn" data-law-id="${topic.id}" title="Marcar como não concluído">
                 <i class="fas fa-undo-alt"></i>
             </button>` : '';
-        
+
         const favoriteClass = topic.is_favorite ? 'favorited' : '';
         const favoriteIcon = 'fas fa-star';
         const favoriteTitle = topic.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
@@ -1797,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.subject-accordion-header, .accordion-header, .favorite-card-header').forEach(header => {
             header.addEventListener('click', function(event) {
                 if (header.classList.contains('accordion-header')) event.stopPropagation();
-                
+
                 this.classList.toggle('open');
                 const content = this.nextElementSibling;
                 const icon = this.querySelector('.toggle-icon, .accordion-toggle-icon');
@@ -1831,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLawsTitle(filterControls.concurso);
         filterControls.search.value = '';
         updateDiplomaFilter(subjectId, null);
-        
+
         // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
         // <<< FIM DA IMPLEMENTAÇÃO >>>
@@ -1853,10 +1875,10 @@ document.addEventListener('DOMContentLoaded', function() {
         filterControls.statusFilter.value = !isStatus ? '' : filterControls.statusFilter.value;
         fetchAndRenderLaws();
     }));
-    
+
     filterControls.statusFilter.addEventListener('change', fetchAndRenderLaws);
     filterControls.topicFilter.addEventListener('change', fetchAndRenderLaws);
-    
+
     filterControls.favorites.addEventListener('change', () => {
         const isChecked = filterControls.favorites.checked;
         if (isChecked) {
@@ -1872,24 +1894,24 @@ document.addEventListener('DOMContentLoaded', function() {
     filterControls.clearButton.addEventListener('click', () => {
         filterControls.search.value = '';
         const hasFavorites = document.querySelector('#favorite-cards-container .favorite-card') !== null;
-        
+
         filterControls.concurso.value = 'all';
         filterControls.subject.value = hasFavorites ? '' : 'all';
-        
+
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.favorites.checked = false;
-        
+
         filterControls.refinementWrapper.style.visibility = 'hidden';
         document.querySelector('input[name="refine_type"][value="status"]').checked = true;
         filterControls.statusFilterWrapper.style.display = 'block';
         filterControls.topicFilterWrapper.style.display = 'none';
         filterControls.statusFilter.value = '';
         updateTopicFilter(null);
-        
+
         updateLawsTitle(filterControls.concurso);
         updateDefaultConcursoButtonState();
-        
+
         // <<< INÍCIO DA IMPLEMENTAÇÃO: Esconde o botão do edital >>>
         checkEdital(null);
         // <<< FIM DA IMPLEMENTAÇÃO >>>
@@ -1917,12 +1939,12 @@ document.addEventListener('DOMContentLoaded', function() {
             resultsContainer.style.display = 'none';
             return;
         }
-        
+
         filterControls.subject.value = 'all';
         filterControls.diploma.innerHTML = '<option value="">-- Selecione uma Matéria --</option>';
         filterControls.diploma.disabled = true;
         filterControls.refinementWrapper.style.visibility = 'hidden';
-        
+
         initialPrompt.style.display = 'none';
         lawsSection.style.display = 'none';
 
@@ -1934,7 +1956,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function renderAutocompleteResults(results) {
-        resultsContainer.innerHTML = !results || results.length === 0 ? '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>' : 
+        resultsContainer.innerHTML = !results || results.length === 0 ? '<div class="autocomplete-item"><span class="autocomplete-item-title">Nenhum resultado encontrado.</span></div>' :
             results.map(item => `
                 <div class="autocomplete-item" onclick="window.location.href='${item.url}'">
                     <span class="autocomplete-item-title">${item.title}</span>
@@ -1988,7 +2010,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.disabled = true;
         const lawId = button.dataset.lawId;
         const icon = button.querySelector('i');
-        const topicItem = button.closest('.topic-item'); 
+        const topicItem = button.closest('.topic-item');
         const topicInfo = topicItem ? topicItem.querySelector('.topic-info span') : null;
         const topicTitle = topicInfo ? topicInfo.textContent : 'Item';
 
@@ -2048,10 +2070,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(() => buttonEl.disabled = false);
     }
-    
+
     function initializeDashboard() {
         attachEventListeners();
-        
+
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
             filterControls.concurso.dispatchEvent(new Event('change'));
@@ -2063,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkEdital(filterControls.concurso.value);
             // <<< FIM DA IMPLEMENTAÇÃO >>>
         }
-        
+
         updateDefaultConcursoButtonState();
         fetchAndRenderTodoItems();
         displayDailyMotivation();
@@ -2072,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeSubjectStudyChart();
         // <<< FIM NOVO >>>
     }
-    
+
     async function fetchAndRenderTodoItems() {
         try {
             const response = await fetch('/student/api/todo_items');
@@ -2092,15 +2114,15 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro ao buscar itens do diário:', error);
         }
     }
-    
+
     function renderTodoItem(item) {
         const listItem = document.createElement('li');
         listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
         listItem.dataset.itemId = item.id;
         const displayText = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
-        
+
         listItem.innerHTML = `<label class="todo-item-content"><input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}><span class="todo-item-text">${displayText}</span><span class="todo-item-text-tooltip">${item.content}</span></label><div class="todo-actions"><button type="button" class="todo-delete-btn" title="Excluir tarefa"><i class="fas fa-trash-alt"></i></button></div>`;
-        
+
         listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
         listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
         return listItem;
@@ -2140,14 +2162,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     todoListUl.appendChild(listItem);
                 } else {
                     // Re-sort if uncompleted to put it back at the top
-                    await fetchAndRenderTodoItems(); 
+                    await fetchAndRenderTodoItems();
                 }
                 Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-            } else { 
+            } else {
                 checkbox.checked = !checkbox.checked; // Revert checkbox state
                 Toastify({ text: "Não foi possível atualizar a tarefa.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
-        } catch (error) { 
+        } catch (error) {
             console.error('Erro ao alternar tarefa:', error);
             checkbox.checked = !checkbox.checked; // Revert checkbox state on error
             Toastify({ text: "Erro de comunicação. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
@@ -2176,7 +2198,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) { console.error('Erro ao excluir tarefa:', error); }
     }
-    
+
     function displayDailyMotivation() {
         const today = new Date();
         const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -2186,7 +2208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dayIndex = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)) % motivationalPhrases.length;
         motivationTextElement.textContent = motivationalPhrases[dayIndex];
     }
-    
+
     // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Lógica para o gráfico de pizza de estudo por matéria >>>
     let subjectStudyChart = null;
 
@@ -2202,11 +2224,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Se não há dados, esconde o canvas e mostra a mensagem
             ctx.style.display = 'none';
             if (noDataMessage) noDataMessage.style.display = 'flex';
+            if (chartContainer) chartContainer.style.height = 'auto'; // Ajusta a altura
             return;
         } else {
             // Se há dados, mostra o canvas e esconde a mensagem
             ctx.style.display = 'block';
             if (noDataMessage) noDataMessage.style.display = 'none';
+            if (chartContainer) chartContainer.style.height = '200px'; // Restaura a altura
         }
 
         const labels = studyData.map(item => item.name);
@@ -2281,7 +2305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     const hours = Math.floor(rawValue / 3600);
                                     const minutes = Math.floor((rawValue % 3600) / 60);
                                     const seconds = rawValue % 60;
-                                    
+
                                     let timeString = '';
                                     if (hours > 0) timeString += `${hours}h `;
                                     if (minutes > 0) timeString += `${minutes}m `;
@@ -2289,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     if (seconds > 0 || (hours === 0 && minutes === 0 && seconds === 0)) {
                                         timeString += `${seconds}s`;
                                     }
-                                    
+
                                     label += `${timeString.trim()} (${percentage}%)`; // Inclui tempo formatado e percentual
                                 }
                                 return label;
@@ -2334,7 +2358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
-    
+
     initializeDashboard();
 });
 </script>
