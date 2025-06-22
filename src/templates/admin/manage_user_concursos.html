@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Concursos para {{ user.email }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Gerenciar Concursos</h1>
+            <p class="text-lg text-gray-600">Para o usuário: <strong>{{ user.full_name or user.email }}</strong></p>
+        </div>
+        <a href="{{ url_for('admin.manage_users') }}" class="text-purple-600 hover:text-purple-800">&larr; Voltar para Usuários</a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+        <form action="{{ url_for('admin.manage_user_concursos', user_id=user.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg border">
+                <label for="can_see_all_concursos" class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="can_see_all_concursos" name="can_see_all_concursos"
+                           class="h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                           {% if user.can_see_all_concursos %}checked{% endif %}
+                           onchange="toggleConcursoList()">
+                    <span class="ml-3 text-lg font-medium text-gray-800">Permitir que o usuário veja TODOS os concursos?</span>
+                </label>
+                <p class="text-sm text-gray-500 mt-1 ml-8">Se marcado, o usuário terá acesso a todos os concursos existentes e futuros. As seleções específicas abaixo serão ignoradas.</p>
+            </div>
+
+            <fieldset id="concurso-list-fieldset">
+                <legend class="text-xl font-semibold text-gray-700 mb-4">Ou, selecione concursos específicos:</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% if all_concursos %}
+                        {% for concurso in all_concursos %}
+                            <div class="flex items-center bg-white p-3 rounded-md border hover:bg-gray-50">
+                                <input type="checkbox" id="concurso-{{ concurso.id }}" name="concursos" value="{{ concurso.id }}"
+                                       class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                       {% if concurso.id in user_concurso_ids %}checked{% endif %}>
+                                <label for="concurso-{{ concurso.id }}" class="ml-3 block text-sm font-medium text-gray-700">
+                                    {{ concurso.name }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-500">Nenhum concurso cadastrado no sistema.</p>
+                    {% endif %}
+                </div>
+            </fieldset>
+
+            <div class="mt-8 flex justify-end">
+                <a href="{{ url_for('admin.manage_users') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-md mr-4 transition duration-300">
+                    Cancelar
+                </a>
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Função JavaScript para habilitar/desabilitar a lista de concursos
+    // com base no estado da checkbox "ver todos".
+    function toggleConcursoList() {
+        const seeAllCheckbox = document.getElementById('can_see_all_concursos');
+        const concursoFieldset = document.getElementById('concurso-list-fieldset');
+        
+        if (seeAllCheckbox.checked) {
+            // Desabilita e 'apaga' visualmente a lista se "ver todos" estiver marcado
+            concursoFieldset.disabled = true;
+            concursoFieldset.style.opacity = '0.5';
+            concursoFieldset.style.pointerEvents = 'none';
+        } else {
+            // Habilita a lista para seleção
+            concursoFieldset.disabled = false;
+            concursoFieldset.style.opacity = '1';
+            concursoFieldset.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Executa a função assim que a página for carregada para definir o estado inicial correto
+    document.addEventListener('DOMContentLoaded', toggleConcursoList);
+</script>
+{% endblock %}
