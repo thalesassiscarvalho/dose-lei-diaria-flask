@@ -487,10 +487,6 @@
         transform: rotate(180deg);
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO CSS: NOVA COR PARA O CARD "LEMBRETES E METAS" >>> */
-    /* ===================================================================== */
-
     .todo-list-card {
         background: linear-gradient(145deg, #eff6ff, #ffffff); /* Gradiente de Azul (claro) para Branco */
         border-color: #bfdbfe; /* Azul 200 */
@@ -639,7 +635,6 @@
         background-color: #1d4ed8; /* Azul 700 */
     }
 
-    /* Oculta itens que não correspondem ao filtro */
     .todo-item.hidden-by-filter {
         display: none;
     }
@@ -653,10 +648,6 @@
             width: 100%;
         }
     }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO CSS >>> */
-    /* ===================================================================== */
-
 
     .hidden-card-section {
         display: none;
@@ -2045,29 +2036,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = newTodoItemInput.value.trim();
         if (!content) return;
 
-        // Pega a categoria selecionada
         const category = document.querySelector('input[name="todo_category"]:checked').value;
 
         try {
             const response = await fetch('/student/api/todo_items', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
-                body: JSON.stringify({ content, category }) // Envia a categoria
+                body: JSON.stringify({ content, category }) 
             });
             const data = await response.json();
             if (data.success) {
                 document.getElementById('no-todo-items-message')?.remove();
-                
                 const newItemElement = renderTodoItem(data.todo_item);
-                
-                // Adiciona o novo item no topo da lista
                 todoListUl.prepend(newItemElement);
-                
                 newTodoItemInput.value = '';
                 newTodoItemInput.focus();
-                
-                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-                applyTodoFilter(); // Re-aplica o filtro
+                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #2563eb, #3b82f6)" } }).showToast();
+                applyTodoFilter();
             } else {
                 Toastify({ text: data.error, duration: 5000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
             }
@@ -2077,20 +2062,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Permite adicionar com a tecla Enter
     newTodoItemInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Impede o comportamento padrão do Enter
+            e.preventDefault();
             addTodoBtn.click();
         }
     });
 
+    // ===============================================================================================
+    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: ALERTA DE META CONCLUÍDA >>>
+    // ===============================================================================================
     async function handleToggleTodoItem(event) {
         const checkbox = event.currentTarget;
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         
-        // Desabilita interações temporariamente
         checkbox.disabled = true;
 
         try {
@@ -2099,6 +2085,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 listItem.classList.toggle('completed', data.todo_item.is_completed);
                 checkbox.checked = data.todo_item.is_completed;
+
+                const isCompleting = data.todo_item.is_completed;
+                const itemCategory = listItem.dataset.category;
+
+                if (isCompleting && itemCategory === 'meta') {
+                    // Mensagem especial para META CONCLUÍDA
+                    Toastify({
+                        text: "🏆 Parabéns! Meta concluída com sucesso! Continue assim!",
+                        duration: 5000,
+                        gravity: "top", 
+                        position: "center", 
+                        stopOnFocus: true, 
+                        style: {
+                            background: "linear-gradient(to right, #16a34a, #4ade80)", // Verde vibrante
+                            fontSize: "1rem",
+                            borderRadius: "8px",
+                            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)"
+                        },
+                        escapeMarkup: false // Necessário para renderizar o emoji 🏆
+                    }).showToast();
+                } else {
+                    // Mensagem padrão para outras ações (concluir lembrete, reabrir item)
+                    Toastify({ 
+                        text: data.message, 
+                        duration: 3000, 
+                        style: { background: "linear-gradient(to right, #2563eb, #3b82f6)" } 
+                    }).showToast();
+                }
 
                 // Re-ordena a lista para manter os concluídos no final
                 const allItems = Array.from(todoListUl.querySelectorAll('.todo-item'));
@@ -2109,7 +2123,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 allItems.forEach(item => todoListUl.appendChild(item));
                 
-                Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
             } else {
                 checkbox.checked = !checkbox.checked; // Reverte a mudança visual
                 Toastify({ text: "Não foi possível atualizar o item.", duration: 3000, style: { background: "linear-gradient(to right, #ff416c, #ff4b2b)" } }).showToast();
@@ -2122,6 +2135,9 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.disabled = false; // Reabilita o checkbox
         }
     }
+    // ===============================================================================================
+    // <<< FIM DA ALTERAÇÃO JAVASCRIPT >>>
+    // ===============================================================================================
 
 
     async function handleDeleteTodoItem(event) {
