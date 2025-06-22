@@ -7,14 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
     from .law import Law
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: IMPORTAR O MODELO 'Concurso' >>>
-    # =====================================================================
-    # Precisamos ter acesso ao modelo Concurso para criar o relacionamento
     from .concurso import Concurso
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 1/3 >>>
-    # =====================================================================
 except ImportError:
     pass
 
@@ -32,17 +25,11 @@ favorites_association = db.Table("user_favorites",
     db.Column("law_id", db.Integer, db.ForeignKey("law.id", ondelete="CASCADE"), primary_key=True)
 )
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO 2/3: NOVA TABELA DE ASSOCIAÇÃO USER-CONCURSO >>>
-# =====================================================================
-# Esta tabela especial conectará os usuários aos concursos na relação muitos-para-muitos.
+# Tabela de Associação User-Concurso
 user_concurso_association = db.Table('user_concurso_association',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), primary_key=True),
     db.Column('concurso_id', db.Integer, db.ForeignKey('concurso.id', ondelete="CASCADE"), primary_key=True)
 )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO 2/3 >>>
-# =====================================================================
 
 
 class User(UserMixin, db.Model):
@@ -58,23 +45,22 @@ class User(UserMixin, db.Model):
     default_concurso_id = db.Column(db.Integer, db.ForeignKey('concurso.id'), nullable=True)
 
     # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: NOVOS CAMPOS E RELACIONAMENTOS >>>
+    # <<< INÍCIO DA CORREÇÃO >>>
     # =====================================================================
-    # Se True, o usuário pode ver todos os concursos. Se False, verá apenas os associados.
-    # O padrão é True para que os usuários existentes não percam o acesso.
-    can_see_all_concursos = db.Column(db.Boolean, default=True, nullable=False)
+    # Alterado de default=True para server_default='true'.
+    # Isso instrui o BANCO DE DADOS a preencher a coluna com 'true' para os usuários existentes.
+    can_see_all_concursos = db.Column(db.Boolean, nullable=False, server_default='true')
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO >>>
+    # =====================================================================
 
-    # Relacionamento muitos-para-muitos com o modelo Concurso,
-    # utilizando a tabela de associação que criamos acima.
+    # Relacionamento muitos-para-muitos com o modelo Concurso
     associated_concursos = db.relationship(
         'Concurso',
         secondary=user_concurso_association,
         backref=db.backref('associated_users', lazy='dynamic'),
         lazy='dynamic'
     )
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 3/3 >>>
-    # =====================================================================
 
     # Relationships
     progress = db.relationship("UserProgress", backref="user", lazy=True)
