@@ -4,6 +4,7 @@ from datetime import datetime, date # Adicionado 'date' para o novo modelo
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship # <<< IMPORTAÇÃO ADICIONADA
 # --- NOVO: Importar Law para a definição da tabela ---
 # Assumindo que law.py está no mesmo diretório ou o import relativo funciona
 # Se law.py estiver em src/models/law.py, o import pode precisar ser ajustado
