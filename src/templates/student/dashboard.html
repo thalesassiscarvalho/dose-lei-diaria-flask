@@ -151,9 +151,6 @@
         box-shadow: 0 10px 20px -5px rgba(158, 158, 158, 0.15), 0 4px 6px -4px rgba(158, 158, 158, 0.1);
     }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO DE ESTILO: AJUSTE DO CARD DE SEQUÊNCIA >>> */
-    /* ===================================================================== */
     .streak-card {
         display: flex;
         flex-direction: column;
@@ -197,9 +194,6 @@
         height: 80px;
         margin-top: 1rem;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO DE ESTILO >>> */
-    /* ===================================================================== */
 
     .level-card {
         background: linear-gradient(145deg, #e0f7fa, #f0fcfe);
@@ -934,24 +928,6 @@
                 <button id="add-todo-btn" class="action-button">Adicionar</button>
             </div>
             <ul id="todo-list" class="space-y-1 flex-grow" style="max-height: 400px; overflow-y: auto;">
-                {% if todo_items %}
-                    {% for item in todo_items %}
-                        <li class="todo-item {% if item.is_completed %}completed{% endif %}" data-item-id="{{ item.id }}">
-                            <label class="todo-item-content">
-                                <input type="checkbox" class="todo-checkbox" {% if item.is_completed %}checked{% endif %}>
-                                <span class="todo-item-text">{{ item.content|truncate(40, True) }}</span>
-                                <span class="todo-item-text-tooltip">{{ item.content }}</span>
-                            </label>
-                            <div class="todo-actions">
-                                <button type="button" class="todo-delete-btn" title="Excluir tarefa">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </li>
-                    {% endfor %}
-                {% else %}
-                    <p id="no-todo-items-message" class="text-gray-500 italic text-sm text-center py-4">Nenhuma tarefa por enquanto. Adicione uma!</p>
-                {% endif %}
             </ul>
         </div>
 
@@ -1014,7 +990,6 @@
                 <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
             {% endif %}
         </div>
-
     </div>
 
     <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
@@ -2114,7 +2089,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: LÓGICA DO GRÁFICO DE ATIVIDADE SEMANAL >>>
+    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: Tooltip do Gráfico de Atividade Semanal >>>
     // =====================================================================
     let streakChart = null;
 
@@ -2150,14 +2125,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        // Personaliza o tooltip que aparece ao passar o mouse
                         callbacks: {
                             label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) { label += ': '; }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y + ' minutos';
+                                const totalMinutes = context.parsed.y || 0;
+
+                                if (totalMinutes === 0) {
+                                    return "Nenhum estudo";
                                 }
-                                return label;
+
+                                const hours = Math.floor(totalMinutes / 60);
+                                const minutes = totalMinutes % 60;
+                                const parts = [];
+
+                                if (hours > 0) {
+                                    parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
+                                }
+                                if (minutes > 0) {
+                                    parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`);
+                                }
+
+                                return parts.join(' e ');
                             }
                         }
                     }
@@ -2176,7 +2164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     // =====================================================================
-    // <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+    // <<< FIM DA ALTERAÇÃO JAVASCRIPT >>>
     // =====================================================================
 
     function initializeDashboard() {
@@ -2195,7 +2183,6 @@ document.addEventListener('DOMContentLoaded', function() {
         displayDailyMotivation();
         setupDynamicPlaceholder();
         initializeSubjectStudyChart();
-        // <<< CHAMA A FUNÇÃO PARA INICIALIZAR O NOVO GRÁFICO >>>
         initializeStreakChart();
     }
 
