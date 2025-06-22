@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, Date
 from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import datetime
@@ -15,7 +15,7 @@ from src.models.comment import UserComment
 from src.models.concurso import Concurso
 from src.models.study import StudySession
 import logging
-import pytz # <<< ADICIONADO PARA CONTROLE DE FUSO HORÁRIO
+import pytz
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
@@ -64,8 +64,6 @@ def _humanize_time_delta(dt):
         return f"{int(minutes)} minutos atrás"
     return "agora mesmo"
 
-# --- INÍCIO DA ALTERAÇÃO 1/2: FUNÇÃO DE FORMATAÇÃO MELHORADA ---
-# Função auxiliar para formatar segundos em horas e minutos de forma mais inteligente
 def _format_duration(total_seconds):
     if not isinstance(total_seconds, (int, float)) or total_seconds < 0:
         total_seconds = 0
@@ -83,7 +81,6 @@ def _format_duration(total_seconds):
         parts.append(f"{minutes} minuto{'s' if minutes > 1 else ''}")
     
     return " e ".join(parts)
-# --- FIM DA ALTERAÇÃO 1/2 ---
 
 LEVELS = [
     {"name": "Novato", "min_points": 0, "icon": "fas fa-seedling"},
@@ -205,9 +202,6 @@ def autocomplete_search():
 @student_bp.route("/api/concurso/<int:concurso_id>/details")
 @login_required
 def get_concurso_details(concurso_id):
-    """
-    Retorna detalhes de um concurso, como a URL do edital.
-    """
     concurso = Concurso.query.get_or_404(concurso_id)
     return jsonify(
         success=True,
@@ -349,40 +343,67 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
-    # --- INÍCIO DA ALTERAÇÃO 2/2: CÁLCULO DE TEMPO DE ESTUDO ---
-    # Tempo Total Acumulado
     total_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                     .filter_by(user_id=current_user.id).scalar() or 0
     formatted_total_study = _format_duration(total_study_seconds)
 
-    # Tempo de Estudo na Última Semana
     one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
     weekly_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                      .filter_by(user_id=current_user.id)\
                                      .filter(StudySession.recorded_at >= one_week_ago).scalar() or 0
     formatted_weekly_study = _format_duration(weekly_study_seconds)
 
-    # Tempo de Estudo Hoje (com fuso horário do Brasil)
     try:
         brazil_tz = pytz.timezone('America/Sao_Paulo')
         now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
         today_start_in_brazil = now_in_brazil.replace(hour=0, minute=0, second=0, microsecond=0)
-        # Converte o início do dia no Brasil de volta para UTC para consultar o banco de dados
         today_start_utc = today_start_in_brazil.astimezone(pytz.utc)
     except pytz.UnknownTimeZoneError:
-        # Fallback para UTC caso o fuso 'America/Sao_Paulo' não seja encontrado no sistema
         logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
         today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     daily_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                     .filter_by(user_id=current_user.id)\
                                     .filter(StudySession.recorded_at >= today_start_utc).scalar() or 0
-    
-    # Utiliza a mesma função de formatação dos outros para consistência
     formatted_daily_study = _format_duration(daily_study_seconds)
-    # --- FIM DA ALTERAÇÃO 2/2 ---
+    
+    # =====================================================================
+    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: DADOS PARA O GRÁFICO DE ATIVIDADE SEMANAL >>>
+    # =====================================================================
+    weekly_activity_data = []
+    days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    today_in_brazil = now_in_brazil.date()
 
-    # Estatísticas por Matéria
+    # Pega os dados de estudo dos últimos 7 dias do banco
+    start_date_of_week = today_in_brazil - timedelta(days=6)
+    start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
+    
+    study_sessions_week = db.session.query(
+        func.cast(StudySession.recorded_at, Date).label('study_date'),
+        func.sum(StudySession.duration_seconds).label('total_seconds')
+    ).filter(
+        StudySession.user_id == current_user.id,
+        StudySession.recorded_at >= start_date_utc
+    ).group_by('study_date').all()
+    
+    # Mapeia os dados do banco para um dicionário para fácil acesso
+    study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
+
+    # Prepara a lista de dados para os últimos 7 dias
+    for i in range(7):
+        current_day = today_in_brazil - timedelta(days=6-i)
+        duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
+        
+        day_label = "Hoje" if current_day == today_in_brazil else days_of_week_br[current_day.weekday()]
+        
+        weekly_activity_data.append({
+            "label": day_label,
+            "minutes": duration_minutes
+        })
+    # =====================================================================
+    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+    # =====================================================================
+
     study_by_subject_data = db.session.query(
         Subject.name,
         func.sum(StudySession.duration_seconds).label('total_duration_seconds')
@@ -393,7 +414,7 @@ def dashboard():
      .all()
     
     most_studied_subject = None
-    study_data_for_chart = [] # Para o gráfico
+    study_data_for_chart = []
     if study_by_subject_data:
         most_studied_subject = {
             'name': study_by_subject_data[0][0],
@@ -426,9 +447,12 @@ def dashboard():
                            weekly_study_formatted=formatted_weekly_study,
                            daily_study_formatted=formatted_daily_study,
                            most_studied_subject=most_studied_subject,
-                           study_data_for_chart=study_data_for_chart
+                           study_data_for_chart=study_data_for_chart,
+                           weekly_activity_data=weekly_activity_data # <<< Envia os novos dados para o template
                            )
 
+
+# ... (o resto do arquivo permanece igual) ...
 
 @student_bp.route("/filter_laws")
 @login_required
@@ -894,7 +918,6 @@ def set_default_concurso():
             message = "Filtro padrão removido com sucesso!"
         elif concurso_id_str and concurso_id_str.isdigit():
             concurso_id = int(concurso_id_str)
-            # Verifica se o concurso existe para evitar inconsistências
             concurso = Concurso.query.get(concurso_id)
             if not concurso:
                 return jsonify(success=False, error="Concurso não encontrado."), 404
@@ -914,21 +937,15 @@ def set_default_concurso():
 @student_bp.route("/api/study_sessions/record", methods=["POST"])
 @login_required
 def record_study_session():
-    """
-    Registra uma sessão de estudo (automática ou manual).
-    Espera JSON com law_id, duration_seconds, entry_type,
-    e opcionalmente start_time, end_time para tipo 'auto'.
-    """
     data = request.get_json()
     
     law_id = data.get('law_id')
     duration_seconds = data.get('duration_seconds')
-    entry_type = data.get('entry_type', 'auto') # Padrão 'auto'
+    entry_type = data.get('entry_type', 'auto')
 
     if not law_id or duration_seconds is None:
         return jsonify(success=False, error="law_id e duration_seconds são obrigatórios."), 400
     
-    # Validação básica
     try:
         law_id = int(law_id)
         duration_seconds = int(duration_seconds)
@@ -942,14 +959,9 @@ def record_study_session():
     if not law:
         return jsonify(success=False, error="Lei não encontrada."), 404
 
-    # --- INÍCIO DA ALTERAÇÃO: Garante que o subject_id seja pego do banco de dados ---
-    # Captura o subject_id diretamente do objeto 'law' que acabamos de buscar.
-    # Isso garante que sempre teremos o subject_id correto associado à lei,
-    # tornando o sistema mais robusto.
     subject_id = law.subject_id
     if not subject_id:
         return jsonify(success=False, error="A lei não está associada a uma matéria válida. Não é possível registrar o tempo de estudo."), 400
-    # --- FIM DA ALTERAÇÃO ---
     
     start_time = None
     end_time = None
@@ -974,7 +986,7 @@ def record_study_session():
         new_session = StudySession(
             user_id=current_user.id,
             law_id=law_id,
-            subject_id=subject_id, # Usando o subject_id obtido do objeto 'law'
+            subject_id=subject_id,
             duration_seconds=duration_seconds,
             entry_type=entry_type,
             start_time=start_time,
@@ -996,9 +1008,6 @@ def record_study_session():
 @student_bp.route("/api/study_stats", methods=["GET"])
 @login_required
 def get_study_stats():
-    """
-    Retorna estatísticas de tempo de estudo por matéria para o usuário atual.
-    """
     study_data = db.session.query(
         Subject.name,
         func.sum(StudySession.duration_seconds).label('total_duration_seconds')
