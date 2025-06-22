@@ -15,6 +15,7 @@ from src.models.comment import UserComment
 from src.models.concurso import Concurso
 from src.models.study import StudySession
 import logging
+import pytz # <<< ADICIONADO PARA CONTROLE DE FUSO HORÁRIO
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
@@ -63,11 +64,26 @@ def _humanize_time_delta(dt):
         return f"{int(minutes)} minutos atrás"
     return "agora mesmo"
 
-# Função auxiliar para formatar segundos em horas e minutos
+# --- INÍCIO DA ALTERAÇÃO 1/2: FUNÇÃO DE FORMATAÇÃO MELHORADA ---
+# Função auxiliar para formatar segundos em horas e minutos de forma mais inteligente
 def _format_duration(total_seconds):
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    return f"{int(hours)} horas e {int(minutes)} minutos"
+    if not isinstance(total_seconds, (int, float)) or total_seconds < 0:
+        total_seconds = 0
+        
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+
+    if hours == 0 and minutes == 0:
+        return "0 minutos"
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours} hora{'s' if hours > 1 else ''}")
+    if minutes > 0:
+        parts.append(f"{minutes} minuto{'s' if minutes > 1 else ''}")
+    
+    return " e ".join(parts)
+# --- FIM DA ALTERAÇÃO 1/2 ---
 
 LEVELS = [
     {"name": "Novato", "min_points": 0, "icon": "fas fa-seedling"},
@@ -333,6 +349,7 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
+    # --- INÍCIO DA ALTERAÇÃO 2/2: CÁLCULO DE TEMPO DE ESTUDO ---
     # Tempo Total Acumulado
     total_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                     .filter_by(user_id=current_user.id).scalar() or 0
@@ -345,15 +362,25 @@ def dashboard():
                                      .filter(StudySession.recorded_at >= one_week_ago).scalar() or 0
     formatted_weekly_study = _format_duration(weekly_study_seconds)
 
-    # Tempo de Estudo Hoje
-    today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    # Tempo de Estudo Hoje (com fuso horário do Brasil)
+    try:
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
+        today_start_in_brazil = now_in_brazil.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Converte o início do dia no Brasil de volta para UTC para consultar o banco de dados
+        today_start_utc = today_start_in_brazil.astimezone(pytz.utc)
+    except pytz.UnknownTimeZoneError:
+        # Fallback para UTC caso o fuso 'America/Sao_Paulo' não seja encontrado no sistema
+        logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
+        today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
     daily_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
                                     .filter_by(user_id=current_user.id)\
-                                    .filter(StudySession.recorded_at >= today_start).scalar() or 0
-    # Para o tempo de hoje, pode ser mais granular (apenas minutos, se menos de uma hora)
-    formatted_daily_study = f"{int(daily_study_seconds // 60)} minutos" if daily_study_seconds >= 60 else f"{int(daily_study_seconds)} segundos"
-    if daily_study_seconds == 0:
-        formatted_daily_study = "0 minutos"
+                                    .filter(StudySession.recorded_at >= today_start_utc).scalar() or 0
+    
+    # Utiliza a mesma função de formatação dos outros para consistência
+    formatted_daily_study = _format_duration(daily_study_seconds)
+    # --- FIM DA ALTERAÇÃO 2/2 ---
 
     # Estatísticas por Matéria
     study_by_subject_data = db.session.query(
@@ -915,27 +942,21 @@ def record_study_session():
     if not law:
         return jsonify(success=False, error="Lei não encontrada."), 404
 
-    # --- INÍCIO DA ALTERAÇÃO ---
+    # --- INÍCIO DA ALTERAÇÃO: Garante que o subject_id seja pego do banco de dados ---
     # Captura o subject_id diretamente do objeto 'law' que acabamos de buscar.
     # Isso garante que sempre teremos o subject_id correto associado à lei,
-    # independentemente de como ele foi passado no frontend (ou se foi omitido).
+    # tornando o sistema mais robusto.
     subject_id = law.subject_id
-    # Se, por algum motivo, a lei não tiver uma matéria associada (o que é raro para leis de estudo),
-    # você pode decidir retornar um erro ou associá-la a um subject_id padrão/nulo, dependendo do seu modelo de dados.
     if not subject_id:
-        # Se for um erro esperado para o seu sistema, descomente e ajuste a mensagem
         return jsonify(success=False, error="A lei não está associada a uma matéria válida. Não é possível registrar o tempo de estudo."), 400
     # --- FIM DA ALTERAÇÃO ---
     
     start_time = None
     end_time = None
     if entry_type == 'auto':
-        # Para sessões automáticas, esperamos start_time e end_time
         start_time_str = data.get('start_time')
         end_time_str = data.get('end_time')
         try:
-            # Assumindo que os timestamps vêm em formato ISO (ex: "2025-06-18T10:30:00.000Z")
-            # Ajusta para aceitar o 'Z' indicando UTC e converter corretamente para datetime
             start_time = datetime.datetime.fromisoformat(start_time_str.replace('Z', '+00:00')) if start_time_str else None
             end_time = datetime.datetime.fromisoformat(end_time_str.replace('Z', '+00:00')) if end_time_str else None
         except ValueError:
@@ -944,11 +965,10 @@ def record_study_session():
         if not start_time or not end_time:
             return jsonify(success=False, error="start_time e end_time são obrigatórios para sessões automáticas."), 400
         
-        # Opcional: Re-validar duration_seconds com base em start/end_time
         calculated_duration = (end_time - start_time).total_seconds()
-        if abs(calculated_duration - duration_seconds) > 5: # Pequena margem de erro
+        if abs(calculated_duration - duration_seconds) > 5:
             logging.warning(f"Duração calculada ({calculated_duration}) difere da enviada ({duration_seconds}) para user {current_user.id}, law {law_id}.")
-            duration_seconds = int(calculated_duration) # Usar a calculada para maior precisão
+            duration_seconds = int(calculated_duration)
 
     try:
         new_session = StudySession(
@@ -959,11 +979,10 @@ def record_study_session():
             entry_type=entry_type,
             start_time=start_time,
             end_time=end_time,
-            recorded_at=datetime.datetime.utcnow() # Data de registro da ação
+            recorded_at=datetime.datetime.utcnow()
         )
         db.session.add(new_session)
         
-        # Opcional: Atualizar a StudyActivity para streak quando uma sessão é registrada
         _record_study_activity(current_user)
 
         db.session.commit()
