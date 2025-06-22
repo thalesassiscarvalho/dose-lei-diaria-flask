@@ -1129,15 +1129,17 @@
 </div>
 {% endif %}
 
-{% if is_completed %}
-<div class="completed-banner" role="alert">
-    <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
+<div id="main-content-below-header">
+    {% if is_completed %}
+    <div class="completed-banner" role="alert">
+        <i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!
+    </div>
+    {% elif last_read_article %}
+    <div class="last-read-info" role="alert">
+        <i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>{{ last_read_article }}</strong>
+    </div>
+    {% endif %}
 </div>
-{% elif last_read_article %}
-<div class="last-read-info" role="alert">
-    <i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>{{ last_read_article }}</strong>
-</div>
-{% endif %}
 
 <div id="sticky-action-bar" class="sticky top-1 z-20 bg-gray-50 py-3 px-4 rounded-md shadow flex flex-col md:flex-row items-center justify-between gap-y-3 mb-4">
 
@@ -1262,26 +1264,25 @@
     </div>
 </div>
 {% endif %}
-{% if not is_completed %}
-<form id="mark-complete-form" action="{{ url_for('student.mark_complete', law_id=law.id) }}" method="post" class="mt-8">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="last_read_article" id="hidden_last_read_article" value="{{ last_read_article or '' }}">
-    <div class="action-buttons flex justify-center items-center">
-        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
-            <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
-        </button>
-        <button type="button" id="back-to-top-btn" class="back-to-top-btn">
-            <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
-        </button>
-    </div>
-</form>
-{% else %}
-<div class="mt-8 flex justify-center">
-    <button type="button" id="back-to-top-btn" class="back-to-top-btn">
-        <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
-    </button>
+
+<div id="action-buttons-container" class="mt-8">
+    {% if not is_completed %}
+        <div class="action-buttons flex justify-center items-center">
+            <button type="button" id="mark-complete-btn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-md transition-colors flex items-center">
+                <i class="fas fa-check-circle mr-2"></i> Marcar como Concluído
+            </button>
+            <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+                <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+            </button>
+        </div>
+    {% else %}
+        <div class="flex justify-center">
+            <button type="button" id="back-to-top-btn" class="back-to-top-btn">
+                <i class="fas fa-arrow-up mr-2"></i> Voltar ao Topo
+            </button>
+        </div>
+    {% endif %}
 </div>
-{% endif %}
 
 <div id="comment-modal-backdrop" class="comment-modal-backdrop">
     <div class="comment-modal-content">
@@ -1543,7 +1544,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setupToggleButton('toggle-doutrina-btn', 'p[style*="background-color: #f5f3ff"]');
     setupToggleButton('toggle-my-comments-btn', '.comment-display');
 
-    const hiddenLastReadArticleInput = document.getElementById("hidden_last_read_article");
     if(goToNotesBtn) {
         goToNotesBtn.addEventListener("click", function() {
             notesSection.scrollIntoView({ behavior: 'smooth' });
@@ -1554,11 +1554,124 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    backToTopBtn.addEventListener("click", function() {
-        pageTop.scrollIntoView({ behavior: 'smooth' });
-    });
+    if (backToTopBtn) {
+      backToTopBtn.addEventListener("click", function() {
+          pageTop.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+    
+    // =====================================================================
+    // <<< INÍCIO DA NOVA LÓGICA: Botão "Marcar como Concluído" >>>
+    // =====================================================================
 
-    // <<< INÍCIO DA NOVA FUNCIONALIDADE: Cronômetro e Registro Manual de Tempo >>>
+    const markCompleteBtn = document.getElementById('mark-complete-btn');
+
+    if (markCompleteBtn) {
+        markCompleteBtn.addEventListener('click', function() {
+            // Desabilita o botão para evitar cliques múltiplos
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Concluindo...';
+
+            // Usa a API Fetch para enviar a requisição POST em segundo plano
+            fetch(`{{ url_for('student.mark_complete', law_id=law.id) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                // O corpo do formulário pode ser vazio se não precisar enviar dados extras
+                body: JSON.stringify({}) 
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Se a resposta do servidor for um erro (ex: 404, 500)
+                    throw new Error('Erro de rede ou do servidor.');
+                }
+                return response.json(); // Converte a resposta para JSON
+            })
+            .then(data => {
+                // Se a requisição foi bem-sucedida (success: true)
+                if (data.success) {
+                    // 1. Exibe a notificação de sucesso principal
+                    Toastify({
+                        text: `Lei marcada como concluída! Você ganhou pontos.`,
+                        duration: 3000,
+                        style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" }
+                    }).showToast();
+
+                    // 2. Verifica se há conquistas desbloqueadas
+                    if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
+                        // Monta a mensagem para as conquistas
+                        let achievementsHtml = data.unlocked_achievements.map(ach => 
+                            `<div style="display: flex; align-items: center; margin-top: 10px;">
+                                <i class="${ach.icon}" style="font-size: 1.5rem; margin-right: 15px; color: #f59e0b;"></i>
+                                <div>
+                                    <strong style="color: #f59e0b;">${ach.name}</strong><br>
+                                    <small>${ach.description}</small>
+                                </div>
+                             </div>`
+                        ).join('');
+                        
+                        // Exibe o pop-up (modal) com as conquistas
+                        Swal.fire({
+                            title: 'Conquista Desbloqueada!',
+                            html: achievementsHtml,
+                            icon: 'success',
+                            confirmButtonText: 'Que legal!'
+                        });
+                    }
+
+                    // 3. Atualiza a interface da página dinamicamente
+                    // Remove o contêiner dos botões de ação
+                    const actionButtonsContainer = document.getElementById('action-buttons-container');
+                    if (actionButtonsContainer) {
+                        actionButtonsContainer.remove();
+                    }
+
+                    // Cria e exibe o banner "Você já concluiu esta legislação!"
+                    const mainContent = document.getElementById('main-content-below-header');
+                    if(mainContent){
+                        // Remove o banner de "última leitura" se ele existir
+                        const lastReadInfo = mainContent.querySelector('.last-read-info');
+                        if(lastReadInfo) lastReadInfo.remove();
+
+                        const completedBanner = document.createElement('div');
+                        completedBanner.className = 'completed-banner';
+                        completedBanner.setAttribute('role', 'alert');
+                        completedBanner.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!';
+                        mainContent.prepend(completedBanner); // Adiciona no topo do conteúdo principal
+                    }
+
+                } else {
+                    // Se o servidor retornar success: false
+                    Toastify({
+                        text: data.error || "Ocorreu um erro ao marcar como concluído.",
+                        duration: 3000,
+                        style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                    }).showToast();
+                    this.disabled = false; // Reabilita o botão em caso de erro
+                    this.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Marcar como Concluído';
+                }
+            })
+            .catch(error => {
+                // Em caso de erro de rede ou falha na requisição
+                console.error("Erro ao marcar como concluído:", error);
+                Toastify({
+                    text: "Erro de comunicação. Verifique sua internet e tente novamente.",
+                    duration: 5000,
+                    style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                }).showToast();
+                this.disabled = false; // Reabilita o botão
+                this.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Marcar como Concluído';
+            });
+        });
+    }
+
+    // =====================================================================
+    // <<< FIM DA NOVA LÓGICA >>>
+    // =====================================================================
+
+
     const timerDisplay = document.getElementById('timer-display');
     const startTimerBtn = document.getElementById('start-timer-btn');
     const pauseTimerBtn = document.getElementById('pause-timer-btn');
@@ -1570,10 +1683,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let timerInterval;
     let startTime;
-    let elapsedTime = 0; // Tempo acumulado em segundos
-    let currentSessionId = null; // ID da sessão de estudo no banco de dados
+    let elapsedTime = 0; 
+    let currentSessionId = null; 
 
-    // Função para formatar o tempo para exibição (HH:MM:SS)
     function formatTime(seconds) {
         const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
         const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
@@ -1581,30 +1693,25 @@ document.addEventListener("DOMContentLoaded", function () {
         return `${h}:${m}:${s}`;
     }
 
-    // Função para renderizar o display do cronômetro
     function renderTimer() {
         timerDisplay.textContent = formatTime(elapsedTime);
     }
 
-    // Função para registrar sync quando a requisição falha - REUTILIZADA DO Background Sync anterior
     async function registerBackgroundSync(tag, requestUrl, requestOptions, successCallback, errorCallback) {
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
             try {
-                // Tenta fazer a requisição imediatamente
                 const response = await fetch(requestUrl, requestOptions);
                 if (response.ok) {
-                    const data = await response.json(); // Tentar parsear JSON
-                    successCallback(data); // Passa os dados de sucesso para o callback
+                    const data = await response.json(); 
+                    successCallback(data); 
                 } else {
-                    // Se a requisição falhou (ex: status 400, 500), registra para sincronização em segundo plano
                     console.warn(`[Background Sync] Requisição falhou (status ${response.status}). Registrando sync: ${tag}`);
                     const swRegistration = await navigator.serviceWorker.ready;
                     
-                    // Clona a requisição para armazenar no IndexedDB, pois o objeto Request não pode ser serializado diretamente
                     const requestToStore = new Request(requestUrl, requestOptions);
                     
                     await swRegistration.active.postMessage({
-                        type: 'SAVE_REQUEST', // Mensagem para o Service Worker
+                        type: 'SAVE_REQUEST', 
                         request: {
                             url: requestToStore.url,
                             method: requestToStore.method,
@@ -1617,20 +1724,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     Toastify({
                         text: `Ação agendada! Será sincronizada quando a internet retornar.`,
                         duration: 5000,
-                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } // Laranja para agendado
+                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } 
                     }).showToast();
                     if (errorCallback) errorCallback();
                 }
             } catch (error) {
-                // Erro de rede (offline)
                 console.error(`[Background Sync] Erro de rede para requisição: ${requestUrl}`, error);
-                if (error.name === 'AbortError') { // Requisição abortada ao sair da página (ex: sendBeacon), não registra sync
+                if (error.name === 'AbortError') { 
                     console.log('Requisição abortada. Não registra sync.');
                     if (errorCallback) errorCallback();
                     return;
                 }
                 
-                // Se a requisição falhou por estar offline, registra para sincronização
                 console.warn(`[Background Sync] Offline. Registrando sync: ${tag}`);
                 const swRegistration = await navigator.serviceWorker.ready;
                 const requestToStore = new Request(requestUrl, requestOptions);
@@ -1648,12 +1753,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 Toastify({
                     text: `Ação agendada! Será sincronizada quando a internet retornar.`,
                     duration: 5000,
-                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } // Laranja para agendado
+                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } 
                 }).showToast();
                 if (errorCallback) errorCallback();
             }
         } else {
-            // Se o navegador não suporta Service Worker ou SyncManager, tenta normalmente
             alert("Seu navegador não suporta sincronização em segundo plano. Por favor, verifique sua conexão.");
             fetch(requestUrl, requestOptions)
                 .then(response => response.json())
@@ -1669,18 +1773,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // Iniciar o cronômetro
     async function startTimer() {
-        if (timerInterval) return; // Já está rodando
+        if (timerInterval) return; 
 
-        // Se é uma nova sessão (ou foi resetada para 0)
         if (elapsedTime === 0) { 
-            startTime = Date.now(); // Marca o início real da contagem
-            currentSessionId = null; // Zera o ID da sessão para indicar nova sessão
+            startTime = Date.now(); 
+            currentSessionId = null; 
             console.log('[Cronômetro] Iniciando nova sessão de estudo...');
         } else {
-            // Retomando de uma pausa
-            startTime = Date.now() - (elapsedTime * 1000); // Ajusta startTime para continuar a contagem
+            startTime = Date.now() - (elapsedTime * 1000); 
             console.log('[Cronômetro] Retomando sessão de estudo...');
         }
 
@@ -1691,11 +1792,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         startTimerBtn.classList.add('hidden');
         pauseTimerBtn.classList.remove('hidden');
-        resetTimerBtn.classList.add('hidden'); // Oculta reset quando em execução
-        saveTimerBtn.classList.add('hidden'); // Oculta salvar quando em execução
+        resetTimerBtn.classList.add('hidden'); 
+        saveTimerBtn.classList.add('hidden'); 
     }
 
-    // Pausar o cronômetro
     function pauseTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -1703,16 +1803,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         startTimerBtn.classList.remove('hidden');
         pauseTimerBtn.classList.add('hidden');
-        resetTimerBtn.classList.remove('hidden'); // Mostra reset após pausa
-        saveTimerBtn.classList.remove('hidden'); // Mostra salvar após pausa
+        resetTimerBtn.classList.remove('hidden'); 
+        saveTimerBtn.classList.remove('hidden'); 
     }
 
-    // Reiniciar o cronômetro (zera a contagem e a UI)
     function resetTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         elapsedTime = 0;
-        currentSessionId = null; // Zera o ID da sessão
+        currentSessionId = null; 
         renderTimer();
         console.log('[Cronômetro] Reiniciado.');
 
@@ -1722,14 +1821,13 @@ document.addEventListener("DOMContentLoaded", function () {
         saveTimerBtn.classList.add('hidden');
     }
 
-    // Salvar a sessão de estudo atual (do cronômetro)
     async function saveCurrentStudySession() {
         if (elapsedTime === 0) {
             Toastify({ text: "A sessão de estudo está vazia.", duration: 3000 }).showToast();
             return;
         }
 
-        pauseTimer(); // Pausa antes de salvar
+        pauseTimer(); 
 
         const requestUrl = '/student/api/study_sessions/record';
         const requestOptions = {
@@ -1737,11 +1835,11 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 law_id: lawId,
-                subject_id: subjectId, // Passa o subjectId
+                subject_id: subjectId, 
                 duration_seconds: elapsedTime,
                 entry_type: 'auto',
-                start_time: new Date(startTime).toISOString(), // Converte para ISO string
-                end_time: new Date().toISOString() // Data/hora atual como fim
+                start_time: new Date(startTime).toISOString(), 
+                end_time: new Date().toISOString() 
             })
         };
 
@@ -1750,21 +1848,19 @@ document.addEventListener("DOMContentLoaded", function () {
         saveTimerBtn.disabled = true;
 
         registerBackgroundSync(`sync-auto-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { // Sucesso
+            (data) => { 
                 Toastify({ text: data.message || "Sessão de estudo salva com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-                resetTimer(); // Zera o cronômetro após salvar com sucesso
+                resetTimer(); 
                 saveTimerBtn.innerHTML = originalSaveBtnText;
                 saveTimerBtn.disabled = false;
             },
-            () => { // Erro/Agendado
+            () => { 
                 saveTimerBtn.innerHTML = originalSaveBtnText;
                 saveTimerBtn.disabled = false;
-                // Toastify já exibido pela registerBackgroundSync
             }
         );
     }
 
-    // Adicionar tempo manualmente
     async function addManualTime() {
         const hours = parseInt(manualHoursInput.value) || 0;
         const minutes = parseInt(manualMinutesInput.value) || 0;
@@ -1781,7 +1877,7 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 law_id: lawId,
-                subject_id: subjectId, // Passa o subjectId
+                subject_id: subjectId, 
                 duration_seconds: totalManualSeconds,
                 entry_type: 'manual'
             })
@@ -1791,34 +1887,28 @@ document.addEventListener("DOMContentLoaded", function () {
         addManualTimeBtn.disabled = true;
 
         registerBackgroundSync(`sync-manual-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { // Sucesso
+            (data) => { 
                 Toastify({ text: data.message || "Tempo manual adicionado com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                 manualHoursInput.value = '';
                 manualMinutesInput.value = '';
                 addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
                 addManualTimeBtn.disabled = false;
             },
-            () => { // Erro/Agendado
+            () => { 
                 addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
                 addManualTimeBtn.disabled = false;
-                // Toastify já exibido pela registerBackgroundSync
             }
         );
     }
 
-    // Event Listeners para os botões do cronômetro e formulário manual
     startTimerBtn.addEventListener('click', startTimer);
     pauseTimerBtn.addEventListener('click', pauseTimer);
     resetTimerBtn.addEventListener('click', resetTimer);
     saveTimerBtn.addEventListener('click', saveCurrentStudySession);
     addManualTimeBtn.addEventListener('click', addManualTime);
 
-    // Lógica para salvar a sessão automaticamente ao sair da página ou fechar a aba
     window.addEventListener('beforeunload', () => {
         if (timerInterval && elapsedTime > 0) {
-            // Tenta salvar a sessão se o cronômetro estiver rodando e houver tempo
-            // Usa sendBeacon para enviar a requisição em segundo plano, não espera resposta
-            // sendBeacon é confiável para enviar dados quando a página está sendo descarregada
             const requestUrl = '/student/api/study_sessions/record';
             const data = JSON.stringify({
                 law_id: lawId,
@@ -1828,8 +1918,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date().toISOString()
             });
-            // navigator.sendBeacon só funciona para POST e envia application/x-www-form-urlencoded por padrão.
-            // Para JSON, é preciso ser um servidor que suporte isso ou converter para URLSearchParams
             if (navigator.sendBeacon) {
                 try {
                     const blob = new Blob([data], {type : 'application/json'});
@@ -1839,28 +1927,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.error("[sendBeacon] Erro ao usar sendBeacon:", e);
                 }
             } else {
-                // Fallback para navegadores sem sendBeacon
                 console.warn("sendBeacon não suportado. Sessão pode não ser salva ao descarregar.");
             }
         }
     });
 
-    // Pausar o cronômetro se a página não estiver visível
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && timerInterval) {
-            // Se a página for escondida e o cronômetro estiver rodando
-            pauseTimer(); // Pausa o cronômetro
-            // Opcional: pode-se salvar a sessão automaticamente aqui também para não perder tempo
-            // saveCurrentStudySession(); // Descomente se quiser salvar ao esconder a página
+            pauseTimer(); 
         } else if (!document.hidden && !timerInterval && elapsedTime > 0) {
-            // Se a página volta a ser visível e o cronômetro estava pausado (e não foi resetado)
-            // Você pode decidir reiniciar automaticamente ou deixar o usuário iniciar
-            // startTimer(); // Descomente para reiniciar automaticamente ao voltar à página
         }
     });
-
-    // <<< FIM DA NOVA FUNCIONALIDADE: Cronômetro e Registro Manual de Tempo >>>
-
 
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
@@ -1868,9 +1945,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!lastReadArticle) {
                 alert("Por favor, informe onde você parou.");
                 return;
-            }
-            if (hiddenLastReadArticleInput) {
-                hiddenLastReadArticleInput.value = lastReadArticle;
             }
             
             const originalText = saveBookmarkBtn.innerHTML;
@@ -1892,7 +1966,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             
             registerBackgroundSync(`sync-save-bookmark-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-                (data) => { // Sucesso
+                (data) => { 
                     Toastify({ text: data.message || "Último artigo lido salvo com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
@@ -1900,8 +1974,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         messageDiv = document.createElement('div');
                         messageDiv.className = 'last-read-info';
                         messageDiv.setAttribute('role', 'alert');
-                        const toggleButtonsContainer = document.getElementById('sticky-action-bar');
-                        toggleButtonsContainer.parentNode.insertBefore(messageDiv, toggleButtonsContainer);
+                        const mainContent = document.getElementById('main-content-below-header');
+                        mainContent.prepend(messageDiv);
                     }
                     messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
                     setTimeout(() => {
@@ -1909,10 +1983,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         saveBookmarkBtn.disabled = false;
                     }, 2000);
                 },
-                () => { // Erro/Agendado
+                () => { 
                     saveBookmarkBtn.innerHTML = originalText;
                     saveBookmarkBtn.disabled = false;
-                    // Toastify já exibido pela registerBackgroundSync
                 }
             );
         });
@@ -1978,22 +2051,22 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         registerBackgroundSync(`sync-save-notes-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { // Sucesso
+            (data) => { 
                 Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                 this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                 this.classList.toggle('bg-green-500', true);
-                this.classList.toggle('bg-blue-500', false); // Remove azul padrão se estava
+                this.classList.toggle('bg-blue-500', false); 
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.disabled = false;
                     this.classList.remove('bg-green-500');
-                    this.classList.add('bg-blue-500'); // Volta para azul padrão
+                    this.classList.add('bg-blue-500'); 
                 }, 2000);
             },
-            () => { // Erro/Agendado
+            () => { 
                 this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Agendado!';
-                this.classList.toggle('bg-orange-500', true); // Cor de aviso para agendado
-                this.classList.toggle('bg-blue-500', false); // Remove azul padrão
+                this.classList.toggle('bg-orange-500', true); 
+                this.classList.toggle('bg-blue-500', false); 
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.disabled = false;
@@ -2129,8 +2202,8 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         
         registerBackgroundSync(`sync-save-markup-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { console.log("Marcações salvas com sucesso!", data); }, // Sucesso
-            () => { console.warn("Marcações agendadas para sincronização."); } // Erro/Agendado
+            (data) => { console.log("Marcações salvas com sucesso!", data); }, 
+            () => { console.warn("Marcações agendadas para sincronização."); } 
         );
     }
 
@@ -2171,7 +2244,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     };
 
                     registerBackgroundSync(`sync-restore-law-${lawId}`, requestUrl, requestOptions,
-                        (data) => { // Sucesso
+                        (data) => { 
                             Swal.fire({
                                 title: 'Restaurada!',
                                 text: data.message || 'A lei foi restaurada com sucesso. A página será recarregada.',
@@ -2183,7 +2256,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 window.location.reload();
                             });
                         },
-                        () => { // Erro/Agendado
+                        () => { 
                             Swal.fire({
                                 title: 'Aguardando Sincronização!',
                                 text: 'A restauração foi agendada e será aplicada quando a internet retornar. A página será recarregada após a sincronização.',
@@ -2192,8 +2265,6 @@ document.addEventListener("DOMContentLoaded", function () {
                                     confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
                                 }
                             });
-                            // Recarrega a página imediatamente para o usuário ver o estado atualizado (sem as marcações)
-                            // Mesmo que a sincronização ocorra depois, a experiência visual é melhor
                             window.location.reload();
                         }
                     );
@@ -2214,11 +2285,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
             };
 
-            const button = this; // Referência ao botão para usar nos callbacks
+            const button = this; 
 
             registerBackgroundSync(`sync-favorite-${lawId}`, requestUrl, requestOptions,
-                (data) => { // Sucesso
-                    button.classList.toggle('favorited', data.favorited); // Inverte o estado visual
+                (data) => { 
+                    button.classList.toggle('favorited', data.favorited); 
                     button.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
                     button.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
 
@@ -2238,11 +2309,10 @@ document.addEventListener("DOMContentLoaded", function () {
                             borderRadius: "0.5rem"
                         }
                     }).showToast();
-                    button.disabled = false; // Reabilita o botão
+                    button.disabled = false; 
                 },
-                () => { // Erro/Agendado
-                    // O Toastify para agendamento já é exibido na função registerBackgroundSync
-                    button.disabled = false; // Reabilita o botão
+                () => { 
+                    button.disabled = false; 
                 }
             );
         });
@@ -2303,7 +2373,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id); // Passa anchor_paragraph_id
+            deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id); 
         });
         anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
         const icon = anchorElement.parentNode.querySelector('.comment-icon');
@@ -2327,7 +2397,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             
             registerBackgroundSync(`sync-update-comment-${currentEditingCommentId}`, requestUrl, requestOptions,
-                (data) => { // Sucesso
+                (data) => { 
                     const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
                     if (commentDiv) { commentDiv.querySelector('p').innerHTML = content.replace(/\n/g, '<br>'); }
                     closeCommentModal();
@@ -2335,11 +2405,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
                 },
-                () => { // Erro/Agendado
-                    // Toastify já exibido pela registerBackgroundSync
+                () => { 
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
-                    closeCommentModal(); // Fecha o modal, a sincronização ocorrerá em segundo plano
+                    closeCommentModal(); 
                 }
             );
         } else { 
@@ -2352,24 +2421,15 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
             registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions,
-                (data) => { // Sucesso
-                    // Para criar comentários, vamos fazer um fetch explícito APÓS o sucesso do sync
-                    // para pegar o ID real do comentário e exibi-lo corretamente.
-                    // Isso é um hack porque o Background Sync não passa o ID gerado pelo servidor para o frontend.
-                    // O ideal seria que o SW fizesse um postMessage de volta com o ID.
-                    // Por simplicidade agora, a gente faz um novo POST aqui.
-                    // ATENÇÃO: isso pode levar a duplicatas se o original JÁ SINCRONIZOU e este POST também.
-                    // Uma solução robusta seria usar um ID temporário no frontend e mapeá-lo no backend.
-                    // Para este exemplo, vou simplificar e esperar que o data.comment já venha do servidor
-                    // ou que o reload da página resolva no caso de múltiplas ações offline.
-                    if (data.comment && data.success) { // Se o sucesso do sync já retornou o comentário
+                (data) => { 
+                    if (data.comment && data.success) { 
                          displayComment(data.comment);
                          closeCommentModal();
                          Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                          modalSaveBtn.innerHTML = originalSaveBtnText;
                          modalSaveBtn.disabled = false;
-                    } else { // Caso o Background Sync não retorne o comentário criado, fazemos o fetch novamente
-                        fetch(requestUrl, requestOptions) // Faz o fetch REAL para pegar o ID gerado pelo DB
+                    } else { 
+                        fetch(requestUrl, requestOptions) 
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
@@ -2392,8 +2452,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             });
                     }
                 },
-                () => { // Erro/Agendado
-                    // Toastify já exibido pela registerBackgroundSync
+                () => { 
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
                     closeCommentModal();
@@ -2412,7 +2471,7 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         registerBackgroundSync(`sync-delete-comment-${commentId}`, requestUrl, requestOptions,
-            (data) => { // Sucesso
+            (data) => { 
                 commentElement.remove();
                 const anchorElement = document.getElementById(anchorParagraphId);
                 if (anchorElement && anchorElement.parentNode) {
@@ -2424,8 +2483,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 Toastify({ text: data.message || "Anotação excluída!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
             },
-            () => { // Erro/Agendado
-                // Toastify já exibido pela registerBackgroundSync
+            () => { 
             }
         );
     }
