@@ -1601,21 +1601,15 @@ document.addEventListener("DOMContentLoaded", function () {
                              </div>`
                         ).join('');
                         
-                        // =====================================================================
-                        // <<< INÍCIO DA CORREÇÃO: Adicionando customClass ao botão >>>
-                        // =====================================================================
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: achievementsHtml,
                             icon: 'success',
-                            confirmButtonText: 'Rumo à próxima!',
+                            confirmButtonText: 'Que legal!',
                             customClass: {
                                 confirmButton: 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded'
                             }
                         });
-                        // =====================================================================
-                        // <<< FIM DA CORREÇÃO >>>
-                        // =====================================================================
                     }
 
                     const actionButtonsContainer = document.getElementById('action-buttons-container');
@@ -1634,6 +1628,17 @@ document.addEventListener("DOMContentLoaded", function () {
                         completedBanner.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!';
                         mainContent.prepend(completedBanner);
                     }
+
+                    // =====================================================================
+                    // <<< INÍCIO DA ALTERAÇÃO: Rolagem suave para o topo >>>
+                    // =====================================================================
+                    const pageTopElement = document.getElementById('page-top');
+                    if (pageTopElement) {
+                        pageTopElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    // =====================================================================
+                    // <<< FIM DA ALTERAÇÃO >>>
+                    // =====================================================================
 
                 } else {
                     Toastify({
