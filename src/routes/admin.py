@@ -107,9 +107,7 @@ def content_management():
                            selected_subject=subject_filter)
 
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: ROTAS ATUALIZADAS PARA GERENCIAR CONCURSOS >>>
-# =====================================================================
+# Rotas para Gerenciar Concursos
 @admin_bp.route("/concursos", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -139,7 +137,6 @@ def manage_concursos():
 def edit_concurso(concurso_id):
     concurso = Concurso.query.get_or_404(concurso_id)
     if request.method == "POST":
-        # Pega os dados do formulário e limpa para segurança
         name = bleach.clean(request.form.get("name"), tags=[], strip=True).strip()
         edital_url = bleach.clean(request.form.get("edital_url"), tags=[], strip=True).strip()
         
@@ -147,7 +144,6 @@ def edit_concurso(concurso_id):
             flash("O nome do concurso não pode ser vazio.", "danger")
         else:
             concurso.name = name
-            # Se a URL estiver vazia, salva como None (nulo) no banco
             concurso.edital_verticalizado_url = edital_url if edital_url else None
             db.session.commit()
             flash(f"Concurso '{concurso.name}' atualizado com sucesso!", "success")
@@ -162,7 +158,6 @@ def edit_concurso(concurso_id):
 def delete_concurso(concurso_id):
     concurso = Concurso.query.get_or_404(concurso_id)
     try:
-        # A relação muitos-para-muitos será limpa automaticamente ao deletar.
         db.session.delete(concurso)
         db.session.commit()
         flash(f"Concurso '{concurso.name}' excluído com sucesso!", "success")
@@ -171,9 +166,6 @@ def delete_concurso(concurso_id):
         current_app.logger.error(f"Erro ao excluir concurso {concurso_id}: {e}")
         flash("Erro ao excluir o concurso.", "danger")
     return redirect(url_for("admin.manage_concursos"))
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 
 # Rota para gerenciar matérias
@@ -430,6 +422,52 @@ def deny_user(user_id):
         flash(f"Ocorreu um erro ao excluir o usuário. Verifique o log da aplicação.", "danger")
 
     return redirect(url_for("admin.manage_users"))
+
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA ROTA PARA GERENCIAR CONCURSOS DO USUÁRIO >>>
+# =====================================================================
+@admin_bp.route("/users/<int:user_id>/manage-concursos", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_user_concursos(user_id):
+    # Usando joinedload para carregar os concursos associados de forma eficiente
+    user = User.query.options(db.joinedload(User.associated_concursos)).get_or_404(user_id)
+    all_concursos = Concurso.query.order_by(Concurso.name).all()
+
+    if request.method == "POST":
+        # Verifica se a caixa "ver todos os concursos" foi marcada
+        can_see_all = request.form.get("can_see_all_concursos") == "on"
+        user.can_see_all_concursos = can_see_all
+
+        if can_see_all:
+            # Se pode ver todos, removemos todas as associações específicas
+            user.associated_concursos = []
+        else:
+            # Caso contrário, pegamos a lista de IDs de concursos do formulário
+            concurso_ids = request.form.getlist('concursos')
+            # Buscamos os objetos Concurso correspondentes
+            selected_concursos = Concurso.query.filter(Concurso.id.in_(concurso_ids)).all()
+            # Atualizamos a lista de concursos do usuário
+            user.associated_concursos = selected_concursos
+
+        db.session.commit()
+        flash(f"As permissões de concurso para {user.email} foram atualizadas com sucesso!", "success")
+        return redirect(url_for("admin.manage_users"))
+
+    # Para o método GET, criamos um set com os IDs dos concursos do usuário
+    # para facilitar a verificação no template
+    user_concurso_ids = {c.id for c in user.associated_concursos}
+
+    # Este template ainda não existe. Nós o criaremos no próximo passo.
+    return render_template(
+        "admin/manage_user_concursos.html",
+        user=user,
+        all_concursos=all_concursos,
+        user_concurso_ids=user_concurso_ids
+    )
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
 
 @admin_bp.route("/users/reset-password/<int:user_id>", methods=["GET", "POST"])
 @login_required
