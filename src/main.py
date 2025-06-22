@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
-from src.models.user import db, User, Achievement, UserWeeklyRanking
+from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
