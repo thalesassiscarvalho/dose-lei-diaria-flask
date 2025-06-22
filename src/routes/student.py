@@ -822,6 +822,9 @@ def save_favorite_title():
         logging.error(f"Erro ao salvar título dos favoritos para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao salvar o título."), 500
 
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO BACKEND: API DO CARD "LEMBRETES E METAS" >>>
+# =====================================================================
 @student_bp.route("/api/todo_items", methods=["GET"])
 @login_required
 def get_todo_items():
@@ -832,6 +835,7 @@ def get_todo_items():
             "id": item.id,
             "content": item.content,
             "is_completed": item.is_completed,
+            "category": item.category, # Adicionado para enviar a categoria ao frontend
             "created_at": item.created_at.isoformat() if item.created_at else None,
             "completed_at": item.completed_at.isoformat() if item.completed_at else None
         })
@@ -842,39 +846,50 @@ def get_todo_items():
 def add_todo_item():
     data = request.get_json()
     content = bleach.clean(data.get("content", ""), tags=[], strip=True).strip()
+    # Pega a categoria do request, com 'lembrete' como padrão
+    category = data.get("category", "lembrete")
+    if category not in ['lembrete', 'meta']:
+        category = 'lembrete' # Garante que a categoria seja válida
+
     if not content:
-        return jsonify(success=False, error="O conteúdo da tarefa não pode estar vazio."), 400
-    new_item = TodoItem(user_id=current_user.id, content=content, is_completed=False)
+        return jsonify(success=False, error="O conteúdo não pode estar vazio."), 400
+
+    # Aumentamos o limite para 10 itens
+    if len(current_user.todo_items.all()) >= 10:
+        return jsonify(success=False, error="Você atingiu o limite de 10 itens."), 400
+
+    new_item = TodoItem(user_id=current_user.id, content=content, category=category, is_completed=False)
     try:
         db.session.add(new_item)
         db.session.commit()
         return jsonify(
             success=True,
-            message="Tarefa adicionada!",
+            message="Item adicionado!",
             todo_item={
                 "id": new_item.id,
                 "content": new_item.content,
                 "is_completed": new_item.is_completed,
+                "category": new_item.category, # Retorna a categoria do novo item
                 "created_at": new_item.created_at.isoformat(),
                 "completed_at": None
             }
         ), 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao adicionar item de diário para o usuário {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao adicionar tarefa."), 500
+        logging.error(f"Erro ao adicionar item de lembrete/meta para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao adicionar item."), 500
 
 @student_bp.route("/api/todo_items/<int:item_id>/toggle", methods=["POST"])
 @login_required
 def toggle_todo_item(item_id):
     item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
     if not item:
-        return jsonify(success=False, error="Tarefa não encontrada."), 404
+        return jsonify(success=False, error="Item não encontrado."), 404
     item.is_completed = not item.is_completed
     item.completed_at = datetime.datetime.utcnow() if item.is_completed else None
     try:
         db.session.commit()
-        message = "Tarefa marcada como concluída!" if item.is_completed else "Tarefa reaberta!"
+        message = "Item marcado como concluído!" if item.is_completed else "Item reaberto!"
         return jsonify(
             success=True,
             message=message,
@@ -882,14 +897,15 @@ def toggle_todo_item(item_id):
                 "id": item.id,
                 "content": item.content,
                 "is_completed": item.is_completed,
+                "category": item.category, # Retorna a categoria do item
                 "created_at": item.created_at.isoformat(),
                 "completed_at": item.completed_at.isoformat() if item.completed_at else None
             }
         )
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao alternar status do item de diário {item_id} para o usuário {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao atualizar tarefa."), 500
+        logging.error(f"Erro ao alternar status do item {item_id} para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao atualizar item."), 500
 
 @student_bp.route("/api/todo_items/<int:item_id>", methods=["DELETE"])
 @login_required
@@ -905,6 +921,10 @@ def delete_todo_item(item_id):
         db.session.rollback()
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO BACKEND >>>
+# =====================================================================
+
 
 @student_bp.route("/api/set_default_concurso", methods=["POST"])
 @login_required
