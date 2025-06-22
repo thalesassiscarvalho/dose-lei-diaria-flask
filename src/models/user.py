@@ -221,8 +221,18 @@ class TodoItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: ADICIONANDO VÍNCULO COM A LEI >>>
+    # =====================================================================
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='SET NULL'), nullable=True)
+    law = db.relationship('Law', backref='todo_items')
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
     content = db.Column(db.String(500), nullable=False)
-    category = db.Column(db.String(50), nullable=False, default='lembrete') # <<< LINHA ADICIONADA >>>
+    category = db.Column(db.String(50), nullable=False, default='lembrete') 
     is_completed = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
