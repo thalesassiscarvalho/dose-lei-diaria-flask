@@ -222,6 +222,7 @@ class TodoItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     content = db.Column(db.String(500), nullable=False)
+    category = db.Column(db.String(50), nullable=False, default='lembrete') # <<< LINHA ADICIONADA >>>
     is_completed = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -231,4 +232,3 @@ class TodoItem(db.Model):
 # =====================================================================
 # <<< FIM DA IMPLEMENTAÇÃO: NOVA CLASSE TodoItem PARA MEU DIÁRIO >>>
 # =====================================================================
-    
