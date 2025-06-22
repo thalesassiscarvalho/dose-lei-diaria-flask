@@ -423,15 +423,18 @@ def deny_user(user_id):
 
     return redirect(url_for("admin.manage_users"))
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO: NOVA ROTA PARA GERENCIAR CONCURSOS DO USUÁRIO >>>
-# =====================================================================
 @admin_bp.route("/users/<int:user_id>/manage-concursos", methods=["GET", "POST"])
 @login_required
 @admin_required
 def manage_user_concursos(user_id):
-    # Usando joinedload para carregar os concursos associados de forma eficiente
-    user = User.query.options(db.joinedload(User.associated_concursos)).get_or_404(user_id)
+    # =====================================================================
+    # <<< INÍCIO DA CORREÇÃO: REMOVENDO O 'joinedload' >>>
+    # =====================================================================
+    # A linha original com 'db.joinedload' foi removida para resolver o conflito com 'lazy="dynamic"'.
+    user = User.query.get_or_404(user_id)
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO >>>
+    # =====================================================================
     all_concursos = Concurso.query.order_by(Concurso.name).all()
 
     if request.method == "POST":
@@ -465,9 +468,6 @@ def manage_user_concursos(user_id):
         all_concursos=all_concursos,
         user_concurso_ids=user_concurso_ids
     )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO >>>
-# =====================================================================
 
 @admin_bp.route("/users/reset-password/<int:user_id>", methods=["GET", "POST"])
 @login_required
