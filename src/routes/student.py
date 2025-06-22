@@ -39,6 +39,42 @@ ALLOWED_STYLES = [
 css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_STYLES)
 
 
+# =====================================================================
+# <<< INÍCIO DA IMPLEMENTAÇÃO: FUNÇÃO AUXILIAR PARA FILTRAGEM DE CONTEÚDO >>>
+# =====================================================================
+def get_user_permissions():
+    """
+    Verifica as permissões do usuário logado e retorna os IDs do conteúdo que ele pode ver.
+    Retorna None para cada tipo de ID se o usuário puder ver tudo.
+    """
+    if current_user.is_authenticated and not current_user.can_see_all_concursos:
+        user_concursos = current_user.associated_concursos.all()
+        allowed_concurso_ids = {c.id for c in user_concursos}
+
+        if not allowed_concurso_ids:
+            # Se o usuário é restrito mas não tem nenhum concurso, ele não pode ver nada.
+            return {-1}, {-1}, {-1}
+
+        # Busca todos os IDs de leis e matérias vinculados aos concursos permitidos
+        laws_in_allowed_concursos = db.session.query(Law.id, Law.parent_id, Law.subject_id)\
+            .join(Law.concursos)\
+            .filter(Concurso.id.in_(allowed_concurso_ids)).all()
+        
+        allowed_law_ids = {row.id for row in laws_in_allowed_concursos}
+        # Inclui também os diplomas (parent_id) dos tópicos permitidos
+        allowed_law_ids.update({row.parent_id for row in laws_in_allowed_concursos if row.parent_id})
+        
+        allowed_subject_ids = {row.subject_id for row in laws_in_allowed_concursos if row.subject_id}
+
+        return allowed_concurso_ids, allowed_law_ids, allowed_subject_ids
+
+    # Se o usuário pode ver tudo, retorna None
+    return None, None, None
+# =====================================================================
+# <<< FIM DA IMPLEMENTAÇÃO >>>
+# =====================================================================
+
+
 def _humanize_time_delta(dt):
     if not dt:
         return ""
@@ -135,40 +171,85 @@ def get_user_level_info(points):
 @student_bp.route("/api/laws_for_subject/<int:subject_id>")
 @login_required
 def get_laws_for_subject(subject_id):
-    laws = Law.query.filter(
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO A API >>>
+    # =====================================================================
+    _, allowed_law_ids, _ = get_user_permissions()
+    
+    laws_query = Law.query.filter(
         Law.subject_id == subject_id,
         Law.parent_id.is_(None)
-    ).order_by(Law.title).all()
+    )
+
+    if allowed_law_ids is not None:
+        laws_query = laws_query.filter(Law.id.in_(allowed_law_ids))
+    
+    laws = laws_query.order_by(Law.title).all()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
     return jsonify([{"id": law.id, "title": law.title} for law in laws])
 
 @student_bp.route("/api/topics_for_law/<int:law_id>")
 @login_required
 def get_topics_for_law(law_id):
-    parent_law = Law.query.filter_by(id=law_id, parent_id=None).first_or_404("Diploma não encontrado.")
-    topics = Law.query.filter_by(parent_id=law_id).order_by(Law.id).all()
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO A API >>>
+    # =====================================================================
+    _, allowed_law_ids, _ = get_user_permissions()
+    
+    # Verifica se o usuário pode ver o diploma pai
+    if allowed_law_ids is not None and law_id not in allowed_law_ids:
+        return jsonify(error="Acesso não permitido a este diploma."), 403
+
+    topics_query = Law.query.filter_by(parent_id=law_id)
+
+    if allowed_law_ids is not None:
+        topics_query = topics_query.filter(Law.id.in_(allowed_law_ids))
+    
+    topics = topics_query.order_by(Law.id).all()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
     return jsonify([{"id": topic.id, "title": topic.title} for topic in topics])
 
 @student_bp.route("/api/autocomplete_search")
 @login_required
 def autocomplete_search():
     query = request.args.get('q', '').strip()
-    search_type = request.args.get('type', 'all')  # Novo parâmetro para filtrar a busca
+    search_type = request.args.get('type', 'all') 
 
     if len(query) < 3:
         return jsonify(results=[])
+
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO A BUSCA >>>
+    # =====================================================================
+    allowed_concurso_ids, allowed_law_ids, allowed_subject_ids = get_user_permissions()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
 
     search_term = f"%{query}%"
     results = []
     limit = 7
 
-    # Busca apenas por tópicos se o tipo for 'topic'
     if search_type == 'topic' or search_type == 'all':
         topics_query = Law.query.filter(
             Law.parent_id.isnot(None),
             or_(Law.title.ilike(search_term), Law.content.ilike(search_term))
-        ).options(joinedload(Law.parent)).limit(limit).all()
+        ).options(joinedload(Law.parent))
+        
+        # =====================================================================
+        # <<< INÍCIO DA ALTERAÇÃO: APLICANDO FILTRO >>>
+        # =====================================================================
+        if allowed_law_ids is not None:
+            topics_query = topics_query.filter(Law.id.in_(allowed_law_ids))
+        # =====================================================================
+        # <<< FIM DA ALTERAÇÃO >>>
+        # =====================================================================
 
-        for topic in topics_query:
+        for topic in topics_query.limit(limit).all():
             parent_title = topic.parent.title if topic.parent else "Tópico"
             results.append({
                 "id": topic.id,
@@ -177,17 +258,28 @@ def autocomplete_search():
                 "url": url_for('student.view_law', law_id=topic.id)
             })
 
-    # Evita buscar outras coisas se o tipo for apenas 'topic'
     if search_type != 'topic':
         if search_type == 'all':
-            # Em modo 'all', busca leis e matérias também, mas com um limite menor para dar espaço aos tópicos
             limit = 5 
 
         laws_query = Law.query.filter(
             Law.parent_id.is_(None),
             Law.title.ilike(search_term)
-        ).limit(limit).all()
-        for law in laws_query:
+        )
+        subjects_query = Subject.query.filter(Subject.name.ilike(search_term))
+
+        # =====================================================================
+        # <<< INÍCIO DA ALTERAÇÃO: APLICANDO FILTRO >>>
+        # =====================================================================
+        if allowed_law_ids is not None:
+            laws_query = laws_query.filter(Law.id.in_(allowed_law_ids))
+        if allowed_subject_ids is not None:
+            subjects_query = subjects_query.filter(Subject.id.in_(allowed_subject_ids))
+        # =====================================================================
+        # <<< FIM DA ALTERAÇÃO >>>
+        # =====================================================================
+
+        for law in laws_query.limit(limit).all():
             results.append({
                 "id": law.id,
                 "title": law.title,
@@ -195,8 +287,7 @@ def autocomplete_search():
                 "url": url_for('student.dashboard', diploma_id=law.id, subject_id=law.subject_id)
             })
 
-        subjects_query = Subject.query.filter(Subject.name.ilike(search_term)).limit(limit).all()
-        for subject in subjects_query:
+        for subject in subjects_query.limit(limit).all():
             results.append({
                 "id": subject.id,
                 "title": subject.name,
@@ -279,18 +370,51 @@ def _calculate_user_streak(user: User) -> int:
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
-    subjects_for_filter = Subject.query.order_by(Subject.name).all()
-    concursos_for_filter = Concurso.query.order_by(Concurso.name).all()
-    
-    total_topics_count = Law.query.filter(Law.parent_id.isnot(None)).count()
-    completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido').count()
-    global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO O DASHBOARD >>>
+    # =====================================================================
+    allowed_concurso_ids, allowed_law_ids, allowed_subject_ids = get_user_permissions()
 
-    recent_progresses = UserProgress.query.join(UserProgress.law).filter(
+    subjects_query = Subject.query
+    concursos_query = Concurso.query
+    total_topics_query = Law.query.filter(Law.parent_id.isnot(None))
+    recent_progresses_query = UserProgress.query.join(UserProgress.law).filter(
         UserProgress.user_id == current_user.id,
         UserProgress.last_accessed_at.isnot(None),
         Law.parent_id.isnot(None)
-    ).options(
+    )
+    favorite_topics_query = current_user.favorite_laws.options(
+        joinedload(Law.parent).joinedload(Law.subject)
+    ).filter(Law.parent_id.isnot(None))
+    
+    if allowed_law_ids is not None:
+        subjects_query = subjects_query.filter(Subject.id.in_(allowed_subject_ids))
+        concursos_query = concursos_query.filter(Concurso.id.in_(allowed_concurso_ids))
+        total_topics_query = total_topics_query.filter(Law.id.in_(allowed_law_ids))
+        recent_progresses_query = recent_progresses_query.filter(UserProgress.law_id.in_(allowed_law_ids))
+        favorite_topics_query = favorite_topics_query.filter(Law.id.in_(allowed_law_ids))
+
+    subjects_for_filter = subjects_query.order_by(Subject.name).all()
+    concursos_for_filter = concursos_query.order_by(Concurso.name).all()
+    total_topics_count = total_topics_query.count()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+    
+    completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido')
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO A CONTAGEM DE CONCLUÍDOS >>>
+    # =====================================================================
+    if allowed_law_ids is not None:
+        completed_count = completed_count.filter(UserProgress.law_id.in_(allowed_law_ids))
+    completed_count = completed_count.count()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
+    global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
+
+    recent_progresses = recent_progresses_query.options(
         joinedload(UserProgress.law).joinedload(Law.parent)
     ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
 
@@ -314,12 +438,10 @@ def dashboard():
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
     
-    favorite_topics_query = current_user.favorite_laws.options(
-        joinedload(Law.parent).joinedload(Law.subject)
-    ).filter(Law.parent_id.isnot(None)).all()
+    favorite_topics = favorite_topics_query.all()
 
     grouped_by_law = {}
-    for topic in favorite_topics_query:
+    for topic in favorite_topics:
         if topic.parent:
             if topic.parent not in grouped_by_law:
                 grouped_by_law[topic.parent] = []
@@ -470,6 +592,14 @@ def filter_laws():
     selected_topic_id_str = request.args.get("topic_id", "")
     show_favorites = request.args.get("show_favorites", "false").lower() == 'true'
 
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: APLICANDO FILTRO DE PERMISSÕES >>>
+    # =====================================================================
+    allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
     user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.law_id: p.status for p in user_progress_records}
     completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
@@ -478,11 +608,28 @@ def filter_laws():
 
     diplomas_query = Law.query.filter(Law.parent_id.is_(None)).options(joinedload(Law.children), joinedload(Law.subject))
     
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: APLICANDO FILTRO DE PERMISSÕES >>>
+    # =====================================================================
+    # O universo de diplomas já é filtrado aqui, se necessário.
+    if allowed_law_ids is not None:
+        diplomas_query = diplomas_query.filter(Law.id.in_(allowed_law_ids))
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
     topic_ids_to_show = None
 
     if selected_concurso_id_str.isdigit():
         concurso = Concurso.query.get(int(selected_concurso_id_str))
-        if concurso:
+        # =====================================================================
+        # <<< INÍCIO DA ALTERAÇÃO: VERIFICANDO PERMISSÃO DO CONCURSO >>>
+        # =====================================================================
+        # Garante que o usuário não possa filtrar por um concurso que ele não pode ver
+        if concurso and (allowed_concurso_ids is None or concurso.id in allowed_concurso_ids):
+        # =====================================================================
+        # <<< FIM DA ALTERAÇÃO >>>
+        # =====================================================================
             topics_in_concurso = concurso.laws.filter(Law.parent_id.isnot(None)).all()
             topic_ids_to_show = {topic.id for topic in topics_in_concurso}
             
@@ -509,6 +656,14 @@ def filter_laws():
         children_iterator = diploma.children
         if topic_ids_to_show is not None:
             children_iterator = [child for child in diploma.children if child.id in topic_ids_to_show]
+        # =====================================================================
+        # <<< INÍCIO DA ALTERAÇÃO: FILTRANDO FILHOS COM BASE NA PERMISSÃO GERAL >>>
+        # =====================================================================
+        elif allowed_law_ids is not None:
+            children_iterator = [child for child in diploma.children if child.id in allowed_law_ids]
+        # =====================================================================
+        # <<< FIM DA ALTERAÇÃO >>>
+        # =====================================================================
 
         for topic in children_iterator:
             is_completed = topic.id in completed_topic_ids
@@ -532,7 +687,16 @@ def filter_laws():
 
         if children_to_display:
             total_children_in_diploma = len(diploma.children)
-            completed_children_count = sum(1 for child in diploma.children if child.id in completed_topic_ids)
+            # =====================================================================
+            # <<< INÍCIO DA ALTERAÇÃO: CORRIGINDO CÁLCULO DE PROGRESSO >>>
+            # =====================================================================
+            # A base de tópicos para o progresso deve ser apenas os tópicos permitidos
+            allowed_children_ids_in_diploma = {child.id for child in children_iterator}
+            total_children_in_diploma = len(allowed_children_ids_in_diploma)
+            completed_children_count = sum(1 for child_id in allowed_children_ids_in_diploma if child_id in completed_topic_ids)
+            # =====================================================================
+            # <<< FIM DA ALTERAÇÃO >>>
+            # =====================================================================
             progress_percentage = (completed_children_count / total_children_in_diploma * 100) if total_children_in_diploma > 0 else 0
             
             diploma_data = {
@@ -555,6 +719,17 @@ def filter_laws():
 @student_bp.route("/law/<int:law_id>")
 @login_required
 def view_law(law_id):
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: CHECAGEM DE PERMISSÃO DE ACESSO >>>
+    # =====================================================================
+    _, allowed_law_ids, _ = get_user_permissions()
+    if allowed_law_ids is not None and law_id not in allowed_law_ids:
+        flash("Você não tem permissão para acessar este tópico.", "danger")
+        return redirect(url_for('student.dashboard'))
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+    
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
