@@ -1284,6 +1284,7 @@
     {% endif %}
 </div>
 
+
 <div id="comment-modal-backdrop" class="comment-modal-backdrop">
     <div class="comment-modal-content">
         <h3 id="comment-modal-title" class="text-lg font-bold mb-4">Adicionar Anotação</h3>
@@ -1560,48 +1561,36 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
     
-    // =====================================================================
-    // <<< INÍCIO DA NOVA LÓGICA: Botão "Marcar como Concluído" >>>
-    // =====================================================================
-
     const markCompleteBtn = document.getElementById('mark-complete-btn');
 
     if (markCompleteBtn) {
         markCompleteBtn.addEventListener('click', function() {
-            // Desabilita o botão para evitar cliques múltiplos
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Concluindo...';
 
-            // Usa a API Fetch para enviar a requisição POST em segundo plano
             fetch(`{{ url_for('student.mark_complete', law_id=law.id) }}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                // O corpo do formulário pode ser vazio se não precisar enviar dados extras
                 body: JSON.stringify({}) 
             })
             .then(response => {
                 if (!response.ok) {
-                    // Se a resposta do servidor for um erro (ex: 404, 500)
                     throw new Error('Erro de rede ou do servidor.');
                 }
-                return response.json(); // Converte a resposta para JSON
+                return response.json();
             })
             .then(data => {
-                // Se a requisição foi bem-sucedida (success: true)
                 if (data.success) {
-                    // 1. Exibe a notificação de sucesso principal
                     Toastify({
                         text: `Lei marcada como concluída! Você ganhou pontos.`,
                         duration: 3000,
                         style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" }
                     }).showToast();
 
-                    // 2. Verifica se há conquistas desbloqueadas
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
-                        // Monta a mensagem para as conquistas
                         let achievementsHtml = data.unlocked_achievements.map(ach => 
                             `<div style="display: flex; align-items: center; margin-top: 10px;">
                                 <i class="${ach.icon}" style="font-size: 1.5rem; margin-right: 15px; color: #f59e0b;"></i>
@@ -1612,26 +1601,30 @@ document.addEventListener("DOMContentLoaded", function () {
                              </div>`
                         ).join('');
                         
-                        // Exibe o pop-up (modal) com as conquistas
+                        // =====================================================================
+                        // <<< INÍCIO DA CORREÇÃO: Adicionando customClass ao botão >>>
+                        // =====================================================================
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: achievementsHtml,
                             icon: 'success',
-                            confirmButtonText: 'Que legal!'
+                            confirmButtonText: 'Que legal!',
+                            customClass: {
+                                confirmButton: 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded'
+                            }
                         });
+                        // =====================================================================
+                        // <<< FIM DA CORREÇÃO >>>
+                        // =====================================================================
                     }
 
-                    // 3. Atualiza a interface da página dinamicamente
-                    // Remove o contêiner dos botões de ação
                     const actionButtonsContainer = document.getElementById('action-buttons-container');
                     if (actionButtonsContainer) {
                         actionButtonsContainer.remove();
                     }
 
-                    // Cria e exibe o banner "Você já concluiu esta legislação!"
                     const mainContent = document.getElementById('main-content-below-header');
                     if(mainContent){
-                        // Remove o banner de "última leitura" se ele existir
                         const lastReadInfo = mainContent.querySelector('.last-read-info');
                         if(lastReadInfo) lastReadInfo.remove();
 
@@ -1639,37 +1632,31 @@ document.addEventListener("DOMContentLoaded", function () {
                         completedBanner.className = 'completed-banner';
                         completedBanner.setAttribute('role', 'alert');
                         completedBanner.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Você já concluiu esta legislação!';
-                        mainContent.prepend(completedBanner); // Adiciona no topo do conteúdo principal
+                        mainContent.prepend(completedBanner);
                     }
 
                 } else {
-                    // Se o servidor retornar success: false
                     Toastify({
                         text: data.error || "Ocorreu um erro ao marcar como concluído.",
                         duration: 3000,
                         style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
                     }).showToast();
-                    this.disabled = false; // Reabilita o botão em caso de erro
+                    this.disabled = false;
                     this.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Marcar como Concluído';
                 }
             })
             .catch(error => {
-                // Em caso de erro de rede ou falha na requisição
                 console.error("Erro ao marcar como concluído:", error);
                 Toastify({
                     text: "Erro de comunicação. Verifique sua internet e tente novamente.",
                     duration: 5000,
                     style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
                 }).showToast();
-                this.disabled = false; // Reabilita o botão
+                this.disabled = false;
                 this.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Marcar como Concluído';
             });
         });
     }
-
-    // =====================================================================
-    // <<< FIM DA NOVA LÓGICA >>>
-    // =====================================================================
 
 
     const timerDisplay = document.getElementById('timer-display');
