@@ -152,52 +152,67 @@ def get_topics_for_law(law_id):
 @login_required
 def autocomplete_search():
     query = request.args.get('q', '').strip()
+    search_type = request.args.get('type', 'all')  # Novo parâmetro para filtrar a busca
+
     if len(query) < 3:
         return jsonify(results=[])
 
     search_term = f"%{query}%"
     results = []
-    limit = 5
+    limit = 7
 
-    topics = Law.query.filter(
-        Law.parent_id.isnot(None),
-        Law.title.ilike(search_term)
-    ).limit(limit).all()
-    for topic in topics:
-        results.append({
-            "title": topic.title,
-            "category": "Artigo/Tópico",
-            "url": url_for('student.view_law', law_id=topic.id)
-        })
+    # Busca apenas por tópicos se o tipo for 'topic'
+    if search_type == 'topic' or search_type == 'all':
+        topics_query = Law.query.filter(
+            Law.parent_id.isnot(None),
+            or_(Law.title.ilike(search_term), Law.content.ilike(search_term))
+        ).options(joinedload(Law.parent)).limit(limit).all()
 
-    laws = Law.query.filter(
-        Law.parent_id.is_(None),
-        Law.title.ilike(search_term)
-    ).limit(limit).all()
-    for law in laws:
-        results.append({
-            "title": law.title,
-            "category": "Lei",
-            "url": url_for('student.dashboard', diploma_id=law.id, subject_id=law.subject_id)
-        })
+        for topic in topics_query:
+            parent_title = topic.parent.title if topic.parent else "Tópico"
+            results.append({
+                "id": topic.id,
+                "title": f"{parent_title} - {topic.title}",
+                "category": "Tópico de Lei",
+                "url": url_for('student.view_law', law_id=topic.id)
+            })
 
-    subjects = Subject.query.filter(Subject.name.ilike(search_term)).limit(limit).all()
-    for subject in subjects:
-        results.append({
-            "title": subject.name,
-            "category": "Matéria",
-            "url": url_for('student.dashboard', subject_id=subject.id)
-        })
+    # Evita buscar outras coisas se o tipo for apenas 'topic'
+    if search_type != 'topic':
+        if search_type == 'all':
+            # Em modo 'all', busca leis e matérias também, mas com um limite menor para dar espaço aos tópicos
+            limit = 5 
+
+        laws_query = Law.query.filter(
+            Law.parent_id.is_(None),
+            Law.title.ilike(search_term)
+        ).limit(limit).all()
+        for law in laws_query:
+            results.append({
+                "id": law.id,
+                "title": law.title,
+                "category": "Diploma Legal",
+                "url": url_for('student.dashboard', diploma_id=law.id, subject_id=law.subject_id)
+            })
+
+        subjects_query = Subject.query.filter(Subject.name.ilike(search_term)).limit(limit).all()
+        for subject in subjects_query:
+            results.append({
+                "id": subject.id,
+                "title": subject.name,
+                "category": "Matéria",
+                "url": url_for('student.dashboard', subject_id=subject.id)
+            })
 
     unique_results = []
-    seen = set()
+    seen_ids = set()
     for r in results:
-        identifier = (r['title'], r['category'])
-        if identifier not in seen:
+        if r['id'] not in seen_ids:
             unique_results.append(r)
-            seen.add(identifier)
+            seen_ids.add(r['id'])
 
-    return jsonify(results=unique_results[:7])
+    return jsonify(results=unique_results[:10])
+
 
 @student_bp.route("/api/concurso/<int:concurso_id>/details")
 @login_required
@@ -367,14 +382,10 @@ def dashboard():
                                     .filter(StudySession.recorded_at >= today_start_utc).scalar() or 0
     formatted_daily_study = _format_duration(daily_study_seconds)
     
-    # =====================================================================
-    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: DADOS PARA O GRÁFICO DE ATIVIDADE SEMANAL >>>
-    # =====================================================================
     weekly_activity_data = []
     days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
     today_in_brazil = now_in_brazil.date()
 
-    # Pega os dados de estudo dos últimos 7 dias do banco
     start_date_of_week = today_in_brazil - timedelta(days=6)
     start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
     
@@ -386,10 +397,8 @@ def dashboard():
         StudySession.recorded_at >= start_date_utc
     ).group_by('study_date').all()
     
-    # Mapeia os dados do banco para um dicionário para fácil acesso
     study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
 
-    # Prepara a lista de dados para os últimos 7 dias
     for i in range(7):
         current_day = today_in_brazil - timedelta(days=6-i)
         duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
@@ -400,9 +409,6 @@ def dashboard():
             "label": day_label,
             "minutes": duration_minutes
         })
-    # =====================================================================
-    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
-    # =====================================================================
 
     study_by_subject_data = db.session.query(
         Subject.name,
@@ -448,7 +454,7 @@ def dashboard():
                            daily_study_formatted=formatted_daily_study,
                            most_studied_subject=most_studied_subject,
                            study_data_for_chart=study_data_for_chart,
-                           weekly_activity_data=weekly_activity_data # <<< Envia os novos dados para o template
+                           weekly_activity_data=weekly_activity_data
                            )
 
 
@@ -823,22 +829,36 @@ def save_favorite_title():
         return jsonify(success=False, error="Erro interno ao salvar o título."), 500
 
 # =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO BACKEND: API DO CARD "LEMBRETES E METAS" >>>
+# <<< INÍCIO DA ALTERAÇÃO: API DO CARD "LEMBRETES E METAS" COM VÍNCULO DE LEI >>>
 # =====================================================================
+def _serialize_todo_item(item):
+    """Função auxiliar para converter um objeto TodoItem em um dicionário JSON."""
+    law_info = { "law_id": None, "law_title": None, "law_url": None }
+    if item.law:
+        law_info["law_id"] = item.law.id
+        # Cria um título mais completo para o tópico, incluindo o pai.
+        law_info["law_title"] = f"{item.law.parent.title} - {item.law.title}" if item.law.parent else item.law.title
+        law_info["law_url"] = url_for('student.view_law', law_id=item.law.id)
+
+    return {
+        "id": item.id,
+        "content": item.content,
+        "is_completed": item.is_completed,
+        "category": item.category,
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "completed_at": item.completed_at.isoformat() if item.completed_at else None,
+        **law_info
+    }
+
 @student_bp.route("/api/todo_items", methods=["GET"])
 @login_required
 def get_todo_items():
-    todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
-    items_data = []
-    for item in todo_items:
-        items_data.append({
-            "id": item.id,
-            "content": item.content,
-            "is_completed": item.is_completed,
-            "category": item.category, # Adicionado para enviar a categoria ao frontend
-            "created_at": item.created_at.isoformat() if item.created_at else None,
-            "completed_at": item.completed_at.isoformat() if item.completed_at else None
-        })
+    # Usamos joinedload para carregar os dados da lei vinculada de forma eficiente (evita múltiplas queries)
+    todo_items = current_user.todo_items.options(
+        joinedload(TodoItem.law).joinedload(Law.parent)
+    ).order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
+    
+    items_data = [_serialize_todo_item(item) for item in todo_items]
     return jsonify(success=True, todo_items=items_data)
 
 @student_bp.route("/api/todo_items", methods=["POST"])
@@ -846,33 +866,41 @@ def get_todo_items():
 def add_todo_item():
     data = request.get_json()
     content = bleach.clean(data.get("content", ""), tags=[], strip=True).strip()
-    # Pega a categoria do request, com 'lembrete' como padrão
     category = data.get("category", "lembrete")
+    law_id = data.get("law_id") # Recebe o law_id (pode ser None)
+
     if category not in ['lembrete', 'meta']:
-        category = 'lembrete' # Garante que a categoria seja válida
+        category = 'lembrete'
 
     if not content:
         return jsonify(success=False, error="O conteúdo não pode estar vazio."), 400
 
-    # Aumentamos o limite para 10 itens
     if len(current_user.todo_items.all()) >= 10:
         return jsonify(success=False, error="Você atingiu o limite de 10 itens."), 400
 
-    new_item = TodoItem(user_id=current_user.id, content=content, category=category, is_completed=False)
+    # Converte law_id para int se existir, senão mantém como None
+    if law_id:
+        try:
+            law_id = int(law_id)
+        except (ValueError, TypeError):
+            return jsonify(success=False, error="ID de lei inválido."), 400
+
+    new_item = TodoItem(
+        user_id=current_user.id, 
+        content=content, 
+        category=category, 
+        law_id=law_id, # Salva o ID da lei
+        is_completed=False
+    )
     try:
         db.session.add(new_item)
         db.session.commit()
+        # Recarrega o item para garantir que o relacionamento com a lei esteja disponível
+        db.session.refresh(new_item)
         return jsonify(
             success=True,
             message="Item adicionado!",
-            todo_item={
-                "id": new_item.id,
-                "content": new_item.content,
-                "is_completed": new_item.is_completed,
-                "category": new_item.category, # Retorna a categoria do novo item
-                "created_at": new_item.created_at.isoformat(),
-                "completed_at": None
-            }
+            todo_item=_serialize_todo_item(new_item)
         ), 201
     except Exception as e:
         db.session.rollback()
@@ -882,9 +910,14 @@ def add_todo_item():
 @student_bp.route("/api/todo_items/<int:item_id>/toggle", methods=["POST"])
 @login_required
 def toggle_todo_item(item_id):
-    item = TodoItem.query.filter_by(id=item_id, user_id=current_user.id).first()
+    # Carrega o item junto com a informação da lei vinculada
+    item = TodoItem.query.options(
+        joinedload(TodoItem.law).joinedload(Law.parent)
+    ).filter_by(id=item_id, user_id=current_user.id).first()
+
     if not item:
         return jsonify(success=False, error="Item não encontrado."), 404
+    
     item.is_completed = not item.is_completed
     item.completed_at = datetime.datetime.utcnow() if item.is_completed else None
     try:
@@ -893,14 +926,7 @@ def toggle_todo_item(item_id):
         return jsonify(
             success=True,
             message=message,
-            todo_item={
-                "id": item.id,
-                "content": item.content,
-                "is_completed": item.is_completed,
-                "category": item.category, # Retorna a categoria do item
-                "created_at": item.created_at.isoformat(),
-                "completed_at": item.completed_at.isoformat() if item.completed_at else None
-            }
+            todo_item=_serialize_todo_item(item)
         )
     except Exception as e:
         db.session.rollback()
@@ -922,7 +948,7 @@ def delete_todo_item(item_id):
         logging.error(f"Erro ao excluir item de diário {item_id} para o usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Erro interno ao excluir tarefa."), 500
 # =====================================================================
-# <<< FIM DA ALTERAÇÃO BACKEND >>>
+# <<< FIM DA ALTERAÇÃO >>>
 # =====================================================================
 
 
