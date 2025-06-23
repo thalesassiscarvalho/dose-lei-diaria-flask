@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # NOVO: Importa a tabela de associação do arquivo concurso.py
 from src.models.concurso import concurso_law_association
-from src.models.user import db 
+from src.extensions import db
 from sqlalchemy.orm import backref
 
 class Subject(db.Model):
