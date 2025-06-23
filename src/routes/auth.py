@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 import os
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.security import check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
@@ -17,12 +17,18 @@ auth_bp = Blueprint("auth", __name__)
 
 def generate_password_reset_token(email):
     """Gera um token seguro para a redefinição de senha."""
-    serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
+    # --- INÍCIO DA CORREÇÃO ---
+    # Alterado de 'SECRET_KEY' para 'FLASK_SECRET_KEY' para corresponder ao arquivo .env
+    serializer = URLSafeTimedSerializer(os.environ.get('FLASK_SECRET_KEY'))
+    # --- FIM DA CORREÇÃO ---
     return serializer.dumps(email, salt=os.environ.get('SECURITY_PASSWORD_SALT'))
 
 def confirm_reset_token(token, expiration=3600):
     """Verifica o token. Retorna o e-mail se for válido, ou None se inválido/expirado."""
-    serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
+    # --- INÍCIO DA CORREÇÃO ---
+    # Alterado de 'SECRET_KEY' para 'FLASK_SECRET_KEY' para corresponder ao arquivo .env
+    serializer = URLSafeTimedSerializer(os.environ.get('FLASK_SECRET_KEY'))
+    # --- FIM DA CORREÇÃO ---
     try:
         email = serializer.loads(
             token,
@@ -130,7 +136,10 @@ def forgot_password():
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
                 
                 subject = "Redefinição de Senha - Dose de Lei Diária"
-                msg = Message(subject, recipients=[email], html=html_body, sender=os.environ.get('EMAIL_USER'))
+                
+                sender_email = current_app.config['MAIL_USERNAME']
+                msg = Message(subject, recipients=[email], html=html_body, sender=sender_email)
+
                 mail.send(msg)
                 logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
 
