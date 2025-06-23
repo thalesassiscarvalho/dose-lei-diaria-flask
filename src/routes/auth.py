@@ -9,11 +9,16 @@ import logging
 import bleach
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 
-# --- NOVAS IMPORTAÇÕES PARA O E-MAIL ---
+# --- IMPORTAÇÕES CORRIGIDAS ---
+# Importa o 'db' do nosso arquivo central de extensões
+from src.extensions import db
+# Importa apenas o Modelo 'User', sem o 'db' junto
+from src.models.user import User
+
+# Importações para o envio de e-mail que já corrigimos
 import smtplib
 from email.message import EmailMessage
-
-from src.models.user import db, User
+# --- FIM DA CORREÇÃO DAS IMPORTAÇÕES ---
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -38,13 +43,15 @@ def confirm_reset_token(token, expiration=3600):
     except (SignatureExpired, Exception):
         return None
 
-# ... (As rotas /login, /signup, /logout permanecem exatamente as mesmas) ...
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
         if current_user.role == "admin":
             return redirect(url_for("admin.dashboard"))
         else:
+            if not current_user.is_approved:
+                 flash("Sua conta ainda não foi aprovada. Por favor, aguarde.", "warning")
+                 return redirect(url_for('auth.login'))
             return redirect(url_for("student.dashboard"))
 
     if request.method == "POST":
@@ -130,32 +137,27 @@ def forgot_password():
         if user:
             logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
             try:
-                # --- INÍCIO DO NOVO CÓDIGO DE ENVIO ---
                 token = generate_password_reset_token(email)
                 reset_url = url_for('auth.reset_with_token', token=token, _external=True)
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
 
-                # Pega as credenciais do ambiente
                 EMAIL_HOST = 'smtp.hostinger.com'
                 EMAIL_PORT = 465
                 SENDER_EMAIL = os.environ.get('EMAIL_USER')
                 SENDER_PASS = os.environ.get('EMAIL_PASS')
 
-                # Cria a mensagem de e-mail
                 msg = EmailMessage()
                 msg['Subject'] = 'Redefinição de Senha - Estudo da Lei Seca'
                 msg['From'] = SENDER_EMAIL
                 msg['To'] = email
-                msg.set_content('Não foi possível carregar o conteúdo HTML.') # Fallback
+                msg.set_content('Não foi possível carregar o conteúdo HTML.')
                 msg.add_alternative(html_body, subtype='html')
 
-                # Conecta, autentica e envia usando o método que funcionou
                 with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT) as server:
                     server.login(SENDER_EMAIL, SENDER_PASS)
                     server.send_message(msg)
                 
                 logging.info(f"[AUTH DEBUG] Password reset email sent to: {email} using smtplib.")
-                # --- FIM DO NOVO CÓDIGO DE ENVIO ---
 
             except Exception as e:
                 logging.error(f"[AUTH ERROR] Failed to send password reset email to {email}: {e}")
@@ -169,7 +171,6 @@ def forgot_password():
             
     return render_template("forgot_password.html")
 
-# ... (A rota /reset-password/<token> permanece exatamente a mesma) ...
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_with_token(token):
     if current_user.is_authenticated:
