@@ -1,3 +1,5 @@
+# main.py
+
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -12,46 +14,31 @@ import logging
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 1/2: IMPORTAR O FLASK-MAIL >>>
-# =====================================================================
 from flask_mail import Mail
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 1/2 >>>
-# =====================================================================
 
 load_dotenv()
 
-# --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
+# --- IMPORTAÇÃO DOS MODELOS E BLUEPRINTS ---
 from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
-# --- FIM DA IMPORTAÇÃO ADICIONADA ---
-
+from src.models.study import StudySession
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
-
 import datetime
 
 logging.basicConfig(level=logging.DEBUG)
 
+# --- CRIAÇÃO E CONFIGURAÇÃO DA APLICAÇÃO ---
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 2/2: CONFIGURAÇÃO DE E-MAIL E INICIALIZAÇÃO >>>
-# =====================================================================
-
-# Configurações de segurança e e-mail lidas do arquivo .env
+# --- CONFIGURAÇÃO PARA RECUPERAÇÃO DE SENHA ---
 app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT')
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
@@ -59,75 +46,39 @@ app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in [
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
 
-# =====================================================================
-
+# --- POLÍTICA DE SEGURANÇA ---
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
-        "'self'",
-        "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
-        'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
-        'https://cdn.tailwindcss.com',
-        'https://cdn.quilljs.com',
-        'https://cdn.tiny.cloud',
-        'https://kit.fontawesome.com'
+        "'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdn.tailwindcss.com',
+        'https://cdn.quilljs.com', 'https://cdn.tiny.cloud', 'https://kit.fontawesome.com'
     ],
     'style-src': [
-        "'self'",
-        "'unsafe-inline'", # Necessário para estilos inline
-        'https://cdn.jsdelivr.net', # Para Toastify CSS
-        'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
-        'https://cdn.quilljs.com', # Para Quill CSS
-        'https://cdn.tiny.cloud',
-        'https://fonts.googleapis.com',
+        "'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
+        'https://cdn.quilljs.com', 'https://cdn.tiny.cloud', 'https://fonts.googleapis.com',
         'https://ka-f.fontawesome.com'
     ],
-    'font-src': [
-        "'self'",
-        'https://cdnjs.cloudflare.com', # Para Font Awesome webfonts
-        'https://fonts.gstatic.com',
-        'https://ka-f.fontawesome.com'
-    ],
-    'img-src': [
-        "'self'",
-        'data:', # Permite imagens base64
-        'https://cdn.tiny.cloud'
-    ],
-    'media-src': [
-        "'self'",
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Para os arquivos de áudio das ondas neurais
-    ],
+    'font-src': ["'self'", 'https://cdnjs.cloudflare.com', 'https://fonts.gstatic.com', 'https://ka-f.fontawesome.com'],
+    'img-src': ["'self'", 'data:', 'https://cdn.tiny.cloud'],
+    'media-src': ["'self'", 'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'],
     'connect-src': [
-        "'self'",
-        'https://cdn.tiny.cloud',
-        'https://ka-f.fontawesome.com',
-        'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
-        'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
-        'https://cdn.quilljs.com', # Adicionado para Quill CSS (fetch)
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Adicionado para os áudios das ondas neurais (fetch)
+        "'self'", 'https://cdn.tiny.cloud', 'https://ka-f.fontawesome.com', 'https://cdn.jsdelivr.net',
+        'https://cdnjs.cloudflare.com', 'https://cdn.quilljs.com', 'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'
     ],
-    'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
-    'object-src': ["'none'"], # Impede a carga de plugins como Flash
-    'form-action': ["'self'"], # Restringe URLs que podem ser usadas como destinos para envios de formulário
-    'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
+    'frame-ancestors': ["'none'"], 'object-src': ["'none'"],
+    'form-action': ["'self'"], 'base-uri': ["'self'"]
 }
 
+# --- INICIALIZAÇÃO DAS EXTENSÕES ---
 db.init_app(app)
-
-# Inicialização do Flask-Mail
 mail = Mail(app)
-
 migrate = Migrate(app, db)
 csrf = CSRFProtect()
 csrf.init_app(app)
 
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 2/2 >>>
-# =====================================================================
-
-
+# --- FUNÇÕES DE INICIALIZAÇÃO ---
 def ensure_achievements_exist():
-    """Checks for predefined achievements and creates them if they don't exist."""
+    """Verifica e cria as conquistas padrão se não existirem."""
     logging.debug("Ensuring base achievements exist...")
     achievements_data = [
         {"name": "Primeiro Passo", "description": "Parabéns! Você começou sua jornada.", "laws_completed_threshold": 5, "icon": "fas fa-shoe-prints"},
@@ -165,7 +116,6 @@ def ensure_achievements_exist():
     else:
         logging.debug("All base achievements already exist.")
 
-# Bloco de inicialização com a indentação corrigida
 with app.app_context():
     logging.info("Initializing database (manual checks)...")
     try:
@@ -196,6 +146,7 @@ with app.app_context():
         logging.error(f"An error occurred during database initialization: {e}")
         db.session.rollback()
 
+# --- LOGIN MANAGER ---
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.init_app(app)
@@ -206,25 +157,17 @@ def load_user(user_id):
     
 @app.after_request
 def apply_csp(response):
-    """
-    Aplica o cabeçalho Content-Security-Policy lendo a política
-    definida na configuração do app.
-    """
     policy = app.config.get('CSP_POLICY', {})
-    
-    csp_header_value = "; ".join([
-        f"{key} {' '.join(values)}" for key, values in policy.items()
-    ])
-
+    csp_header_value = "; ".join([f"{key} {' '.join(values)}" for key, values in policy.items()])
     response.headers['Content-Security-Policy'] = csp_header_value
     return response
 
-# --- Register Blueprints ---
+# --- REGISTRO DE BLUEPRINTS ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp)
 app.register_blueprint(student_bp)
 
-# --- Main Routes ---
+# --- ROTAS PRINCIPAIS ---
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -237,7 +180,6 @@ def index():
             return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
 
-# Adicione esta rota para servir o favicon.ico
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
