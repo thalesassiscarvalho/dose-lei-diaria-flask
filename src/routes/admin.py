@@ -1,5 +1,3 @@
-# src/routes/admin.py
-
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
 from flask_login import login_required, current_user
@@ -9,18 +7,13 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
-# --- INÍCIO DA CORREÇÃO DAS IMPORTAÇÕES ---
-# 1. Importamos o 'db' do nosso arquivo central de extensões.
-from src.extensions import db
-
-# 2. Importamos apenas os Modelos dos seus respectivos arquivos, sem o 'db' junto.
-from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
+# Importações completas e corretas
+from src.models.user import db, User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 from src.models.law import Law, Subject, UsefulLink 
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.concurso import Concurso
-# --- FIM DA CORREÇÃO DAS IMPORTAÇÕES ---
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -434,26 +427,41 @@ def deny_user(user_id):
 @login_required
 @admin_required
 def manage_user_concursos(user_id):
+    # =====================================================================
+    # <<< INÍCIO DA CORREÇÃO: REMOVENDO O 'joinedload' >>>
+    # =====================================================================
+    # A linha original com 'db.joinedload' foi removida para resolver o conflito com 'lazy="dynamic"'.
     user = User.query.get_or_404(user_id)
+    # =====================================================================
+    # <<< FIM DA CORREÇÃO >>>
+    # =====================================================================
     all_concursos = Concurso.query.order_by(Concurso.name).all()
 
     if request.method == "POST":
+        # Verifica se a caixa "ver todos os concursos" foi marcada
         can_see_all = request.form.get("can_see_all_concursos") == "on"
         user.can_see_all_concursos = can_see_all
 
         if can_see_all:
+            # Se pode ver todos, removemos todas as associações específicas
             user.associated_concursos = []
         else:
+            # Caso contrário, pegamos a lista de IDs de concursos do formulário
             concurso_ids = request.form.getlist('concursos')
+            # Buscamos os objetos Concurso correspondentes
             selected_concursos = Concurso.query.filter(Concurso.id.in_(concurso_ids)).all()
+            # Atualizamos a lista de concursos do usuário
             user.associated_concursos = selected_concursos
 
         db.session.commit()
         flash(f"As permissões de concurso para {user.email} foram atualizadas com sucesso!", "success")
         return redirect(url_for("admin.manage_users"))
 
+    # Para o método GET, criamos um set com os IDs dos concursos do usuário
+    # para facilitar a verificação no template
     user_concurso_ids = {c.id for c in user.associated_concursos}
 
+    # Este template ainda não existe. Nós o criaremos no próximo passo.
     return render_template(
         "admin/manage_user_concursos.html",
         user=user,
