@@ -1,4 +1,4 @@
-# auth.py
+# src/routes/auth.py
 
 # -*- coding: utf-8 -*-
 import os
@@ -11,24 +11,21 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from flask_mail import Message
 from src.models.user import db, User
 
+# --- NOVA IMPORTAÇÃO ---
+from src.extensions import mail
+
 logging.basicConfig(level=logging.DEBUG)
 auth_bp = Blueprint("auth", __name__)
 
 
 def generate_password_reset_token(email):
     """Gera um token seguro para a redefinição de senha."""
-    # --- INÍCIO DA CORREÇÃO ---
-    # Alterado de 'SECRET_KEY' para 'FLASK_SECRET_KEY' para corresponder ao arquivo .env
     serializer = URLSafeTimedSerializer(os.environ.get('FLASK_SECRET_KEY'))
-    # --- FIM DA CORREÇÃO ---
     return serializer.dumps(email, salt=os.environ.get('SECURITY_PASSWORD_SALT'))
 
 def confirm_reset_token(token, expiration=3600):
     """Verifica o token. Retorna o e-mail se for válido, ou None se inválido/expirado."""
-    # --- INÍCIO DA CORREÇÃO ---
-    # Alterado de 'SECRET_KEY' para 'FLASK_SECRET_KEY' para corresponder ao arquivo .env
     serializer = URLSafeTimedSerializer(os.environ.get('FLASK_SECRET_KEY'))
-    # --- FIM DA CORREÇÃO ---
     try:
         email = serializer.loads(
             token,
@@ -129,7 +126,7 @@ def forgot_password():
         if user:
             logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
             try:
-                from src.main import mail
+                # A importação local 'from src.main import mail' foi removida daqui.
                 
                 token = generate_password_reset_token(email)
                 reset_url = url_for('auth.reset_with_token', token=token, _external=True)
@@ -140,7 +137,7 @@ def forgot_password():
                 sender_email = current_app.config['MAIL_USERNAME']
                 msg = Message(subject, recipients=[email], html=html_body, sender=sender_email)
 
-                mail.send(msg)
+                mail.send(msg) # Agora usa o 'mail' importado no topo do arquivo.
                 logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
 
             except Exception as e:
