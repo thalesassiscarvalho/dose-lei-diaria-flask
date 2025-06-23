@@ -2,13 +2,14 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
-from src.extensions import db, mail # <<< ADICIONADO 'mail'
+from src.extensions import db, mail
 from src.models.user import User
 import logging
 import bleach
-# <<< NOVAS IMPORTAÇÕES PARA O PROCESSO DE RESET DE SENHA >>>
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+# <<< NOVA IMPORTAÇÃO PARA CORRIGIR O ERRO DA DATA >>>
+import datetime
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -25,7 +26,6 @@ def login():
             return redirect(url_for("student.dashboard"))
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza o email para remover qualquer tag HTML
         email = bleach.clean(request.form.get("email"), tags=[], strip=True)
         password = request.form.get("password")
         remember = True if request.form.get("remember") else False
@@ -67,7 +67,6 @@ def signup():
         return redirect(url_for("main.index"))
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza todos os campos de texto do formulário
         email = bleach.clean(request.form.get("email"), tags=[], strip=True)
         full_name = bleach.clean(request.form.get("full_name"), tags=[], strip=True)
         phone = bleach.clean(request.form.get("phone"), tags=[], strip=True)
@@ -134,12 +133,23 @@ def forgot_password():
             reset_url = url_for('auth.reset_with_token', token=token, _external=True)
 
             # Preparar e enviar o e-mail
+            # =====================================================================
+            # <<< INÍCIO DA ALTERAÇÃO: Passando o ano para o template >>>
+            # =====================================================================
+            current_year = datetime.datetime.now().year
             msg = Message(
                 subject="Redefinição de Senha - Dose de Lei Diária",
                 sender=current_app.config['MAIL_DEFAULT_SENDER'],
                 recipients=[email]
             )
-            msg.html = render_template('auth/reset_password_email.html', reset_url=reset_url)
+            msg.html = render_template(
+                'auth/reset_password_email.html', 
+                reset_url=reset_url, 
+                current_year=current_year # <-- Enviando o ano para o template
+            )
+            # =====================================================================
+            # <<< FIM DA ALTERAÇÃO >>>
+            # =====================================================================
             
             try:
                 mail.send(msg)
