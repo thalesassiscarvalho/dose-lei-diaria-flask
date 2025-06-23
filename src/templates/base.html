@@ -251,6 +251,8 @@
     </nav>
 
     <main class="container mx-auto px-4 py-8 fade-in-up" style="animation-delay: 0.2s;">
+        {# O bloco de código abaixo foi removido para evitar a exibição de mensagens flash no topo da página. #}
+        {# 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mb-4">
@@ -262,6 +264,7 @@
                 </div>
             {% endif %}
         {% endwith %}
+        #}
         {% block content %}
         {% endblock %}
     </main>
