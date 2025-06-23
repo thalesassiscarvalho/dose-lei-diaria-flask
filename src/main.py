@@ -11,11 +11,10 @@ from sqlalchemy.exc import OperationalError
 import logging
 from dotenv import load_dotenv
 
-# ALTERADO: Importa as instâncias das extensões do arquivo central
-from src.extensions import db, migrate, csrf, login_manager
+# ALTERADO: Importa 'mail' junto com as outras extensões
+from src.extensions import db, migrate, csrf, login_manager, mail
 
 # --- IMPORTAÇÃO DE MODELOS ---
-# ALTERADO: A importação do 'db' foi removida desta linha, pois ele não é mais definido aqui.
 from src.models.user import User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
@@ -32,13 +31,33 @@ import datetime
 load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__, 
+app = Flask(__name__,
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: CARREGAR CONFIGURAÇÕES DE E-MAIL E SEGURANÇA >>>
+# =====================================================================
+# Lendo as chaves de segurança do arquivo .env
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT')
+
+# Lendo a configuração do banco de dados
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+
+# Lendo as configurações de e-mail do arquivo .env usando suas variáveis
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'false').lower() in ['true', 'on', '1']
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'true').lower() in ['true', 'on', '1']
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER')
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
+
 
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
@@ -97,6 +116,7 @@ db.init_app(app)
 migrate.init_app(app, db)
 csrf.init_app(app)
 login_manager.init_app(app)
+mail.init_app(app) # <<< ADICIONADO: Inicializa o Flask-Mail com as configurações acima
 # --- Fim da Inicialização ---
 
 def ensure_achievements_exist():
@@ -113,7 +133,7 @@ def ensure_achievements_exist():
         {"name": "Mentor da Lei", "description": "Você inspira outros estudantes a seguirem seu exemplo.", "laws_completed_threshold": 150, "icon": "fas fa-chalkboard-teacher"},
         {"name": "Uma lenda!", "description": "Um verdadeiro mito entre os estudiosos.", "laws_completed_threshold": 200, "icon": "fas fa-crown"}
     ]
-    
+
     achievements_added = 0
     for data in achievements_data:
         existing_achievement = Achievement.query.filter_by(name=data["name"]).first()
@@ -127,7 +147,7 @@ def ensure_achievements_exist():
             db.session.add(achievement)
             achievements_added += 1
             logging.debug(f"Adding achievement: {data['name']}")
-    
+
     if achievements_added > 0:
         try:
             db.session.commit()
@@ -169,13 +189,10 @@ with app.app_context():
         logging.error(f"An error occurred during database initialization: {e}")
         db.session.rollback()
 
-# REMOVIDO: A criação e configuração do LoginManager foram movidas para extensions.py
-# e a inicialização (.init_app) foi feita acima.
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-    
+
 @app.after_request
 def apply_csp(response):
     """
@@ -183,7 +200,7 @@ def apply_csp(response):
     definida na configuração do app.
     """
     policy = app.config.get('CSP_POLICY', {})
-    
+
     csp_header_value = "; ".join([
         f"{key} {' '.join(values)}" for key, values in policy.items()
     ])
