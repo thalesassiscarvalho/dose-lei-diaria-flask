@@ -1,5 +1,5 @@
 # src/models/comment.py
-from src.models.user import db
+from src.extensions import db
 import datetime
 
 class UserComment(db.Model):
