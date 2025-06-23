@@ -138,7 +138,7 @@ def forgot_password():
             # =====================================================================
             current_year = datetime.datetime.now().year
             msg = Message(
-                subject="Redefinição de Senha - Dose de Lei Diária",
+                subject="Redefinição de Senha - Estudo da Lei Seca",
                 sender=current_app.config['MAIL_DEFAULT_SENDER'],
                 recipients=[email]
             )
