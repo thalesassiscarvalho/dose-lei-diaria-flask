@@ -55,8 +55,9 @@ def login():
             return redirect(url_for("admin.dashboard"))
         else:
             return redirect(url_for("student.dashboard"))
-
-    return render_template("login.html")
+            
+    # ALTERADO: Aponta para o novo caminho do template
+    return render_template("auth/login.html")
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -96,7 +97,8 @@ def signup():
             flash("Erro ao criar conta. Tente novamente.", "danger")
             return redirect(url_for("auth.signup"))
 
-    return render_template("signup.html")
+    # ALTERADO: Aponta para o novo caminho do template
+    return render_template("auth/signup.html")
     
 @auth_bp.route("/logout")
 @login_required
