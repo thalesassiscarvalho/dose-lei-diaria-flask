@@ -8,11 +8,10 @@ from flask_login import login_user, logout_user, login_required, current_user
 import logging
 import bleach
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from flask_mail import Message
+from flask_mail import Message, Mail # Adicionado Mail aqui
 from src.models.user import db, User
 
-# --- NOVA IMPORTAÇÃO ---
-from src.extensions import mail
+# A importação from src.extensions import mail foi removida daqui
 
 logging.basicConfig(level=logging.DEBUG)
 auth_bp = Blueprint("auth", __name__)
@@ -126,8 +125,13 @@ def forgot_password():
         if user:
             logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
             try:
-                # A importação local 'from src.main import mail' foi removida daqui.
-                
+                # --- INÍCIO DA NOVA ESTRATÉGIA ---
+                # 1. Criamos uma instância local do Mail.
+                local_mail = Mail()
+                # 2. Configuramos essa instância com o app atual.
+                local_mail.init_app(current_app)
+                # --- FIM DA NOVA ESTRATÉGIA ---
+
                 token = generate_password_reset_token(email)
                 reset_url = url_for('auth.reset_with_token', token=token, _external=True)
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
@@ -137,7 +141,8 @@ def forgot_password():
                 sender_email = current_app.config['MAIL_USERNAME']
                 msg = Message(subject, recipients=[email], html=html_body, sender=sender_email)
 
-                mail.send(msg) # Agora usa o 'mail' importado no topo do arquivo.
+                # 3. Usamos a nossa instância local para enviar o e-mail.
+                local_mail.send(msg) 
                 logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
 
             except Exception as e:
