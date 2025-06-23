@@ -30,7 +30,7 @@
         Não tem uma conta? <a href="{{ url_for("auth.signup") }}" class="font-bold transition-all duration-300" style="color: #1d4ed8;">Cadastre-se</a>
     </p>
     <p class="text-center text-brand-text-light text-sm mt-4">
-        Esqueceu sua senha? <a href="https://wa.me/5521999157700?text=Ol%C3%A1%2C%20vim%20do%20site%20da%20lei%20seca%20e%20esqueci%20minha%20senha" target="_blank" class="font-bold transition-all duration-300" style="color: #1d4ed8;">Entre em contato</a>
+        Esqueceu sua senha? <a href="{{ url_for('auth.forgot_password') }}" class="font-bold transition-all duration-300" style="color: #1d4ed8;">Recuperar senha</a>
     </p>
 </div>
 
@@ -73,9 +73,7 @@
     }
 }
 
-/* ===================================================================== */
-/* <<< INÍCIO DA ALTERAÇÃO: MOBILE - Fundo com cor sólida >>> */
-/* ===================================================================== */
+/* MOBILE - Fundo com cor sólida */
 @media (max-width: 768px) {
     body {
         background-color: #2D68EB; /* Cor sólida para mobile, muito mais rápido! */
@@ -110,9 +108,6 @@
         backdrop-filter: blur(10px);
     }
 }
-/* ===================================================================== */
-/* <<< FIM DA ALTERAÇÃO >>> */
-/* ===================================================================== */
 
 /* Estilos gerais */
 .form-input-focus:focus {
