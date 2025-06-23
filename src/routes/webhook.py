@@ -4,13 +4,22 @@ import stripe
 import os
 import logging
 
-from src.extensions import db
+# ALTERADO: Importando 'csrf' de 'extensions'
+from src.extensions import db, csrf
 from src.models.user import User
 
 webhook_bp = Blueprint('webhook', __name__)
 
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: Adicionando a exceção de CSRF >>>
+# =====================================================================
 @webhook_bp.route('/stripe-webhook', methods=['POST'])
+@csrf.exempt # <-- ESTA É A LINHA QUE RESOLVE O PROBLEMA
 def stripe_webhook():
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
     """ Rota para receber eventos do Stripe e automatizar ações. """
     
     # Pega a assinatura da requisição enviada pelo Stripe
