@@ -12,8 +12,16 @@ import logging
 from flask_wtf.csrf import CSRFProtect
 
 from flask_migrate import Migrate
-
 from dotenv import load_dotenv
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: Importação do Flask-Mail >>>
+# =====================================================================
+from flask_mail import Mail
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
+
 load_dotenv()
 
 # --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
@@ -35,10 +43,30 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'uma-chave-padrao-para-testes')
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: Configuração do Flask-Mail >>>
+# =====================================================================
+# Adicionado para a recuperação de senha
+app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT', 'outro-sal-secreto-para-seguranca')
+
+# Configuração do Flask-Mail. Assumi que você usará o Gmail.
+# Se seu e-mail "suporte@app.estudoleiseca.com.br" for do Google Workspace, isto funcionará.
+# Se for de outro provedor (ex: Hostgator, GoDaddy), o 'MAIL_SERVER' será diferente.
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'  # Servidor SMTP do Google/Gmail
+app.config['MAIL_PORT'] = 587                      # Porta de conexão padrão para TLS
+app.config['MAIL_USE_TLS'] = True                  # Habilita a criptografia da conexão
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER') # Seu e-mail, que será lido do arquivo .env
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS') # Sua "Senha de App", lida do arquivo .env
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
+
 
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
@@ -92,6 +120,15 @@ app.config['CSP_POLICY'] = {
 }
 
 db.init_app(app)
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: Inicialização do Flask-Mail >>>
+# =====================================================================
+mail = Mail(app)
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
+
 migrate = Migrate(app, db)
 csrf = CSRFProtect()
 csrf.init_app(app)
