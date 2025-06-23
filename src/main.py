@@ -20,6 +20,7 @@ from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.study import StudySession
+from src.models.product import Product
 # --- FIM DA IMPORTAÇÃO DE MODELOS ---
 
 from src.routes.auth import auth_bp
