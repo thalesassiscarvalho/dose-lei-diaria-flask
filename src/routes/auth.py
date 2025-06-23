@@ -8,10 +8,13 @@ from flask_login import login_user, logout_user, login_required, current_user
 import logging
 import bleach
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from flask_mail import Message, Mail # Adicionado Mail aqui
+
+# --- NOVAS IMPORTAÇÕES PARA O E-MAIL ---
+import smtplib
+from email.message import EmailMessage
+
 from src.models.user import db, User
 
-# A importação from src.extensions import mail foi removida daqui
 
 logging.basicConfig(level=logging.DEBUG)
 auth_bp = Blueprint("auth", __name__)
@@ -35,6 +38,7 @@ def confirm_reset_token(token, expiration=3600):
     except (SignatureExpired, Exception):
         return None
 
+# ... (As rotas /login, /signup, /logout permanecem exatamente as mesmas) ...
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -113,6 +117,7 @@ def logout():
     flash("Você foi desconectado.", "info")
     return redirect(url_for("auth.login"))
 
+
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if current_user.is_authenticated:
@@ -125,25 +130,32 @@ def forgot_password():
         if user:
             logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
             try:
-                # --- INÍCIO DA NOVA ESTRATÉGIA ---
-                # 1. Criamos uma instância local do Mail.
-                local_mail = Mail()
-                # 2. Configuramos essa instância com o app atual.
-                local_mail.init_app(current_app)
-                # --- FIM DA NOVA ESTRATÉGIA ---
-
+                # --- INÍCIO DO NOVO CÓDIGO DE ENVIO ---
                 token = generate_password_reset_token(email)
                 reset_url = url_for('auth.reset_with_token', token=token, _external=True)
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
-                
-                subject = "Redefinição de Senha - Dose de Lei Diária"
-                
-                sender_email = current_app.config['MAIL_USERNAME']
-                msg = Message(subject, recipients=[email], html=html_body, sender=sender_email)
 
-                # 3. Usamos a nossa instância local para enviar o e-mail.
-                local_mail.send(msg) 
-                logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
+                # Pega as credenciais do ambiente
+                EMAIL_HOST = 'smtp.hostinger.com'
+                EMAIL_PORT = 465
+                SENDER_EMAIL = os.environ.get('EMAIL_USER')
+                SENDER_PASS = os.environ.get('EMAIL_PASS')
+
+                # Cria a mensagem de e-mail
+                msg = EmailMessage()
+                msg['Subject'] = 'Redefinição de Senha - Dose de Lei Diária'
+                msg['From'] = SENDER_EMAIL
+                msg['To'] = email
+                msg.set_content('Não foi possível carregar o conteúdo HTML.') # Fallback
+                msg.add_alternative(html_body, subtype='html')
+
+                # Conecta, autentica e envia usando o método que funcionou
+                with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT) as server:
+                    server.login(SENDER_EMAIL, SENDER_PASS)
+                    server.send_message(msg)
+                
+                logging.info(f"[AUTH DEBUG] Password reset email sent to: {email} using smtplib.")
+                # --- FIM DO NOVO CÓDIGO DE ENVIO ---
 
             except Exception as e:
                 logging.error(f"[AUTH ERROR] Failed to send password reset email to {email}: {e}")
@@ -157,6 +169,7 @@ def forgot_password():
             
     return render_template("forgot_password.html")
 
+# ... (A rota /reset-password/<token> permanece exatamente a mesma) ...
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_with_token(token):
     if current_user.is_authenticated:
