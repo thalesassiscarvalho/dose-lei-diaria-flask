@@ -15,6 +15,11 @@ from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.concurso import Concurso
+# =====================================================================
+# <<< INÍCIO DA CORREÇÃO 1/2: IMPORTANDO O MODELO 'StudySession' >>>
+# Adicionamos a importação que estava faltando.
+# =====================================================================
+from src.models.study import StudySession
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -410,6 +415,13 @@ def deny_user(user_id):
         TodoItem.query.filter_by(user_id=user_id).delete()
         UserNotes.query.filter_by(user_id=user_id).delete()
         UserLawMarkup.query.filter_by(user_id=user_id).delete()
+        
+        # =====================================================================
+        # <<< INÍCIO DA CORREÇÃO 2/2: APAGANDO AS SESSÕES DE ESTUDO >>>
+        # Esta é a linha que faltava e que causava o erro.
+        # Ela apaga os registros de tempo de estudo antes de apagar o usuário.
+        # =====================================================================
+        StudySession.query.filter_by(user_id=user_id).delete()
         
         user.achievements = []
         user.favorite_laws = []
