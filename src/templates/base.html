@@ -6,13 +6,11 @@
     <title>{% block title %}Estudo da Lei Seca{% endblock %}</title>
     
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#2563eb"/> {# Cor da barra de endereço em navegadores mobile #}
-
+    <meta name="theme-color" content="#2563eb"/>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.quilljs.com">
 
     <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -22,14 +20,12 @@
       <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     </noscript>
+
     <style>
-        /* ===================================================================== */
-        /* <<< INÍCIO DA ADIÇÃO: ESTILOS DO PRE-LOADER E TRANSIÇÃO SUAVE >>> */
-        /* ===================================================================== */
+        /* Estilos para o pre-loader e transição suave */
         body {
             background-color: #f0f7ff;
             color: #374151;
-            /* A página começa invisível para aguardar o carregamento completo */
             visibility: hidden;
             opacity: 0;
             transition: visibility 0s 0.5s, opacity 0.5s linear;
@@ -68,14 +64,8 @@
             height: 40px;
             animation: spin 1s linear infinite;
         }
-        /* A animação 'spin' abaixo já existia para '.loading-spinner', */
-        /* mas o preloader usa a sua própria, então a mantemos para compatibilidade. */
-        /* ===================================================================== */
-        /* <<< FIM DA ADIÇÃO >>> */
-        /* ===================================================================== */
 
-
-        /* Custom base styles for White/Blue Theme (TODO O SEU CSS ORIGINAL FOI MANTIDO ABAIXO) */
+        /* Seus estilos originais mantidos intactos */
         .alert {
             padding: 1rem;
             margin-bottom: 1rem;
@@ -222,6 +212,7 @@
     <div id="preloader">
         <div class="spinner"></div>
     </div>
+
     <nav class="bg-brand-blue text-white shadow-md">
         <div class="container mx-auto flex flex-col items-center">
             <div class="header-container">
@@ -248,9 +239,8 @@
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 fade-in-up" style="animation-delay: 0.2s;">
-        {# O bloco de código abaixo foi removido para evitar a exibição de mensagens flash no topo da página. #}
-        {# 
+    <main class="container mx-auto px-4 py-8" style="animation-delay: 0.2s;">
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mb-4">
@@ -262,7 +252,7 @@
                 </div>
             {% endif %}
         {% endwith %}
-        #}
+        
         {% block content %}
         {% endblock %}
     </main>
@@ -288,25 +278,13 @@
     {% block scripts %}{% endblock %}
 
     <script>
-        // SEUS SCRIPTS ORIGINAIS MANTIDOS
+        // Seus scripts originais mantidos intactos
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     
         document.addEventListener('keydown', function(e) {
-            if (e.keyCode === 123) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && e.keyCode === 85) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault();
             }
         });
@@ -323,10 +301,7 @@
             });
         }
         
-        // =====================================================================
-        // <<< ADIÇÃO: JAVASCRIPT DO PRE-LOADER >>>
-        // =====================================================================
-        // O evento 'window.onload' espera que TUDO (imagens, css, etc.) seja carregado.
+        // Script do pre-loader adicionado
         window.onload = function() {
             const preloader = document.getElementById('preloader');
             if (preloader) {
@@ -334,7 +309,6 @@
             }
             document.body.classList.add('loaded');
         };
-        // =====================================================================
     </script>
     </body>
 </html>
