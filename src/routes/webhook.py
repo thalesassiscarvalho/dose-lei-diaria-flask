@@ -36,9 +36,6 @@ def stripe_webhook():
         logging.error(f"Erro na assinatura do Webhook: {e}")
         return 'Invalid signature', 400
 
-    # =====================================================================
-    # <<< LÓGICA EXISTENTE: LIDA COM NOVAS ASSINATURAS >>>
-    # =====================================================================
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         customer_email = session.get('customer_details', {}).get('email')
@@ -94,25 +91,29 @@ def stripe_webhook():
                     db.session.rollback()
 
     # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA PARA LIDAR COM CANCELAMENTOS E FALHAS >>>
+    # <<< INÍCIO DA CORREÇÃO: LÓGICA DE SUSPENSÃO MAIS ROBUSTA >>>
     # =====================================================================
     elif event['type'] in ['customer.subscription.deleted', 'invoice.payment_failed']:
-        customer_email = None
         event_type = event['type']
+        event_object = event['data']['object']
+        customer_id = None
+        customer_email = None
 
-        # Tentamos obter o e-mail do cliente a partir do objeto do evento
-        # A estrutura do payload pode variar um pouco entre os tipos de evento
-        if 'customer_email' in event['data']['object']:
-             customer_email = event['data']['object']['customer_email']
-        elif 'customer' in event['data']['object']:
+        # A forma mais confiável de obter o ID do cliente é diretamente do objeto do evento.
+        if 'customer' in event_object:
+            customer_id = event_object['customer']
+        
+        if customer_id:
             try:
-                # O objeto 'customer' pode conter o ID do cliente, não o e-mail direto.
-                # Então, buscamos os detalhes do cliente no Stripe usando o ID.
-                customer_id = event['data']['object']['customer']
-                customer_obj = stripe.Customer.retrieve(customer_id)
-                customer_email = customer_obj.get('email')
+                # Com o ID do cliente em mãos, buscamos o objeto completo do cliente no Stripe
+                # para garantir que teremos o e-mail correto.
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.email
+                logging.info(f"ID do cliente '{customer_id}' encontrado no evento '{event_type}'. E-mail recuperado do Stripe: {customer_email}")
             except Exception as e:
-                logging.error(f"Não foi possível obter o e-mail do cliente do evento '{event_type}'. Erro: {e}")
+                logging.error(f"Erro ao buscar cliente '{customer_id}' no Stripe: {e}")
+        else:
+             logging.warning(f"Não foi possível encontrar o ID do cliente (customer) no payload do evento '{event_type}'.")
 
         if customer_email:
             logging.info(f"Webhook de '{event_type}' recebido para: {customer_email}. Iniciando processo de suspensão.")
@@ -120,22 +121,19 @@ def stripe_webhook():
             user = User.query.filter_by(email=customer_email).first()
 
             if user:
-                # A ação principal: desativar o usuário.
                 if user.is_approved:
                     user.is_approved = False
                     db.session.commit()
-                    logging.info(f"Usuário {customer_email} teve seu acesso SUSPENSO devido ao evento '{event_type}'.")
+                    logging.info(f"SUCESSO: Usuário {customer_email} teve seu acesso SUSPENSO devido ao evento '{event_type}'.")
                 else:
-                    logging.info(f"Usuário {customer_email} já estava com acesso suspenso. Nenhuma ação necessária.")
+                    logging.info(f"AVISO: Usuário {customer_email} já estava com acesso suspenso. Nenhuma ação necessária.")
             else:
-                logging.warning(f"Recebido evento '{event_type}' para o e-mail {customer_email}, mas nenhum usuário foi encontrado no banco de dados.")
-
+                logging.warning(f"FALHA: Recebido evento '{event_type}' para o e-mail {customer_email}, mas nenhum usuário foi encontrado no banco de dados.")
     # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # <<< FIM DA CORREÇÃO >>>
     # =====================================================================
     
     else:
-        # Log para outros eventos que possamos receber, mas não estamos tratando
         logging.info(f"Webhook recebido para evento não tratado: {event['type']}")
     
     return 'OK', 200
