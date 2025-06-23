@@ -1,24 +1,25 @@
+# src/models/user.py
+
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import datetime, date
-from flask_sqlalchemy import SQLAlchemy
+# A linha "from flask_sqlalchemy import SQLAlchemy" foi removida daqui.
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# --- INÍCIO DA CORREÇÃO ---
+# Importamos o objeto 'db' centralizado do nosso novo arquivo de extensões.
+from src.extensions import db
+# --- FIM DA CORREÇÃO ---
+
+
 try:
     from .law import Law 
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: IMPORTAR O MODELO 'Concurso' >>>
-    # =====================================================================
-    # Importação do modelo Concurso para criar o relacionamento.
     from .concurso import Concurso
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 1/3 >>>
-    # =====================================================================
 except ImportError:
     pass 
 
-db = SQLAlchemy()
+# A linha "db = SQLAlchemy()" foi REMOVIDA daqui.
 
 # Association table for User-Achievement relationship
 achievements_association = db.Table("user_achievements",
@@ -32,47 +33,32 @@ favorites_association = db.Table("user_favorites",
     db.Column("law_id", db.Integer, db.ForeignKey("law.id", ondelete="CASCADE"), primary_key=True)
 )
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO 2/3: NOVA TABELA DE ASSOCIAÇÃO USER-CONCURSO >>>
-# =====================================================================
 # Esta tabela conecta os usuários aos concursos.
 user_concurso_association = db.Table('user_concurso_association',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), primary_key=True),
     db.Column('concurso_id', db.Integer, db.ForeignKey('concurso.id', ondelete="CASCADE"), primary_key=True)
 )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO 2/3 >>>
-# =====================================================================
 
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False) # Changed from username to email
-    full_name = db.Column(db.String(120), nullable=True) # Added full name
-    phone = db.Column(db.String(20), nullable=True) # Added phone number
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    full_name = db.Column(db.String(120), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(256))
-    role = db.Column(db.String(10), nullable=False, default="student") # "admin" or "student"
+    role = db.Column(db.String(10), nullable=False, default="student")
     is_approved = db.Column(db.Boolean, nullable=False, default=False)
-    points = db.Column(db.Integer, default=0, nullable=False) # Added points field
+    points = db.Column(db.Integer, default=0, nullable=False)
     favorite_label = db.Column(db.String(100), nullable=True)
     default_concurso_id = db.Column(db.Integer, db.ForeignKey('concurso.id'), nullable=True)
-
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: NOVOS CAMPOS E RELACIONAMENTOS >>>
-    # =====================================================================
-    # Coluna de controle, com a correção 'server_default' para evitar erros de migração.
     can_see_all_concursos = db.Column(db.Boolean, nullable=False, server_default='true')
 
-    # Relacionamento muitos-para-muitos com o modelo Concurso
     associated_concursos = db.relationship(
         'Concurso',
         secondary=user_concurso_association,
         backref=db.backref('associated_users', lazy='dynamic'),
         lazy='dynamic'
     )
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 3/3 >>>
-    # =====================================================================
 
     # Relationships
     progress = db.relationship("UserProgress", backref="user", lazy=True)
