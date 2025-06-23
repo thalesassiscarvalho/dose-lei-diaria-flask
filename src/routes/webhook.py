@@ -3,9 +3,8 @@ from flask import Blueprint, request, abort, current_app, render_template, url_f
 import stripe
 import os
 import logging
-import datetime # <<< NOVA IMPORTAÇÃO
+import datetime
 
-# ALTERADO: Importando mais ferramentas que vamos usar
 from src.extensions import db, csrf, mail
 from src.models.user import User
 from flask_mail import Message
@@ -37,21 +36,19 @@ def stripe_webhook():
         logging.error(f"Erro na assinatura do Webhook: {e}")
         return 'Invalid signature', 400
 
+    # =====================================================================
+    # <<< LÓGICA EXISTENTE: LIDA COM NOVAS ASSINATURAS >>>
+    # =====================================================================
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         customer_email = session.get('customer_details', {}).get('email')
 
         if customer_email:
-            logging.info(f"Webhook de pagamento bem-sucedido recebido para o e-mail: {customer_email}")
+            logging.info(f"Webhook de 'checkout.session.completed' recebido para: {customer_email}")
             
             user = User.query.filter_by(email=customer_email).first()
 
-            # =====================================================================
-            # <<< INÍCIO DA ALTERAÇÃO: Lógica para criar novo usuário >>>
-            # =====================================================================
             if user:
-                # Cenário 1: Usuário já existia (ex: se cadastrou antes de pagar)
-                # Apenas aprova a conta dele.
                 if not user.is_approved:
                     user.is_approved = True
                     db.session.commit()
@@ -59,13 +56,10 @@ def stripe_webhook():
                 else:
                     logging.info(f"Usuário {customer_email} já estava aprovado. Nenhuma ação necessária.")
             else:
-                # Cenário 2: Usuário não existe. Vamos criar a conta para ele!
                 logging.info(f"Nenhum usuário encontrado para {customer_email}. Criando nova conta...")
                 
-                # Pega o nome do cliente do Stripe, se disponível
                 customer_name = session.get('customer_details', {}).get('name', 'Aluno')
                 
-                # Cria o novo usuário, sem senha, mas já aprovado
                 new_user = User(
                     email=customer_email,
                     full_name=customer_name,
@@ -74,19 +68,16 @@ def stripe_webhook():
                 )
                 db.session.add(new_user)
 
-                # Gera um token para ele criar a senha (reaproveitando nossa lógica)
                 serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
                 token = serializer.dumps(customer_email, salt=current_app.config['SECURITY_PASSWORD_SALT'])
                 set_password_url = url_for('auth.reset_with_token', token=token, _external=True)
                 
-                # Prepara o e-mail de boas-vindas
                 current_year = datetime.datetime.now().year
                 msg = Message(
                     subject="Bem-vindo ao Estudo da Lei Seca! Crie sua senha de acesso",
                     sender=current_app.config['MAIL_DEFAULT_SENDER'],
                     recipients=[customer_email]
                 )
-                # IMPORTANTE: Usaremos um novo template de e-mail que ainda vamos criar
                 msg.html = render_template(
                     'auth/welcome_and_set_password_email.html',
                     set_password_url=set_password_url,
@@ -95,7 +86,6 @@ def stripe_webhook():
                 )
 
                 try:
-                    # Salva o novo usuário no banco e envia o e-mail
                     db.session.commit()
                     mail.send(msg)
                     logging.info(f"Nova conta para {customer_email} criada e e-mail de boas-vindas enviado.")
@@ -103,8 +93,49 @@ def stripe_webhook():
                     logging.error(f"Erro ao criar novo usuário ou enviar e-mail para {customer_email}: {e}")
                     db.session.rollback()
 
-            # =====================================================================
-            # <<< FIM DA ALTERAÇÃO >>>
-            # =====================================================================
+    # =====================================================================
+    # <<< INÍCIO DA IMPLEMENTAÇÃO: LÓGICA PARA LIDAR COM CANCELAMENTOS E FALHAS >>>
+    # =====================================================================
+    elif event['type'] in ['customer.subscription.deleted', 'invoice.payment_failed']:
+        customer_email = None
+        event_type = event['type']
+
+        # Tentamos obter o e-mail do cliente a partir do objeto do evento
+        # A estrutura do payload pode variar um pouco entre os tipos de evento
+        if 'customer_email' in event['data']['object']:
+             customer_email = event['data']['object']['customer_email']
+        elif 'customer' in event['data']['object']:
+            try:
+                # O objeto 'customer' pode conter o ID do cliente, não o e-mail direto.
+                # Então, buscamos os detalhes do cliente no Stripe usando o ID.
+                customer_id = event['data']['object']['customer']
+                customer_obj = stripe.Customer.retrieve(customer_id)
+                customer_email = customer_obj.get('email')
+            except Exception as e:
+                logging.error(f"Não foi possível obter o e-mail do cliente do evento '{event_type}'. Erro: {e}")
+
+        if customer_email:
+            logging.info(f"Webhook de '{event_type}' recebido para: {customer_email}. Iniciando processo de suspensão.")
+            
+            user = User.query.filter_by(email=customer_email).first()
+
+            if user:
+                # A ação principal: desativar o usuário.
+                if user.is_approved:
+                    user.is_approved = False
+                    db.session.commit()
+                    logging.info(f"Usuário {customer_email} teve seu acesso SUSPENSO devido ao evento '{event_type}'.")
+                else:
+                    logging.info(f"Usuário {customer_email} já estava com acesso suspenso. Nenhuma ação necessária.")
+            else:
+                logging.warning(f"Recebido evento '{event_type}' para o e-mail {customer_email}, mas nenhum usuário foi encontrado no banco de dados.")
+
+    # =====================================================================
+    # <<< FIM DA IMPLEMENTAÇÃO >>>
+    # =====================================================================
+    
+    else:
+        # Log para outros eventos que possamos receber, mas não estamos tratando
+        logging.info(f"Webhook recebido para evento não tratado: {event['type']}")
     
     return 'OK', 200
