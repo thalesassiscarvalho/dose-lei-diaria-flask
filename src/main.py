@@ -26,6 +26,7 @@ from src.models.product import Product
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
+from src.routes.webhook import webhook_bp
 
 import datetime
 
@@ -213,6 +214,7 @@ def apply_csp(response):
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp)
 app.register_blueprint(student_bp)
+app.register_blueprint(webhook_bp)
 
 # --- Main Routes ---
 @app.route('/')
