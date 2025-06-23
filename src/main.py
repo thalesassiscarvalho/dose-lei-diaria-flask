@@ -1,89 +1,103 @@
-# main.py
-
+# -*- coding: utf-8 -*-
 import os
 import sys
+# DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, redirect, url_for, render_template, flash
 from flask_login import LoginManager, current_user
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from sqlalchemy.exc import OperationalError
 import logging
 from flask_wtf.csrf import CSRFProtect
+
 from flask_migrate import Migrate
+
 from dotenv import load_dotenv
-import datetime
+load_dotenv()
 
-# --- INÍCIO DA CORREÇÃO DAS IMPORTAÇÕES ---
-# 1. Importamos as extensões centralizadas.
-from src.extensions import db, mail
-
-# 2. Importamos TODOS os Modelos para que o SQLAlchemy os conheça.
-# (Baseado nos arquivos que você mostrou anteriormente)
-from src.models.user import User, Achievement, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
-from src.models.law import Law, Subject, UsefulLink
+# --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
+from src.models.user import db, User, Achievement
+from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.notes import UserNotes, UserLawMarkup
-from src.models.concurso import Concurso
-from src.models.study import StudySession
+from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
+# --- FIM DA IMPORTAÇÃO ADICIONADA ---
 
-# 3. Importamos as rotas (blueprints).
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
-# --- FIM DA CORREÇÃO DAS IMPORTAÇÕES ---
 
-load_dotenv()
+import datetime
+
 logging.basicConfig(level=logging.DEBUG)
 
-# Cria a aplicação
-app = Flask(__name__,
+app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(__file__), 'static'),
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-
-# --- CONFIGURAÇÕES ---
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT')
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.hostinger.com')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'true').lower() in ['true', '1', 't']
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
-        "'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdn.tailwindcss.com',
-        'https://cdn.quilljs.com', 'https://cdn.tiny.cloud', 'https://kit.fontawesome.com'
+        "'self'",
+        "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
+        'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
+        'https://cdn.tailwindcss.com',
+        'https://cdn.quilljs.com',
+        'https://cdn.tiny.cloud',
+        'https://kit.fontawesome.com'
     ],
     'style-src': [
-        "'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-        'https://cdn.quilljs.com', 'https://cdn.tiny.cloud', 'https://fonts.googleapis.com',
+        "'self'",
+        "'unsafe-inline'", # Necessário para estilos inline
+        'https://cdn.jsdelivr.net', # Para Toastify CSS
+        'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
+        'https://cdn.quilljs.com', # Para Quill CSS
+        'https://cdn.tiny.cloud',
+        'https://fonts.googleapis.com',
         'https://ka-f.fontawesome.com'
     ],
-    'font-src': ["'self'", 'https://cdnjs.cloudflare.com', 'https://fonts.gstatic.com', 'https://ka-f.fontawesome.com'],
-    'img-src': ["'self'", 'data:', 'https://cdn.tiny.cloud'],
-    'media-src': ["'self'", 'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'],
-    'connect-src': [
-        "'self'", 'https://cdn.tiny.cloud', 'https://ka-f.fontawesome.com', 'https://cdn.jsdelivr.net',
-        'https://cdnjs.cloudflare.com', 'https://cdn.quilljs.com', 'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'
+    'font-src': [
+        "'self'",
+        'https://cdnjs.cloudflare.com', # Para Font Awesome webfonts
+        'https://fonts.gstatic.com',
+        'https://ka-f.fontawesome.com'
     ],
-    'frame-ancestors': ["'none'"], 'object-src': ["'none'"],
-    'form-action': ["'self'"], 'base-uri': ["'self'"]
+    'img-src': [
+        "'self'",
+        'data:', # Permite imagens base64
+        'https://cdn.tiny.cloud'
+    ],
+    'media-src': [
+        "'self'",
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Para os arquivos de áudio das ondas neurais
+    ],
+    'connect-src': [
+        "'self'",
+        'https://cdn.tiny.cloud',
+        'https://ka-f.fontawesome.com',
+        'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
+        'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
+        'https://cdn.quilljs.com', # Adicionado para Quill CSS (fetch)
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Adicionado para os áudios das ondas neurais (fetch)
+    ],
+    'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
+    'object-src': ["'none'"], # Impede a carga de plugins como Flash
+    'form-action': ["'self'"], # Restringe URLs que podem ser usadas como destinos para envios de formulário
+    'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
 }
 
-# --- INICIALIZAÇÃO DAS EXTENSÕES ---
 db.init_app(app)
-mail.init_app(app)
 migrate = Migrate(app, db)
-csrf = CSRFProtect(app)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
-
-# --- FUNÇÕES DE INICIALIZAÇÃO ---
 def ensure_achievements_exist():
-    """Verifica e cria as conquistas padrão se não existirem."""
+    """Checks for predefined achievements and creates them if they don't exist."""
     logging.debug("Ensuring base achievements exist...")
     achievements_data = [
         {"name": "Primeiro Passo", "description": "Parabéns! Você começou sua jornada.", "laws_completed_threshold": 5, "icon": "fas fa-shoe-prints"},
@@ -121,55 +135,9 @@ def ensure_achievements_exist():
     else:
         logging.debug("All base achievements already exist.")
 
-
-# --- SETUP DO LOGIN MANAGER E OUTRAS FUNÇÕES GLOBAIS ---
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.init_app(app)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-@app.after_request
-def apply_csp(response):
-    policy = app.config.get('CSP_POLICY', {})
-    csp_header_value = "; ".join([f"{key} {' '.join(values)}" for key, values in policy.items()])
-    response.headers['Content-Security-Policy'] = csp_header_value
-    return response
-
-# --- REGISTRO DE BLUEPRINTS ---
-app.register_blueprint(auth_bp, url_prefix='/auth')
-app.register_blueprint(admin_bp)
-app.register_blueprint(student_bp)
-
-# --- ROTAS PRINCIPAIS ---
-@app.route('/')
-def index():
-    if current_user.is_authenticated:
-        if current_user.role == "admin":
-            return redirect(url_for('admin.dashboard'))
-        else:
-            if not current_user.is_approved:
-                 flash("Sua conta ainda não foi aprovada. Por favor, aguarde.", "warning")
-                 return redirect(url_for('auth.login'))
-            return redirect(url_for('student.dashboard'))
-    return redirect(url_for('auth.login'))
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-@app.context_processor
-def inject_now():
-    return {'now': datetime.datetime.utcnow()}
-
-# --- Bloco de Inicialização da Aplicação ---
-# Este bloco é executado quando a aplicação inicia para criar tabelas,
-# o usuário admin e as conquistas.
+# Bloco de inicialização com a indentação corrigida
 with app.app_context():
-    logging.info("Initializing database and default data...")
+    logging.info("Initializing database (manual checks)...")
     try:
         db.create_all()
         logging.info("Database tables ensured (created if they didn't exist).")
@@ -195,9 +163,66 @@ with app.app_context():
         ensure_achievements_exist()
 
     except Exception as e:
-        logging.error(f"An error occurred during application initialization: {e}")
+        logging.error(f"An error occurred during database initialization: {e}")
         db.session.rollback()
 
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+    
+@app.after_request
+def apply_csp(response):
+    """
+    Aplica o cabeçalho Content-Security-Policy lendo a política
+    definida na configuração do app.
+    """
+    policy = app.config.get('CSP_POLICY', {})
+    
+    csp_header_value = "; ".join([
+        f"{key} {' '.join(values)}" for key, values in policy.items()
+    ])
+
+    response.headers['Content-Security-Policy'] = csp_header_value
+    return response
+
+# --- Register Blueprints ---
+app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(admin_bp)
+app.register_blueprint(student_bp)
+
+# --- Main Routes ---
+@app.route('/')
+def index():
+    if current_user.is_authenticated:
+        if current_user.role == "admin":
+            return redirect(url_for('admin.dashboard'))
+        else:
+            if not current_user.is_approved:
+                 flash("Sua conta ainda não foi aprovada. Por favor, aguarde.", "warning")
+                 return redirect(url_for('auth.login'))
+            return redirect(url_for('student.dashboard'))
+    return redirect(url_for('auth.login'))
+
+# Adicione esta rota para servir o favicon.ico
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.context_processor
+def inject_now():
+    return {'now': datetime.datetime.utcnow}
+
+with app.app_context():
+    try:
+        db.session.execute(text("SELECT 1"))
+        logging.info("✅ Conexão com o banco de dados bem-sucedida!")
+    except Exception as e:
+        logging.error(f"❌ Falha na conexão com o banco de dados: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
