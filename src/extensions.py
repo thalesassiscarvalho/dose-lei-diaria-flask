@@ -12,3 +12,8 @@ mail = Mail()
 login_manager = LoginManager()
 migrate = Migrate()
 csrf = CSRFProtect()
+
+# Configuração do LoginManager que precisa estar aqui
+login_manager.login_view = 'auth.login'
+login_manager.login_message = "Por favor, faça login para acessar esta página."
+login_manager.login_message_category = "info"
