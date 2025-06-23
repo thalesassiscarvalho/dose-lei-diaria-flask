@@ -1,40 +1,41 @@
 # -*- coding: utf-8 -*-
 import os
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
 import bleach
 
+# =====================================================================
+# <<< INÍCIO DAS NOVAS IMPORTAÇÕES >>>
+# Bibliotecas para gerar tokens seguros e para o e-mail
+# =====================================================================
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from flask_mail import Message
-
 # =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO >>>
-# Esta é a principal correção para este arquivo.
-# Trocamos a importação de '..main' e 'src.models.user' para o novo
-# arquivo centralizador de extensões que criaremos a seguir.
-# =====================================================================
-from ..extensions import mail, db
-from ..models.user import User
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO >>>
+# <<< FIM DAS NOVAS IMPORTAÇÕES >>>
 # =====================================================================
 
+# Sua importação original, que vamos manter
+from src.models.user import db, User
 
 logging.basicConfig(level=logging.DEBUG)
 
 auth_bp = Blueprint("auth", __name__)
 
 
-# Funções para gerar e validar o token de segurança para o link de e-mail.
+# =====================================================================
+# <<< INÍCIO DAS NOVAS FUNÇÕES DE TOKEN >>>
+# Funções auxiliares para criar e verificar o link seguro enviado por e-mail
+# =====================================================================
 def generate_password_reset_token(email):
     """Gera um token seguro para a redefinição de senha."""
+    # Usa chaves do seu arquivo .env para segurança
     serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
     return serializer.dumps(email, salt=os.environ.get('SECURITY_PASSWORD_SALT'))
 
-def confirm_reset_token(token, expiration=3600):  # Expiração de 1 hora
-    """Verifica o token. Retorna o e-mail se for válido, ou None se for inválido/expirado."""
+def confirm_reset_token(token, expiration=3600):  # Token expira em 1 hora (3600s)
+    """Verifica o token. Retorna o e-mail se for válido, ou None se inválido/expirado."""
     serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
     try:
         email = serializer.loads(
@@ -45,6 +46,9 @@ def confirm_reset_token(token, expiration=3600):  # Expiração de 1 hora
         return email
     except (SignatureExpired, Exception):
         return None
+# =====================================================================
+# <<< FIM DAS NOVAS FUNÇÕES DE TOKEN >>>
+# =====================================================================
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -90,10 +94,13 @@ def login():
 
     return render_template("login.html")
 
+
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
+    # A rota original apontava para 'main.index', ajustei para a consistência do fluxo
     if current_user.is_authenticated:
-        # Redirecionado para student.dashboard para consistência
+        if current_user.role == 'admin':
+            return redirect(url_for("admin.dashboard"))
         return redirect(url_for("student.dashboard"))
 
     if request.method == "POST":
@@ -130,6 +137,7 @@ def signup():
 
     return render_template("signup.html")
     
+    
 @auth_bp.route("/logout")
 @login_required
 def logout():
@@ -138,6 +146,11 @@ def logout():
     logging.info(f"[AUTH DEBUG] User logged out: {user_email}")
     flash("Você foi desconectado.", "info")
     return redirect(url_for("auth.login"))
+
+
+# =====================================================================
+# <<< INÍCIO DAS NOVAS ROTAS DE RECUPERAÇÃO DE SENHA >>>
+# =====================================================================
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -152,6 +165,9 @@ def forgot_password():
         if user:
             logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
             try:
+                # Importação tardia para evitar o erro de importação circular
+                from src.main import mail
+                
                 token = generate_password_reset_token(email)
                 reset_url = url_for('auth.reset_with_token', token=token, _external=True)
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
@@ -165,11 +181,11 @@ def forgot_password():
                 logging.error(f"[AUTH ERROR] Failed to send password reset email to {email}: {e}")
                 flash('Ocorreu um erro ao enviar o e-mail. Por favor, tente novamente mais tarde.', 'danger')
                 return redirect(url_for('auth.forgot_password'))
-
         else:
             logging.warning(f"[AUTH DEBUG] Password reset requested for non-existent user: {email}")
         
-        flash('Se um e-mail correspondente for encontrado, um link de redefinição de senha será enviado.', 'info')
+        # Mensagem genérica para não revelar quais e-mails estão ou não no sistema
+        flash('Se um e-mail correspondente for encontrado em nosso sistema, um link de recuperação será enviado.', 'info')
         return redirect(url_for('auth.login'))
             
     return render_template("forgot_password.html")
@@ -201,6 +217,7 @@ def reset_with_token(token):
         user = User.query.filter_by(email=email).first()
         if user:
             try:
+                # Usando o método .set_password() do seu modelo User, para manter a consistência
                 user.set_password(password)
                 db.session.commit()
                 logging.info(f"[AUTH DEBUG] User password reset successfully for: {email}")
@@ -213,3 +230,7 @@ def reset_with_token(token):
                 return redirect(url_for('auth.reset_with_token', token=token))
 
     return render_template("reset_password_from_token.html", token=token)
+
+# =====================================================================
+# <<< FIM DAS NOVAS ROTAS >>>
+# =====================================================================
