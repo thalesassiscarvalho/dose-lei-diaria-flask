@@ -187,7 +187,10 @@ def favicon():
 
 @app.context_processor
 def inject_now():
-    return {'now': datetime.datetime.utcnow}
+    # --- INÍCIO DA CORREÇÃO ---
+    # Adicionado parênteses () para EXECUTAR a função e retornar o objeto de data.
+    return {'now': datetime.datetime.utcnow()}
+    # --- FIM DA CORREÇÃO ---
 
 with app.app_context():
     try:
