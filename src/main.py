@@ -5,24 +5,23 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, redirect, url_for, render_template, flash
-from flask_login import LoginManager, current_user
+from flask_login import current_user
 from sqlalchemy import text, inspect
 from sqlalchemy.exc import OperationalError
 import logging
-from flask_wtf.csrf import CSRFProtect
-
-from flask_migrate import Migrate
-
 from dotenv import load_dotenv
-load_dotenv()
 
-# --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
-from src.models.user import db, User, Achievement
+# ALTERADO: Importa as instâncias das extensões do arquivo central
+from src.extensions import db, migrate, csrf, login_manager
+
+# --- IMPORTAÇÃO DE MODELOS ---
+# ALTERADO: A importação do 'db' foi removida desta linha, pois ele não é mais definido aqui.
+from src.models.user import User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
-# --- FIM DA IMPORTAÇÃO ADICIONADA ---
+from src.models.study import StudySession
+# --- FIM DA IMPORTAÇÃO DE MODELOS ---
 
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
@@ -30,6 +29,7 @@ from src.routes.student import student_bp
 
 import datetime
 
+load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__, 
@@ -91,10 +91,13 @@ app.config['CSP_POLICY'] = {
     'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
 }
 
+# --- Inicialização das Extensões com o App ---
+# As instâncias são importadas de src.extensions e inicializadas aqui.
 db.init_app(app)
-migrate = Migrate(app, db)
-csrf = CSRFProtect()
+migrate.init_app(app, db)
 csrf.init_app(app)
+login_manager.init_app(app)
+# --- Fim da Inicialização ---
 
 def ensure_achievements_exist():
     """Checks for predefined achievements and creates them if they don't exist."""
@@ -166,9 +169,8 @@ with app.app_context():
         logging.error(f"An error occurred during database initialization: {e}")
         db.session.rollback()
 
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.init_app(app)
+# REMOVIDO: A criação e configuração do LoginManager foram movidas para extensions.py
+# e a inicialização (.init_app) foi feita acima.
 
 @login_manager.user_loader
 def load_user(user_id):
