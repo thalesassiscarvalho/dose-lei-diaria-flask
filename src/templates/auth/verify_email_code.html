@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Verificação de Segurança por E-mail{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 bg-white border border-gray-200 shadow-lg rounded-lg p-8">
+    <h1 class="text-3xl font-bold text-center mb-6" style="color: #2563eb;">Verificação de Segurança</h1>
+    <p class="text-center text-gray-600 mb-6">
+        Para sua segurança, enviamos um código de 6 dígitos para o seu e-mail. Por favor, insira o código abaixo para continuar.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category or 'info' }} mb-4 text-center" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.verify_email_code') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-6">
+            <label for="code" class="block text-gray-700 text-sm font-bold mb-2">Código de Verificação:</label>
+            <input type="text" id="code" name="code" required maxlength="6" autofocus
+                   class="shadow-sm appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400"
+                   placeholder="123456" autocomplete="off" inputmode="numeric">
+        </div>
+        
+        <div class="text-center">
+            <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg focus:outline-none transition duration-300 text-lg"
+                    style="background-color: #2563eb; border: none;">
+                Verificar e Entrar
+            </button>
+        </div>
+    </form>
+    <p class="text-center text-sm text-gray-500 mt-4">
+        O código expira em 10 minutos.
+    </p>
+</div>
+{% endblock %}
