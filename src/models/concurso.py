@@ -1,5 +1,5 @@
 # src/models/concurso.py
-from src.models.user import db
+from src.extensions import db
 from sqlalchemy.orm import backref
 
 # Tabela de Associação Muitos-para-Muitos
