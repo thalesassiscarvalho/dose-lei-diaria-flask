@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import datetime, date
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
+# REMOVIDO: A importação do SQLAlchemy foi movida para extensions.py
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+
+# ALTERADO: Importa a instância 'db' do arquivo central de extensões.
+from src.extensions import db
 
 try:
     from .law import Law 
@@ -18,7 +21,8 @@ try:
 except ImportError:
     pass 
 
-db = SQLAlchemy()
+# REMOVIDO: A linha 'db = SQLAlchemy()' foi movida para o arquivo extensions.py
+# e agora é importada acima.
 
 # Association table for User-Achievement relationship
 achievements_association = db.Table("user_achievements",
