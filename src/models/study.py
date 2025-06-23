@@ -1,4 +1,4 @@
-from .user import db # Importe db do seu arquivo user.py (ou onde db é inicializado)
+from src.extensions import db
 from datetime import datetime
 
 class StudySession(db.Model):
