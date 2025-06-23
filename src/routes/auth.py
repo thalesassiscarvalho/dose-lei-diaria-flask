@@ -173,7 +173,7 @@ def forgot_password():
                 html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
                 
                 subject = "Redefinição de Senha - Dose de Lei Diária"
-                msg = Message(subject, recipients=[email], html=html_body, sender=os.environ.get('MAIL_USERNAME'))
+                msg = Message(subject, recipients=[email], html=html_body, sender=os.environ.get('EMAIL_USER'))
                 mail.send(msg)
                 logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
 
