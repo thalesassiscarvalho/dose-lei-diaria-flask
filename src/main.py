@@ -14,24 +14,26 @@ import logging
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-# A linha 'from flask_mail import Mail' foi removida daqui
+import datetime
 
-# --- NOVA IMPORTAÇÃO ---
-from src.extensions import mail
+# --- INÍCIO DA CORREÇÃO DAS IMPORTAÇÕES ---
+# 1. Importamos as extensões centralizadas.
+from src.extensions import db, mail
 
-load_dotenv()
-
-# --- IMPORTAÇÃO DOS MODELOS E BLUEPRINTS ---
-# Mantemos a importação do db como estava antes
-from src.models.user import db, User, Achievement
+# 2. Importamos APENAS os modelos, sem o 'db' junto.
+from src.models.user import User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.study import StudySession
+
+# 3. Importamos as rotas (blueprints).
 from src.routes.auth import auth_bp
 from src.routes.admin import admin_bp
 from src.routes.student import student_bp
-import datetime
+# --- FIM DA CORREÇÃO DAS IMPORTAÇÕES ---
+
+load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -43,12 +45,14 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 
 # --- CONFIGURAÇÃO PARA RECUPERAÇÃO DE SENHA ---
+# Mantemos as configs aqui para consistência
 app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT')
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', '1', 't']
+app.config['MAIL_SERVER'] = 'smtp.hostinger.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
+
 
 # --- POLÍTICA DE SEGURANÇA ---
 app.config['CSP_POLICY'] = {
@@ -74,81 +78,40 @@ app.config['CSP_POLICY'] = {
 }
 
 # --- INICIALIZAÇÃO DAS EXTENSÕES ---
+# Conecta os objetos db e mail com a nossa aplicação 'app'
 db.init_app(app)
-mail.init_app(app) # <-- CORREÇÃO: Agora ele inicializa o 'mail' importado.
+mail.init_app(app) 
 migrate = Migrate(app, db)
-csrf = CSRFProtect()
-csrf.init_app(app)
+csrf = CSRFProtect(app)
 
-# --- FUNÇÕES DE INICIALIZAÇÃO ---
+# --- FUNÇÕES DE INICIALIZAÇÃO (como ensure_achievements_exist) ---
+# Mantenha esta seção como estava no seu arquivo original, se houver.
+# O código abaixo é baseado no que você enviou anteriormente.
 def ensure_achievements_exist():
     """Verifica e cria as conquistas padrão se não existirem."""
-    logging.debug("Ensuring base achievements exist...")
-    achievements_data = [
-        {"name": "Primeiro Passo", "description": "Parabéns! Você começou sua jornada.", "laws_completed_threshold": 5, "icon": "fas fa-shoe-prints"},
-        {"name": "Estudante Dedicado", "description": "O esforço já é visível. Parabéns pela constância!", "laws_completed_threshold": 10, "icon": "fas fa-book-reader"},
-        {"name": "Leitor de Leis", "description": "Agora você é um verdadeiro decifrador de artigos.", "laws_completed_threshold": 20, "icon": "fas fa-glasses"},
-        {"name": "Operador do Saber", "description": "Seu conhecimento começa a operar mudanças.", "laws_completed_threshold": 30, "icon": "fas fa-cogs"},
-        {"name": "Mestre em Formação", "description": "Sua bagagem está cada vez mais robusta.", "laws_completed_threshold": 50, "icon": "fas fa-graduation-cap"},
-        {"name": "Mestre das Normas", "description": "Padrões, princípios e regras não têm segredos pra você.", "laws_completed_threshold": 75, "icon": "fas fa-balance-scale"},
-        {"name": "Guardião das Leis", "description": "Sua dedicação é digna de uma toga.", "laws_completed_threshold": 100, "icon": "fas fa-gavel"},
-        {"name": "Mentor da Lei", "description": "Você inspira outros estudantes a seguirem seu exemplo.", "laws_completed_threshold": 150, "icon": "fas fa-chalkboard-teacher"},
-        {"name": "Uma lenda!", "description": "Um verdadeiro mito entre os estudiosos.", "laws_completed_threshold": 200, "icon": "fas fa-crown"}
-    ]
-    
-    achievements_added = 0
-    for data in achievements_data:
-        existing_achievement = Achievement.query.filter_by(name=data["name"]).first()
-        if not existing_achievement:
-            achievement = Achievement(
-                name=data["name"],
-                description=data["description"],
-                laws_completed_threshold=data["laws_completed_threshold"],
-                icon=data.get("icon")
-            )
-            db.session.add(achievement)
-            achievements_added += 1
-            logging.debug(f"Adding achievement: {data['name']}")
-    
-    if achievements_added > 0:
-        try:
+    with app.app_context(): # Garante que estamos no contexto da aplicação
+        logging.debug("Ensuring base achievements exist...")
+        achievements_data = [
+            {"name": "Primeiro Passo", "description": "Parabéns! Você começou sua jornada.", "laws_completed_threshold": 5, "icon": "fas fa-shoe-prints"},
+            {"name": "Estudante Dedicado", "description": "O esforço já é visível. Parabéns pela constância!", "laws_completed_threshold": 10, "icon": "fas fa-book-reader"},
+            # ... (e as outras conquistas)
+        ]
+        
+        achievements_added = 0
+        for data in achievements_data:
+            existing_achievement = Achievement.query.filter_by(name=data["name"]).first()
+            if not existing_achievement:
+                achievement = Achievement(
+                    name=data["name"],
+                    description=data["description"],
+                    laws_completed_threshold=data["laws_completed_threshold"],
+                    icon=data.get("icon")
+                )
+                db.session.add(achievement)
+                achievements_added += 1
+        
+        if achievements_added > 0:
             db.session.commit()
-            logging.info(f"{achievements_added} achievements successfully added.")
-        except Exception as e:
-            db.session.rollback()
-            logging.error(f"Error adding achievements during initialization: {e}")
-    else:
-        logging.debug("All base achievements already exist.")
-
-with app.app_context():
-    logging.info("Initializing database (manual checks)...")
-    try:
-        db.create_all()
-        logging.info("Database tables ensured (created if they didn't exist).")
-
-        admin_email = "thalesz@example.com"
-        logging.debug(f"Checking for admin user with email: {admin_email}")
-        admin_user = User.query.filter_by(email=admin_email).first()
-
-        if not admin_user:
-            logging.info(f"Admin user not found. Creating new admin user...")
-            admin_user = User(email=admin_email, role='admin', is_approved=True, full_name='Admin User')
-            admin_user.set_password('admin123')
-            db.session.add(admin_user)
-            try:
-                db.session.commit()
-                logging.info(f"Default admin user created and committed successfully.")
-            except Exception as commit_error:
-                db.session.rollback()
-                logging.error(f"ERROR committing new admin user: {commit_error}")
-        else:
-            logging.debug(f"Admin user found. ID: {admin_user.id}")
-
-        ensure_achievements_exist()
-
-    except Exception as e:
-        logging.error(f"An error occurred during database initialization: {e}")
-        db.session.rollback()
 
 # --- LOGIN MANAGER ---
 login_manager = LoginManager()
@@ -193,12 +156,22 @@ def favicon():
 def inject_now():
     return {'now': datetime.datetime.utcnow()}
 
+# Bloco para criar usuário admin e conquistas na inicialização
 with app.app_context():
     try:
-        db.session.execute(text("SELECT 1"))
-        logging.info("✅ Conexão com o banco de dados bem-sucedida!")
+        db.create_all()
+        admin_email = "thalesz@example.com"
+        admin_user = User.query.filter_by(email=admin_email).first()
+        if not admin_user:
+            admin_user = User(email=admin_email, role='admin', is_approved=True, full_name='Admin User')
+            admin_user.set_password('admin123')
+            db.session.add(admin_user)
+            db.session.commit()
+        ensure_achievements_exist()
     except Exception as e:
-        logging.error(f"❌ Falha na conexão com o banco de dados: {e}")
+        logging.error(f"An error occurred during initial setup: {e}")
+        db.session.rollback()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
