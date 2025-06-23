@@ -2,7 +2,8 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
-from src.models.user import db, User
+from src.extensions import db
+from src.models.user import User
 import logging
 # NOVO: Importar a biblioteca de sanitização
 import bleach
