@@ -10,6 +10,16 @@ from src.models.user import User
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer
 
+# =====================================================================
+# <<< INÍCIO DA CORREÇÃO: CONFIGURANDO A CHAVE DA API DO STRIPE >>>
+# Esta linha garante que a chave secreta da API seja carregada e esteja
+# disponível para qualquer chamada que o código precise fazer ao Stripe.
+# =====================================================================
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+# =====================================================================
+# <<< FIM DA CORREÇÃO >>>
+# =====================================================================
+
 webhook_bp = Blueprint('webhook', __name__)
 
 @webhook_bp.route('/stripe-webhook', methods=['POST'])
@@ -90,23 +100,17 @@ def stripe_webhook():
                     logging.error(f"Erro ao criar novo usuário ou enviar e-mail para {customer_email}: {e}")
                     db.session.rollback()
 
-    # =====================================================================
-    # <<< INÍCIO DA CORREÇÃO: LÓGICA DE SUSPENSÃO MAIS ROBUSTA >>>
-    # =====================================================================
     elif event['type'] in ['customer.subscription.deleted', 'invoice.payment_failed']:
         event_type = event['type']
         event_object = event['data']['object']
         customer_id = None
         customer_email = None
 
-        # A forma mais confiável de obter o ID do cliente é diretamente do objeto do evento.
         if 'customer' in event_object:
             customer_id = event_object['customer']
         
         if customer_id:
             try:
-                # Com o ID do cliente em mãos, buscamos o objeto completo do cliente no Stripe
-                # para garantir que teremos o e-mail correto.
                 customer = stripe.Customer.retrieve(customer_id)
                 customer_email = customer.email
                 logging.info(f"ID do cliente '{customer_id}' encontrado no evento '{event_type}'. E-mail recuperado do Stripe: {customer_email}")
@@ -129,9 +133,6 @@ def stripe_webhook():
                     logging.info(f"AVISO: Usuário {customer_email} já estava com acesso suspenso. Nenhuma ação necessária.")
             else:
                 logging.warning(f"FALHA: Recebido evento '{event_type}' para o e-mail {customer_email}, mas nenhum usuário foi encontrado no banco de dados.")
-    # =====================================================================
-    # <<< FIM DA CORREÇÃO >>>
-    # =====================================================================
     
     else:
         logging.info(f"Webhook recebido para evento não tratado: {event['type']}")
