@@ -8,17 +8,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, redirect, url_for, render_template, flash
 from flask_login import LoginManager, current_user
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 import logging
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from flask_mail import Mail
+# A linha 'from flask_mail import Mail' foi removida daqui
+
+# --- NOVA IMPORTAÇÃO ---
+from src.extensions import mail
 
 load_dotenv()
 
 # --- IMPORTAÇÃO DOS MODELOS E BLUEPRINTS ---
+# Mantemos a importação do db como estava antes
 from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
@@ -71,7 +75,7 @@ app.config['CSP_POLICY'] = {
 
 # --- INICIALIZAÇÃO DAS EXTENSÕES ---
 db.init_app(app)
-mail = Mail(app)
+mail.init_app(app) # <-- CORREÇÃO: Agora ele inicializa o 'mail' importado.
 migrate = Migrate(app, db)
 csrf = CSRFProtect()
 csrf.init_app(app)
@@ -187,10 +191,7 @@ def favicon():
 
 @app.context_processor
 def inject_now():
-    # --- INÍCIO DA CORREÇÃO ---
-    # Adicionado parênteses () para EXECUTAR a função e retornar o objeto de data.
     return {'now': datetime.datetime.utcnow()}
-    # --- FIM DA CORREÇÃO ---
 
 with app.app_context():
     try:
