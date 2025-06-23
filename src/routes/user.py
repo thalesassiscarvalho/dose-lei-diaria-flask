@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from src.models.user import User, db
+from src.extensions import db
+from src.models.user import db
 # NOVO: Importar a biblioteca de sanitização
 import bleach
 
