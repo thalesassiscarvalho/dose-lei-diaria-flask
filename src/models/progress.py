@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .user import db 
+from src.extensions import db
 import datetime
 
 class UserProgress(db.Model):
