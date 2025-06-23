@@ -143,7 +143,7 @@ def forgot_password():
 
                 # Cria a mensagem de e-mail
                 msg = EmailMessage()
-                msg['Subject'] = 'Redefinição de Senha - Dose de Lei Diária'
+                msg['Subject'] = 'Redefinição de Senha - Estudo da Lei Seca'
                 msg['From'] = SENDER_EMAIL
                 msg['To'] = email
                 msg.set_content('Não foi possível carregar o conteúdo HTML.') # Fallback
