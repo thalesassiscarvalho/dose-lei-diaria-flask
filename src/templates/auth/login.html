@@ -6,23 +6,6 @@
 <div class="max-w-md mx-auto mt-12 bg-white border border-gray-200 shadow-lg rounded-lg p-8 card-hover fade-in-up login-container">
     <h1 class="text-3xl font-bold text-center mb-4" style="color: #2563eb;">Login</h1>
 
-    {# ===================================================================== #}
-    {# <<< INÍCIO DA ALTERAÇÃO: Bloco para exibir mensagens de erro >>> #}
-    {# ===================================================================== #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                {# A classe 'alert-danger' já existe no seu base.html e deixará o fundo vermelho #}
-                <div class="alert alert-{{ category or 'info' }} mb-6 text-center" role="alert">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    {# ===================================================================== #}
-    {# <<< FIM DA ALTERAÇÃO >>> #}
-    {# ===================================================================== #}
-
     <form method="POST" action="{{ url_for("auth.login") }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# <-- Campo CSRF oculto #}
         <div class="mb-5">
