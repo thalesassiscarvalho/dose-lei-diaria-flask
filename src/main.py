@@ -13,15 +13,9 @@ from flask_wtf.csrf import CSRFProtect
 
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO: Importação do Flask-Mail >>>
-# =====================================================================
 from flask_mail import Mail
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO >>>
-# =====================================================================
 
+# Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
 # --- IMPORTAÇÃO ADICIONADA: Modelos de Banco de Dados ---
@@ -29,7 +23,7 @@ from src.models.user import db, User, Achievement
 from src.models.law import Law
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
-from src.models.study import StudySession # <<< ADICIONADO: Importa o novo modelo StudySession
+from src.models.study import StudySession
 # --- FIM DA IMPORTAÇÃO ADICIONADA ---
 
 from src.routes.auth import auth_bp
@@ -49,31 +43,24 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'uma-chave-padrao-
 DATABASE_URL = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO: Configuração do Flask-Mail >>>
-# =====================================================================
-# Adicionado para a recuperação de senha
-app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT', 'outro-sal-secreto-para-seguranca')
+# --- Configuração do Flask-Mail para HOSTINGER ---
+# Estas configurações leem os dados do seu arquivo .env de forma segura
+app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SECURITY_PASSWORD_SALT')
 
-# Configuração do Flask-Mail. Assumi que você usará o Gmail.
-# Se seu e-mail "suporte@app.estudoleiseca.com.br" for do Google Workspace, isto funcionará.
-# Se for de outro provedor (ex: Hostgator, GoDaddy), o 'MAIL_SERVER' será diferente.
-app.config['MAIL_SERVER'] = 'smtp.googlemail.com'  # Servidor SMTP do Google/Gmail
-app.config['MAIL_PORT'] = 587                      # Porta de conexão padrão para TLS
-app.config['MAIL_USE_TLS'] = True                  # Habilita a criptografia da conexão
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER') # Seu e-mail, que será lido do arquivo .env
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS') # Sua "Senha de App", lida do arquivo .env
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO >>>
-# =====================================================================
+app.config['MAIL_SERVER'] = 'smtp.hostinger.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
+# --- Fim da Configuração ---
 
 
 app.config['CSP_POLICY'] = {
     'default-src': ["'self'"],
     'script-src': [
         "'self'",
-        "'unsafe-inline'", # Necessário para scripts inline, como o do Service Worker em base.html
-        'https://cdn.jsdelivr.net', # Para Toastify JS, SweetAlert2 JS
+        "'unsafe-inline'",
+        'https://cdn.jsdelivr.net',
         'https://cdn.tailwindcss.com',
         'https://cdn.quilljs.com',
         'https://cdn.tiny.cloud',
@@ -81,54 +68,46 @@ app.config['CSP_POLICY'] = {
     ],
     'style-src': [
         "'self'",
-        "'unsafe-inline'", # Necessário para estilos inline
-        'https://cdn.jsdelivr.net', # Para Toastify CSS
-        'https://cdnjs.cloudflare.com', # Para Font Awesome CSS, Animate.css
-        'https://cdn.quilljs.com', # Para Quill CSS
+        "'unsafe-inline'",
+        'https://cdn.jsdelivr.net',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.quilljs.com',
         'https://cdn.tiny.cloud',
         'https://fonts.googleapis.com',
         'https://ka-f.fontawesome.com'
     ],
     'font-src': [
         "'self'",
-        'https://cdnjs.cloudflare.com', # Para Font Awesome webfonts
+        'https://cdnjs.cloudflare.com',
         'https://fonts.gstatic.com',
         'https://ka-f.fontawesome.com'
     ],
     'img-src': [
         "'self'",
-        'data:', # Permite imagens base64
+        'data:',
         'https://cdn.tiny.cloud'
     ],
     'media-src': [
         "'self'",
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Para os arquivos de áudio das ondas neurais
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'
     ],
     'connect-src': [
         "'self'",
         'https://cdn.tiny.cloud',
         'https://ka-f.fontawesome.com',
-        'https://cdn.jsdelivr.net', # Adicionado para Toastify JS, SweetAlert2 JS (fetch)
-        'https://cdnjs.cloudflare.com', # Adicionado para FontAwesome CSS/Webfonts (fetch)
-        'https://cdn.quilljs.com', # Adicionado para Quill CSS (fetch)
-        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com' # Adicionado para os áudios das ondas neurais (fetch)
+        'https://cdn.jsdelivr.net',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.quilljs.com',
+        'https://audios-estudoleieca.s3.us-west-2.amazonaws.com'
     ],
-    'frame-ancestors': ["'none'"], # Impede que a página seja incorporada em iframes
-    'object-src': ["'none'"], # Impede a carga de plugins como Flash
-    'form-action': ["'self'"], # Restringe URLs que podem ser usadas como destinos para envios de formulário
-    'base-uri': ["'self'"] # Restringe as URLs que podem aparecer no atributo <base> do documento
+    'frame-ancestors': ["'none'"],
+    'object-src': ["'none'"],
+    'form-action': ["'self'"],
+    'base-uri': ["'self'"]
 }
 
 db.init_app(app)
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO: Inicialização do Flask-Mail >>>
-# =====================================================================
 mail = Mail(app)
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO >>>
-# =====================================================================
-
 migrate = Migrate(app, db)
 csrf = CSRFProtect()
 csrf.init_app(app)
