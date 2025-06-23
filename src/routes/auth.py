@@ -1,15 +1,54 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+import os
+from flask import Blueprint, render_template, redirect, url_for, request, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
-from src.models.user import db, User
 import logging
-# NOVO: Importar a biblioteca de sanitização
 import bleach
+
+# =====================================================================
+# <<< INÍCIO DAS NOVAS IMPORTAÇÕES >>>
+# =====================================================================
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from flask_mail import Message
+from ..main import mail # Importa a instância 'mail' do seu arquivo principal (main.py)
+# =====================================================================
+# <<< FIM DAS NOVAS IMPORTAÇÕES >>>
+# =====================================================================
+
+from src.models.user import db, User
 
 logging.basicConfig(level=logging.DEBUG)
 
 auth_bp = Blueprint("auth", __name__)
+
+
+# =====================================================================
+# <<< INÍCIO DAS NOVAS FUNÇÕES HELPER >>>
+# =====================================================================
+# Funções para gerar e validar o token de segurança para o link de e-mail.
+
+def generate_password_reset_token(email):
+    """Gera um token seguro para a redefinição de senha."""
+    serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
+    return serializer.dumps(email, salt=os.environ.get('SECURITY_PASSWORD_SALT'))
+
+def confirm_reset_token(token, expiration=3600):  # Expiração de 1 hora
+    """Verifica o token. Retorna o e-mail se for válido, ou None se for inválido/expirado."""
+    serializer = URLSafeTimedSerializer(os.environ.get('SECRET_KEY'))
+    try:
+        email = serializer.loads(
+            token,
+            salt=os.environ.get('SECURITY_PASSWORD_SALT'),
+            max_age=expiration
+        )
+        return email
+    except (SignatureExpired, Exception):
+        return None
+# =====================================================================
+# <<< FIM DAS NOVAS FUNÇÕES HELPER >>>
+# =====================================================================
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -21,7 +60,6 @@ def login():
             return redirect(url_for("student.dashboard"))
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza o email para remover qualquer tag HTML
         email = bleach.clean(request.form.get("email"), tags=[], strip=True)
         password = request.form.get("password")
         remember = True if request.form.get("remember") else False
@@ -30,9 +68,7 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user:
-            logging.debug(f"[AUTH DEBUG] User found: ID={user.id}, Email={user.email}, Role={user.role}, Hash={user.password_hash}")
-            password_check_result = user.check_password(password)
-            logging.debug(f"[AUTH DEBUG] Password check result for 	'{password}	': {password_check_result}")
+            logging.debug(f"[AUTH DEBUG] User found: ID={user.id}, Email={user.email}, Role={user.role}")
         else:
             logging.debug(f"[AUTH DEBUG] User not found for email: {email}")
 
@@ -63,7 +99,6 @@ def signup():
         return redirect(url_for("main.index"))
 
     if request.method == "POST":
-        # ALTERADO: Sanitiza todos os campos de texto do formulário
         email = bleach.clean(request.form.get("email"), tags=[], strip=True)
         full_name = bleach.clean(request.form.get("full_name"), tags=[], strip=True)
         phone = bleach.clean(request.form.get("phone"), tags=[], strip=True)
@@ -81,7 +116,7 @@ def signup():
 
         new_user = User(email=email, full_name=full_name, phone=phone, role="student", is_approved=False)
         new_user.set_password(password)
-        logging.debug(f"[AUTH DEBUG] Creating new user: {email}, Hash: {new_user.password_hash}")
+        logging.debug(f"[AUTH DEBUG] Creating new user: {email}")
 
         try:
             db.session.add(new_user)
@@ -105,3 +140,87 @@ def logout():
     logging.info(f"[AUTH DEBUG] User logged out: {user_email}")
     flash("Você foi desconectado.", "info")
     return redirect(url_for("auth.login"))
+
+# =====================================================================
+# <<< INÍCIO DAS NOVAS ROTAS DE RECUPERAÇÃO DE SENHA >>>
+# =====================================================================
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """ Rota para o formulário de 'Esqueci Minha Senha'. """
+    if current_user.is_authenticated:
+        return redirect(url_for('student.dashboard'))
+
+    if request.method == 'POST':
+        email = bleach.clean(request.form.get('email'), tags=[], strip=True)
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            logging.debug(f"[AUTH DEBUG] Password reset requested for existing user: {email}")
+            try:
+                token = generate_password_reset_token(email)
+                reset_url = url_for('auth.reset_with_token', token=token, _external=True)
+                html_body = render_template('email/reset_password_email.html', reset_url=reset_url)
+                
+                subject = "Redefinição de Senha - Dose de Lei Diária"
+                msg = Message(subject, recipients=[email], html=html_body, sender=os.environ.get('MAIL_USERNAME'))
+                mail.send(msg)
+                logging.info(f"[AUTH DEBUG] Password reset email sent to: {email}")
+
+            except Exception as e:
+                logging.error(f"[AUTH ERROR] Failed to send password reset email to {email}: {e}")
+                flash('Ocorreu um erro ao enviar o e-mail. Por favor, tente novamente mais tarde.', 'danger')
+                return redirect(url_for('auth.forgot_password'))
+
+        else:
+            logging.warning(f"[AUTH DEBUG] Password reset requested for non-existent user: {email}")
+        
+        # Mensagem genérica para não revelar quais e-mails estão ou não no sistema.
+        flash('Se um e-mail correspondente for encontrado, um link de redefinição de senha será enviado.', 'info')
+        return redirect(url_for('auth.login'))
+            
+    return render_template("forgot_password.html")
+
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_with_token(token):
+    """ Rota para a página de redefinição de senha, acessada pelo link do e-mail. """
+    if current_user.is_authenticated:
+        return redirect(url_for('student.dashboard'))
+        
+    email = confirm_reset_token(token)
+    if not email:
+        flash('O link de redefinição de senha é inválido ou expirou.', 'danger')
+        return redirect(url_for('auth.forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if not password or password != confirm_password:
+            flash('As senhas não conferem ou estão em branco. Tente novamente.', 'danger')
+            return redirect(url_for('auth.reset_with_token', token=token))
+        
+        if len(password) < 6:
+            flash('Sua senha precisa ter no mínimo 6 caracteres.', 'danger')
+            return redirect(url_for('auth.reset_with_token', token=token))
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            try:
+                user.set_password(password) # Usando seu método existente para definir a senha
+                db.session.commit()
+                logging.info(f"[AUTH DEBUG] User password reset successfully for: {email}")
+                flash('Sua senha foi redefinida com sucesso! Você já pode fazer o login.', 'success')
+                return redirect(url_for('auth.login'))
+            except Exception as e:
+                db.session.rollback()
+                logging.error(f"[AUTH ERROR] Failed to save new password for {email}: {e}")
+                flash('Ocorreu um erro ao salvar sua nova senha. Tente novamente.', 'danger')
+                return redirect(url_for('auth.reset_with_token', token=token))
+
+    return render_template("reset_password_from_token.html", token=token)
+
+# =====================================================================
+# <<< FIM DAS NOVAS ROTAS >>>
+# =====================================================================
