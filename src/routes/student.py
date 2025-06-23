@@ -7,7 +7,8 @@ from datetime import date, timedelta
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-from src.models.user import db, Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
+from src.extensions import db
+from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
