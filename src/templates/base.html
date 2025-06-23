@@ -7,6 +7,7 @@
     
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#2563eb"/> {# Cor da barra de endereço em navegadores mobile #}
+
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.quilljs.com">
 
@@ -16,13 +17,65 @@
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
+    <noscript>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    </noscript>
     <style>
-        /* Custom base styles for White/Blue Theme */
+        /* ===================================================================== */
+        /* <<< INÍCIO DA ADIÇÃO: ESTILOS DO PRE-LOADER E TRANSIÇÃO SUAVE >>> */
+        /* ===================================================================== */
         body {
-            background-color: #f0f7ff; /* Fundo azul claro solicitado */
-            color: #374151; /* Dark Gray text for readability */
+            background-color: #f0f7ff;
+            color: #374151;
+            /* A página começa invisível para aguardar o carregamento completo */
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s 0.5s, opacity 0.5s linear;
         }
-        /* Alert styles adjusted for light background */
+        
+        body.loaded {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.5s linear;
+        }
+
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f7ff;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .spinner {
+            border: 4px solid rgba(37, 99, 235, 0.2);
+            border-left-color: #2563eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        /* A animação 'spin' abaixo já existia para '.loading-spinner', */
+        /* mas o preloader usa a sua própria, então a mantemos para compatibilidade. */
+        /* ===================================================================== */
+        /* <<< FIM DA ADIÇÃO >>> */
+        /* ===================================================================== */
+
+
+        /* Custom base styles for White/Blue Theme (TODO O SEU CSS ORIGINAL FOI MANTIDO ABAIXO) */
         .alert {
             padding: 1rem;
             margin-bottom: 1rem;
@@ -31,48 +84,38 @@
             animation: fadeInDown 0.5s;
             transition: all 0.3s ease;
         }
-        /* Using blue tones for alerts where appropriate */
-        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; } /* Keep green for success */
-        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; } /* Keep red for danger */
-        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; } /* Keep yellow for warning */
-        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; } /* Blue for info */
-
-        /* Footer style */
+        .alert-success { color: #065f46; background-color: #d1fae5; border-color: #a7f3d0; }
+        .alert-danger { color: #991b1b; background-color: #fee2e2; border-color: #fecaca; }
+        .alert-warning { color: #92400e; background-color: #fef3c7; border-color: #fde68a; }
+        .alert-info { color: #1e40af; background-color: #dbeafe; border-color: #bfdbfe; }
         footer {
-            color: #6B7280; /* Medium gray for footer text */
+            color: #6B7280;
         }
-
-        /* Custom scrollbar for light theme (optional  ) */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #E5E7EB; /* Light gray track */
+            background: #E5E7EB;
         }
         ::-webkit-scrollbar-thumb {
-            background: #60a5fa; /* Light Blue thumb */
+            background: #60a5fa;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #2563eb; /* Medium Blue thumb */
+            background: #2563eb;
         }
-
-        /* Animações e efeitos visuais */
         .btn-transition {
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-
         .btn-transition:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
-
         .btn-transition:active {
             transform: translateY(0);
         }
-
         .btn-transition::after {
             content: '';
             position: absolute;
@@ -84,16 +127,13 @@
             opacity: 0;
             transition: all 0.3s ease;
         }
-
         .btn-transition:hover::after {
             opacity: 1;
         }
-
         .nav-link {
             position: relative;
             transition: all 0.3s ease;
         }
-
         .nav-link::after {
             content: '';
             position: absolute;
@@ -104,77 +144,44 @@
             background-color: white;
             transition: width 0.3s ease;
         }
-
         .nav-link:hover::after {
             width: 100%;
         }
-
         .card-hover {
             transition: all 0.3s ease;
         }
-
         .card-hover:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
         }
-
         .form-input-focus {
             transition: all 0.3s ease;
         }
-
         .form-input-focus:focus {
             transform: scale(1.01);
         }
-
-        /* Animações para entrada de elementos */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         .fade-in-up {
             animation: fadeInUp 0.5s;
         }
-
         .fade-in-down {
             animation: fadeInDown 0.5s;
         }
-
-        /* Efeito de pulse para chamar atenção */
         @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
-
         .pulse-effect {
             animation: pulse 2s infinite;
         }
-
-        /* Efeito de loading */
         .loading-spinner {
             border: 3px solid rgba(37, 99, 235, 0.1);
             border-radius: 50%;
@@ -186,13 +193,10 @@
             vertical-align: middle;
             margin-right: 8px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        /* Estilo para o container do título e logo */
         .header-container {
             position: relative;
             display: flex;
@@ -200,16 +204,12 @@
             justify-content: center;
             padding: 1.5rem 0;
         }
-        
-        /* Estilo para o logo */
         .site-logo {
-            height: 40px; /* Altura um pouco maior que o título */
+            height: 40px;
             width: auto;
-            margin-left: 10px; /* Pequeno espaçamento entre o título e a logo */
+            margin-left: 10px;
             vertical-align: middle;
         }
-        
-        /* Estilo para o título */
         .site-title {
             font-size: 1.5rem;
             font-weight: bold;
@@ -218,6 +218,10 @@
     {% block head_extra %}{% endblock %}
     <meta name="csrf-token" content="{{ csrf_token() }}"> </head>
 <body class="font-sans bg-brand-bg text-brand-text">
+
+    <div id="preloader">
+        <div class="spinner"></div>
+    </div>
     <nav class="bg-brand-blue text-white shadow-md">
         <div class="container mx-auto flex flex-col items-center">
             <div class="header-container">
@@ -284,36 +288,29 @@
     {% block scripts %}{% endblock %}
 
     <script>
-        // Desabilita o clique com o botão direito
+        // SEUS SCRIPTS ORIGINAIS MANTIDOS
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     
-        // Desabilita atalhos comuns para abrir DevTools
         document.addEventListener('keydown', function(e) {
-            // F12
             if (e.keyCode === 123) {
                 e.preventDefault();
             }
-            // Ctrl+Shift+I
             if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
                 e.preventDefault();
             }
-            // Ctrl+Shift+C
             if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
                 e.preventDefault();
             }
-            // Ctrl+Shift+J
             if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
                 e.preventDefault();
             }
-            // Ctrl+U
             if (e.ctrlKey && e.keyCode === 85) {
                 e.preventDefault();
             }
         });
 
-        // Novo script para registrar o Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
@@ -325,6 +322,19 @@
                     });
             });
         }
+        
+        // =====================================================================
+        // <<< ADIÇÃO: JAVASCRIPT DO PRE-LOADER >>>
+        // =====================================================================
+        // O evento 'window.onload' espera que TUDO (imagens, css, etc.) seja carregado.
+        window.onload = function() {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.classList.add('hidden');
+            }
+            document.body.classList.add('loaded');
+        };
+        // =====================================================================
     </script>
     </body>
 </html>
