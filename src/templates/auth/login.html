@@ -13,11 +13,20 @@
                    class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent placeholder-gray-400 form-input-focus"
                    style="focus:ring: 2px solid #60a5fa;">
         </div>
-        <div class="mb-6">
-            <label for="password" class="block text-brand-text text-sm font-bold mb-2">Senha:</label>
+        <div class="mb-4"> <label for="password" class="block text-brand-text text-sm font-bold mb-2">Senha:</label>
             <input type="password" id="password" name="password" required
                    class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-brand-text leading-tight focus:outline-none focus:border-transparent placeholder-gray-400 form-input-focus"
                    style="focus:ring: 2px solid #60a5fa;">
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <label class="flex items-center text-sm text-gray-600">
+                <input type="checkbox" name="remember" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <span class="ml-2">Lembrar de mim</span>
+            </label>
+            <a href="{{ url_for('auth.forgot_password') }}" class="text-sm font-medium hover:text-blue-700" style="color: #1d4ed8;">
+                Esqueceu sua senha?
+            </a>
         </div>
         <div class="text-center">
             <button type="submit" class="w-full text-white font-bold py-2 px-4 rounded-lg focus:outline-none transition duration-300 text-lg btn-transition"
@@ -30,9 +39,6 @@
         Não tem uma conta? <a href="{{ url_for("auth.signup") }}" class="font-bold transition-all duration-300" style="color: #1d4ed8;">Cadastre-se</a>
     </p>
 
-    <p class="text-center text-brand-text-light text-sm mt-4">
-        Esqueceu sua senha? <a href="{{ url_for('auth.forgot_password') }}" class="font-bold transition-all duration-300" style="color: #1d4ed8;">Recuperar senha</a>
-    </p>
     </div>
 
 <style>
