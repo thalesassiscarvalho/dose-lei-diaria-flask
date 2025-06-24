@@ -614,3 +614,81 @@ def review_contribution_detail(contribution_id):
 # =====================================================================
 # <<< FIM DA ALTERAÇÃO >>>
 # =====================================================================
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: NOVAS ROTAS PARA REVISÃO DE CONTRIBUIÇÕES >>>
+# =====================================================================
+
+# Rota para a lista de contribuições pendentes
+@admin_bp.route("/community-contributions")
+@login_required
+@admin_required
+def review_contributions():
+    pending_contributions = CommunityContribution.query.options(
+        joinedload(CommunityContribution.user),
+        joinedload(CommunityContribution.law).joinedload(Law.parent)
+    ).filter_by(status='pending').order_by(CommunityContribution.created_at.asc()).all()
+    
+    return render_template("admin/review_contributions.html", contributions=pending_contributions)
+
+
+# Rota para a tela de detalhes de UMA contribuição
+@admin_bp.route("/community-contributions/review/<int:contribution_id>")
+@login_required
+@admin_required
+def review_contribution_detail(contribution_id):
+    contribution = CommunityContribution.query.options(
+        joinedload(CommunityContribution.user),
+        joinedload(CommunityContribution.law).joinedload(Law.parent)
+    ).get_or_404(contribution_id)
+    
+    return render_template("admin/review_contribution_detail.html", contribution=contribution)
+
+
+# Rota para PROCESSAR a ação de Aprovar ou Rejeitar
+@admin_bp.route("/community-contributions/process/<int:contribution_id>", methods=["POST"])
+@login_required
+@admin_required
+def process_contribution(contribution_id):
+    # 1. Busca a contribuição no banco de dados.
+    contribution = CommunityContribution.query.get_or_404(contribution_id)
+    
+    # 2. Pega a ação ('approve' ou 'reject') e as notas do formulário.
+    action = request.form.get("action")
+    notes = request.form.get("reviewer_notes", "").strip()
+
+    if action == "approve":
+        # 3. Se a ação for APROVAR:
+        # Atualiza o status da contribuição
+        contribution.status = "approved"
+        # O mais importante: atualiza a lei para apontar para o ID desta contribuição.
+        contribution.law.approved_contribution_id = contribution.id
+        contribution.reviewer_notes = notes
+        contribution.reviewed_at = datetime.datetime.utcnow()
+        flash("Contribuição APROVADA e definida como a nova versão da comunidade!", "success")
+
+    elif action == "reject":
+        # 4. Se a ação for REJEITAR:
+        # Apenas atualiza o status da contribuição.
+        contribution.status = "rejected"
+        contribution.reviewer_notes = notes
+        contribution.reviewed_at = datetime.datetime.utcnow()
+        flash("Contribuição rejeitada com sucesso.", "info")
+        
+    else:
+        # 5. Se nenhuma ação for reconhecida:
+        flash("Ação inválida.", "danger")
+        return redirect(url_for('admin.review_contribution_detail', contribution_id=contribution.id))
+
+    # 6. Salva as mudanças no banco de dados e redireciona para a lista.
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Ocorreu um erro ao processar a contribuição: {e}", "danger")
+        
+    return redirect(url_for('admin.review_contributions'))
+
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
