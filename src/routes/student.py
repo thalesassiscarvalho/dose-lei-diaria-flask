@@ -315,7 +315,7 @@ def dashboard():
     today_in_brazil_date = now_in_brazil.date()
     start_date_of_week = today_in_brazil_date - timedelta(days=6)
     start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
-    study_sessions_week = db.session.query(func.cast(StudySession.recorded_at.astimezone(brazil_tz), Date).label('study_date'), func.sum(StudySession.duration_seconds).label('total_seconds')).filter(StudySession.user_id == current_user.id, StudySession.recorded_at >= start_date_utc).group_by('study_date').all()
+    study_sessions_week = db.session.query(func.cast(StudySession.recorded_at, Date).label('study_date'), func.sum(StudySession.duration_seconds).label('total_seconds')).filter(StudySession.user_id == current_user.id, StudySession.recorded_at >= start_date_utc).group_by('study_date').all()
     study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
     for i in range(7):
         current_day = today_in_brazil_date - timedelta(days=6 - i)
