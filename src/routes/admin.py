@@ -12,7 +12,14 @@ from bleach.css_sanitizer import CSSSanitizer
 
 # Importações completas e corretas
 from src.extensions import db
-from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 1/2: IMPORTANDO CommunityComment >>>
+# =====================================================================
+# Adicionamos o nosso novo modelo à lista de importações do user.py
+from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 1/2 >>>
+# =====================================================================
 from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
@@ -77,7 +84,7 @@ def dashboard():
                            pending_users_count=pending_users_count,
                            charts_data=charts_data,
                            active_announcements_count=active_announcements_count,
-                           pending_contributions_count=pending_contributions_count 
+                           pending_contributions_count=pending_contributions_count
                            )
 
 # Rota de gerenciamento de conteúdo
@@ -588,9 +595,6 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO SEM DUPLICATAS >>>
-# =====================================================================
 @admin_bp.route("/community-contributions")
 @login_required
 @admin_required
@@ -608,7 +612,8 @@ def review_contributions():
 def review_contribution_detail(contribution_id):
     contribution = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
-        joinedload(CommunityContribution.law).joinedload(Law.parent)
+        joinedload(CommunityContribution.law).joinedload(Law.parent),
+        joinedload(CommunityContribution.comments) 
     ).get_or_404(contribution_id)
     
     return render_template("admin/review_contribution_detail.html", contribution=contribution)
@@ -647,7 +652,3 @@ def process_contribution(contribution_id):
         current_app.logger.error(f"Erro ao processar contribuição {contribution_id}: {e}")
         
     return redirect(url_for('admin.review_contributions'))
-
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO FINAL >>>
-# =====================================================================
