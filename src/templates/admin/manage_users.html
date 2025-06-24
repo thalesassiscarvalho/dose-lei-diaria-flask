@@ -79,6 +79,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                        <a href="{{ url_for('admin.user_details', user_id=user.id) }}" class="text-teal-600 hover:text-teal-900">Detalhes</a>
                                         {% if not user.is_approved %}
                                             <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="inline-block">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -90,7 +91,7 @@
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="text-red-600 hover:text-red-900">Negar</button>
                                         </form>
-
+                                        
                                         <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900">Redefinir Senha</a>
                                         
                                         <a href="{{ url_for('admin.manage_user_concursos', user_id=user.id) }}" class="text-purple-600 hover:text-purple-900">Gerenciar Concursos</a>
