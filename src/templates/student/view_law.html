@@ -4,6 +4,22 @@
 
 {% block head_extra %}
 <style>
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO: CORRIGIR VISIBILIDADE DA BARRA DE AÇÕES >>> */
+    /* ===================================================================== */
+    /* Esta regra força a barra de ferramentas e seus botões a ficarem
+       sempre 100% visíveis, resolvendo o problema de aparecerem
+       apenas ao passar o mouse. O '!important' garante que esta
+       regra tenha prioridade sobre outras. */
+    #sticky-action-bar,
+    #sticky-action-bar .font-control-btn {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO >>> */
+    /* ===================================================================== */
+    
     /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
