@@ -19,7 +19,7 @@
     /* ===================================================================== */
     /* <<< FIM DA ALTERAÇÃO >>> */
     /* ===================================================================== */
-    
+
     /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
@@ -960,24 +960,10 @@
     }
 
     /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA O BOTÃO DE COMPARTILHAR >>> */
+    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTA SEÇÃO FOI REMOVIDA >>> */
     /* ===================================================================== */
-    .share-contribution-btn {
-        background-color: #dcfce7; /* green-100 */
-        color: #166534; /* green-700 */
-        border: 1px solid #86efac; /* green-300 */
-    }
-    .share-contribution-btn:hover {
-        background-color: #bbf7d0; /* green-200 */
-    }
-    .dark-mode .share-contribution-btn {
-        background-color: #14532d; /* green-900 */
-        color: #bbf7d0; /* green-200 */
-        border-color: #22c55e; /* green-500 */
-    }
-    .dark-mode .share-contribution-btn:hover {
-        background-color: #166534; /* green-800 */
-    }
+    /* O estilo customizado para .share-contribution-btn foi removido
+       para usarmos as classes do Tailwind diretamente no HTML. */
     /* ===================================================================== */
     /* <<< FIM DA ALTERAÇÃO 1/3 >>> */
     /* ===================================================================== */
@@ -1108,11 +1094,13 @@
                  <button id="format-highlight-pink-btn" class="font-control-btn" title="Marca-texto Rosa"><i class="fas fa-highlighter" style="color: #f472b6;"></i></button>
                  <button id="format-unformat-btn" class="font-control-btn" title="Remover formatação (selecione o texto)"><i class="fas fa-eraser" style="color: #6b7280;"></i></button>
                  <button id="restore-law-btn" class="font-control-btn" title="Restaurar lei ao original (removes all marks and annotations)"><i class="fas fa-history" style="color: #6b7280;"></i></button>
-                 
-                <button id="share-contribution-btn" class="font-control-btn share-contribution-btn" title="Compartilhar suas marcações com a comunidade para revisão">
-                    <i class="fas fa-users"></i>
-                </button>
-                </div>
+            </div>
+            
+            <button id="share-contribution-btn" 
+                    class="font-control-btn bg-green-100 text-green-800 border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-500 dark:hover:bg-green-800" 
+                    title="Compartilhar suas marcações com a comunidade para revisão">
+                <i class="fas fa-users"></i>
+            </button>
             <div class="flex items-center space-x-2 border-l border-gray-300 pl-2 ml-1">
                 <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
                 <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
