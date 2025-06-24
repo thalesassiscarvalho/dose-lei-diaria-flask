@@ -180,6 +180,16 @@ class CommunityContribution(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO >>>
+    # =====================================================================
+    # Adicionando a coluna para armazenar o conteúdo das anotações (JSON).
+    comments_content = db.Column(db.JSON, nullable=True)
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
     status = db.Column(db.String(50), nullable=False, default='pending', index=True) 
     reviewer_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -188,16 +198,7 @@ class CommunityContribution(db.Model):
     # --- RELACIONAMENTOS CORRIGIDOS ---
     user = db.relationship('User', backref=db.backref('community_contributions', lazy='dynamic'))
     
-    # =====================================================================
-    # <<< INÍCIO DA ALTERAÇÃO: ESPECIFICANDO A CHAVE ESTRANGEIRA >>>
-    # =====================================================================
-    # Aqui, estamos dizendo ao SQLAlchemy para usar APENAS a coluna 'law_id'
-    # para este relacionamento específico, resolvendo a ambiguidade.
-    # O 'back_populates' é uma forma mais moderna de criar o relacionamento reverso.
     law = db.relationship('Law', foreign_keys=[law_id], back_populates='all_contributions')
-    # =====================================================================
-    # <<< FIM DA ALTERAÇÃO >>>
-    # =====================================================================
 
     def __repr__(self):
         return f'<CommunityContribution {self.id} for Law {self.law_id} by User {self.user_id}>'
