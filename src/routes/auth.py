@@ -9,15 +9,8 @@ import bleach
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 import datetime
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO: Novas importações para o 2FA por E-mail >>>
-# =====================================================================
 import secrets
 from datetime import datetime, timedelta
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO >>>
-# =====================================================================
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -40,28 +33,41 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if not user or not user.check_password(password):
-            flash("Email ou senha inválidos.", "danger")
+            flash("E-mail ou senha inválidos. Por favor, verifique seus dados e tente novamente.", "danger")
             return redirect(url_for("auth.login"))
 
+        # =====================================================================
+        # <<< INÍCIO DA MELHORIA 1: LÓGICA DE LOGIN PARA EX-ASSINANTES >>>
+        # =====================================================================
+        # Verificamos se o usuário NÃO é admin e NÃO está aprovado
         if user.role != "admin" and not user.is_approved:
-            flash("Sua conta ainda não foi aprovada por um administrador.", "warning")
+            # Se ele não está aprovado, mas JÁ TEM uma senha cadastrada,
+            # significa que é um ex-assinante.
+            if user.password_hash:
+                # IMPORTANTE: Substitua o texto abaixo pelo seu link de pagamento do Stripe
+                payment_link = "COLOQUE_SEU_LINK_DE_PAGAMENTO_DO_STRIPE_AQUI"
+                
+                # Criamos a mensagem personalizada com o link
+                message = f'Seu acesso foi suspenso. Para reativar sua conta e recuperar todo o seu progresso, <a href="{payment_link}" class="font-bold text-white underline hover:text-yellow-200">clique aqui e realize a assinatura novamente.</a>'
+                flash(message, "warning")
+            else:
+                # Se ele não tem senha, é um novo usuário aguardando ativação
+                flash("Sua conta ainda não foi ativada. Verifique seu e-mail para criar uma senha ou aguarde a aprovação.", "info")
+            
             return redirect(url_for("auth.login"))
+        # =====================================================================
+        # <<< FIM DA MELHORIA 1 >>>
+        # =====================================================================
 
-        # =====================================================================
-        # <<< INÍCIO DA ALTERAÇÃO: LÓGICA DE 2FA POR E-MAIL >>>
-        # =====================================================================
         # Se o usuário for um administrador, iniciamos o fluxo de 2FA.
         if user.role == 'admin':
-            # 1. Gera um código seguro de 6 dígitos
             auth_code = str(secrets.randbelow(1000000)).zfill(6)
             
-            # 2. Guarda o código e outras informações na sessão do navegador
             session['2fa_code'] = auth_code
             session['2fa_user_id'] = user.id
             session['2fa_expiry'] = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
             session['2fa_remember_me'] = remember
 
-            # 3. Envia o e-mail com o código de verificação
             try:
                 msg = Message(
                     subject="Seu Código de Verificação - Estudo da Lei Seca",
@@ -72,18 +78,14 @@ def login():
                 msg.html = f"<p>Olá.</p><p>Seu código de verificação para login é: <b>{auth_code}</b></p><p>Este código expira em 10 minutos.</p>"
                 mail.send(msg)
                 
-                # 4. Redireciona para a página de verificação de código
                 return redirect(url_for('auth.verify_email_code'))
 
             except Exception as e:
                 logging.error(f"Falha ao enviar e-mail de 2FA para {user.email}: {e}")
                 flash("Não foi possível enviar o código de verificação. Tente novamente mais tarde.", "danger")
                 return redirect(url_for('auth.login'))
-        # =====================================================================
-        # <<< FIM DA ALTERAÇÃO >>>
-        # =====================================================================
 
-        # Se for um usuário comum, o login acontece normalmente.
+        # Se for um usuário comum e aprovado, o login acontece normalmente.
         login_user(user, remember=remember)
         logging.info(f"[AUTH DEBUG] User logged in successfully: {email}")
         flash("Login realizado com sucesso!", "success")
@@ -92,19 +94,13 @@ def login():
     return render_template("auth/login.html")
 
 
-# =====================================================================
-# <<< INÍCIO DA NOVA ROTA PARA VERIFICAR O CÓDIGO DE E-MAIL >>>
-# =====================================================================
 @auth_bp.route('/verify-email-code', methods=['GET', 'POST'])
 def verify_email_code():
-    # Se o usuário não estiver no meio do processo de 2FA, manda de volta para o login
     if '2fa_user_id' not in session:
         return redirect(url_for('auth.login'))
         
-    # Verifica se o código na sessão já expirou
     expiry_time = datetime.fromisoformat(session['2fa_expiry'])
     if datetime.utcnow() > expiry_time:
-        # Limpa a sessão e manda de volta pro login com um aviso
         session.pop('2fa_code', None)
         session.pop('2fa_user_id', None)
         session.pop('2fa_expiry', None)
@@ -115,13 +111,11 @@ def verify_email_code():
     if request.method == 'POST':
         user_code = request.form.get('code')
         
-        # Verifica se o código digitado é o mesmo que foi guardado na sessão
         if user_code == session.get('2fa_code'):
             user_id = session['2fa_user_id']
             remember = session['2fa_remember_me']
             user = User.query.get(user_id)
             
-            # Limpa a sessão para que o código não possa ser reutilizado
             session.pop('2fa_code', None)
             session.pop('2fa_user_id', None)
             session.pop('2fa_expiry', None)
@@ -138,9 +132,6 @@ def verify_email_code():
             flash('Código de verificação inválido.', 'danger')
 
     return render_template('auth/verify_email_code.html')
-# =====================================================================
-# <<< FIM DA NOVA ROTA >>>
-# =====================================================================
 
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
