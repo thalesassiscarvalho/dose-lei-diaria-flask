@@ -1,4 +1,12 @@
-{% extends "admin/base.html" %}
+{# ===================================================================== #}
+{# <<< INÍCIO DA ALTERAÇÃO: CORREÇÃO DO CAMINHO DO TEMPLATE BASE >>> #}
+{# ===================================================================== #}
+{# Alteramos de "admin/base.html" para "base.html" para usar o template #}
+{# principal correto do seu projeto, corrigindo o erro 'TemplateNotFound'. #}
+{% extends "base.html" %}
+{# ===================================================================== #}
+{# <<< FIM DA ALTERAÇÃO >>> #}
+{# ===================================================================== #}
 
 {% block title %}Revisão de Contribuições da Comunidade{% endblock %}
 
@@ -39,9 +47,15 @@
                                 <strong>{{ c.law.title }}</strong>
                             </td>
                             <td class="text-center">
-                                <a href="#" class="btn btn-primary btn-sm">
+                                {# ===================================================================== #}
+                                {# <<< MELHORIA: LINK DO BOTÃO APONTA PARA A ROTA FUTURA >>> #}
+                                {# ===================================================================== #}
+                                <a href="{{ url_for('admin.review_contribution_detail', contribution_id=c.id) }}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-search me-1"></i> Revisar
                                 </a>
+                                {# ===================================================================== #}
+                                {# <<< FIM DA MELHORIA >>> #}
+                                {# ===================================================================== #}
                             </td>
                         </tr>
                         {% endfor %}
