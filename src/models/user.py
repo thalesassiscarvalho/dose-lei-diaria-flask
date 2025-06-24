@@ -1,3 +1,5 @@
+# src/models/user.py
+
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import datetime, date
@@ -60,6 +62,18 @@ class User(UserMixin, db.Model):
     points = db.Column(db.Integer, default=0, nullable=False) # Added points field
     favorite_label = db.Column(db.String(100), nullable=True)
     default_concurso_id = db.Column(db.Integer, db.ForeignKey('concurso.id'), nullable=True)
+
+    # =====================================================================
+    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: CAMPOS DE DATA E HORA >>>
+    # Adicionamos os campos para registrar a data de criação e o último acesso do usuário.
+    # - created_at: Registra a data e hora no momento em que o usuário é criado.
+    # - last_seen: Atualiza automaticamente sempre que o registro do usuário for alterado.
+    # =====================================================================
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    # =====================================================================
+    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+    # =====================================================================
 
     # =====================================================================
     # <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: NOVOS CAMPOS E RELACIONAMENTOS >>>
