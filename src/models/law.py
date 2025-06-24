@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
-# NOVO: Importa a tabela de associação do arquivo concurso.py
 from src.models.concurso import concurso_law_association
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: IMPORTAR CommunityContribution >>>
+# =====================================================================
+# Precisamos que este arquivo "conheça" o modelo CommunityContribution para
+# criar os relacionamentos. Usamos um 'try-except' para evitar erros circulares.
+try:
+    from src.models.user import CommunityContribution
+except ImportError:
+    pass
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
 from src.extensions import db
 from sqlalchemy.orm import backref
 
@@ -21,35 +32,43 @@ class Law(db.Model):
     audio_url = db.Column(db.String(500), nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
     approved_contribution_id = db.Column(db.Integer, db.ForeignKey('community_contributions.id'), nullable=True)
-
-    # --- FUNCIONALIDADE EXISTENTE: Explicação do Juridiquês ---
     juridiques_explanation = db.Column(db.Text, nullable=True)
 
-    # --- FUNCIONALIDADE EXISTENTE: Relação com Tópicos Filhos (children) ---
     children = db.relationship('Law', 
                                backref=backref('parent', remote_side=[id]),
                                cascade="all, delete-orphan")
 
-    # --- FUNCIONALIDADE EXISTENTE: Relação com Links Úteis ---
     useful_links = db.relationship('UsefulLink', back_populates='law', lazy="dynamic", cascade="all, delete-orphan")
-
-    # --- FUNCIONALIDADE EXISTENTE: Relação com Banner ---
-    # Esta é a relação com o banner que você mencionou. Ela está mantida aqui.
     banner = db.relationship('LawBanner', backref='law', uselist=False, cascade="all, delete-orphan")
-    
-    # =====================================================================
-    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: Relação com Concursos >>>
-    # Esta é a única seção nova, que conecta a Lei aos Concursos.
-    # =====================================================================
     concursos = db.relationship(
         'Concurso',
         secondary=concurso_law_association,
         back_populates='laws'
     )
-    # =====================================================================
-    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
-    # =====================================================================
 
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: ADICIONANDO RELACIONAMENTOS EXPLÍCITOS >>>
+    # =====================================================================
+    # Este relacionamento busca TODAS as contribuições que apontam para esta lei.
+    # Ele usa a chave estrangeira 'CommunityContribution.law_id'.
+    all_contributions = db.relationship(
+        'CommunityContribution', 
+        foreign_keys='CommunityContribution.law_id', 
+        back_populates='law'
+    )
+
+    # Este relacionamento busca a UMA contribuição aprovada.
+    # Ele usa a chave estrangeira 'Law.approved_contribution_id'.
+    # 'uselist=False' diz que este é um relacionamento um-para-um (uma lei tem uma contribuição aprovada).
+    approved_contribution = db.relationship(
+        'CommunityContribution',
+        foreign_keys=[approved_contribution_id],
+        uselist=False,
+        post_update=True # Ajuda a resolver o ciclo de dependência
+    )
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
 
     def __repr__(self):
         audio_indicator = " (Audio)" if self.audio_url else ""
