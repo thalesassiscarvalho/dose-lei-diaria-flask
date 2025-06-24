@@ -4,22 +4,6 @@
 
 {% block head_extra %}
 <style>
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO: CORRIGIR VISIBILIDADE DA BARRA DE AÇÕES >>> */
-    /* ===================================================================== */
-    /* Esta regra força a barra de ferramentas e seus botões a ficarem
-       sempre 100% visíveis, resolvendo o problema de aparecerem
-       apenas ao passar o mouse. O '!important' garante que esta
-       regra tenha prioridade sobre outras. */
-    #sticky-action-bar,
-    #sticky-action-bar .font-control-btn {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO >>> */
-    /* ===================================================================== */
-
     /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
@@ -959,6 +943,29 @@
         }
     }
 
+    /* ===================================================================== */
+    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA O BOTÃO DE COMPARTILHAR >>> */
+    /* ===================================================================== */
+    .share-contribution-btn {
+        background-color: #dcfce7; /* green-100 */
+        color: #166534; /* green-700 */
+        border: 1px solid #86efac; /* green-300 */
+    }
+    .share-contribution-btn:hover {
+        background-color: #bbf7d0; /* green-200 */
+    }
+    .dark-mode .share-contribution-btn {
+        background-color: #14532d; /* green-900 */
+        color: #bbf7d0; /* green-200 */
+        border-color: #22c55e; /* green-500 */
+    }
+    .dark-mode .share-contribution-btn:hover {
+        background-color: #166534; /* green-800 */
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO 1/3 >>> */
+    /* ===================================================================== */
+
 </style>
 {% endblock %}
 
@@ -1071,12 +1078,6 @@
             <button id="toggle-jurisprudence-btn" class="toggle-button toggle-btn-juris" title="Ocultar/Mostrar Jurisprudência"><i class="fas fa-eye-slash"></i><span>Jurisprudência</span></button>
             <button id="toggle-doutrina-btn" class="toggle-button toggle-btn-doutrina" title="Ocultar/Mostrar Doutrina"><i class="fas fa-eye-slash"></i><span>Doutrina</span></button>
             <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i><span>Minhas Anotações</span></button>
-            
-            <button id="share-contribution-btn" 
-                    class="font-control-btn bg-green-100 text-green-800 border-green-200 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-500 dark:hover:bg-green-800" 
-                    title="Compartilhar suas marcações com a comunidade para revisão">
-                <i class="fas fa-users"></i>
-            </button>
         </div>
         
         <div class="font-control-group flex items-center space-x-2">
@@ -1091,8 +1092,11 @@
                  <button id="format-highlight-pink-btn" class="font-control-btn" title="Marca-texto Rosa"><i class="fas fa-highlighter" style="color: #f472b6;"></i></button>
                  <button id="format-unformat-btn" class="font-control-btn" title="Remover formatação (selecione o texto)"><i class="fas fa-eraser" style="color: #6b7280;"></i></button>
                  <button id="restore-law-btn" class="font-control-btn" title="Restaurar lei ao original (removes all marks and annotations)"><i class="fas fa-history" style="color: #6b7280;"></i></button>
-            </div>
-
+                 
+                <button id="share-contribution-btn" class="font-control-btn share-contribution-btn" title="Compartilhar suas marcações com a comunidade para revisão">
+                    <i class="fas fa-users"></i>
+                </button>
+                </div>
             <div class="flex items-center space-x-2 border-l border-gray-300 pl-2 ml-1">
                 <button id="decrease-font-btn" class="font-control-btn" title="Diminuir fonte">A-</button>
                 <button id="increase-font-btn" class="font-control-btn" title="Aumentar fonte">A+</button>
@@ -2142,8 +2146,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 customClass: {
                     confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded',
                     cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3'
-                },
-                buttonsStyling: false
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     
@@ -2521,13 +2524,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA DO BOTÃO DE COMPARTILHAR >>>
+    // <<< INÍCIO DA ALTERAÇÃO: LÓGICA DO BOTÃO DE COMPARTILHAR >>>
     // =====================================================================
     const shareContributionBtn = document.getElementById('share-contribution-btn');
 
     if (shareContributionBtn) {
         shareContributionBtn.addEventListener('click', () => {
-            // AQUI ESTÁ A CORREÇÃO PRINCIPAL:
             Swal.fire({
                 title: 'Compartilhar suas marcações?',
                 html: "Você está prestes a enviar suas marcações e anotações para análise da nossa equipe. Se aprovada, sua contribuição poderá ajudar outros alunos.<br><br><strong>Deseja continuar?</strong>",
@@ -2535,16 +2537,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 showCancelButton: true,
                 confirmButtonText: 'Sim, enviar para análise!',
                 cancelButtonText: 'Cancelar',
-                // Em vez de 'confirmButtonColor', usamos 'customClass' para aplicar
-                // as classes do Tailwind diretamente, assim como no pop-up de 'Restaurar'.
+                // --- CORREÇÃO APLICADA AQUI ---
+                // Substituindo 'confirmButtonColor' e 'cancelButtonColor' por 'customClass'
+                // para aplicar classes de estilo completas aos botões, assim como no modal de "restaurar".
                 customClass: {
                     popup: document.body.classList.contains('dark-mode') ? 'dark-mode' : '',
                     confirmButton: 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded',
                     cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3'
                 },
-                // Esta linha é importante para dizer ao SweetAlert2 para NÃO usar seus
-                // próprios estilos, permitindo que as classes do Tailwind assumam o controle total.
-                buttonsStyling: false
+                // As linhas abaixo foram removidas e substituídas pela 'customClass' acima
+                // confirmButtonColor: '#16a34a',
+                // cancelButtonColor: '#6b7280',
+                // --- FIM DA CORREÇÃO ---
             }).then((result) => {
                 if (result.isConfirmed) {
                     shareContributionBtn.disabled = true;
@@ -2592,7 +2596,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     // =====================================================================
-    // <<< FIM DA ALTERAÇÃO 3/3 >>>
+    // <<< FIM DA ALTERAÇÃO >>>
     // =====================================================================
 
 });
