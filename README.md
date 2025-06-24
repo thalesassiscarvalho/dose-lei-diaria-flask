@@ -1,6 +1,6 @@
-# Treino Turbo - Dose de Lei Diária (Versão com Categorias e Gamificação)
+# Estudo da Lei Seca (Versão com Categorias e Gamificação)
 
-Este arquivo contém o código-fonte da aplicação Flask "Treino Turbo - Dose de Lei Diária", incluindo as funcionalidades de categorização de leis por matéria e um sistema básico de gamificação (pontos e conquistas).
+Este arquivo contém o código-fonte da aplicação Flask "Estudo da Lei Seca", incluindo as funcionalidades de categorização de leis por matéria e um sistema básico de gamificação (pontos e conquistas).
 
 ## Estrutura do Projeto
 
