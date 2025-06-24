@@ -2620,5 +2620,81 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO 2/2: LÓGICA DO BOTÃO DE COMPARTILHAR >>>
+    // =====================================================================
+    const shareContributionBtn = document.getElementById('share-contribution-btn');
+
+    if (shareContributionBtn) {
+        shareContributionBtn.addEventListener('click', () => {
+            Swal.fire({
+                title: 'Compartilhar suas marcações?',
+                html: "Você está prestes a enviar suas marcações e anotações para análise da nossa equipe. Se aprovada, sua contribuição poderá se tornar a versão padrão para outros alunos.<br><br><strong>Deseja continuar?</strong>",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, enviar para análise!',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#16a34a', // Verde
+                cancelButtonColor: '#6b7280', // Cinza
+                customClass: {
+                    popup: document.body.classList.contains('dark-mode') ? 'dark-mode' : '',
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Desabilita o botão para evitar cliques múltiplos
+                    shareContributionBtn.disabled = true;
+                    shareContributionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    // Chama a nova rota no backend
+                    fetch(`/student/law/${lawId}/share_contribution`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toastify({
+                                text: data.message,
+                                duration: 5000,
+                                style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" }
+                            }).showToast();
+                            // Mantém o botão desabilitado e com um ícone de 'check' para feedback
+                            shareContributionBtn.innerHTML = '<i class="fas fa-check"></i>';
+                            shareContributionBtn.title = 'Sua contribuição foi enviada!';
+                        } else {
+                            Toastify({
+                                text: data.error || "Ocorreu um erro ao enviar.",
+                                duration: 5000,
+                                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                            }).showToast();
+                            // Reabilita o botão em caso de erro
+                            shareContributionBtn.disabled = false;
+                            shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro de rede ao compartilhar:", error);
+                        Toastify({
+                            text: "Erro de comunicação. Verifique sua conexão e tente novamente.",
+                            duration: 5000,
+                            style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                        }).showToast();
+                        // Reabilita o botão em caso de erro
+                        shareContributionBtn.disabled = false;
+                        shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>';
+                    });
+                }
+            });
+        });
+    }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO 2/2 >>>
+    // =====================================================================
+
+});
 </script>
 {% endblock %}
