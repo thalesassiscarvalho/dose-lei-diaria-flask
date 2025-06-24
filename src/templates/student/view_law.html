@@ -374,8 +374,8 @@
 
     @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        70% { box_shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+        100% { box_shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
     }
     @keyframes spin {
         from { transform: rotate(0deg); }
@@ -395,7 +395,7 @@
     .format-btn.active { background-color: #dbeafe; border-color: #93c5fd; }
     .format-btn i { font-size: 14px; }
     .notes-editor {
-        min-height: 200px; 
+        min-height: 200px;
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         padding: 12px;
@@ -424,7 +424,7 @@
         .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
         .back-to-top-btn { margin-left: 0; margin-top: 1rem; }
         #sticky-action-bar .flex-wrap.gap-2 {
-            gap: 0.5rem; 
+            gap: 0.5rem;
         }
     }
 
@@ -432,7 +432,7 @@
         #format-bold-btn,
         #format-italic-btn,
         #format-strikethrough-btn,
-        #highlight-buttons-group, 
+        #highlight-buttons-group,
         #toggle-font-family-btn {
             display: none;
         }
@@ -444,16 +444,16 @@
     @media (min-width: 641px) {
         .bookmark-section { max-width: 33.33%; }
     }
-    
+
     @media (max-width: 768px) {
         .notes-editor {
-            min-height: 150px; 
+            min-height: 150px;
         }
     }
 
     .paragraph-wrapper {
         position: relative;
-        padding-right: 30px; 
+        padding-right: 30px;
     }
 
     .comment-icon {
@@ -461,7 +461,7 @@
         top: 5px;
         right: 0;
         cursor: pointer;
-        color: #a5b4fc; 
+        color: #a5b4fc;
         font-size: 1.1rem;
         transition: all 0.2s ease;
         opacity: 0.5;
@@ -473,25 +473,25 @@
     }
 
     .comment-icon.has-comment {
-        color: #6366f1; 
+        color: #6366f1;
         opacity: 1;
     }
 
     .comment-display {
-        background-color: #fff7ed; 
-        border-left: 3px solid #f97316; 
+        background-color: #fff7ed;
+        border-left: 3px solid #f97316;
         padding: 10px 15px;
         margin-top: 5px;
         margin-bottom: 15px;
         border-radius: 0 5px 5px 0;
         position: relative;
-        font-style: italic;     
-        color: #f97316;         
-        cursor: pointer;        
+        font-style: italic;
+        color: #f97316;
+        cursor: pointer;
     }
-    
+
     .comment-display:hover {
-        background-color: #ffedd5; 
+        background-color: #ffedd5;
     }
 
     .comment-delete-btn {
@@ -510,7 +510,7 @@
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        display: none; 
+        display: none;
         align-items: center;
         justify-content: center;
         z-index: 1000;
@@ -533,7 +533,7 @@
     }
 
     body.dark-mode {
-        background-color: #030712; 
+        background-color: #030712;
     }
 
     .dark-mode .law-content-container,
@@ -544,19 +544,19 @@
     .dark-mode .bookmark-section,
     .dark-mode .notes-container,
     .dark-mode .comment-modal-content,
-    .dark-mode .audio-player-container, 
+    .dark-mode .audio-player-container,
     .dark-mode .juridiques-container,
-    .dark-mode .links-container 
+    .dark-mode .links-container
     {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
 
     .dark-mode .law-content-container {
-        background-color: #1f2937; 
-        color: #d1d5db; 
-        border-color: #374151; 
+        background-color: #1f2937;
+        color: #d1d5db;
+        border-color: #374151;
     }
-    
+
     .dark-mode .user-highlight-yellow { background-color: rgba(254, 249, 195, 0.3); }
     .dark-mode .user-highlight-green { background-color: rgba(220, 252, 231, 0.3); }
     .dark-mode .user-highlight-blue { background-color: rgba(219, 234, 254, 0.3); }
@@ -568,7 +568,7 @@
     .dark-mode .law-content-container h4,
     .dark-mode .law-content-container h5,
     .dark-mode .law-content-container h6 {
-        color: #93c5fd; 
+        color: #93c5fd;
     }
 
     .dark-mode h1.text-blue-700 {
@@ -576,7 +576,7 @@
     }
 
     .dark-mode .completed-banner {
-        background-color: #064e3b; 
+        background-color: #064e3b;
         color: #a7f3d0;
         border-color: #059669;
     }
@@ -586,12 +586,12 @@
         color: #fef08a;
     }
     .dark-mode .last-read-info {
-        background-color: #3730a3; 
+        background-color: #3730a3;
         color: #c7d2fe;
         border-color: #4f46e5;
     }
     .dark-mode .bookmark-section {
-        background-color: #1e293b; 
+        background-color: #1e293b;
         border-color: #374151;
     }
     .dark-mode .bookmark-section h3 {
@@ -599,7 +599,7 @@
     }
 
     .dark-mode #sticky-action-bar {
-        background-color: #111827; 
+        background-color: #111827;
         border-color: #374151;
     }
     .dark-mode #sticky-action-bar label {
@@ -645,7 +645,7 @@
         bottom: 20px;
         right: 20px;
         background-color: #4b5563;
-        color: #fde047; 
+        color: #fde047;
         border: none;
         width: 50px;
         height: 50px;
@@ -712,31 +712,31 @@
     .dark-mode .font-control-btn:hover {
         background-color: #4b5563;
     }
-    
+
     #law-content.font-size-sm, #law-content.font-size-sm p { font-size: 0.85rem; line-height: 1.6; }
-    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; } 
+    #law-content.font-size-md, #law-content.font-size-md p { font-size: 1rem; line-height: 1.7; }
     #law-content.font-size-lg, #law-content.font-size-lg p { font-size: 1.1rem; line-height: 1.8; }
     #law-content.font-size-xl, #law-content.font-size-xl p { font-size: 1.2rem; line-height: 1.85; }
 
-    #law-content.font-serif, 
-    #law-content.font-serif p, 
+    #law-content.font-serif,
+    #law-content.font-serif p,
     #law-content.font-serif li {
         font-family: Georgia, 'Times New Roman', Times, serif;
     }
-    
+
     .links-container {
-        background-color: #f0fdf4; 
-        border: 1px solid #bbf7d0; 
+        background-color: #f0fdf4;
+        border: 1px solid #bbf7d0;
     }
     .links-container #toggle-links-btn {
-        background-color: #dcfce7; 
+        background-color: #dcfce7;
         border-bottom-color: #bbf7d0;
     }
     .links-container #toggle-links-btn h3 {
-        color: #166534; 
+        color: #166534;
     }
     .dark-mode .links-container {
-        background-color: #14532d; 
+        background-color: #14532d;
         border-color: #22c55e;
     }
     .dark-mode .links-container #toggle-links-btn {
@@ -744,46 +744,46 @@
         border-bottom-color: #22c55e;
     }
     .dark-mode .links-container #toggle-links-btn h3 {
-        color: #dcfce7; 
+        color: #dcfce7;
     }
     .dark-mode .links-container a {
-        color: #86efac; 
+        color: #86efac;
     }
     .dark-mode .links-container a:hover {
         color: #f0fdf4;
     }
 
     .juridiques-container {
-        background-color: #f5f3ff; 
-        border: 1px solid #ddd6fe; 
+        background-color: #f5f3ff;
+        border: 1px solid #ddd6fe;
     }
     .juridiques-container #toggle-juridiques-btn {
-        background-color: #ede9fe; 
-        border-bottom-color: #ddd6fe; 
+        background-color: #ede9fe;
+        border-bottom-color: #ddd6fe;
     }
     .juridiques-container #toggle-juridiques-btn h3 {
-        color: #5b21b6; 
+        color: #5b21b6;
     }
     .dark-mode .juridiques-container {
-        background-color: #4c1d95; 
-        border-color: #7c3aed; 
+        background-color: #4c1d95;
+        border-color: #7c3aed;
     }
     .dark-mode .juridiques-container #toggle-juridiques-btn {
-        background-color: #5b21b6; 
+        background-color: #5b21b6;
         border-bottom-color: #7c3aed;
     }
     .dark-mode .juridiques-container #toggle-juridiques-btn h3 {
-        color: #ddd6fe; 
+        color: #ddd6fe;
     }
 
     @media (max-width: 480px) {
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center {
-            flex-wrap: nowrap; 
-            overflow-x: auto;  
-            justify-content: flex-start; 
-            padding: 0 10px; 
-            -ms-overflow-style: none;  
-            scrollbar-width: none;  
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            justify-content: flex-start;
+            padding: 0 10px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         #sticky-action-bar > .flex.flex-wrap.items-center.justify-center::-webkit-scrollbar {
@@ -817,75 +817,75 @@
 
     .top-right-controls {
         display: flex;
-        flex-direction: column; 
-        align-items: flex-end; 
+        flex-direction: column;
+        align-items: flex-end;
     }
 
     .top-right-buttons {
         display: flex;
-        gap: 12px; 
+        gap: 12px;
         align-items: center;
-        margin-bottom: 8px; 
+        margin-bottom: 8px;
     }
 
     .neural-waves-container {
         display: flex;
-        justify-content: space-between; 
-        align-items: center; 
-        gap: 15px; 
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
         margin-top: 15px;
         margin-bottom: 15px;
-        flex-wrap: wrap; 
+        flex-wrap: wrap;
     }
 
     .minimal-timer-container {
-        background-color: #f9fafb; 
-        border: 1px solid #e5e7eb; 
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
         border-radius: 0.5rem;
         padding: 0.75rem 1rem;
         box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        justify-content: space-between; 
-        height: auto; 
-        margin-bottom: 0; 
-        gap: 10px; 
-        max-width: 500px; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        height: auto;
+        margin-bottom: 0;
+        gap: 10px;
+        max-width: 500px;
     }
 
     .dark-mode .minimal-timer-container {
-        background-color: #1f2937; 
-        border-color: #374151; 
+        background-color: #1f2937;
+        border-color: #374151;
     }
 
     .timer-display-group {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 1.25rem; 
+        font-size: 1.25rem;
         font-weight: bold;
-        color: #2563eb; 
-        white-space: nowrap; 
+        color: #2563eb;
+        white-space: nowrap;
     }
     .dark-mode .timer-display-group {
-        color: #93c5fd; 
+        color: #93c5fd;
     }
     .timer-display-group .timer-icon {
         font-size: 1.5rem;
-        color: #3b82f6; 
+        color: #3b82f6;
     }
 
     .timer-controls-group {
         display: flex;
         gap: 5px;
-        flex-wrap: nowrap; 
+        flex-wrap: nowrap;
     }
 
     .btn-timer-icon {
-        width: 38px; 
+        width: 38px;
         height: 38px;
-        border-radius: 50%; 
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -893,34 +893,34 @@
         cursor: pointer;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         font-size: 1rem;
-        color: white; 
-        position: relative; 
+        color: white;
+        position: relative;
     }
     .btn-timer-icon:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    .btn-green { background-color: #22c55e; } 
-    .btn-green:hover { background-color: #16a34a; } 
-    .btn-yellow { background-color: #eab308; } 
-    .btn-yellow:hover { background-color: #d97706; } 
-    .btn-red { background-color: #ef4444; } 
-    .btn-red:hover { background-color: #dc2626; } 
-    .btn-blue { background-color: #3b82f6; } 
-    .btn-blue:hover { background-color: #2563eb; } 
-    .btn-purple { background-color: #a855f7; } 
-    .btn-purple:hover { background-color: #9333ea; } 
+    .btn-green { background-color: #22c55e; }
+    .btn-green:hover { background-color: #16a34a; }
+    .btn-yellow { background-color: #eab308; }
+    .btn-yellow:hover { background-color: #d97706; }
+    .btn-red { background-color: #ef4444; }
+    .btn-red:hover { background-color: #dc2626; }
+    .btn-blue { background-color: #3b82f6; }
+    .btn-blue:hover { background-color: #2563eb; }
+    .btn-purple { background-color: #a855f7; }
+    .btn-purple:hover { background-color: #9333ea; }
 
 
     .manual-time-group {
         display: flex;
         align-items: center;
         gap: 5px;
-        flex-wrap: nowrap; 
+        flex-wrap: nowrap;
     }
 
     .manual-input {
-        width: 60px; 
+        width: 60px;
         padding: 0.4rem 0.6rem;
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
@@ -942,35 +942,35 @@
 
     @media (max-width: 640px) {
         .top-right-controls {
-            flex-direction: column; 
-            align-items: stretch; 
-            gap: 8px; 
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
         }
         .top-right-buttons {
-            justify-content: flex-end; 
+            justify-content: flex-end;
         }
         .minimal-timer-container {
-            flex-direction: column; 
-            align-items: flex-start; 
-            padding: 0.75rem; 
-            gap: 8px; 
-            max-width: none; 
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.75rem;
+            gap: 8px;
+            max-width: none;
         }
         .timer-display-group,
         .timer-controls-group,
         .manual-time-group {
-            justify-content: flex-start; 
-            flex-wrap: wrap; 
+            justify-content: flex-start;
+            flex-wrap: wrap;
             width: 100%;
         }
         .manual-input {
-            width: 70px; 
+            width: 70px;
         }
 
         .neural-waves-container {
-            flex-direction: column; 
+            flex-direction: column;
             align-items: flex-start;
-            gap: 15px; 
+            gap: 15px;
         }
     }
 </style>
@@ -1029,7 +1029,7 @@
 {% endif %}
 
 <div class="neural-waves-container">
-    <div class="flex flex-wrap items-center gap-2"> 
+    <div class="flex flex-wrap items-center gap-2">
         <button class="neural-wave-button wave-alpha" data-wave="alpha" aria-label="Onda Alfa"><i class="fas fa-brain"></i><span class="tooltip">Onda Alfa (8-12Hz) <br>Ideal para relaxamento alerta e foco sem tensão</span></button>
         <button class="neural-wave-button wave-beta" data-wave="beta" aria-label="Onda Beta"><i class="fas fa-bolt"></i><span class="tooltip">Onda Beta (12-30Hz) <br>Perfeita para análise jurídica e raciocínio lógico</span></button>
         <button class="neural-wave-button wave-theta" data-wave="theta" aria-label="Onda Teta"><i class="fas fa-moon"></i><span class="tooltip">Onda Teta (4-8Hz) <br>Auxilia na compreensão de conceitos jurídicos complexos</span></button>
@@ -1260,7 +1260,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
-    const subjectId = {{ law.subject_id | tojson }}; 
+    const subjectId = {{ law.subject_id | tojson }};
+
+    let isCommunityViewActive = false; // <<< ALTERAÇÃO: Movida para um escopo mais alto
 
     function fixDuplicateDescription() {
         if (!lawContent) return;
@@ -1278,10 +1280,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             if (potentialDuplicate.tagName === 'P' && potentialDuplicate.textContent.trim() === descriptionText) {
                 potentialDuplicate.remove();
-                break; 
+                break;
             }
             if (potentialDuplicate.textContent.trim() !== '' && potentialDuplicate.textContent.trim() !== descriptionText) {
-                break; 
+                break;
             }
             potentialDuplicate = potentialDuplicate.nextElementSibling;
         }
@@ -1350,7 +1352,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const pageTop = document.getElementById("page-top");
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
-    
+
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
@@ -1451,30 +1453,30 @@ document.addEventListener("DOMContentLoaded", function () {
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
         if (!button) return;
-        
-        const elementsToToggleOnLoad = buttonId === 'toggle-my-comments-btn' 
+
+        const elementsToToggleOnLoad = buttonId === 'toggle-my-comments-btn'
             ? document.querySelectorAll(contentSelector)
             : lawContent.querySelectorAll(contentSelector);
-        
+
         elementsToToggleOnLoad.forEach(el => {
             el.classList.remove("conteudo-oculto");
         });
 
         let isVisible = true;
-        
+
         button.addEventListener("click", function () {
             isVisible = !isVisible;
-            const elementsToToggle = buttonId === 'toggle-my-comments-btn' 
+            const elementsToToggle = buttonId === 'toggle-my-comments-btn'
                 ? document.querySelectorAll(contentSelector)
                 : lawContent.querySelectorAll(contentSelector);
-            
+
             elementsToToggle.forEach(el => {
                 el.classList.toggle("conteudo-oculto", !isVisible);
             });
-            
+
             const icon = this.querySelector('i');
             this.classList.toggle("active", !isVisible);
-            
+
             if (isVisible) {
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
@@ -1507,7 +1509,7 @@ document.addEventListener("DOMContentLoaded", function () {
           pageTop.scrollIntoView({ behavior: 'smooth' });
       });
     }
-    
+
     const markCompleteBtn = document.getElementById('mark-complete-btn');
 
     if (markCompleteBtn) {
@@ -1521,7 +1523,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({}) 
+                body: JSON.stringify({})
             })
             .then(response => {
                 if (!response.ok) {
@@ -1538,7 +1540,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }).showToast();
 
                     if (data.unlocked_achievements && data.unlocked_achievements.length > 0) {
-                        let achievementsHtml = data.unlocked_achievements.map(ach => 
+                        let achievementsHtml = data.unlocked_achievements.map(ach =>
                             `<div style="display: flex; align-items: center; margin-top: 10px;">
                                 <i class="${ach.icon}" style="font-size: 1.5rem; margin-right: 15px; color: #f59e0b;"></i>
                                 <div>
@@ -1547,7 +1549,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 </div>
                              </div>`
                         ).join('');
-                        
+
                         Swal.fire({
                             title: 'Conquista Desbloqueada!',
                             html: achievementsHtml,
@@ -1616,13 +1618,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let timerInterval;
     let startTime;
-    let elapsedTime = 0; 
-    let currentSessionId = null; 
+    let elapsedTime = 0;
+    let currentSessionId = null;
 
     function formatTime(seconds) {
         const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
         const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
+        const s = String(Math.floor(seconds % 60)).padStart(2, '0');
         return `${h}:${m}:${s}`;
     }
 
@@ -1635,16 +1637,16 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 const response = await fetch(requestUrl, requestOptions);
                 if (response.ok) {
-                    const data = await response.json(); 
-                    successCallback(data); 
+                    const data = await response.json();
+                    successCallback(data);
                 } else {
                     console.warn(`[Background Sync] Requisição falhou (status ${response.status}). Registrando sync: ${tag}`);
                     const swRegistration = await navigator.serviceWorker.ready;
-                    
+
                     const requestToStore = new Request(requestUrl, requestOptions);
-                    
+
                     await swRegistration.active.postMessage({
-                        type: 'SAVE_REQUEST', 
+                        type: 'SAVE_REQUEST',
                         request: {
                             url: requestToStore.url,
                             method: requestToStore.method,
@@ -1657,18 +1659,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     Toastify({
                         text: `Ação agendada! Será sincronizada quando a internet retornar.`,
                         duration: 5000,
-                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } 
+                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" }
                     }).showToast();
                     if (errorCallback) errorCallback();
                 }
             } catch (error) {
                 console.error(`[Background Sync] Erro de rede para requisição: ${requestUrl}`, error);
-                if (error.name === 'AbortError') { 
+                if (error.name === 'AbortError') {
                     console.log('Requisição abortada. Não registra sync.');
                     if (errorCallback) errorCallback();
                     return;
                 }
-                
+
                 console.warn(`[Background Sync] Offline. Registrando sync: ${tag}`);
                 const swRegistration = await navigator.serviceWorker.ready;
                 const requestToStore = new Request(requestUrl, requestOptions);
@@ -1686,7 +1688,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 Toastify({
                     text: `Ação agendada! Será sincronizada quando a internet retornar.`,
                     duration: 5000,
-                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } 
+                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" }
                 }).showToast();
                 if (errorCallback) errorCallback();
             }
@@ -1707,14 +1709,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     async function startTimer() {
-        if (timerInterval) return; 
+        if (timerInterval) return;
 
-        if (elapsedTime === 0) { 
-            startTime = Date.now(); 
-            currentSessionId = null; 
+        if (elapsedTime === 0) {
+            startTime = Date.now();
+            currentSessionId = null;
             console.log('[Cronômetro] Iniciando nova sessão de estudo...');
         } else {
-            startTime = Date.now() - (elapsedTime * 1000); 
+            startTime = Date.now() - (elapsedTime * 1000);
             console.log('[Cronômetro] Retomando sessão de estudo...');
         }
 
@@ -1725,8 +1727,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         startTimerBtn.classList.add('hidden');
         pauseTimerBtn.classList.remove('hidden');
-        resetTimerBtn.classList.add('hidden'); 
-        saveTimerBtn.classList.add('hidden'); 
+        resetTimerBtn.classList.add('hidden');
+        saveTimerBtn.classList.add('hidden');
     }
 
     function pauseTimer() {
@@ -1736,15 +1738,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         startTimerBtn.classList.remove('hidden');
         pauseTimerBtn.classList.add('hidden');
-        resetTimerBtn.classList.remove('hidden'); 
-        saveTimerBtn.classList.remove('hidden'); 
+        resetTimerBtn.classList.remove('hidden');
+        saveTimerBtn.classList.remove('hidden');
     }
 
     function resetTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         elapsedTime = 0;
-        currentSessionId = null; 
+        currentSessionId = null;
         renderTimer();
         console.log('[Cronômetro] Reiniciado.');
 
@@ -1760,7 +1762,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        pauseTimer(); 
+        pauseTimer();
 
         const requestUrl = '/student/api/study_sessions/record';
         const requestOptions = {
@@ -1768,11 +1770,11 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 law_id: lawId,
-                subject_id: subjectId, 
+                subject_id: subjectId,
                 duration_seconds: elapsedTime,
                 entry_type: 'auto',
-                start_time: new Date(startTime).toISOString(), 
-                end_time: new Date().toISOString() 
+                start_time: new Date(startTime).toISOString(),
+                end_time: new Date().toISOString()
             })
         };
 
@@ -1781,13 +1783,13 @@ document.addEventListener("DOMContentLoaded", function () {
         saveTimerBtn.disabled = true;
 
         registerBackgroundSync(`sync-auto-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { 
+            (data) => {
                 Toastify({ text: data.message || "Sessão de estudo salva com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
-                resetTimer(); 
+                resetTimer();
                 saveTimerBtn.innerHTML = originalSaveBtnText;
                 saveTimerBtn.disabled = false;
             },
-            () => { 
+            () => {
                 saveTimerBtn.innerHTML = originalSaveBtnText;
                 saveTimerBtn.disabled = false;
             }
@@ -1810,7 +1812,7 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 law_id: lawId,
-                subject_id: subjectId, 
+                subject_id: subjectId,
                 duration_seconds: totalManualSeconds,
                 entry_type: 'manual'
             })
@@ -1820,14 +1822,14 @@ document.addEventListener("DOMContentLoaded", function () {
         addManualTimeBtn.disabled = true;
 
         registerBackgroundSync(`sync-manual-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { 
+            (data) => {
                 Toastify({ text: data.message || "Tempo manual adicionado com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                 manualHoursInput.value = '';
                 manualMinutesInput.value = '';
                 addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
                 addManualTimeBtn.disabled = false;
             },
-            () => { 
+            () => {
                 addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
                 addManualTimeBtn.disabled = false;
             }
@@ -1867,7 +1869,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && timerInterval) {
-            pauseTimer(); 
+            pauseTimer();
         } else if (!document.hidden && !timerInterval && elapsedTime > 0) {
         }
     });
@@ -1879,11 +1881,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Por favor, informe onde você parou.");
                 return;
             }
-            
+
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
-            
+
             const formData = new URLSearchParams();
             formData.append('last_read_article', lastReadArticle);
             formData.append('csrf_token', csrfToken);
@@ -1891,15 +1893,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const requestUrl = `/student/save_last_read/${lawId}`;
             const requestOptions = {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded', 
-                    'X-CSRFToken': csrfToken 
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
                 },
                 body: formData
             };
-            
+
             registerBackgroundSync(`sync-save-bookmark-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-                (data) => { 
+                (data) => {
                     Toastify({ text: data.message || "Último artigo lido salvo com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                     saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                     let messageDiv = document.querySelector('.last-read-info');
@@ -1916,7 +1918,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         saveBookmarkBtn.disabled = false;
                     }, 2000);
                 },
-                () => { 
+                () => {
                     saveBookmarkBtn.innerHTML = originalText;
                     saveBookmarkBtn.disabled = false;
                 }
@@ -1962,7 +1964,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
-    
+
 
     function loadNotes() {
         fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
@@ -1984,22 +1986,22 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         registerBackgroundSync(`sync-save-notes-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { 
+            (data) => {
                 Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                 this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
                 this.classList.toggle('bg-green-500', true);
-                this.classList.toggle('bg-blue-500', false); 
+                this.classList.toggle('bg-blue-500', false);
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.disabled = false;
                     this.classList.remove('bg-green-500');
-                    this.classList.add('bg-blue-500'); 
+                    this.classList.add('bg-blue-500');
                 }, 2000);
             },
-            () => { 
+            () => {
                 this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Agendado!';
-                this.classList.toggle('bg-orange-500', true); 
-                this.classList.toggle('bg-blue-500', false); 
+                this.classList.toggle('bg-orange-500', true);
+                this.classList.toggle('bg-blue-500', false);
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.disabled = false;
@@ -2009,9 +2011,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
     });
-    
+
     loadNotes();
-    
+
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
             event.preventDefault();
@@ -2051,7 +2053,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const allHighlightSpans = lawContent.querySelectorAll('span[class*="user-highlight-"]');
-        
+
         allHighlightSpans.forEach(span => {
             if (selection.containsNode(span, true)) {
                 unwrap(span);
@@ -2079,9 +2081,9 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Para garantir a estabilidade do layout, por favor, aplique a formatação dentro de um único parágrafo ou elemento de cada vez.");
             return;
         }
-        
+
         lawContent.setAttribute('contenteditable', 'true');
-        
+
         if (command === 'bold' || command === 'italic') {
             document.execCommand(command, false, null);
         } else if (command === 'strikethrough') {
@@ -2108,17 +2110,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 range.insertNode(span);
             }
         }
-        
+
         lawContent.setAttribute('contenteditable', 'false');
         lawContent.focus();
         debounceSaveMarkup();
     }
-    
+
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
-    
+
     async function saveLawMarkup() {
         const clonedContent = lawContent.cloneNode(true);
         clonedContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
@@ -2133,10 +2135,10 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({ content: contentToSave })
         };
-        
+
         registerBackgroundSync(`sync-save-markup-${lawId}-${Date.now()}`, requestUrl, requestOptions,
-            (data) => { console.log("Marcações salvas com sucesso!", data); }, 
-            () => { console.warn("Marcações agendadas para sincronização."); } 
+            (data) => { console.log("Marcações salvas com sucesso!", data); },
+            () => { console.warn("Marcações agendadas para sincronização."); }
         );
     }
 
@@ -2165,7 +2167,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 buttonsStyling: false
             }).then((result) => {
                 if (result.isConfirmed) {
-                    
+
                     restoreLawBtn.disabled = true;
 
                     const requestUrl = `/student/law/${lawId}/restore`;
@@ -2178,7 +2180,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     };
 
                     registerBackgroundSync(`sync-restore-law-${lawId}`, requestUrl, requestOptions,
-                        (data) => { 
+                        (data) => {
                             Swal.fire({
                                 title: 'Restaurada!',
                                 text: data.message || 'A lei foi restaurada com sucesso. A página será recarregada.',
@@ -2190,7 +2192,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 window.location.reload();
                             });
                         },
-                        () => { 
+                        () => {
                             Swal.fire({
                                 title: 'Aguardando Sincronização!',
                                 text: 'A restauração foi agendada e será aplicada quando a internet retornar. A página será recarregada após a sincronização.',
@@ -2211,7 +2213,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             this.disabled = true;
-            const lawTitle = '{{ law.title | e }}'; 
+            const lawTitle = '{{ law.title | e }}';
 
             const requestUrl = `/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`;
             const requestOptions = {
@@ -2219,15 +2221,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
             };
 
-            const button = this; 
+            const button = this;
 
             registerBackgroundSync(`sync-favorite-${lawId}`, requestUrl, requestOptions,
-                (data) => { 
-                    button.classList.toggle('favorited', data.favorited); 
+                (data) => {
+                    button.classList.toggle('favorited', data.favorited);
                     button.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
                     button.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
 
-                    const notificationText = data.favorited 
+                    const notificationText = data.favorited
                         ? `'${lawTitle}' adicionado aos favoritos!`
                         : `'${lawTitle}' removido dos favoritos.`;
 
@@ -2243,10 +2245,10 @@ document.addEventListener("DOMContentLoaded", function () {
                             borderRadius: "0.5rem"
                         }
                     }).showToast();
-                    button.disabled = false; 
+                    button.disabled = false;
                 },
-                () => { 
-                    button.disabled = false; 
+                () => {
+                    button.disabled = false;
                 }
             );
         });
@@ -2258,7 +2260,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const modalSaveBtn = document.getElementById('comment-modal-save');
     const modalCancelBtn = document.getElementById('comment-modal-cancel');
     let currentAnchorId = null;
-    let currentEditingCommentId = null; 
+    let currentEditingCommentId = null;
 
     function openCommentModalForCreate(anchorId) {
         currentEditingCommentId = null;
@@ -2284,54 +2286,77 @@ document.addEventListener("DOMContentLoaded", function () {
         currentEditingCommentId = null;
     }
 
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO 1/2: FUNÇÃO DISPLAYCOMMENT ATUALIZADA >>>
+    // =====================================================================
+    // Esta função agora é inteligente. Ela sabe se está na visão da comunidade
+    // e mostra os comentários de forma diferente (apenas leitura).
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
-        if (!anchorElement || !anchorElement.parentNode) return;
-        const oldCommentDiv = anchorElement.parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
+        if (!anchorElement) return;
+
+        const parentNode = anchorElement.parentNode;
+        const oldCommentDiv = parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
         if(oldCommentDiv) oldCommentDiv.remove();
 
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
+
         const commentParagraph = document.createElement('p');
         commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'comment-delete-btn';
-        deleteButton.title = 'Excluir anotação';
-        deleteButton.innerHTML = '&times;';
         commentDiv.appendChild(commentParagraph);
-        commentDiv.appendChild(deleteButton);
-        commentDiv.addEventListener('click', (e) => {
-            if (e.target.classList.contains('comment-delete-btn')) { return; }
-            openCommentModalForEdit(comment.id, comment.content);
-        });
-        deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id); 
-        });
-        anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-        const icon = anchorElement.parentNode.querySelector('.comment-icon');
-        if(icon) icon.classList.add('has-comment');
+
+        // Se NÃO estiver na visão da comunidade, adiciona botões de editar/excluir
+        if (!isCommunityViewActive) {
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'comment-delete-btn';
+            deleteButton.title = 'Excluir anotação';
+            deleteButton.innerHTML = '&times;';
+            commentDiv.appendChild(deleteButton);
+
+            commentDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('comment-delete-btn')) { return; }
+                openCommentModalForEdit(comment.id, comment.content);
+            });
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id);
+            });
+        } else {
+            // Na visão da comunidade, o cursor é padrão (não clicável para editar)
+            commentDiv.style.cursor = 'default';
+        }
+
+        parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
+
+        const wrapper = anchorElement.closest('.paragraph-wrapper');
+        if (wrapper) {
+            const icon = wrapper.querySelector('.comment-icon');
+            if (icon) icon.classList.add('has-comment');
+        }
     }
-    
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO 1/2 >>>
+    // =====================================================================
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
         if (!content) return;
-        
+
         const originalSaveBtnText = modalSaveBtn.innerHTML;
         modalSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         modalSaveBtn.disabled = true;
 
-        if (currentEditingCommentId) { 
+        if (currentEditingCommentId) {
             const requestUrl = `/student/comments/${currentEditingCommentId}`;
             const requestOptions = {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ content: content })
             };
-            
+
             registerBackgroundSync(`sync-update-comment-${currentEditingCommentId}`, requestUrl, requestOptions,
-                (data) => { 
+                (data) => {
                     const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
                     if (commentDiv) { commentDiv.querySelector('p').innerHTML = content.replace(/\n/g, '<br>'); }
                     closeCommentModal();
@@ -2339,13 +2364,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
                 },
-                () => { 
+                () => {
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
-                    closeCommentModal(); 
+                    closeCommentModal();
                 }
             );
-        } else { 
+        } else {
             if (!currentAnchorId) return;
             const requestUrl = `/student/law/${lawId}/comments`;
             const requestOptions = {
@@ -2355,15 +2380,15 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
             registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions,
-                (data) => { 
-                    if (data.comment && data.success) { 
+                (data) => {
+                    if (data.comment && data.success) {
                          displayComment(data.comment);
                          closeCommentModal();
                          Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
                          modalSaveBtn.innerHTML = originalSaveBtnText;
                          modalSaveBtn.disabled = false;
-                    } else { 
-                        fetch(requestUrl, requestOptions) 
+                    } else {
+                        fetch(requestUrl, requestOptions)
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
@@ -2386,7 +2411,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             });
                     }
                 },
-                () => { 
+                () => {
                     modalSaveBtn.innerHTML = originalSaveBtnText;
                     modalSaveBtn.disabled = false;
                     closeCommentModal();
@@ -2394,10 +2419,10 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         }
     }
-    
+
     async function deleteComment(commentId, commentElement, anchorParagraphId) {
         if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
-        
+
         const requestUrl = `/student/comments/${commentId}`;
         const requestOptions = {
             method: 'DELETE',
@@ -2405,7 +2430,7 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         registerBackgroundSync(`sync-delete-comment-${commentId}`, requestUrl, requestOptions,
-            (data) => { 
+            (data) => {
                 commentElement.remove();
                 const anchorElement = document.getElementById(anchorParagraphId);
                 if (anchorElement && anchorElement.parentNode) {
@@ -2417,7 +2442,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 Toastify({ text: data.message || "Anotação excluída!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
             },
-            () => { 
+            () => {
             }
         );
     }
@@ -2431,7 +2456,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let areIconsVisible = false;
         const paragraphs = lawContent.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
-            if (p.style.backgroundColor) return; 
+            if (p.style.backgroundColor) return;
             p.id = `law-p-${index}`;
             const wrapper = document.createElement('div');
             wrapper.className = 'paragraph-wrapper';
@@ -2452,7 +2477,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
                 icon.title = 'Adicionar anotação privada';
-                icon.style.display = 'none'; 
+                icon.style.display = 'none';
                 icon.addEventListener('click', () => openCommentModalForCreate(p.id));
             }
             wrapper.appendChild(icon);
@@ -2464,7 +2489,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success) { data.comments.forEach(displayComment); }
         } catch (error) { console.error("Erro ao carregar anotações por parágrafo:", error); }
     }
-    
+
     modalSaveBtn.addEventListener('click', saveOrUpdateComment);
     modalCancelBtn.addEventListener('click', closeCommentModal);
     modalBackdrop.addEventListener('click', (e) => {
@@ -2604,30 +2629,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA PARA VER VERSÃO DA COMUNIDADE >>>
+    // <<< INÍCIO DA ALTERAÇÃO 2/2: LÓGICA ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
     // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
-    
-    // Guarda o conteúdo pessoal do usuário assim que a página carrega.
     let userPersonalContent = lawContent.innerHTML;
-    let isCommunityViewActive = false;
 
     if (toggleCommunityBtn) {
         toggleCommunityBtn.addEventListener('click', () => {
             if (isCommunityViewActive) {
                 // --- VOLTA PARA A VERSÃO PESSOAL ---
                 lawContent.innerHTML = userPersonalContent;
-                // Re-inicializa os sistemas que dependem do conteúdo HTML, como os comentários.
-                // É importante chamar de novo para que os ícones e eventos funcionem no conteúdo restaurado.
-                initCommentSystem(); 
+                isCommunityViewActive = false;
+                initCommentSystem(); // Re-inicializa os comentários interativos do usuário
                 indexArticles();
-                
-                // Reabilita as ferramentas de edição
+
                 document.getElementById('editing-tools-container').classList.remove('editing-disabled');
                 document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
-                
+
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
-                isCommunityViewActive = false;
             } else {
                 // --- BUSCA E MOSTRA A VERSÃO DA COMUNIDADE ---
                 const originalBtnHTML = toggleCommunityBtn.innerHTML;
@@ -2638,14 +2657,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
+                            isCommunityViewActive = true;
                             lawContent.innerHTML = data.content;
-                            
-                            // Desabilita APENAS os contêineres de edição, mantendo os toggles de visibilidade ativos
+
+                            // Se a API retornar comentários, os exibe.
+                            if (data.comments && Array.isArray(data.comments)) {
+                                data.comments.forEach(comment => displayComment(comment));
+                            }
+
                             document.getElementById('editing-tools-container').classList.add('editing-disabled');
                             document.getElementById('right-side-controls-container').classList.add('editing-disabled');
-                            
+
                             toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
-                            isCommunityViewActive = true;
                         } else {
                             Toastify({
                                 text: data.error || "Não foi possível carregar a versão da comunidade.",
@@ -2671,7 +2694,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     // =====================================================================
-    // <<< FIM DA ALTERAÇÃO 3/3 >>>
+    // <<< FIM DA ALTERAÇÃO 2/2 >>>
     // =====================================================================
 
 });
