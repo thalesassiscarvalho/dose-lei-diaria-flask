@@ -5,7 +5,7 @@
 {% block head_extra %}
 <style>
     /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA O NOVO BOTÃO >>> */
+    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA A NOVA FUNCIONALIDADE >>> */
     /* ===================================================================== */
     #community-version-controls {
         margin-bottom: 1.5rem;
@@ -27,6 +27,7 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
+    /* Esta classe será usada via JS para desabilitar os botões de edição */
     .editing-disabled {
         pointer-events: none;
         opacity: 0.5;
@@ -1011,14 +1012,17 @@
     </div>
 </div>
 
-{% if law.approved_contribution_id %}
-<div id="community-version-controls">
-    <button id="toggle-community-version-btn">
-        <i class="fas fa-star mr-2"></i>
-        <span>Ver Versão da Comunidade</span>
-    </button>
+<div id="community-version-controls-container">
+    {% if law.approved_contribution_id %}
+    <div id="community-version-controls">
+        <button id="toggle-community-version-btn">
+            <i class="fas fa-star mr-2"></i>
+            <span>Ver Versão da Comunidade</span>
+        </button>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
+
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
     <div class="law-banner-content">
@@ -2603,33 +2607,35 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA PARA VER VERSÃO DA COMUNIDADE >>>
-    // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
-    const stickyBar = document.getElementById('sticky-action-bar');
-    
-    // Guarda o conteúdo pessoal do usuário assim que a página carrega.
-    let userPersonalContent = lawContent.innerHTML;
-    let isCommunityViewActive = false;
+    const editingToolsContainer = document.querySelector('.font-control-group');
 
+    let userPersonalContent = '';
+    let isCommunityViewActive = false;
+    
     if (toggleCommunityBtn) {
+        userPersonalContent = lawContent.innerHTML;
+
         toggleCommunityBtn.addEventListener('click', () => {
+            const elementsToDisable = [
+                '.font-control-group', 
+                '#share-contribution-btn'
+            ];
+
             if (isCommunityViewActive) {
-                // --- VOLTA PARA A VERSÃO PESSOAL ---
+                // VOLTA PARA A VERSÃO PESSOAL
                 lawContent.innerHTML = userPersonalContent;
-                // Re-inicializa os sistemas que dependem do conteúdo HTML, como os comentários.
-                // É importante chamar de novo para que os ícones e eventos funcionem no conteúdo restaurado.
                 initCommentSystem(); 
                 indexArticles();
                 
-                // Reabilita as ferramentas de edição
-                if(stickyBar) stickyBar.classList.remove('editing-disabled');
+                elementsToDisable.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => el.classList.remove('editing-disabled'));
+                });
                 
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
                 isCommunityViewActive = false;
             } else {
-                // --- BUSCA E MOSTRA A VERSÃO DA COMUNIDADE ---
+                // BUSCA E MOSTRA A VERSÃO DA COMUNIDADE
                 const originalBtnHTML = toggleCommunityBtn.innerHTML;
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
                 toggleCommunityBtn.disabled = true;
@@ -2640,8 +2646,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (data.success) {
                             lawContent.innerHTML = data.content;
                             
-                            // Desabilita as ferramentas de edição
-                            if(stickyBar) stickyBar.classList.add('editing-disabled');
+                            elementsToDisable.forEach(selector => {
+                                document.querySelectorAll(selector).forEach(el => el.classList.add('editing-disabled'));
+                            });
                             
                             toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
                             isCommunityViewActive = true;
@@ -2669,9 +2676,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO 3/3 >>>
-    // =====================================================================
 
 });
 </script>
