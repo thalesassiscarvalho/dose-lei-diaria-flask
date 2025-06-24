@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Revisão de Contribuições da Comunidade{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Revisão de Contribuições</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Revisão de Contribuições</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-users-cog me-1"></i>
+            Contribuições Pendentes
+        </div>
+        <div class="card-body">
+            {% if contributions %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data de Envio</th>
+                            <th>Usuário</th>
+                            <th>Lei (Tópico)</th>
+                            <th class="text-center">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contributions %}
+                        <tr>
+                            <td>{{ c.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ c.user.full_name or c.user.email }}</td>
+                            <td>
+                                {% if c.law.parent %}
+                                    <small class="text-muted">{{ c.law.parent.title }}</small><br>
+                                {% endif %}
+                                <strong>{{ c.law.title }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <a href="#" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-search me-1"></i> Revisar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success text-center" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                Parabéns! Não há nenhuma contribuição pendente para revisão.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
