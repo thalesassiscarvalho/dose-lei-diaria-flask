@@ -47,24 +47,5 @@ Este arquivo contém o código-fonte da aplicação Flask "Estudo da Lei Seca", 
     ```
     A aplicação estará disponível em `http://127.0.0.1:5001` (ou a porta configurada).
 
-## Funcionalidades Implementadas
 
-- Autenticação de usuários (cadastro, login, logout).
-- Aprovação de usuários pelo administrador.
-- Gerenciamento de Leis (CRUD) pelo administrador.
-- **Gerenciamento de Matérias** pelo administrador.
-- **Associação de Leis a Matérias**.
-- Painel do aluno com visualização de leis.
-- **Filtro de leis por matéria** no painel do aluno.
-- Marcação de progresso (leis concluídas).
-- Barra de progresso geral.
-- Pesquisa de leis.
-- Botão para "Rever Lei" (resetar progresso).
-- **Sistema de Pontos:** Alunos ganham pontos ao concluir leis.
-- **Estrutura de Conquistas:** Sistema pronto para adicionar e conceder conquistas (nenhuma definida por padrão).
-- Interface visual com tema claro (fundo branco, detalhes roxos).
-
-## Implantação
-
-Esta aplicação foi implantada usando a plataforma Manus. Para implantação em outros ambientes (como Turbocloud), verifique os requisitos de suporte a Python/Flask, banco de dados MySQL e configuração de servidor web (WSGI/uWSGI).
 
