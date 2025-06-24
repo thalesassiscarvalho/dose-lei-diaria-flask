@@ -3,30 +3,19 @@
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import datetime, date
-# REMOVIDO: A importação do SQLAlchemy foi movida para extensions.py
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
-# ALTERADO: Importa a instância 'db' do arquivo central de extensões.
+# Importa a instância 'db' do arquivo central de extensões.
 from src.extensions import db
 
 try:
     from .law import Law 
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 1/3: IMPORTAR O MODELO 'Concurso' >>>
-    # =====================================================================
-    # Importação do modelo Concurso para criar o relacionamento.
     from .concurso import Concurso
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 1/3 >>>
-    # =====================================================================
 except ImportError:
     pass 
 
-# REMOVIDO: A linha 'db = SQLAlchemy()' foi movida para o arquivo extensions.py
-# e agora é importada acima.
-
-# Association table for User-Achievement relationship
+# Tabela de associação User-Achievement
 achievements_association = db.Table("user_achievements",
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
     db.Column("achievement_id", db.Integer, db.ForeignKey("achievement.id"), primary_key=True)
@@ -38,70 +27,42 @@ favorites_association = db.Table("user_favorites",
     db.Column("law_id", db.Integer, db.ForeignKey("law.id", ondelete="CASCADE"), primary_key=True)
 )
 
-# =====================================================================
-# <<< INÍCIO DA IMPLEMENTAÇÃO 2/3: NOVA TABELA DE ASSOCIAÇÃO USER-CONCURSO >>>
-# =====================================================================
-# Esta tabela conecta os usuários aos concursos.
+# Tabela de associação User-Concurso
 user_concurso_association = db.Table('user_concurso_association',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), primary_key=True),
     db.Column('concurso_id', db.Integer, db.ForeignKey('concurso.id', ondelete="CASCADE"), primary_key=True)
 )
-# =====================================================================
-# <<< FIM DA IMPLEMENTAÇÃO 2/3 >>>
-# =====================================================================
 
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user' 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False) # Changed from username to email
-    full_name = db.Column(db.String(120), nullable=True) # Added full name
-    phone = db.Column(db.String(20), nullable=True) # Added phone number
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    full_name = db.Column(db.String(120), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(256))
-    role = db.Column(db.String(10), nullable=False, default="student") # "admin" or "student"
+    role = db.Column(db.String(10), nullable=False, default="student")
     is_approved = db.Column(db.Boolean, nullable=False, default=False)
-    points = db.Column(db.Integer, default=0, nullable=False) # Added points field
+    points = db.Column(db.Integer, default=0, nullable=False)
     favorite_label = db.Column(db.String(100), nullable=True)
     default_concurso_id = db.Column(db.Integer, db.ForeignKey('concurso.id'), nullable=True)
-
-    # =====================================================================
-    # <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: CAMPOS DE DATA E HORA >>>
-    # Adicionamos os campos para registrar a data de criação e o último acesso do usuário.
-    # - created_at: Registra a data e hora no momento em que o usuário é criado.
-    # - last_seen: Atualiza automaticamente sempre que o registro do usuário for alterado.
-    # =====================================================================
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    # =====================================================================
-    # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
-    # =====================================================================
-
-    # =====================================================================
-    # <<< INÍCIO DA IMPLEMENTAÇÃO 3/3: NOVOS CAMPOS E RELACIONAMENTOS >>>
-    # =====================================================================
-    # Coluna de controle, com a correção 'server_default' para evitar erros de migração.
     can_see_all_concursos = db.Column(db.Boolean, nullable=False, server_default='true')
 
-    # Relacionamento muitos-para-muitos com o modelo Concurso
     associated_concursos = db.relationship(
         'Concurso',
         secondary=user_concurso_association,
         backref=db.backref('associated_users', lazy='dynamic'),
         lazy='dynamic'
     )
-    # =====================================================================
-    # <<< FIM DA IMPLEMENTAÇÃO 3/3 >>>
-    # =====================================================================
 
-    # Relationships
     progress = db.relationship("UserProgress", backref="user", lazy=True)
     achievements = db.relationship("Achievement", secondary=achievements_association, lazy="subquery",
                                  backref=db.backref("users", lazy=True))
-    
     favorite_laws = db.relationship("Law", secondary=favorites_association, lazy="dynamic", 
                                   backref=db.backref("favorited_by_users", lazy=True))
-    
     study_activities = db.relationship("StudyActivity", backref="user", lazy="dynamic", cascade="all, delete-orphan")
-
     todo_items = db.relationship("TodoItem", backref="user", lazy="dynamic", cascade="all, delete-orphan")
 
     def set_password(self, password):
@@ -121,6 +82,7 @@ class User(UserMixin, db.Model):
 
 
 class Achievement(db.Model):
+    __tablename__ = 'achievement'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
@@ -133,6 +95,7 @@ class Achievement(db.Model):
 
 
 class Announcement(db.Model):
+    __tablename__ = 'announcement'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
@@ -145,6 +108,7 @@ class Announcement(db.Model):
 
 
 class UserSeenAnnouncement(db.Model):
+    __tablename__ = 'user_seen_announcement'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
     announcement_id = db.Column(db.Integer, db.ForeignKey('announcement.id', ondelete='CASCADE'), primary_key=True)
     seen_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -157,15 +121,11 @@ class UserSeenAnnouncement(db.Model):
 
 
 class StudyActivity(db.Model):
-    """Registra a atividade de estudo diária de um usuário para a funcionalidade de streak."""
     __tablename__ = 'study_activity'
-    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     study_date = db.Column(db.Date, nullable=False, default=date.today)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Garante que só haverá um registro por usuário por dia
     __table_args__ = (db.UniqueConstraint('user_id', 'study_date', name='_user_study_date_uc'),)
 
     def __repr__(self):
@@ -173,39 +133,25 @@ class StudyActivity(db.Model):
 
 
 class LawBanner(db.Model):
-    """
-    Armazena o conteúdo do banner para uma lei específica.
-    Cada lei pode ter no máximo um banner (relação um-para-um).
-    """
     __tablename__ = 'law_banner'
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
-    # Chave estrangeira para a lei, garantindo que seja única
     law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='CASCADE'), unique=True, nullable=False)
 
     def __repr__(self):
         return f'<LawBanner para Law ID {self.law_id}>'
 
+
 class UserSeenLawBanner(db.Model):
-    """
-    Rastreia qual usuário viu qual versão específica do banner de uma lei.
-    A 'versão' é identificada pelo timestamp 'last_updated' do banner.
-    """
     __tablename__ = 'user_seen_law_banner'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='CASCADE'), nullable=False)
-    
-    # Armazena o timestamp exato do banner que foi visto
     seen_at_timestamp = db.Column(db.DateTime, nullable=False)
     
-    # Relações para facilitar consultas
     user = db.relationship('User', backref=db.backref('seen_law_banners', lazy='dynamic'))
     law = db.relationship('Law', backref=db.backref('seen_by_users', lazy='dynamic'))
-
-    # Garante que um usuário só pode ter um registro de 'visto' para uma versão específica do banner
     __table_args__ = (db.UniqueConstraint('user_id', 'law_id', 'seen_at_timestamp', name='_user_law_timestamp_uc'),)
 
     def __repr__(self):
@@ -213,17 +159,11 @@ class UserSeenLawBanner(db.Model):
 
 
 class TodoItem(db.Model):
-    """
-    Represents um item de tarefa no diário pessoal do usuário.
-    """
     __tablename__ = 'todo_item'
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    
     law_id = db.Column(db.Integer, db.ForeignKey('law.id', ondelete='SET NULL'), nullable=True)
     law = db.relationship('Law', backref='todo_items')
-
     content = db.Column(db.String(500), nullable=False)
     category = db.Column(db.String(50), nullable=False, default='lembrete')
     is_completed = db.Column(db.Boolean, default=False, nullable=False)
@@ -233,52 +173,31 @@ class TodoItem(db.Model):
     def __repr__(self):
         return f"<TodoItem {self.id} (User: {self.user_id}): {self.content[:30]}...>"
 
-# =================================================================================
-# <<< INÍCIO DA ALTERAÇÃO: ADIÇÃO DO MODELO DE CONTRIBUIÇÃO DA COMUNIDADE >>>
-# =================================================================================
-# Esta nova classe 'CommunityContribution' define a estrutura da tabela que irá
-# armazenar as marcações que os usuários desejam compartilhar. Ela funciona como
-# uma área de espera para que um administrador possa revisar o conteúdo antes de
-# torná-lo público para outros usuários.
 class CommunityContribution(db.Model):
-    # O nome da tabela no banco de dados será 'community_contributions'.
     __tablename__ = 'community_contributions'
 
-    # --- Colunas da Tabela ---
-    
-    # ID único para cada contribuição.
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Conecta a contribuição ao usuário que a enviou.
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    # Conecta a contribuição à lei específica que foi marcada.
     law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
-    
-    # Armazena todo o código HTML com as marcações e anotações feitas pelo usuário.
     content = db.Column(db.Text, nullable=False)
-    
-    # Controla o estado da contribuição. Começa como 'pending' (pendente).
-    # Pode ser alterado para 'approved' (aprovado) ou 'rejected' (rejeitado) pelo admin.
     status = db.Column(db.String(50), nullable=False, default='pending', index=True) 
-    
-    # Campo para o admin escrever um feedback, especialmente útil em caso de rejeição.
     reviewer_notes = db.Column(db.Text)
-    
-    # Registra quando a contribuição foi criada.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Registra quando o admin revisou a contribuição.
     reviewed_at = db.Column(db.DateTime)
 
-    # --- Relacionamentos ---
-    # Estes relacionamentos permitem acessar facilmente os dados do usuário e da lei
-    # a partir de um objeto de contribuição. Ex: `minha_contribuicao.user.email`
-    user = db.relationship('User', backref=db.backref('community_contributions', lazy=True))
-    law = db.relationship('Law', backref=db.backref('community_contributions', lazy=True))
+    # --- RELACIONAMENTOS CORRIGIDOS ---
+    user = db.relationship('User', backref=db.backref('community_contributions', lazy='dynamic'))
+    
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: ESPECIFICANDO A CHAVE ESTRANGEIRA >>>
+    # =====================================================================
+    # Aqui, estamos dizendo ao SQLAlchemy para usar APENAS a coluna 'law_id'
+    # para este relacionamento específico, resolvendo a ambiguidade.
+    # O 'back_populates' é uma forma mais moderna de criar o relacionamento reverso.
+    law = db.relationship('Law', foreign_keys=[law_id], back_populates='all_contributions')
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
 
     def __repr__(self):
         return f'<CommunityContribution {self.id} for Law {self.law_id} by User {self.user_id}>'
-# =================================================================================
-# <<< FIM DA ALTERAÇÃO >>>
-# =================================================================================
