@@ -1304,3 +1304,29 @@ def share_contribution(law_id):
 # =====================================================================
 # <<< FIM DA ALTERAÇÃO 2/2 >>>
 # =====================================================================
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO: API PARA VERSÃO DA COMUNIDADE >>>
+# =====================================================================
+@student_bp.route("/api/law/<int:law_id>/community-version")
+@login_required
+def get_community_version(law_id):
+    # 1. Busca a lei no banco de dados.
+    law = Law.query.get_or_404(law_id)
+
+    # 2. Verifica se existe um ID de contribuição aprovada nesta lei.
+    if not law.approved_contribution_id:
+        return jsonify(success=False, error="Nenhuma versão da comunidade foi aprovada para esta lei ainda."), 404
+
+    # 3. Busca a contribuição aprovada específica usando o ID.
+    approved_contribution = CommunityContribution.query.get(law.approved_contribution_id)
+
+    if not approved_contribution:
+        # Caso raro onde o ID existe na lei mas a contribuição foi apagada.
+        return jsonify(success=False, error="A versão da comunidade não pôde ser encontrada."), 404
+
+    # 4. Retorna o conteúdo da contribuição aprovada em formato JSON.
+    return jsonify(success=True, content=approved_contribution.content)
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =====================================================================
