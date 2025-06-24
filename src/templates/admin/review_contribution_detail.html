@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Revisando Contribuição{% endblock %}
+
+{% block head_extra %}
+<style>
+    .content-panel {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        height: 60vh;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+    .content-panel h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+        position: sticky;
+        top: -1.5rem; /* Ajuste para compensar o padding do painel */
+        background-color: inherit; /* Herda a cor de fundo do painel */
+        padding-top: 1.5rem;
+    }
+    .prose {
+        /* Estilos básicos para o conteúdo da lei, pode ajustar conforme necessário */
+        line-height: 1.6;
+    }
+    .prose .user-highlight-yellow { background-color: #fef9c3; }
+    .prose .user-highlight-green { background-color: #dcfce7; }
+    .prose .user-highlight-blue { background-color: #dbeafe; }
+    .prose .user-highlight-pink { background-color: #fce7f3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-6">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Revisando Contribuição</h1>
+        <p class="text-lg text-gray-600 mt-1">
+            Enviado por: <span class="font-semibold">{{ contribution.user.full_name or contribution.user.email }}</span> em {{ contribution.created_at.strftime('%d/%m/%Y') }}
+        </p>
+        <p class="text-lg text-gray-600">
+            Tópico: <span class="font-semibold">{{ contribution.law.title }}</span>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+            <div class="content-panel bg-gray-50">
+                <h3 class="text-gray-700">Versão Original da Lei</h3>
+                <div class="prose max-w-none">
+                    {{ contribution.law.content|safe }}
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="content-panel bg-white">
+                <h3 class="text-blue-700">Versão Enviada pelo Usuário</h3>
+                <div class="prose max-w-none">
+                    {{ contribution.content|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Ação de Moderação</h2>
+        <form action="{{ url_for('admin.process_contribution', contribution_id=contribution.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-4">
+                <label for="reviewer_notes" class="block text-sm font-medium text-gray-700">Notas para o Usuário (Opcional)</label>
+                <textarea name="reviewer_notes" id="reviewer_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Ótimas marcações, mas revisei a ortografia."></textarea>
+                <p class="mt-2 text-xs text-gray-500">Estas notas podem ser usadas para referência futura.</p>
+            </div>
+
+            <div class="flex justify-end items-center space-x-4">
+                <a href="{{ url_for('admin.review_contributions') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Cancelar
+                </a>
+                <button type="submit" name="action" value="reject" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    <span>Rejeitar</span>
+                </button>
+                <button type="submit" name="action" value="approve" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Aprovar Contribuição</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
