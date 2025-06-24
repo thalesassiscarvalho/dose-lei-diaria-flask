@@ -246,8 +246,8 @@
                 <div class="mb-4">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category or 'info' }}" role="alert">
-                        {{ message }}
-                    </div>
+                        {{ message | safe }}
+                        </div>
                 {% endfor %}
                 </div>
             {% endif %}
