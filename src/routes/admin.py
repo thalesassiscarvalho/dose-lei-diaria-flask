@@ -582,27 +582,35 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
-
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 3/3: NOVAS ROTAS PARA REVISÃO DE CONTRIBUIÇÕES >>>
-# =====================================================================
-
-# Rota para a lista de contribuições pendentes
 @admin_bp.route("/community-contributions")
 @login_required
 @admin_required
 def review_contributions():
-    # Busca todas as contribuições com status 'pending'.
-    # Usa 'joinedload' para carregar os dados do usuário e da lei de forma
-    # otimizada, evitando múltiplas consultas ao banco de dados.
     pending_contributions = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
         joinedload(CommunityContribution.law).joinedload(Law.parent)
     ).filter_by(status='pending').order_by(CommunityContribution.created_at.asc()).all()
     
-    # Renderiza o novo template, passando a lista de contribuições.
     return render_template("admin/review_contributions.html", contributions=pending_contributions)
 
+
 # =====================================================================
-# <<< FIM DA ALTERAÇÃO 3/3 >>>
+# <<< INÍCIO DA ALTERAÇÃO: ADICIONANDO A ROTA DE DETALHES QUE FALTAVA >>>
+# =====================================================================
+# Esta é a rota que o botão "Revisar" procura. Ela recebe o ID da 
+# contribuição, busca os dados no banco e renderiza um novo template.
+@admin_bp.route("/community-contributions/review/<int:contribution_id>")
+@login_required
+@admin_required
+def review_contribution_detail(contribution_id):
+    # Busca a contribuição específica ou retorna um erro 404 (Não Encontrado)
+    contribution = CommunityContribution.query.options(
+        joinedload(CommunityContribution.user),
+        joinedload(CommunityContribution.law).joinedload(Law.parent)
+    ).get_or_404(contribution_id)
+    
+    # Por enquanto, apenas renderizamos o template passando o objeto da contribuição
+    return render_template("admin/review_contribution_detail.html", contribution=contribution)
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO >>>
 # =====================================================================
