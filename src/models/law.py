@@ -20,6 +20,7 @@ class Law(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True)
     audio_url = db.Column(db.String(500), nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=True)
+    approved_contribution_id = db.Column(db.Integer, db.ForeignKey('community_contributions.id'), nullable=True)
 
     # --- FUNCIONALIDADE EXISTENTE: Explicação do Juridiquês ---
     juridiques_explanation = db.Column(db.Text, nullable=True)
