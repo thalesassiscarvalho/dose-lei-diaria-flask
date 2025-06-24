@@ -180,25 +180,55 @@ class CommunityContribution(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    
-    # =====================================================================
-    # <<< INÍCIO DA ALTERAÇÃO >>>
-    # =====================================================================
-    # Adicionando a coluna para armazenar o conteúdo das anotações (JSON).
-    comments_content = db.Column(db.JSON, nullable=True)
-    # =====================================================================
-    # <<< FIM DA ALTERAÇÃO >>>
-    # =====================================================================
-
     status = db.Column(db.String(50), nullable=False, default='pending', index=True) 
     reviewer_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reviewed_at = db.Column(db.DateTime)
 
-    # --- RELACIONAMENTOS CORRIGIDOS ---
     user = db.relationship('User', backref=db.backref('community_contributions', lazy='dynamic'))
-    
     law = db.relationship('Law', foreign_keys=[law_id], back_populates='all_contributions')
+
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO 1/2: RELACIONAMENTO COM CommunityComment >>>
+    # =====================================================================
+    # Este relacionamento nos permitirá acessar facilmente todas as anotações
+    # que pertencem a esta contribuição específica. Ex: `contribution.comments`.
+    # 'cascade="all, delete-orphan"' garante que se uma contribuição for
+    # deletada, todas as suas anotações de comunidade também serão.
+    comments = db.relationship('CommunityComment', backref='contribution', lazy='dynamic', cascade="all, delete-orphan")
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO 1/2 >>>
+    # =====================================================================
 
     def __repr__(self):
         return f'<CommunityContribution {self.id} for Law {self.law_id} by User {self.user_id}>'
+
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 2/2: NOVO MODELO CommunityComment >>>
+# =====================================================================
+# Esta é a nova tabela que irá armazenar uma cópia das anotações de
+# parágrafo (as laranjas) para cada contribuição.
+class CommunityComment(db.Model):
+    __tablename__ = 'community_comments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Chave estrangeira que conecta esta anotação à contribuição principal.
+    # ondelete="CASCADE" significa que se a contribuição for deletada,
+    # esta anotação também será.
+    contribution_id = db.Column(db.Integer, db.ForeignKey('community_contributions.id', ondelete="CASCADE"), nullable=False)
+    
+    # O texto da anotação em si.
+    content = db.Column(db.Text, nullable=False)
+    
+    # O ID do parágrafo onde esta anotação deve ser ancorada (ex: "law-p-5").
+    anchor_paragraph_id = db.Column(db.String(255), nullable=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<CommunityComment {self.id} for Contribution {self.contribution_id}>'
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 2/2 >>>
+# =====================================================================
