@@ -69,8 +69,8 @@ class User(UserMixin, db.Model):
     # - created_at: Registra a data e hora no momento em que o usuário é criado.
     # - last_seen: Atualiza automaticamente sempre que o registro do usuário for alterado.
     # =====================================================================
-    # created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    # last_seen = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     # =====================================================================
     # <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
     # =====================================================================
