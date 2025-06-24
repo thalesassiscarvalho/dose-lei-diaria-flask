@@ -582,7 +582,7 @@ def user_details(user_id):
 
     # 1. Calcular tempo total de estudo a partir de StudySession
     # Usamos db.func.sum para somar a duração de todas as sessões do usuário.
-    total_seconds = db.session.query(db.func.sum(StudySession.duration)).filter_by(user_id=user_id).scalar() or 0
+    total_seconds = db.session.query(db.func.sum(StudySession.duration_seconds)).filter_by(user_id=user_id).scalar() or 0
     hours, remainder = divmod(total_seconds, 3600)
     minutes, _ = divmod(remainder, 60)
     study_time_formatted = f"{int(hours)}h {int(minutes)}min"
