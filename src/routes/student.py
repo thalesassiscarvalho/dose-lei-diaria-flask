@@ -8,7 +8,7 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from src.extensions import db
-from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
+from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
@@ -1260,3 +1260,47 @@ def get_study_stats():
                    total_study_seconds=total_study_seconds,
                    total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
                 )
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 2/2: NOVA ROTA PARA COMPARTILHAR CONTRIBUIÇÃO >>>
+# =====================================================================
+# Esta é a nova rota que será chamada pelo JavaScript do frontend.
+@student_bp.route("/law/<int:law_id>/share_contribution", methods=["POST"])
+@login_required
+def share_contribution(law_id):
+    # 1. Busca as marcações que o usuário salvou para esta lei.
+    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+    # 2. Se não houver marcações, ele não pode compartilhar nada. Retorna um erro.
+    if not user_markup or not user_markup.content.strip():
+        return jsonify(success=False, error="Você não fez nenhuma marcação nesta lei para compartilhar."), 400
+
+    # 3. Verifica se já existe uma contribuição PENDENTE para evitar envios duplicados.
+    existing_contribution = CommunityContribution.query.filter_by(
+        user_id=current_user.id,
+        law_id=law_id,
+        status='pending'
+    ).first()
+    
+    if existing_contribution:
+        return jsonify(success=False, error="Você já enviou suas marcações para análise. Por favor, aguarde a revisão."), 400
+
+    # 4. Cria o novo registro da contribuição no banco de dados.
+    try:
+        new_contribution = CommunityContribution(
+            user_id=current_user.id,
+            law_id=law_id,
+            content=user_markup.content, # Usa o conteúdo já salvo e sanitizado
+            status='pending'
+        )
+        db.session.add(new_contribution)
+        db.session.commit()
+        return jsonify(success=True, message="Sua contribuição foi enviada para análise. Muito obrigado!")
+    
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar contribuição do usuário {current_user.id} para a lei {law_id}: {e}")
+        return jsonify(success=False, error="Ocorreu um erro interno ao enviar sua contribuição."), 500
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 2/2 >>>
+# =====================================================================
