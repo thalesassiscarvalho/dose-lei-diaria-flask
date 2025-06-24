@@ -566,3 +566,52 @@ def delete_announcement(announcement_id):
         current_app.logger.error(f"Falha ao excluir o aviso ID {announcement_id}. Erro: {e}", exc_info=True)
         flash(f"Erro ao excluir o aviso: {e}", "danger")
     return redirect(url_for('admin.manage_announcements'))
+
+# Adicione este código no final do seu arquivo src/routes/admin.py
+
+# =====================================================================
+# <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: ROTA DE DETALHES DO USUÁRIO >>>
+# Esta é a rota que o link "Detalhes" que criamos irá chamar.
+# =====================================================================
+@admin_bp.route("/users/details/<int:user_id>")
+@login_required
+@admin_required
+def user_details(user_id):
+    # Busca o usuário ou retorna erro 404 se não encontrar
+    user = User.query.get_or_404(user_id)
+
+    # 1. Calcular tempo total de estudo a partir de StudySession
+    # Usamos db.func.sum para somar a duração de todas as sessões do usuário.
+    total_seconds = db.session.query(db.func.sum(StudySession.duration)).filter_by(user_id=user_id).scalar() or 0
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, _ = divmod(remainder, 60)
+    study_time_formatted = f"{int(hours)}h {int(minutes)}min"
+
+    # 2. Buscar o progresso nos estudos
+    # Usamos 'joinedload' para carregar os dados da lei junto e evitar múltiplas buscas no banco.
+    progress_items = UserProgress.query.filter_by(user_id=user_id).options(
+        joinedload(UserProgress.law)
+    ).order_by(UserProgress.last_accessed_at.desc()).all()
+
+    # 3. Buscar os itens favoritados
+    # O relacionamento 'favorite_laws' que já existe no modelo User facilita isso.
+    favorite_items = user.favorite_laws.all()
+
+    # Monta um dicionário com todas as estatísticas para organizar
+    stats = {
+        'study_time': study_time_formatted,
+        'progress_count': len(progress_items),
+        'favorites_count': len(favorite_items)
+    }
+
+    # No final, tentamos renderizar um template que ainda não criamos.
+    return render_template(
+        "admin/user_details.html", 
+        user=user, 
+        stats=stats,
+        progress_items=progress_items,
+        favorite_items=favorite_items
+    )
+# =====================================================================
+# <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
+# =====================================================================
