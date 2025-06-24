@@ -10,6 +10,7 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
+# Importações completas e corretas
 from src.extensions import db
 # =====================================================================
 # <<< INÍCIO DA ALTERAÇÃO 1/3: IMPORTANDO CommunityContribution >>>
@@ -70,7 +71,7 @@ def dashboard():
     }
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
-
+    
     # =====================================================================
     # <<< INÍCIO DA ALTERAÇÃO 2/3: ADICIONANDO CONTAGEM DE CONTRIBUIÇÕES PENDENTES >>>
     # =====================================================================
@@ -91,10 +92,13 @@ def dashboard():
                            pending_users_count=pending_users_count,
                            charts_data=charts_data,
                            active_announcements_count=active_announcements_count,
-                           pending_contributions_count=pending_contributions_count # Passando a nova contagem para o template
+                           # Passando a nova contagem para o template
+                           pending_contributions_count=pending_contributions_count 
                            )
 
-# ... (todas as outras rotas permanecem iguais) ...
+# ... (o resto das suas rotas continua aqui, sem alterações) ...
+
+# Rota de gerenciamento de conteúdo
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
@@ -129,6 +133,7 @@ def content_management():
                            selected_subject=subject_filter)
 
 
+# Rotas para Gerenciar Concursos
 @admin_bp.route("/concursos", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -189,6 +194,7 @@ def delete_concurso(concurso_id):
     return redirect(url_for("admin.manage_concursos"))
 
 
+# Rota para gerenciar matérias
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -210,7 +216,7 @@ def manage_subjects():
     subjects = Subject.query.order_by(Subject.name).all()
     return render_template("admin/manage_subjects.html", subjects=subjects)
 
-
+# Rota para deletar matérias
 @admin_bp.route("/subjects/delete/<int:subject_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -225,6 +231,7 @@ def delete_subject(subject_id):
     return redirect(url_for("admin.manage_subjects"))
 
 
+# Rota para adicionar lei
 @admin_bp.route("/laws/add", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -296,7 +303,7 @@ def add_law():
                            pre_selected_parent_id=pre_selected_parent_id,
                            concursos=concursos)
 
-
+# Rota para editar lei
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -358,7 +365,7 @@ def edit_law(law_id):
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts, concursos=concursos)
 
-
+# Rota para deletar leis
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -388,7 +395,6 @@ def delete_law(law_id):
         current_app.logger.error(f"Falha ao excluir a lei ID {law_id}. Erro: {e}", exc_info=True)
         flash(f"Erro ao excluir o item. Verifique o log da aplicação para mais detalhes.", "danger")
     return redirect(url_for("admin.content_management"))
-
 
 @admin_bp.route("/users")
 @login_required
@@ -599,3 +605,27 @@ def user_details(user_id):
         progress_items=progress_items,
         favorite_items=favorite_items
     )
+
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 3/3: NOVAS ROTAS PARA REVISÃO DE CONTRIBUIÇÕES >>>
+# =====================================================================
+
+# Rota para a lista de contribuições pendentes
+@admin_bp.route("/community-contributions")
+@login_required
+@admin_required
+def review_contributions():
+    # Busca todas as contribuições com status 'pending'.
+    # Usa 'joinedload' para carregar os dados do usuário e da lei de forma
+    # otimizada, evitando múltiplas consultas ao banco de dados.
+    pending_contributions = CommunityContribution.query.options(
+        joinedload(CommunityContribution.user),
+        joinedload(CommunityContribution.law).joinedload(Law.parent)
+    ).filter_by(status='pending').order_by(CommunityContribution.created_at.asc()).all()
+    
+    # Renderiza o novo template, passando a lista de contribuições.
+    return render_template("admin/review_contributions.html", contributions=pending_contributions)
+
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 3/3 >>>
+# =====================================================================
