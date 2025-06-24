@@ -232,3 +232,53 @@ class TodoItem(db.Model):
 
     def __repr__(self):
         return f"<TodoItem {self.id} (User: {self.user_id}): {self.content[:30]}...>"
+
+# =================================================================================
+# <<< INÍCIO DA ALTERAÇÃO: ADIÇÃO DO MODELO DE CONTRIBUIÇÃO DA COMUNIDADE >>>
+# =================================================================================
+# Esta nova classe 'CommunityContribution' define a estrutura da tabela que irá
+# armazenar as marcações que os usuários desejam compartilhar. Ela funciona como
+# uma área de espera para que um administrador possa revisar o conteúdo antes de
+# torná-lo público para outros usuários.
+class CommunityContribution(db.Model):
+    # O nome da tabela no banco de dados será 'community_contributions'.
+    __tablename__ = 'community_contributions'
+
+    # --- Colunas da Tabela ---
+    
+    # ID único para cada contribuição.
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Conecta a contribuição ao usuário que a enviou.
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Conecta a contribuição à lei específica que foi marcada.
+    law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
+    
+    # Armazena todo o código HTML com as marcações e anotações feitas pelo usuário.
+    content = db.Column(db.Text, nullable=False)
+    
+    # Controla o estado da contribuição. Começa como 'pending' (pendente).
+    # Pode ser alterado para 'approved' (aprovado) ou 'rejected' (rejeitado) pelo admin.
+    status = db.Column(db.String(50), nullable=False, default='pending', index=True) 
+    
+    # Campo para o admin escrever um feedback, especialmente útil em caso de rejeição.
+    reviewer_notes = db.Column(db.Text)
+    
+    # Registra quando a contribuição foi criada.
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Registra quando o admin revisou a contribuição.
+    reviewed_at = db.Column(db.DateTime)
+
+    # --- Relacionamentos ---
+    # Estes relacionamentos permitem acessar facilmente os dados do usuário e da lei
+    # a partir de um objeto de contribuição. Ex: `minha_contribuicao.user.email`
+    user = db.relationship('User', backref=db.backref('community_contributions', lazy=True))
+    law = db.relationship('Law', backref=db.backref('community_contributions', lazy=True))
+
+    def __repr__(self):
+        return f'<CommunityContribution {self.id} for Law {self.law_id} by User {self.user_id}>'
+# =================================================================================
+# <<< FIM DA ALTERAÇÃO >>>
+# =================================================================================
