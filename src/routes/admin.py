@@ -1,8 +1,15 @@
+# src/routes/admin.py
+
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
+# =====================================================================
+# <<< INÍCIO DA ATUALIZAÇÃO 1/2: IMPORTANDO 'or_' >>>
+# Adicionamos a importação do 'or_' para permitir a busca em múltiplas colunas.
+# =====================================================================
+from sqlalchemy import or_
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
@@ -15,10 +22,6 @@ from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.concurso import Concurso
-# =====================================================================
-# <<< INÍCIO DA CORREÇÃO 1/2: IMPORTANDO O MODELO 'StudySession' >>>
-# Adicionamos a importação que estava faltando.
-# =====================================================================
 from src.models.study import StudySession
 
 
@@ -377,13 +380,35 @@ def delete_law(law_id):
     return redirect(url_for("admin.content_management"))
 
 
-# Rotas de gerenciamento de usuários
+# =====================================================================
+# <<< INÍCIO DA ATUALIZAÇÃO 2/2: ATUALIZANDO A ROTA 'manage_users' >>>
+# Substituímos a função antiga por esta nova versão que:
+# 1. Pega o termo de busca da URL.
+# 2. Se houver um termo, filtra os usuários por nome ou email.
+# 3. Ordena os resultados para mostrar pendentes primeiro, e depois os mais novos.
+# 4. Passa a busca para o template, para que o campo não se apague.
+# =====================================================================
 @admin_bp.route("/users")
 @login_required
 @admin_required
 def manage_users():
-    users = User.query.filter(User.role != "admin").order_by(User.is_approved.asc(), User.email.asc()).all()
-    return render_template("admin/manage_users.html", users=users)
+    search_query = request.args.get('search', '').strip()
+    
+    query = User.query.filter(User.role != "admin")
+
+    if search_query:
+        search_term = f"%{search_query}%"
+        query = query.filter(
+            or_(
+                User.full_name.ilike(search_term),
+                User.email.ilike(search_term)
+            )
+        )
+
+    users = query.order_by(User.is_approved.asc(), User.created_at.desc()).all()
+    
+    return render_template("admin/manage_users.html", users=users, search_query=search_query)
+
 
 @admin_bp.route("/users/approve/<int:user_id>", methods=["POST"])
 @login_required
@@ -415,12 +440,6 @@ def deny_user(user_id):
         TodoItem.query.filter_by(user_id=user_id).delete()
         UserNotes.query.filter_by(user_id=user_id).delete()
         UserLawMarkup.query.filter_by(user_id=user_id).delete()
-        
-        # =====================================================================
-        # <<< INÍCIO DA CORREÇÃO 2/2: APAGANDO AS SESSÕES DE ESTUDO >>>
-        # Esta é a linha que faltava e que causava o erro.
-        # Ela apaga os registros de tempo de estudo antes de apagar o usuário.
-        # =====================================================================
         StudySession.query.filter_by(user_id=user_id).delete()
         
         user.achievements = []
@@ -440,41 +459,26 @@ def deny_user(user_id):
 @login_required
 @admin_required
 def manage_user_concursos(user_id):
-    # =====================================================================
-    # <<< INÍCIO DA CORREÇÃO: REMOVENDO O 'joinedload' >>>
-    # =====================================================================
-    # A linha original com 'db.joinedload' foi removida para resolver o conflito com 'lazy="dynamic"'.
     user = User.query.get_or_404(user_id)
-    # =====================================================================
-    # <<< FIM DA CORREÇÃO >>>
-    # =====================================================================
     all_concursos = Concurso.query.order_by(Concurso.name).all()
 
     if request.method == "POST":
-        # Verifica se a caixa "ver todos os concursos" foi marcada
         can_see_all = request.form.get("can_see_all_concursos") == "on"
         user.can_see_all_concursos = can_see_all
 
         if can_see_all:
-            # Se pode ver todos, removemos todas as associações específicas
             user.associated_concursos = []
         else:
-            # Caso contrário, pegamos a lista de IDs de concursos do formulário
             concurso_ids = request.form.getlist('concursos')
-            # Buscamos os objetos Concurso correspondentes
             selected_concursos = Concurso.query.filter(Concurso.id.in_(concurso_ids)).all()
-            # Atualizamos a lista de concursos do usuário
             user.associated_concursos = selected_concursos
 
         db.session.commit()
         flash(f"As permissões de concurso para {user.email} foram atualizadas com sucesso!", "success")
         return redirect(url_for("admin.manage_users"))
 
-    # Para o método GET, criamos um set com os IDs dos concursos do usuário
-    # para facilitar a verificação no template
     user_concurso_ids = {c.id for c in user.associated_concursos}
 
-    # Este template ainda não existe. Nós o criaremos no próximo passo.
     return render_template(
         "admin/manage_user_concursos.html",
         user=user,
