@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes de {{ user.full_name or user.email }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Detalhes do Usuário</h1>
+        <p class="text-lg text-gray-600">{{ user.full_name or 'Usuário sem nome' }} ({{ user.email }})</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-sm font-medium text-gray-500 uppercase">Tempo de Estudo Total</h3>
+            <p class="mt-1 text-3xl font-semibold text-purple-700">{{ stats.study_time }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-sm font-medium text-gray-500 uppercase">Itens em Progresso</h3>
+            <p class="mt-1 text-3xl font-semibold text-purple-700">{{ stats.progress_count }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-sm font-medium text-gray-500 uppercase">Itens Favoritados</h3>
+            <p class="mt-1 text-3xl font-semibold text-purple-700">{{ stats.favorites_count }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Progresso de Estudo</h2>
+            {% if progress_items %}
+                <ul class="divide-y divide-gray-200">
+                    {% for item in progress_items %}
+                        <li class="py-3">
+                            <p class="font-medium text-gray-900">{{ item.law.title if item.law else 'Item não encontrado' }}</p>
+                            <p class="text-sm text-gray-500">Progresso: {{ item.progress_percentage }}% - Visto por último em: {{ item.last_accessed_at.strftime('%d/%m/%Y') }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500">Este usuário ainda não iniciou o estudo de nenhum item.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Itens Favoritados</h2>
+            {% if favorite_items %}
+                <ul class="divide-y divide-gray-200">
+                    {% for item in favorite_items %}
+                         <li class="py-3">
+                            <p class="font-medium text-gray-900">{{ item.title }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500">Este usuário não favoritou nenhum item.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-8">
+         <a href="{{ url_for('admin.manage_users') }}" class="text-purple-600 hover:text-purple-800">&larr; Voltar para a lista de usuários</a>
+    </div>
+</div>
+{% endblock %}
