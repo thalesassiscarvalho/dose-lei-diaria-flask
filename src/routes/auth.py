@@ -48,7 +48,7 @@ def login():
                 payment_link = "https://www.estudoleiseca.com.br/"
                 
                 # Criamos a mensagem personalizada com o link
-                message = f'Seu acesso foi suspenso. Para reativar sua conta e recuperar todo o seu progresso, <a href="{payment_link}" class="font-bold text-white underline hover:text-yellow-200">clique aqui e realize a assinatura novamente.</a>'
+                message = f'Seu acesso foi suspenso. Para reativar sua conta e recuperar todo o seu progresso, <a href="{payment_link}" class="font-bold text-black underline hover:text-gray-700">clique aqui e realize a assinatura novamente.</a>'
                 flash(message, "warning")
             else:
                 # Se ele não tem senha, é um novo usuário aguardando ativação
