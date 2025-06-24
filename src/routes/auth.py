@@ -37,15 +37,15 @@ def login():
             return redirect(url_for("auth.login"))
 
         # =====================================================================
-        # <<< INÍCIO DA MELHORIA 1: LÓGICA DE LOGIN PARA EX-ASSINANTES >>>
+        # <<< INÍCIO DA ALTERAÇÃO: LÓGICA DE LOGIN PARA EX-ASSINANTES >>>
         # =====================================================================
         # Verificamos se o usuário NÃO é admin e NÃO está aprovado
         if user.role != "admin" and not user.is_approved:
             # Se ele não está aprovado, mas JÁ TEM uma senha cadastrada,
             # significa que é um ex-assinante.
             if user.password_hash:
-                # IMPORTANTE: Substitua o texto abaixo pelo seu link de pagamento do Stripe
-                payment_link = "COLOQUE_SEU_LINK_DE_PAGAMENTO_DO_STRIPE_AQUI"
+                # O link da sua página de vendas foi inserido aqui.
+                payment_link = "https://www.estudoleiseca.com.br/"
                 
                 # Criamos a mensagem personalizada com o link
                 message = f'Seu acesso foi suspenso. Para reativar sua conta e recuperar todo o seu progresso, <a href="{payment_link}" class="font-bold text-white underline hover:text-yellow-200">clique aqui e realize a assinatura novamente.</a>'
@@ -56,7 +56,7 @@ def login():
             
             return redirect(url_for("auth.login"))
         # =====================================================================
-        # <<< FIM DA MELHORIA 1 >>>
+        # <<< FIM DA ALTERAÇÃO >>>
         # =====================================================================
 
         # Se o usuário for um administrador, iniciamos o fluxo de 2FA.
