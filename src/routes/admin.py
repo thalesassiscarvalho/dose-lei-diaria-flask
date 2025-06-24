@@ -1,23 +1,25 @@
 # src/routes/admin.py
 
 # -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app 
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from sqlalchemy.orm import joinedload
-# =====================================================================
-# <<< INÍCIO DA ATUALIZAÇÃO 1/2: IMPORTANDO 'or_' >>>
-# Adicionamos a importação do 'or_' para permitir a busca em múltiplas colunas.
-# =====================================================================
 from sqlalchemy import or_
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
-# Importações completas e corretas
 from src.extensions import db
-from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem
-from src.models.law import Law, Subject, UsefulLink 
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 1/3: IMPORTANDO CommunityContribution >>>
+# =====================================================================
+# Adicionamos o nosso novo modelo à lista de importações do user.py
+from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 1/3 >>>
+# =====================================================================
+from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
@@ -69,6 +71,16 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
 
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO 2/3: ADICIONANDO CONTAGEM DE CONTRIBUIÇÕES PENDENTES >>>
+    # =====================================================================
+    # Adicionamos a contagem de contribuições pendentes para exibir no dashboard
+    # ou no menu de navegação.
+    pending_contributions_count = CommunityContribution.query.filter_by(status='pending').count()
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO 2/3 >>>
+    # =====================================================================
+
     charts_data = {
         'new_users': {'labels': [], 'values': []},
         'top_content': {'labels': [], 'values': []}
@@ -78,10 +90,11 @@ def dashboard():
                            stats=stats,
                            pending_users_count=pending_users_count,
                            charts_data=charts_data,
-                           active_announcements_count=active_announcements_count
+                           active_announcements_count=active_announcements_count,
+                           pending_contributions_count=pending_contributions_count # Passando a nova contagem para o template
                            )
 
-# Rota de gerenciamento de conteúdo
+# ... (todas as outras rotas permanecem iguais) ...
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
@@ -116,7 +129,6 @@ def content_management():
                            selected_subject=subject_filter)
 
 
-# Rotas para Gerenciar Concursos
 @admin_bp.route("/concursos", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -177,7 +189,6 @@ def delete_concurso(concurso_id):
     return redirect(url_for("admin.manage_concursos"))
 
 
-# Rota para gerenciar matérias
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -199,7 +210,7 @@ def manage_subjects():
     subjects = Subject.query.order_by(Subject.name).all()
     return render_template("admin/manage_subjects.html", subjects=subjects)
 
-# Rota para deletar matérias
+
 @admin_bp.route("/subjects/delete/<int:subject_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -214,7 +225,6 @@ def delete_subject(subject_id):
     return redirect(url_for("admin.manage_subjects"))
 
 
-# Rota para adicionar lei
 @admin_bp.route("/laws/add", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -286,7 +296,7 @@ def add_law():
                            pre_selected_parent_id=pre_selected_parent_id,
                            concursos=concursos)
 
-# Rota para editar lei
+
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -348,7 +358,7 @@ def edit_law(law_id):
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts, concursos=concursos)
 
-# Rota para deletar leis
+
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -380,14 +390,6 @@ def delete_law(law_id):
     return redirect(url_for("admin.content_management"))
 
 
-# =====================================================================
-# <<< INÍCIO DA ATUALIZAÇÃO 2/2: ATUALIZANDO A ROTA 'manage_users' >>>
-# Substituímos a função antiga por esta nova versão que:
-# 1. Pega o termo de busca da URL.
-# 2. Se houver um termo, filtra os usuários por nome ou email.
-# 3. Ordena os resultados para mostrar pendentes primeiro, e depois os mais novos.
-# 4. Passa a busca para o template, para que o campo não se apague.
-# =====================================================================
 @admin_bp.route("/users")
 @login_required
 @admin_required
@@ -567,44 +569,29 @@ def delete_announcement(announcement_id):
         flash(f"Erro ao excluir o aviso: {e}", "danger")
     return redirect(url_for('admin.manage_announcements'))
 
-# Adicione este código no final do seu arquivo src/routes/admin.py
-
-# =====================================================================
-# <<< INÍCIO DA NOVA IMPLEMENTAÇÃO: ROTA DE DETALHES DO USUÁRIO >>>
-# Esta é a rota que o link "Detalhes" que criamos irá chamar.
-# =====================================================================
 @admin_bp.route("/users/details/<int:user_id>")
 @login_required
 @admin_required
 def user_details(user_id):
-    # Busca o usuário ou retorna erro 404 se não encontrar
     user = User.query.get_or_404(user_id)
 
-    # 1. Calcular tempo total de estudo a partir de StudySession
-    # Usamos db.func.sum para somar a duração de todas as sessões do usuário.
     total_seconds = db.session.query(db.func.sum(StudySession.duration_seconds)).filter_by(user_id=user_id).scalar() or 0
     hours, remainder = divmod(total_seconds, 3600)
     minutes, _ = divmod(remainder, 60)
     study_time_formatted = f"{int(hours)}h {int(minutes)}min"
 
-    # 2. Buscar o progresso nos estudos
-    # Usamos 'joinedload' para carregar os dados da lei junto e evitar múltiplas buscas no banco.
     progress_items = UserProgress.query.filter_by(user_id=user_id).options(
         joinedload(UserProgress.law)
     ).order_by(UserProgress.last_accessed_at.desc()).all()
 
-    # 3. Buscar os itens favoritados
-    # O relacionamento 'favorite_laws' que já existe no modelo User facilita isso.
     favorite_items = user.favorite_laws.all()
 
-    # Monta um dicionário com todas as estatísticas para organizar
     stats = {
         'study_time': study_time_formatted,
         'progress_count': len(progress_items),
         'favorites_count': len(favorite_items)
     }
 
-    # No final, tentamos renderizar um template que ainda não criamos.
     return render_template(
         "admin/user_details.html", 
         user=user, 
@@ -612,6 +599,3 @@ def user_details(user_id):
         progress_items=progress_items,
         favorite_items=favorite_items
     )
-# =====================================================================
-# <<< FIM DA NOVA IMPLEMENTAÇÃO >>>
-# =====================================================================
