@@ -5,7 +5,7 @@
 {% block head_extra %}
 <style>
     /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA A NOVA FUNCIONALIDADE >>> */
+    /* <<< INÍCIO DA ALTERAÇÃO 1/3: ESTILOS PARA O NOVO BOTÃO >>> */
     /* ===================================================================== */
     #community-version-controls {
         margin-bottom: 1.5rem;
@@ -27,7 +27,6 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
-    /* Esta classe será usada via JS para desabilitar os botões de edição */
     .editing-disabled {
         pointer-events: none;
         opacity: 0.5;
@@ -1012,17 +1011,14 @@
     </div>
 </div>
 
-<div id="community-version-controls-container">
-    {% if law.approved_contribution_id %}
-    <div id="community-version-controls">
-        <button id="toggle-community-version-btn">
-            <i class="fas fa-star mr-2"></i>
-            <span>Ver Versão da Comunidade</span>
-        </button>
-    </div>
-    {% endif %}
+{% if law.approved_contribution_id %}
+<div id="community-version-controls">
+    <button id="toggle-community-version-btn">
+        <i class="fas fa-star mr-2"></i>
+        <span>Ver Versão da Comunidade</span>
+    </button>
 </div>
-
+{% endif %}
 {% if banner_to_show %}
 <div id="law-banner-container" class="law-banner" role="alert">
     <div class="law-banner-content">
@@ -1099,7 +1095,7 @@
             <button id="toggle-my-comments-btn" class="toggle-button toggle-btn-my-notes" title="Ocultar/Mostrar Minhas Anotações"><i class="fas fa-eye-slash"></i><span>Minhas Anotações</span></button>
         </div>
         
-        <div class="font-control-group flex items-center space-x-2">
+        <div id="editing-tools-container" class="font-control-group flex items-center space-x-2">
             <button id="format-bold-btn" class="font-control-btn" title="Negrito (selecione o texto)"><b>B</b></button>
             <button id="format-italic-btn" class="font-control-btn" title="Itálico (selecione o texto)"><i class="fas fa-italic"></i></button>
             <button id="format-strikethrough-btn" class="font-control-btn" title="Tachado (selecione o texto)"><i class="fas fa-strikethrough"></i></button>
@@ -1124,7 +1120,7 @@
        </div>
     </div>
 
-    <div class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 sticky-bar-right-side">
+    <div id="right-side-controls-container" class="flex items-center flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 sticky-bar-right-side">
         <div class="flex items-center space-x-1">
             <label for="article-search-input" class="text-sm font-medium text-gray-700">Art.</label>
             <input type="text" id="article-search-input" class="w-20 bg-white border border-gray-300 rounded-md shadow-sm text-sm py-1 px-2">
@@ -2607,35 +2603,33 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA PARA VER VERSÃO DA COMUNIDADE >>>
+    // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
-    const editingToolsContainer = document.querySelector('.font-control-group');
-
-    let userPersonalContent = '';
-    let isCommunityViewActive = false;
     
+    // Guarda o conteúdo pessoal do usuário assim que a página carrega.
+    let userPersonalContent = lawContent.innerHTML;
+    let isCommunityViewActive = false;
+
     if (toggleCommunityBtn) {
-        userPersonalContent = lawContent.innerHTML;
-
         toggleCommunityBtn.addEventListener('click', () => {
-            const elementsToDisable = [
-                '.font-control-group', 
-                '#share-contribution-btn'
-            ];
-
             if (isCommunityViewActive) {
-                // VOLTA PARA A VERSÃO PESSOAL
+                // --- VOLTA PARA A VERSÃO PESSOAL ---
                 lawContent.innerHTML = userPersonalContent;
+                // Re-inicializa os sistemas que dependem do conteúdo HTML, como os comentários.
+                // É importante chamar de novo para que os ícones e eventos funcionem no conteúdo restaurado.
                 initCommentSystem(); 
                 indexArticles();
                 
-                elementsToDisable.forEach(selector => {
-                    document.querySelectorAll(selector).forEach(el => el.classList.remove('editing-disabled'));
-                });
+                // Reabilita as ferramentas de edição
+                document.getElementById('editing-tools-container').classList.remove('editing-disabled');
+                document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
                 
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
                 isCommunityViewActive = false;
             } else {
-                // BUSCA E MOSTRA A VERSÃO DA COMUNIDADE
+                // --- BUSCA E MOSTRA A VERSÃO DA COMUNIDADE ---
                 const originalBtnHTML = toggleCommunityBtn.innerHTML;
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
                 toggleCommunityBtn.disabled = true;
@@ -2646,9 +2640,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (data.success) {
                             lawContent.innerHTML = data.content;
                             
-                            elementsToDisable.forEach(selector => {
-                                document.querySelectorAll(selector).forEach(el => el.classList.add('editing-disabled'));
-                            });
+                            // Desabilita APENAS os contêineres de edição, mantendo os toggles de visibilidade ativos
+                            document.getElementById('editing-tools-container').classList.add('editing-disabled');
+                            document.getElementById('right-side-controls-container').classList.add('editing-disabled');
                             
                             toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
                             isCommunityViewActive = true;
@@ -2676,6 +2670,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO 3/3 >>>
+    // =====================================================================
 
 });
 </script>
