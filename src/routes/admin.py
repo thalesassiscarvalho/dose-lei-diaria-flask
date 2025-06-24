@@ -12,14 +12,7 @@ from bleach.css_sanitizer import CSSSanitizer
 
 # Importações completas e corretas
 from src.extensions import db
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 1/3: IMPORTANDO CommunityContribution >>>
-# =====================================================================
-# Adicionamos o nosso novo modelo à lista de importações do user.py
 from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 1/3 >>>
-# =====================================================================
 from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
@@ -72,15 +65,7 @@ def dashboard():
     pending_users_count = User.query.filter_by(is_approved=False, role="student").count()
     active_announcements_count = Announcement.query.filter_by(is_active=True).count()
     
-    # =====================================================================
-    # <<< INÍCIO DA ALTERAÇÃO 2/3: ADICIONANDO CONTAGEM DE CONTRIBUIÇÕES PENDENTES >>>
-    # =====================================================================
-    # Adicionamos a contagem de contribuições pendentes para exibir no dashboard
-    # ou no menu de navegação.
     pending_contributions_count = CommunityContribution.query.filter_by(status='pending').count()
-    # =====================================================================
-    # <<< FIM DA ALTERAÇÃO 2/3 >>>
-    # =====================================================================
 
     charts_data = {
         'new_users': {'labels': [], 'values': []},
@@ -92,13 +77,10 @@ def dashboard():
                            pending_users_count=pending_users_count,
                            charts_data=charts_data,
                            active_announcements_count=active_announcements_count,
-                           # Passando a nova contagem para o template
                            pending_contributions_count=pending_contributions_count 
                            )
 
-# ... (o resto das suas rotas continua aqui, sem alterações) ...
-
-# Rota de gerenciamento de conteúdo
+# ... (todas as outras rotas permanecem iguais) ...
 @admin_bp.route('/content-management')
 @login_required
 @admin_required
@@ -133,7 +115,6 @@ def content_management():
                            selected_subject=subject_filter)
 
 
-# Rotas para Gerenciar Concursos
 @admin_bp.route("/concursos", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -194,7 +175,6 @@ def delete_concurso(concurso_id):
     return redirect(url_for("admin.manage_concursos"))
 
 
-# Rota para gerenciar matérias
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -216,7 +196,6 @@ def manage_subjects():
     subjects = Subject.query.order_by(Subject.name).all()
     return render_template("admin/manage_subjects.html", subjects=subjects)
 
-# Rota para deletar matérias
 @admin_bp.route("/subjects/delete/<int:subject_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -231,7 +210,6 @@ def delete_subject(subject_id):
     return redirect(url_for("admin.manage_subjects"))
 
 
-# Rota para adicionar lei
 @admin_bp.route("/laws/add", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -303,7 +281,6 @@ def add_law():
                            pre_selected_parent_id=pre_selected_parent_id,
                            concursos=concursos)
 
-# Rota para editar lei
 @admin_bp.route("/laws/edit/<int:law_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -365,7 +342,6 @@ def edit_law(law_id):
 
     return render_template("admin/add_edit_law.html", law=law, subjects=subjects, normative_acts=normative_acts, concursos=concursos)
 
-# Rota para deletar leis
 @admin_bp.route("/laws/delete/<int:law_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -605,6 +581,7 @@ def user_details(user_id):
         progress_items=progress_items,
         favorite_items=favorite_items
     )
+
 
 # =====================================================================
 # <<< INÍCIO DA ALTERAÇÃO 3/3: NOVAS ROTAS PARA REVISÃO DE CONTRIBUIÇÕES >>>
