@@ -35,6 +35,30 @@
     /* <<< FIM DA ALTERAÇÃO 1/3 >>> */
     /* ===================================================================== */
 
+    /* ===================================================================== */
+    /* <<< PASSO 1 DE 3: ESTILOS PARA O BANNER DE COLABORAÇÃO >>> */
+    /* ===================================================================== */
+    .community-banner {
+        background-color: #f3e8ff; /* Roxo bem claro */
+        color: #581c87; /* Roxo escuro */
+        border: 1px solid #d8b4fe; /* Roxo claro */
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        display: none; /* Começa escondido */
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .community-banner i {
+        font-size: 1.25rem;
+        color: #7e22ce; /* Roxo médio */
+    }
+    /* ===================================================================== */
+    /* <<< FIM DA ALTERAÇÃO >>> */
+    /* ===================================================================== */
+
+
     /* --- INÍCIO: ESTILO PARA BARRA DE PROGRESSO DE LEITURA --- */
     .progress-bar-container {
         position: fixed;
@@ -2628,6 +2652,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =====================================================================
+    // <<< INÍCIO DA LÓGICA ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
+    // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
     let userPersonalContent = lawContent.innerHTML;
 
@@ -2638,7 +2665,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 lawContent.innerHTML = userPersonalContent;
                 isCommunityViewActive = false;
                 initCommentSystem(); // Re-inicializa os comentários interativos do usuário
-                indexArticles();
+                indexArticles(); // Re-indexa os artigos para a busca funcionar
 
                 document.getElementById('editing-tools-container').classList.remove('editing-disabled');
                 document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
@@ -2655,12 +2682,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(data => {
                         if (data.success) {
                             isCommunityViewActive = true;
+                            // Guarda o conteúdo pessoal ANTES de sobrescrever
+                            userPersonalContent = lawContent.innerHTML;
                             lawContent.innerHTML = data.content;
 
                             // =====================================================================
-                            // <<< INÍCIO DA CORREÇÃO >>>
-                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar exibir os comentários.
+                            // <<< CORREÇÃO APLICADA AQUI >>>
                             // =====================================================================
+                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar
+                            // exibir os comentários. Isso garante que as âncoras existam.
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
                                 if (!p.id) {
                                     p.id = `law-p-${index}`;
@@ -2670,7 +2700,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             // <<< FIM DA CORREÇÃO >>>
                             // =====================================================================
 
-                            // Agora, exibe os comentários da comunidade, pois os IDs já existem.
+                            // Agora, com as âncoras no lugar, exibe os comentários da comunidade.
                             if (data.comments && Array.isArray(data.comments)) {
                                 data.comments.forEach(comment => displayComment(comment));
                             }
@@ -2703,6 +2733,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+    // =====================================================================
+    // <<< FIM DA LÓGICA ATUALIZADA >>>
+    // =====================================================================
+
 });
 </script>
 {% endblock %}
