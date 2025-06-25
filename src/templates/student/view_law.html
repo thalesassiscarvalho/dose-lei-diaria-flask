@@ -36,26 +36,32 @@
     /* ===================================================================== */
 
     /* ===================================================================== */
-    /* <<< PASSO 1 DE 3: ESTILOS PARA O BANNER DE COLABORAÇÃO >>> */
+    /* <<< INÍCIO: ESTILO PARA O BANNER DE COLABORAÇÃO >>> */
     /* ===================================================================== */
-    .community-banner {
-        background-color: #f3e8ff; /* Roxo bem claro */
-        color: #581c87; /* Roxo escuro */
-        border: 1px solid #d8b4fe; /* Roxo claro */
-        padding: 1rem;
-        border-radius: 0.5rem;
+    #community-contributor-banner {
+        padding: 0.75rem 1.25rem;
         margin-bottom: 1.5rem;
+        border-left: 4px solid #8b5cf6; /* Roxo */
+        background-color: #f5f3ff;
+        border-radius: 0.375rem;
+        color: #5b21b6;
         font-size: 0.9rem;
-        display: none; /* Começa escondido */
+        display: flex; /* Usamos flex para alinhar o ícone e o texto */
         align-items: center;
         gap: 0.75rem;
     }
-    .community-banner i {
-        font-size: 1.25rem;
-        color: #7e22ce; /* Roxo médio */
+
+    #community-contributor-banner.hidden {
+        display: none; /* Classe para esconder/mostrar */
+    }
+
+    .dark-mode #community-contributor-banner {
+        background-color: #3730a3;
+        border-left-color: #a78bfa;
+        color: #e0e7ff;
     }
     /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO >>> */
+    /* <<< FIM: ESTILO PARA O BANNER DE COLABORAÇÃO >>> */
     /* ===================================================================== */
 
 
