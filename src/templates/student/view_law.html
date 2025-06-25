@@ -2660,7 +2660,21 @@ document.addEventListener("DOMContentLoaded", function () {
                             isCommunityViewActive = true;
                             lawContent.innerHTML = data.content;
 
-                            // Se a API retornar comentários, os exibe.
+                            // =====================================================================
+                            // <<< INÍCIO DA CORREÇÃO >>>
+                            // =====================================================================
+                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar
+                            // exibir os comentários.
+                            lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+                                if (!p.id) {
+                                    p.id = `law-p-${index}`;
+                                }
+                            });
+                            // =====================================================================
+                            // <<< FIM DA CORREÇÃO >>>
+                            // =====================================================================
+
+                            // Agora, exibe os comentários da comunidade, pois os IDs já existem.
                             if (data.comments && Array.isArray(data.comments)) {
                                 data.comments.forEach(comment => displayComment(comment));
                             }
