@@ -411,8 +411,19 @@ def dashboard():
 
     favorites_by_subject = {}
     
-    user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
-    completed_topic_ids = {p.law_id for p in user_progress_records if p.status == 'concluido'}
+    # OTIMIZAÇÃO: Consultas mais eficientes para obter IDs de tópicos concluídos e em andamento,
+    # evitando carregar todos os registros de progresso do usuário na memória.
+    # Isto substitui a antiga linha: 'user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()'
+    completed_topic_ids = {
+        row.law_id for row in UserProgress.query.filter_by(
+            user_id=current_user.id, status='concluido'
+        ).with_entities(UserProgress.law_id).all()
+    }
+    in_progress_topic_ids = {
+        row.law_id for row in UserProgress.query.filter_by(
+            user_id=current_user.id, status='em_andamento'
+        ).with_entities(UserProgress.law_id).all()
+    }
     
     favorite_topics = favorite_topics_query.all()
 
@@ -435,7 +446,7 @@ def dashboard():
         total_in_group = len(topics)
         progress_percentage = (completed_in_group / total_in_group * 100) if total_in_group > 0 else 0
         
-        in_progress_topic_ids = {p.law_id for p in user_progress_records if p.status == 'em_andamento'}
+        # OTIMIZAÇÃO: A definição de 'in_progress_topic_ids' foi movida para fora do loop para maior eficiência.
         topic_details_list = []
         for topic in sorted(topics, key=lambda t: t.id):
             topic_details_list.append({
@@ -610,7 +621,13 @@ def filter_laws():
     all_filtered_topics = topics_query.all()
     
     subjects_with_diplomas = {}
-    user_progress_map = {p.law_id: p.status for p in current_user.progress}
+    
+    # OTIMIZAÇÃO: Carrega o mapa de progresso do usuário de forma mais eficiente.
+    # Em vez de carregar objetos completos via 'current_user.progress', esta consulta
+    # busca apenas os campos necessários (law_id, status), reduzindo o uso de memória.
+    progress_records = db.session.query(UserProgress.law_id, UserProgress.status).filter_by(user_id=current_user.id).all()
+    user_progress_map = {law_id: status for law_id, status in progress_records}
+
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
     diplomas_map = {}
