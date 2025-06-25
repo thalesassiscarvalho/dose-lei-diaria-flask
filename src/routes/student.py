@@ -1226,14 +1226,11 @@ def get_community_version(law_id):
         for comment in approved_contribution.comments
     ]
 
-    # <-- INÍCIO DA ALTERAÇÃO -->
-    # Pega o nome completo do usuário ou o email como fallback
-    contributor_name = approved_contribution.user.full_name or approved_contribution.user.email
-    # <-- FIM DA ALTERAÇÃO -->
-
     return jsonify(
         success=True, 
         content=approved_contribution.content,
-        comments=comments_data,
-        contributor_name=contributor_name  # <-- NOVA LINHA ADICIONADA
+        comments=comments_data
     )
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO FINAL >>>
+# =====================================================================
