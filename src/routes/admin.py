@@ -337,7 +337,7 @@ def edit_law(law_id):
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
                 db.session.add(new_link)
             index += 1
 
@@ -588,9 +588,12 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
+
 # =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO SEM DUPLICATAS >>>
+# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO COMPLETAS >>>
 # =====================================================================
+
+# Rota para a lista de contribuições pendentes
 @admin_bp.route("/community-contributions")
 @login_required
 @admin_required
@@ -602,6 +605,8 @@ def review_contributions():
     
     return render_template("admin/review_contributions.html", contributions=pending_contributions)
 
+
+# Rota para a tela de detalhes de UMA contribuição
 @admin_bp.route("/community-contributions/review/<int:contribution_id>")
 @login_required
 @admin_required
@@ -627,6 +632,8 @@ def review_contribution_detail(contribution_id):
         comments_json=comments_for_template # Enviando a lista segura para o template
     )
 
+
+# Rota para PROCESSAR a ação de Aprovar ou Rejeitar
 @admin_bp.route("/community-contributions/process/<int:contribution_id>", methods=["POST"])
 @login_required
 @admin_required
