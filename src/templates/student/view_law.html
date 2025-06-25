@@ -36,7 +36,7 @@
     /* ===================================================================== */
 
     /* ===================================================================== */
-    /* <<< INÍCIO: ESTILO PARA O BANNER DE COLABORAÇÃO >>> */
+    /* <<< INÍCIO DA ALTERAÇÃO 2/3: ESTILO ATUALIZADO PARA O BANNER >>> */
     /* ===================================================================== */
     #community-contributor-banner {
         padding: 0.75rem 1.25rem;
@@ -46,13 +46,15 @@
         border-radius: 0.375rem;
         color: #5b21b6;
         font-size: 0.9rem;
-        display: flex; /* Usamos flex para alinhar o ícone e o texto */
+        display: flex; 
         align-items: center;
-        gap: 0.75rem;
+        justify-content: space-between; /* Novo */
+        flex-wrap: wrap; /* Novo */
+        gap: 1rem; /* Novo */
     }
 
     #community-contributor-banner.hidden {
-        display: none; /* Classe para esconder/mostrar */
+        display: none;
     }
 
     .dark-mode #community-contributor-banner {
@@ -60,8 +62,62 @@
         border-left-color: #a78bfa;
         color: #e0e7ff;
     }
+    
+    .contributor-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .contribution-stats {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .like-btn {
+        background-color: transparent;
+        border: 1px solid #ddd6fe;
+        color: #7c3aed;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .like-btn:hover {
+        background-color: #ede9fe;
+        transform: translateY(-1px);
+    }
+    .like-btn.liked {
+        background-color: #8b5cf6;
+        color: white;
+        border-color: #8b5cf6;
+    }
+    .dark-mode .like-btn {
+        border-color: #a78bfa;
+        color: #c4b5fd;
+    }
+    .dark-mode .like-btn:hover {
+        background-color: #5b21b6;
+    }
+    .dark-mode .like-btn.liked {
+        background-color: #a78bfa;
+        color: #1e1b4b;
+        border-color: #a78bfa;
+    }
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: #6d28d9;
+    }
+    .dark-mode .stat-item {
+        color: #a78bfa;
+    }
     /* ===================================================================== */
-    /* <<< FIM: ESTILO PARA O BANNER DE COLABORAÇÃO >>> */
+    /* <<< FIM DA ALTERAÇÃO 2/3 >>> */
     /* ===================================================================== */
 
 
@@ -1292,7 +1348,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
     const subjectId = {{ law.subject_id | tojson }};
 
-    let isCommunityViewActive = false; // <<< ALTERAÇÃO: Movida para um escopo mais alto
+    let isCommunityViewActive = false;
+    let userPersonalContent = lawContent.innerHTML;
 
     function fixDuplicateDescription() {
         if (!lawContent) return;
@@ -2316,11 +2373,6 @@ document.addEventListener("DOMContentLoaded", function () {
         currentEditingCommentId = null;
     }
 
-    // =====================================================================
-    // <<< INÍCIO DA ALTERAÇÃO 1/2: FUNÇÃO DISPLAYCOMMENT ATUALIZADA >>>
-    // =====================================================================
-    // Esta função agora é inteligente. Ela sabe se está na visão da comunidade
-    // e mostra os comentários de forma diferente (apenas leitura).
     function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
@@ -2337,7 +2389,6 @@ document.addEventListener("DOMContentLoaded", function () {
         commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
         commentDiv.appendChild(commentParagraph);
 
-        // Se NÃO estiver na visão da comunidade, adiciona botões de editar/excluir
         if (!isCommunityViewActive) {
             const deleteButton = document.createElement('button');
             deleteButton.className = 'comment-delete-btn';
@@ -2354,7 +2405,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id);
             });
         } else {
-            // Na visão da comunidade, o cursor é padrão (não clicável para editar)
             commentDiv.style.cursor = 'default';
         }
 
@@ -2366,9 +2416,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (icon) icon.classList.add('has-comment');
         }
     }
-    // =====================================================================
-    // <<< FIM DA ALTERAÇÃO 1/2 >>>
-    // =====================================================================
+    
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
         if (!content) return;
@@ -2657,22 +2705,19 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-
+    
     // =====================================================================
-    // <<< INÍCIO DA LÓGICA CORRIGIDA E ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
+    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA DA VERSÃO DA COMUNIDADE ATUALIZADA >>>
     // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
     const contributorBanner = document.getElementById('community-contributor-banner');
-    let userPersonalContent = lawContent.innerHTML;
 
     if (toggleCommunityBtn) {
         toggleCommunityBtn.addEventListener('click', () => {
             if (isCommunityViewActive) {
-                // --- VOLTA PARA A VERSÃO PESSOAL ---
                 lawContent.innerHTML = userPersonalContent;
                 isCommunityViewActive = false;
 
-                // <<< NOVO: Esconde o banner ao voltar para a versão pessoal >>>
                 if(contributorBanner) {
                     contributorBanner.classList.add('hidden');
                     contributorBanner.innerHTML = '';
@@ -2686,7 +2731,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
             } else {
-                // --- BUSCA E MOSTRA A VERSÃO DA COMUNIDADE ---
                 const originalBtnHTML = toggleCommunityBtn.innerHTML;
                 toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
                 toggleCommunityBtn.disabled = true;
@@ -2698,16 +2742,51 @@ document.addEventListener("DOMContentLoaded", function () {
                             isCommunityViewActive = true;
                             lawContent.innerHTML = data.content;
 
-                            // <<< NOVO: Mostra o banner com o nome do colaborador >>>
                             if (contributorBanner && data.contributor_name) {
-                                contributorBanner.innerHTML = `<i class="fas fa-medal"></i> Colaboração de: <strong>${data.contributor_name}</strong>`;
+                                contributorBanner.innerHTML = ''; 
+
+                                const infoDiv = document.createElement('div');
+                                infoDiv.className = 'contributor-info';
+                                infoDiv.innerHTML = `<i class="fas fa-medal"></i> <span>Colaboração de: <strong>${data.contributor_name}</strong></span>`;
+                                
+                                const statsDiv = document.createElement('div');
+                                statsDiv.className = 'contribution-stats';
+
+                                const viewsSpan = document.createElement('span');
+                                viewsSpan.className = 'stat-item';
+                                viewsSpan.innerHTML = `<i class="fas fa-eye"></i> <span id="view-count">${data.view_count || 0}</span>`;
+
+                                if (!data.is_own_contribution) {
+                                    const likeButton = document.createElement('button');
+                                    likeButton.className = 'like-btn';
+                                    likeButton.id = 'contribution-like-btn';
+                                    likeButton.dataset.contributionId = data.contribution_id;
+                                    if(data.user_has_liked) {
+                                        likeButton.classList.add('liked');
+                                    }
+                                    likeButton.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likeButton);
+                                } else {
+                                    const likesSpan = document.createElement('span');
+                                    likesSpan.className = 'stat-item';
+                                    likesSpan.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likesSpan);
+                                }
+                                
+                                statsDiv.appendChild(viewsSpan);
+                                
+                                contributorBanner.appendChild(infoDiv);
+                                contributorBanner.appendChild(statsDiv);
                                 contributorBanner.classList.remove('hidden');
+
+                                const likeBtn = document.getElementById('contribution-like-btn');
+                                if (likeBtn) {
+                                    likeBtn.addEventListener('click', handleLikeClick);
+                                }
                             }
 
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
-                                if (!p.id) {
-                                    p.id = `law-p-${index}`;
-                                }
+                                if (!p.id) { p.id = `law-p-${index}`; }
                             });
 
                             if (data.comments && Array.isArray(data.comments)) {
@@ -2742,8 +2821,48 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+
+    function handleLikeClick(event) {
+        const button = event.currentTarget;
+        const contributionId = button.dataset.contributionId;
+        
+        button.disabled = true;
+
+        fetch(`/student/api/contribution/${contributionId}/toggle_like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const likeCountSpan = document.getElementById('like-count');
+                likeCountSpan.textContent = data.likes_count;
+                button.classList.toggle('liked', data.liked);
+            } else {
+                Toastify({
+                    text: data.error || "Não foi possível processar a ação.",
+                    duration: 3000,
+                    style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                }).showToast();
+            }
+        })
+        .catch(err => {
+            console.error("Erro ao dar like:", err);
+            Toastify({
+                text: "Erro de rede. Tente novamente.",
+                duration: 3000,
+                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+            }).showToast();
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    }
     // =====================================================================
-    // <<< FIM DA LÓGICA >>>
+    // <<< FIM DA ALTERAÇÃO 3/3 >>>
     // =====================================================================
 
 });
