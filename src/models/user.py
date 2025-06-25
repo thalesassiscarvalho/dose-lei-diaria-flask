@@ -173,6 +173,21 @@ class TodoItem(db.Model):
     def __repr__(self):
         return f"<TodoItem {self.id} (User: {self.user_id}): {self.content[:30]}...>"
 
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 1/3: TABELA DE LIKES >>>
+# =====================================================================
+# Esta é uma nova tabela de associação para rastrear qual usuário
+# curtiu qual contribuição. Isso evita que um usuário curta a mesma
+# contribuição várias vezes.
+contribution_likes_association = db.Table('contribution_likes',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), primary_key=True),
+    db.Column('contribution_id', db.Integer, db.ForeignKey('community_contributions.id', ondelete="CASCADE"), primary_key=True)
+)
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 1/3 >>>
+# =====================================================================
+
+
 class CommunityContribution(db.Model):
     __tablename__ = 'community_contributions'
 
@@ -184,51 +199,51 @@ class CommunityContribution(db.Model):
     reviewer_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reviewed_at = db.Column(db.DateTime)
+    
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO 2/3: NOVOS CAMPOS NO MODELO >>>
+    # =====================================================================
+    # Armazena o número total de "likes" que a contribuição recebeu.
+    # `index=True` ajuda a otimizar buscas por este campo.
+    likes = db.Column(db.Integer, nullable=False, default=0, index=True)
+
+    # Armazena o número total de vezes que esta contribuição foi visualizada.
+    view_count = db.Column(db.Integer, nullable=False, default=0)
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO 2/3 >>>
+    # =====================================================================
 
     user = db.relationship('User', backref=db.backref('community_contributions', lazy='dynamic'))
     law = db.relationship('Law', foreign_keys=[law_id], back_populates='all_contributions')
+    comments = db.relationship('CommunityComment', backref='contribution', cascade="all, delete-orphan")
 
     # =====================================================================
-    # <<< INÍCIO DA ALTERAÇÃO 1/2: RELACIONAMENTO COM CommunityComment >>>
+    # <<< INÍCIO DA ALTERAÇÃO 3/3: RELACIONAMENTO DE LIKES >>>
     # =====================================================================
-    # Este relacionamento nos permitirá acessar facilmente todas as anotações
-    # que pertencem a esta contribuição específica. Ex: `contribution.comments`.
-    # 'cascade="all, delete-orphan"' garante que se uma contribuição for
-    # deletada, todas as suas anotações de comunidade também serão.
-    comments = db.relationship('CommunityComment', backref='contribution', cascade="all, delete-orphan")
+    # Este relacionamento nos permitirá acessar a lista de usuários que
+    # curtiram esta contribuição. Ex: `contribution.liked_by_users`.
+    liked_by_users = db.relationship(
+        'User', 
+        secondary=contribution_likes_association,
+        backref=db.backref('liked_contributions', lazy='dynamic'),
+        lazy='dynamic'
+    )
     # =====================================================================
-    # <<< FIM DA ALTERAÇÃO 1/2 >>>
+    # <<< FIM DA ALTERAÇÃO 3/3 >>>
     # =====================================================================
 
     def __repr__(self):
         return f'<CommunityContribution {self.id} for Law {self.law_id} by User {self.user_id}>'
 
 
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 2/2: NOVO MODELO CommunityComment >>>
-# =====================================================================
-# Esta é a nova tabela que irá armazenar uma cópia das anotações de
-# parágrafo (as laranjas) para cada contribuição.
 class CommunityComment(db.Model):
     __tablename__ = 'community_comments'
 
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Chave estrangeira que conecta esta anotação à contribuição principal.
-    # ondelete="CASCADE" significa que se a contribuição for deletada,
-    # esta anotação também será.
     contribution_id = db.Column(db.Integer, db.ForeignKey('community_contributions.id', ondelete="CASCADE"), nullable=False)
-    
-    # O texto da anotação em si.
     content = db.Column(db.Text, nullable=False)
-    
-    # O ID do parágrafo onde esta anotação deve ser ancorada (ex: "law-p-5").
     anchor_paragraph_id = db.Column(db.String(255), nullable=False)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'<CommunityComment {self.id} for Contribution {self.contribution_id}>'
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 2/2 >>>
-# =====================================================================
