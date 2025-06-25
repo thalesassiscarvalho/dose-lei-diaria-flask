@@ -10,22 +10,15 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
-# Importações completas e corretas
 from src.extensions import db
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 1/2: IMPORTANDO CommunityComment >>>
-# =====================================================================
-# Adicionamos o nosso novo modelo à lista de importações do user.py
 from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 1/2 >>>
-# =====================================================================
 from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.concurso import Concurso
 from src.models.study import StudySession
+import logging
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -595,6 +588,9 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO SEM DUPLICATAS >>>
+# =====================================================================
 @admin_bp.route("/community-contributions")
 @login_required
 @admin_required
@@ -610,13 +606,26 @@ def review_contributions():
 @login_required
 @admin_required
 def review_contribution_detail(contribution_id):
+    # A consulta agora usa `joinedload` para carregar os comentários junto
+    # de forma otimizada, evitando novas consultas ao banco no template.
     contribution = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
         joinedload(CommunityContribution.law).joinedload(Law.parent),
-        joinedload(CommunityContribution.comments) 
+        joinedload(CommunityContribution.comments) # Carrega os comentários associados
     ).get_or_404(contribution_id)
     
-    return render_template("admin/review_contribution_detail.html", contribution=contribution)
+    # Criamos uma lista de dicionários simples a partir dos objetos de comentário
+    # para que possa ser convertida em JSON de forma segura.
+    comments_for_template = [
+        {"content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} 
+        for c in contribution.comments
+    ]
+    
+    return render_template(
+        "admin/review_contribution_detail.html", 
+        contribution=contribution,
+        comments_json=comments_for_template # Enviando a lista segura para o template
+    )
 
 @admin_bp.route("/community-contributions/process/<int:contribution_id>", methods=["POST"])
 @login_required
@@ -652,3 +661,7 @@ def process_contribution(contribution_id):
         current_app.logger.error(f"Erro ao processar contribuição {contribution_id}: {e}")
         
     return redirect(url_for('admin.review_contributions'))
+
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO FINAL >>>
+# =====================================================================
