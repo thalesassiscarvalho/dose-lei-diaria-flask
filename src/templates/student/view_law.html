@@ -2659,9 +2659,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =====================================================================
-    // <<< INÍCIO DA LÓGICA ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
+    // <<< INÍCIO DA LÓGICA CORRIGIDA E ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
     // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
+    const contributorBanner = document.getElementById('community-contributor-banner');
     let userPersonalContent = lawContent.innerHTML;
 
     if (toggleCommunityBtn) {
@@ -2670,8 +2671,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 // --- VOLTA PARA A VERSÃO PESSOAL ---
                 lawContent.innerHTML = userPersonalContent;
                 isCommunityViewActive = false;
-                initCommentSystem(); // Re-inicializa os comentários interativos do usuário
-                indexArticles(); // Re-indexa os artigos para a busca funcionar
+
+                // <<< NOVO: Esconde o banner ao voltar para a versão pessoal >>>
+                if(contributorBanner) {
+                    contributorBanner.classList.add('hidden');
+                    contributorBanner.innerHTML = '';
+                }
+
+                initCommentSystem();
+                indexArticles();
 
                 document.getElementById('editing-tools-container').classList.remove('editing-disabled');
                 document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
@@ -2688,25 +2696,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(data => {
                         if (data.success) {
                             isCommunityViewActive = true;
-                            // Guarda o conteúdo pessoal ANTES de sobrescrever
-                            userPersonalContent = lawContent.innerHTML;
                             lawContent.innerHTML = data.content;
 
-                            // =====================================================================
-                            // <<< CORREÇÃO APLICADA AQUI >>>
-                            // =====================================================================
-                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar
-                            // exibir os comentários. Isso garante que as âncoras existam.
+                            // <<< NOVO: Mostra o banner com o nome do colaborador >>>
+                            if (contributorBanner && data.contributor_name) {
+                                contributorBanner.innerHTML = `<i class="fas fa-medal"></i> Colaboração de: <strong>${data.contributor_name}</strong>`;
+                                contributorBanner.classList.remove('hidden');
+                            }
+
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
                                 if (!p.id) {
                                     p.id = `law-p-${index}`;
                                 }
                             });
-                            // =====================================================================
-                            // <<< FIM DA CORREÇÃO >>>
-                            // =====================================================================
 
-                            // Agora, com as âncoras no lugar, exibe os comentários da comunidade.
                             if (data.comments && Array.isArray(data.comments)) {
                                 data.comments.forEach(comment => displayComment(comment));
                             }
@@ -2740,7 +2743,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     // =====================================================================
-    // <<< FIM DA LÓGICA ATUALIZADA >>>
+    // <<< FIM DA LÓGICA >>>
     // =====================================================================
 
 });
