@@ -10,15 +10,22 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
+# Importações completas e corretas
 from src.extensions import db
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO 1/1: IMPORTANDO O CommunityComment >>>
+# =====================================================================
+# Importamos o CommunityComment para que o SQLAlchemy saiba sobre ele ao fazer as consultas.
 from src.models.user import User, Announcement, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO 1/1 >>>
+# =====================================================================
 from src.models.law import Law, Subject, UsefulLink
 from src.models.progress import UserProgress
 from src.models.comment import UserComment
 from src.models.notes import UserNotes, UserLawMarkup
 from src.models.concurso import Concurso
 from src.models.study import StudySession
-import logging
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -77,7 +84,7 @@ def dashboard():
                            pending_users_count=pending_users_count,
                            charts_data=charts_data,
                            active_announcements_count=active_announcements_count,
-                           pending_contributions_count=pending_contributions_count
+                           pending_contributions_count=pending_contributions_count 
                            )
 
 # Rota de gerenciamento de conteúdo
@@ -337,7 +344,7 @@ def edit_law(law_id):
             link_title = bleach.clean(request.form.get(f'link-{index}-title'), tags=[], strip=True)
             link_url = bleach.clean(request.form.get(f'link-{index}-url'), tags=[], strip=True)
             if link_title and link_url:
-                new_link = UsefulLink(title=link_title, url=link_url, law_id=new_law.id)
+                new_link = UsefulLink(title=link_title, url=link_url, law_id=law.id)
                 db.session.add(new_link)
             index += 1
 
@@ -377,7 +384,6 @@ def delete_law(law_id):
         current_app.logger.error(f"Falha ao excluir a lei ID {law_id}. Erro: {e}", exc_info=True)
         flash(f"Erro ao excluir o item. Verifique o log da aplicação para mais detalhes.", "danger")
     return redirect(url_for("admin.content_management"))
-
 
 @admin_bp.route("/users")
 @login_required
@@ -589,11 +595,6 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO COMPLETAS E CORRIGIDAS >>>
-# =====================================================================
-
-# Rota para a lista de contribuições pendentes
 @admin_bp.route("/community-contributions")
 @login_required
 @admin_required
@@ -605,34 +606,27 @@ def review_contributions():
     
     return render_template("admin/review_contributions.html", contributions=pending_contributions)
 
-
-# Rota para a tela de detalhes de UMA contribuição
+# =====================================================================
+# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTA DE REVISÃO ATUALIZADA >>>
+# =====================================================================
 @admin_bp.route("/community-contributions/review/<int:contribution_id>")
 @login_required
 @admin_required
 def review_contribution_detail(contribution_id):
-    # A consulta agora usa `joinedload` para carregar os comentários junto
+    # Usamos `joinedload(CommunityContribution.comments)` para carregar as
+    # anotações da comunidade junto com a contribuição principal em uma única
+    # consulta ao banco de dados, o que é mais eficiente.
     contribution = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
         joinedload(CommunityContribution.law).joinedload(Law.parent),
         joinedload(CommunityContribution.comments) 
     ).get_or_404(contribution_id)
     
-    # Criamos uma lista de dicionários simples a partir dos objetos de comentário
-    # para que o Jinja2 possa convertê-la em JSON de forma segura.
-    comments_for_template = [
-        {"content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} 
-        for c in contribution.comments
-    ]
-    
-    return render_template(
-        "admin/review_contribution_detail.html", 
-        contribution=contribution,
-        comments_json=comments_for_template 
-    )
+    return render_template("admin/review_contribution_detail.html", contribution=contribution)
+# =====================================================================
+# <<< FIM DA ALTERAÇÃO FINAL >>>
+# =====================================================================
 
-
-# Rota para PROCESSAR a ação de Aprovar ou Rejeitar
 @admin_bp.route("/community-contributions/process/<int:contribution_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -667,7 +661,3 @@ def process_contribution(contribution_id):
         current_app.logger.error(f"Erro ao processar contribuição {contribution_id}: {e}")
         
     return redirect(url_for('admin.review_contributions'))
-
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO FINAL >>>
-# =====================================================================
