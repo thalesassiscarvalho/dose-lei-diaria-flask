@@ -378,6 +378,7 @@ def delete_law(law_id):
         flash(f"Erro ao excluir o item. Verifique o log da aplicação para mais detalhes.", "danger")
     return redirect(url_for("admin.content_management"))
 
+
 @admin_bp.route("/users")
 @login_required
 @admin_required
@@ -588,9 +589,8 @@ def user_details(user_id):
         favorite_items=favorite_items
     )
 
-
 # =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO COMPLETAS >>>
+# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE REVISÃO COMPLETAS E CORRIGIDAS >>>
 # =====================================================================
 
 # Rota para a lista de contribuições pendentes
@@ -612,15 +612,14 @@ def review_contributions():
 @admin_required
 def review_contribution_detail(contribution_id):
     # A consulta agora usa `joinedload` para carregar os comentários junto
-    # de forma otimizada, evitando novas consultas ao banco no template.
     contribution = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
         joinedload(CommunityContribution.law).joinedload(Law.parent),
-        joinedload(CommunityContribution.comments) # Carrega os comentários associados
+        joinedload(CommunityContribution.comments) 
     ).get_or_404(contribution_id)
     
     # Criamos uma lista de dicionários simples a partir dos objetos de comentário
-    # para que possa ser convertida em JSON de forma segura.
+    # para que o Jinja2 possa convertê-la em JSON de forma segura.
     comments_for_template = [
         {"content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} 
         for c in contribution.comments
@@ -629,7 +628,7 @@ def review_contribution_detail(contribution_id):
     return render_template(
         "admin/review_contribution_detail.html", 
         contribution=contribution,
-        comments_json=comments_for_template # Enviando a lista segura para o template
+        comments_json=comments_for_template 
     )
 
 
