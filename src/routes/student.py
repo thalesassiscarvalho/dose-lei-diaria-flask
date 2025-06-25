@@ -1,3 +1,5 @@
+# src/blueprints/student.py
+
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
@@ -8,13 +10,7 @@ import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from src.extensions import db
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO 1/3: IMPORTANDO OS NOVOS MODELOS >>>
-# =====================================================================
 from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
-# =====================================================================
-# <<< FIM DA ALTERAÇÃO 1/3 >>>
-# =====================================================================
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
@@ -1160,9 +1156,6 @@ def get_study_stats():
                    total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
                 )
 
-# =====================================================================
-# <<< INÍCIO DA ALTERAÇÃO FINAL: ROTAS DE COMUNIDADE >>>
-# =====================================================================
 @student_bp.route("/law/<int:law_id>/share_contribution", methods=["POST"])
 @login_required
 def share_contribution(law_id):
@@ -1207,6 +1200,38 @@ def share_contribution(law_id):
         logging.error(f"Erro ao salvar contribuição do usuário {current_user.id} para a lei {law_id}: {e}")
         return jsonify(success=False, error="Ocorreu um erro interno ao enviar sua contribuição."), 500
 
+@student_bp.route("/api/contribution/<int:contribution_id>/toggle_like", methods=["POST"])
+@login_required
+def toggle_like_contribution(contribution_id):
+    contribution = CommunityContribution.query.get_or_404(contribution_id)
+    
+    if contribution.user_id == current_user.id:
+        return jsonify(success=False, error="Você não pode curtir sua própria contribuição."), 403
+
+    user_has_liked = contribution.liked_by_users.filter_by(id=current_user.id).count() > 0
+
+    try:
+        if user_has_liked:
+            contribution.liked_by_users.remove(current_user)
+            contribution.likes = max(0, contribution.likes - 1)
+            liked = False
+        else:
+            contribution.liked_by_users.append(current_user)
+            contribution.likes += 1
+            liked = True
+        
+        db.session.commit()
+        
+        return jsonify(
+            success=True, 
+            liked=liked, 
+            likes_count=contribution.likes
+        )
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao dar like na contribuição {contribution_id} pelo usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao processar o like."), 500
+
 @student_bp.route("/api/law/<int:law_id>/community-version")
 @login_required
 def get_community_version(law_id):
@@ -1214,9 +1239,20 @@ def get_community_version(law_id):
     if not law.approved_contribution_id:
         return jsonify(success=False, error="Nenhuma versão da comunidade foi aprovada para esta lei ainda."), 404
 
-    approved_contribution = law.approved_contribution
+    approved_contribution = db.session.query(CommunityContribution).options(
+        joinedload(CommunityContribution.user),
+        joinedload(CommunityContribution.comments)
+    ).get(law.approved_contribution_id)
+
     if not approved_contribution:
         return jsonify(success=False, error="A versão da comunidade não pôde ser encontrada."), 404
+
+    try:
+        approved_contribution.view_count = (approved_contribution.view_count or 0) + 1
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao incrementar view_count da contribuição {approved_contribution.id}: {e}")
 
     comments_data = [
         {
@@ -1227,14 +1263,18 @@ def get_community_version(law_id):
         for comment in approved_contribution.comments
     ]
 
-    # <-- INÍCIO DA ALTERAÇÃO -->
-    # Pega o nome completo do usuário ou o email como fallback
     contributor_name = approved_contribution.user.full_name or approved_contribution.user.email
-    # <-- FIM DA ALTERAÇÃO -->
+    
+    user_has_liked = approved_contribution.liked_by_users.filter_by(id=current_user.id).count() > 0
 
     return jsonify(
         success=True, 
         content=approved_contribution.content,
         comments=comments_data,
-        contributor_name=contributor_name  # <-- NOVA LINHA ADICIONADA
+        contributor_name=contributor_name,
+        contribution_id=approved_contribution.id,
+        likes_count=approved_contribution.likes,
+        view_count=approved_contribution.view_count,
+        user_has_liked=user_has_liked,
+        is_own_contribution=(current_user.id == approved_contribution.user_id)
     )
