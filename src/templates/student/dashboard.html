@@ -1826,29 +1826,115 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    function attachEventListeners() {
-        document.querySelectorAll('.subject-accordion-header, .accordion-header, .favorite-card-header').forEach(header => {
-            header.addEventListener('click', function(event) {
-                if (header.classList.contains('accordion-header')) event.stopPropagation();
+    // <<< INÍCIO DO CÓDIGO PARA ADICIONAR >>>
 
-                this.classList.toggle('open');
-                const content = this.nextElementSibling;
-                const icon = this.querySelector('.toggle-icon, .accordion-toggle-icon');
-                if (content.style.display === 'block') {
-                    content.style.display = 'none';
-                    if (icon) icon.style.transform = 'rotate(0deg)';
-                } else {
-                    content.style.display = 'block';
-                    if (icon) icon.style.transform = icon.classList.contains('accordion-toggle-icon') ? 'rotate(90deg)' : 'rotate(180deg)';
-                }
-            });
-        });
-
-        document.querySelectorAll('.js-favorite-btn').forEach(button => button.addEventListener('click', handleFavoriteClick));
-        document.querySelectorAll('.js-mark-incomplete-btn').forEach(button => button.addEventListener('click', handleMarkIncompleteClick));
+    /**
+     * OTIMIZAÇÃO: Função central que "despacha" os cliques ocorridos nos containers
+     * para a função apropriada com base na classe do elemento clicado.
+     * @param {Event} event - O objeto do evento de clique.
+     */
+    function handleContainerClick(event) {
+        const target = event.target;
         
+        // Procura pelo elemento clicado ou seus pais para encontrar a ação correta
+        const favoriteBtn = target.closest('.js-favorite-btn');
+        if (favoriteBtn) {
+            handleFavoriteClick(favoriteBtn);
+            return; // Encerra a função após tratar o evento
+        }
+
+        const incompleteBtn = target.closest('.js-mark-incomplete-btn');
+        if (incompleteBtn) {
+            handleMarkIncompleteClick(incompleteBtn);
+            return;
+        }
+        
+        const accordionHeader = target.closest('.subject-accordion-header, .accordion-header, .favorite-card-header');
+        if (accordionHeader) {
+            // Previne que o clique no ícone de progresso dispare a ação do acordeão pai
+            if (accordionHeader.classList.contains('accordion-header') && target.closest('.diploma-progress')) {
+                 event.stopPropagation();
+            }
+            toggleAccordion(accordionHeader);
+        }
     }
 
+    function setupEventListeners() {
+        const accordionContainer = document.getElementById('laws-accordion-container');
+        const favoriteCardsContainer = document.getElementById('favorite-cards-container');
+        const nonFixedAnnouncementsContainer = document.getElementById('non-fixed-announcements-container');
+        const todoList = document.getElementById('todo-list');
+
+        // Listener principal para os containers de leis
+        if (accordionContainer) {
+            accordionContainer.addEventListener('click', handleContainerClick);
+        }
+        if (favoriteCardsContainer) {
+            favoriteCardsContainer.addEventListener('click', handleContainerClick);
+        }
+
+        // Listener para o To-Do list (que também tem itens dinâmicos)
+        if (todoList) {
+            todoList.addEventListener('click', (event) => {
+                if (event.target.classList.contains('todo-delete-btn') || event.target.closest('.todo-delete-btn')) {
+                    handleDeleteTodoItem(event);
+                }
+            });
+            todoList.addEventListener('change', (event) => {
+                if (event.target.classList.contains('todo-checkbox')) {
+                    handleToggleTodoItem(event);
+                }
+            });
+        }
+        
+        // Listener delegado para os avisos
+        if (nonFixedAnnouncementsContainer) {
+            nonFixedAnnouncementsContainer.addEventListener('change', (event) => {
+                 if (event.target.classList.contains('mark-seen-checkbox')) {
+                    const checkbox = event.target;
+                    checkbox.disabled = true;
+                    const announcementItem = checkbox.closest('.non-fixed-announcement-item');
+                    const announcementId = announcementItem.dataset.announcementId;
+                    
+                    fetch(`/student/announcement/${announcementId}/mark_seen`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            announcementItem.classList.add('fade-out');
+                            setTimeout(() => {
+                                announcementItem.remove();
+                                if (document.querySelectorAll('.non-fixed-announcement-item').length === 0) {
+                                    nonFixedAnnouncementsContainer.remove();
+                                }
+                            }, 500);
+                        } else { 
+                            checkbox.checked = false;
+                            checkbox.disabled = false;
+                        }
+                    })
+                    .catch(() => {
+                        checkbox.checked = false;
+                        checkbox.disabled = false;
+                    });
+                }
+            });
+        }
+    }
+    
+    function toggleAccordion(header) {
+        header.classList.toggle('open');
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.toggle-icon, .accordion-toggle-icon');
+        
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'block';
+            if (icon) icon.style.transform = icon.classList.contains('accordion-toggle-icon') ? 'rotate(90deg)' : 'rotate(180deg)';
+        }
+    }
+    
     filterControls.subject.addEventListener('change', () => {
         const subjectId = filterControls.subject.value;
         if (subjectId === '') {
