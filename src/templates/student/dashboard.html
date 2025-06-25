@@ -2089,52 +2089,72 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function handleFavoriteClick(event) {
-        button.disabled = true;
-        const lawId = button.dataset.lawId;
-        const icon = button.querySelector('i');
-        const topicItem = button.closest('.topic-item');
-        const topicInfo = topicItem ? topicItem.querySelector('.topic-info span') : null;
-        const topicTitle = topicInfo ? topicInfo.textContent : 'Item';
+    // <<< INÍCIO DO CÓDIGO PARA SUBSTITUIR A FUNÇÃO ANTIGA >>>
 
-        fetch(`/student/law/toggle_favorite/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
-        .then(response => response.json())
-        .then(data => {
-            let notificationText;
-            if (data.favorited) {
-                button.classList.add('favorited');
-                icon.className = 'fas fa-star';
-                button.title = 'Remover dos Favoritos';
-                notificationText = `'${topicTitle}' adicionado aos favoritos!`;
-            } else {
-                button.classList.remove('favorited');
-                icon.className = 'far fa-star';
-                button.title = 'Adicionar aos Favoritos';
-                notificationText = `'${topicTitle}' removido dos favoritos.`;
-                if (button.closest('#initial-prompt')) {
-                    const topicToRemove = button.closest('.topic-item');
-                    if (topicToRemove) {
-                         const card = topicToRemove.closest('.favorite-card');
-                         topicToRemove.remove();
-                         if (!card.querySelector('.topic-item')) {
-                            const subjectContainer = card.closest('.subject-accordion-item');
-                            card.remove();
-                            if (!subjectContainer.querySelector('.favorite-card')) {
-                                subjectContainer.remove();
-                            }
-                            if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
-                                window.location.reload();
-                            }
-                         }
+/**
+ * CORREÇÃO: Função que trata o clique no botão de favoritar.
+ * Agora ela aceita o elemento 'button' como parâmetro direto.
+ * @param {HTMLElement} button - O elemento do botão que foi clicado.
+ */
+function handleFavoriteClick(button) {
+    button.disabled = true;
+    const lawId = button.dataset.lawId;
+    const icon = button.querySelector('i');
+    const topicItem = button.closest('.topic-item');
+    const topicTitle = topicItem ? topicItem.querySelector('.topic-info span').textContent : 'Item';
+
+    fetch(`/student/law/toggle_favorite/${lawId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        let notificationText;
+        if (data.favorited) {
+            button.classList.add('favorited');
+            icon.className = 'fas fa-star';
+            button.title = 'Remover dos Favoritos';
+            notificationText = `'${topicTitle}' adicionado aos favoritos!`;
+        } else {
+            button.classList.remove('favorited');
+            icon.className = 'far fa-star'; // Mostra a estrela vazia
+            button.title = 'Adicionar aos Favoritos';
+            notificationText = `'${topicTitle}' removido dos favoritos.`;
+            
+            // Se a visualização atual for de favoritos, remove o item da tela.
+            const favoritesCheckbox = document.getElementById('show_favorites');
+            if (button.closest('#initial-prompt') || (favoritesCheckbox && favoritesCheckbox.checked)) {
+                const topicToRemove = button.closest('.topic-item');
+                if (topicToRemove) {
+                    const card = topicToRemove.closest('.favorite-card');
+                    topicToRemove.remove();
+                    // Se o card ficar vazio, remove o card também
+                    if (card && card.querySelector('.topic-item') === null) {
+                        const subjectContainer = card.closest('.subject-accordion-item');
+                        card.remove();
+                        // Se a matéria ficar vazia, remove a matéria
+                        if (subjectContainer && subjectContainer.querySelector('.favorite-card') === null) {
+                            subjectContainer.remove();
+                        }
+                        // Se não houver mais nenhum favorito, recarrega a página para mostrar a mensagem inicial
+                        if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
+                            window.location.reload();
+                        }
                     }
-                } else if (filterControls.favorites.checked) {
-                    fetchAndRenderLaws();
                 }
             }
-            Toastify({ text: notificationText, duration: 3000, style: { background: "linear-gradient(to right, #1f2937, #374151)" } }).showToast();
-        })
-        .finally(() => { button.disabled = false; });
-    }
+        }
+        Toastify({ text: notificationText, duration: 3000, style: { background: "linear-gradient(to right, #1f2937, #374151)" } }).showToast();
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+// <<< FIM DO CÓDIGO DE SUBSTITUIÇÃO >>>
 
     function handleMarkIncompleteClick(event) {        
         buttonEl.disabled = true;
