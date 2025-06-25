@@ -2170,21 +2170,37 @@ function handleFavoriteClick(button) {
 
 // <<< FIM DO CÓDIGO DE SUBSTITUIÇÃO >>>
 
-    function handleMarkIncompleteClick(event) {        
+    function handleMarkIncompleteClick(buttonEl) {
         buttonEl.disabled = true;
         const lawId = buttonEl.dataset.lawId;
-        fetch(`/student/law/review/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+    
+        fetch(`/student/law/review/${lawId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
         .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                 if (buttonEl.closest('#initial-prompt')) {
+                // Verifica se o botão clicado estava na seção de favoritos da tela inicial
+                if (buttonEl.closest('#initial-prompt')) {
+                    // Se sim, a forma mais simples de atualizar a UI é recarregar a página
                     window.location.reload();
                 } else {
+                    // Se foi na seção de filtros, apenas recarrega a lista de leis
                     fetchAndRenderLaws();
                 }
-            } else { buttonEl.disabled = false; }
+            } else {
+                // Se falhar, reabilita o botão
+                buttonEl.disabled = false;
+            }
         })
-        .catch(() => buttonEl.disabled = false);
+        .catch(() => {
+            // Em caso de erro de rede, também reabilita o botão
+            buttonEl.disabled = false;
+        });
     }
     
     // ===============================================================================================
