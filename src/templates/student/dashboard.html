@@ -2333,59 +2333,33 @@ function handleFavoriteClick(button) {
     }
 
     function renderTodoItem(item) {
-        const listItem = document.createElement('li');
-        listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
-        listItem.dataset.itemId = item.id;
-        listItem.dataset.category = item.category;
+    const listItem = document.createElement('li');
+    listItem.className = `todo-item ${item.is_completed ? 'completed' : ''}`;
+    listItem.dataset.itemId = item.id;
+    listItem.dataset.category = item.category;
 
-        const categoryIconClass = item.category === 'meta' ? 'fa-bullseye' : 'fa-lightbulb';
-        const categoryIconColorClass = item.category === 'meta' ? 'meta-icon' : 'lembrete-icon';
-        const categoryTitle = item.category.charAt(0).toUpperCase() + item.category.slice(1);
-        
-        let contentHtml;
-        if (item.law_id && item.law_url) {
-            // Se tiver uma lei anexada, cria um link
-            contentHtml = `
-                <a href="${item.law_url}" class="todo-item-link" title="Ir para: ${item.law_title}">
-                    ${item.content}
-                    <i class="fas fa-external-link-alt"></i>
-                </a>`;
-        } else {
-            // Senão, apenas o texto normal
-            contentHtml = `<span>${item.content}</span>`;
-        }
+    const categoryIconClass = item.category === 'meta' ? 'fa-bullseye' : 'fa-lightbulb';
+    const categoryIconColorClass = item.category === 'meta' ? 'meta-icon' : 'lembrete-icon';
+    const categoryTitle = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+    
+    let contentHtml = item.law_id && item.law_url
+        ? `<a href="${item.law_url}" class="todo-item-link" title="Ir para: ${item.law_title}">${item.content}<i class="fas fa-external-link-alt"></i></a>`
+        : `<span>${item.content}</span>`;
 
-        listItem.innerHTML = `
-            <div class="todo-item-content">
-                <i class="fas ${categoryIconClass} category-icon ${categoryIconColorClass}" title="${categoryTitle}"></i>
-                <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
-                <div class="todo-item-text">${contentHtml}</div>
-            </div>
-            <div class="todo-actions">
-                <button type="button" class="todo-delete-btn" title="Excluir item">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `;
-
-        // Adiciona evento de clique no container do texto para ativar o checkbox (melhora UX)
-        const contentContainer = listItem.querySelector('.todo-item-content');
-        contentContainer.addEventListener('click', (e) => {
-            // Evita ativar o checkbox se o clique for no próprio link ou no ícone do link
-            if (e.target.closest('.todo-item-link')) {
-                return;
-            }
-            const checkbox = contentContainer.querySelector('.todo-checkbox');
-            if (e.target !== checkbox) { // Evita o duplo clique se clicar diretamente no checkbox
-                checkbox.checked = !checkbox.checked;
-                 // A linha abaixo causava o bug do duplo alerta e foi removida.
-                // checkbox.dispatchEvent(new Event('change'));
-            }
-        });
-
-        listItem.querySelector('.todo-checkbox').addEventListener('change', handleToggleTodoItem);
-        listItem.querySelector('.todo-delete-btn').addEventListener('click', handleDeleteTodoItem);
-        return listItem;
+    listItem.innerHTML = `
+        <div class="todo-item-content">
+            <i class="fas ${categoryIconClass} category-icon ${categoryIconColorClass}" title="${categoryTitle}"></i>
+            <input type="checkbox" class="todo-checkbox" ${item.is_completed ? 'checked' : ''}>
+            <div class="todo-item-text">${contentHtml}</div>
+        </div>
+        <div class="todo-actions">
+            <button type="button" class="todo-delete-btn" title="Excluir item">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    `;
+    // Nenhum addEventListener é adicionado aqui. A mágica acontece no listener delegado.
+    return listItem;
     }
 
     addTodoBtn.addEventListener('click', async function() {
