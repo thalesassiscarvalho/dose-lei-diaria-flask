@@ -1858,34 +1858,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // <<< CÓDIGO NOVO E CORRIGIDO PARA SUBSTITUIR >>>
     function setupEventListeners() {
         const accordionContainer = document.getElementById('laws-accordion-container');
         const favoriteCardsContainer = document.getElementById('favorite-cards-container');
         const nonFixedAnnouncementsContainer = document.getElementById('non-fixed-announcements-container');
         const todoList = document.getElementById('todo-list');
-
-        // Listener principal para os containers de leis
+    
+        // Listener delegado para os acordeões e botões das leis
         if (accordionContainer) {
             accordionContainer.addEventListener('click', handleContainerClick);
         }
         if (favoriteCardsContainer) {
             favoriteCardsContainer.addEventListener('click', handleContainerClick);
         }
-
-        // Listener para o To-Do list (que também tem itens dinâmicos)
+    
+        // Listener delegado para a lista de Lembretes/Metas
         if (todoList) {
             todoList.addEventListener('click', (event) => {
-                if (event.target.classList.contains('todo-delete-btn') || event.target.closest('.todo-delete-btn')) {
+                // Ação de deletar
+                if (event.target.closest('.todo-delete-btn')) {
                     handleDeleteTodoItem(event);
                 }
+                // Ação de clicar no texto para marcar o checkbox
+                const contentContainer = event.target.closest('.todo-item-content');
+                if (contentContainer && !event.target.closest('a') && !event.target.closest('input')) {
+                     const checkbox = contentContainer.querySelector('.todo-checkbox');
+                     if(checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        // Dispara o evento 'change' manualmente para que nosso outro listener o capture
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                     }
+                }
             });
+    
             todoList.addEventListener('change', (event) => {
+                // Ação de marcar/desmarcar
                 if (event.target.classList.contains('todo-checkbox')) {
                     handleToggleTodoItem(event);
                 }
             });
         }
-        
+
         // Listener delegado para os avisos
         if (nonFixedAnnouncementsContainer) {
             nonFixedAnnouncementsContainer.addEventListener('change', (event) => {
@@ -1894,7 +1908,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkbox.disabled = true;
                     const announcementItem = checkbox.closest('.non-fixed-announcement-item');
                     const announcementId = announcementItem.dataset.announcementId;
-                    
+    
                     fetch(`/student/announcement/${announcementId}/mark_seen`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
                     .then(response => response.json())
                     .then(data => {
