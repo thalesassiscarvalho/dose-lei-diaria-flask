@@ -467,16 +467,11 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
-    total_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
-                                    .filter_by(user_id=current_user.id).scalar() or 0
-    formatted_total_study = _format_duration(total_study_seconds)
-
+    # Código Novo (versão otimizada):
+    
+    # OTIMIZAÇÃO: Consolida três consultas de tempo de estudo em uma única consulta.
+    # Isto reduz a latência de rede e a carga no banco de dados.
     one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
-    weekly_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
-                                     .filter_by(user_id=current_user.id)\
-                                     .filter(StudySession.recorded_at >= one_week_ago).scalar() or 0
-    formatted_weekly_study = _format_duration(weekly_study_seconds)
-
     try:
         brazil_tz = pytz.timezone('America/Sao_Paulo')
         now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
@@ -485,10 +480,19 @@ def dashboard():
     except pytz.UnknownTimeZoneError:
         logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
         today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-
-    daily_study_seconds = db.session.query(func.sum(StudySession.duration_seconds))\
-                                    .filter_by(user_id=current_user.id)\
-                                    .filter(StudySession.recorded_at >= today_start_utc).scalar() or 0
+    
+    study_time_stats = db.session.query(
+        func.sum(StudySession.duration_seconds).label('total'),
+        func.sum(case((StudySession.recorded_at >= one_week_ago, StudySession.duration_seconds), else_=0)).label('weekly'),
+        func.sum(case((StudySession.recorded_at >= today_start_utc, StudySession.duration_seconds), else_=0)).label('daily')
+    ).filter(StudySession.user_id == current_user.id).one()
+    
+    total_study_seconds = study_time_stats.total or 0
+    weekly_study_seconds = study_time_stats.weekly or 0
+    daily_study_seconds = study_time_stats.daily or 0
+    
+    formatted_total_study = _format_duration(total_study_seconds)
+    formatted_weekly_study = _format_duration(weekly_study_seconds)
     formatted_daily_study = _format_duration(daily_study_seconds)
     
     weekly_activity_data = []
