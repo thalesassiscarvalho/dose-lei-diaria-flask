@@ -580,93 +580,128 @@ def filter_laws():
 
     allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
 
-    # A consulta base agora é sobre os TÓPICOS (leis com parent_id)
-    topics_query = Law.query.filter(Law.parent_id.isnot(None))\
-                           .options(selectinload(Law.parent).joinedload(Law.subject))
+    # Query base para os TÓPICOS que serão *exibidos* na lista
+    display_topics_query = Law.query.filter(Law.parent_id.isnot(None))\
+                                    .options(selectinload(Law.parent).joinedload(Law.subject))
 
     if allowed_law_ids is not None:
-        topics_query = topics_query.filter(Law.id.in_(allowed_law_ids))
-
-    if selected_concurso_id_str.isdigit():
-        topics_query = topics_query.join(Law.concursos).filter(Concurso.id == int(selected_concurso_id_str))
+        display_topics_query = display_topics_query.filter(Law.id.in_(allowed_law_ids))
+    
+    selected_concurso_id = int(selected_concurso_id_str) if selected_concurso_id_str.isdigit() else None
+    if selected_concurso_id:
+        display_topics_query = display_topics_query.join(Law.concursos).filter(Concurso.id == selected_concurso_id)
 
     selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
     if selected_diploma_id:
-        topics_query = topics_query.filter(Law.parent_id == selected_diploma_id)
+        display_topics_query = display_topics_query.filter(Law.parent_id == selected_diploma_id)
     else:
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
-            topics_query = topics_query.join(Subject, Law.subject_id == Subject.id).filter(Subject.id == selected_subject_id)
+            display_topics_query = display_topics_query.join(Subject, Law.subject_id == Subject.id).filter(Subject.id == selected_subject_id)
 
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
     if selected_topic_id:
-        topics_query = topics_query.filter(Law.id == selected_topic_id)
+        display_topics_query = display_topics_query.filter(Law.id == selected_topic_id)
         
-    topics_query = topics_query.outerjoin(UserProgress, and_(
+    display_topics_query = display_topics_query.outerjoin(UserProgress, and_(
         UserProgress.law_id == Law.id,
         UserProgress.user_id == current_user.id
     ))
 
     if selected_status == 'completed':
-        topics_query = topics_query.filter(UserProgress.status == 'concluido')
+        display_topics_query = display_topics_query.filter(UserProgress.status == 'concluido')
     elif selected_status == 'in_progress':
-        topics_query = topics_query.filter(UserProgress.status == 'em_andamento')
+        display_topics_query = display_topics_query.filter(UserProgress.status == 'em_andamento')
     elif selected_status == 'not_read':
-        topics_query = topics_query.filter(UserProgress.id.is_(None))
+        display_topics_query = display_topics_query.filter(UserProgress.id.is_(None))
 
-    # CORREÇÃO: A filtragem de favoritos foi alterada para usar o relacionamento do modelo.
     if show_favorites:
-        topics_query = topics_query.join(Law.favorite_of_users).filter(User.id == current_user.id)
+        display_topics_query = display_topics_query.join(Law.favorite_of_users).filter(User.id == current_user.id)
 
-    all_filtered_topics = topics_query.all()
+    # Executa a query para obter os tópicos a serem exibidos
+    all_display_topics = display_topics_query.all()
     
-    subjects_with_diplomas = {}
-    
-    # OTIMIZAÇÃO: Carrega o mapa de progresso do usuário de forma mais eficiente.
-    # Em vez de carregar objetos completos via 'current_user.progress', esta consulta
-    # busca apenas os campos necessários (law_id, status), reduzindo o uso de memória.
+    # Se não houver resultados, retorna uma resposta vazia
+    if not all_display_topics:
+        return jsonify(subjects_with_diplomas={})
+
+    # OTIMIZAÇÃO: Carrega o mapa de progresso do usuário de forma eficiente
     progress_records = db.session.query(UserProgress.law_id, UserProgress.status).filter_by(user_id=current_user.id).all()
     user_progress_map = {law_id: status for law_id, status in progress_records}
-
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
+    # Agrupa os tópicos a serem exibidos por diploma
     diplomas_map = {}
-    for topic in all_filtered_topics:
+    for topic in all_display_topics:
         diploma = topic.parent
         if not diploma: continue
         
-        if diploma not in diplomas_map:
-            diplomas_map[diploma] = {
-                "id": diploma.id,
-                "title": diploma.title,
-                "subject": diploma.subject,
-                "children": [],
-                "all_children_ids": {c.id for c in diploma.children if (allowed_law_ids is None or c.id in allowed_law_ids)}
+        if diploma.id not in diplomas_map:
+            diplomas_map[diploma.id] = {
+                "diploma_obj": diploma,
+                "display_children": []
             }
         
         status = user_progress_map.get(topic.id)
-        diplomas_map[diploma]["children"].append({
+        diplomas_map[diploma.id]["display_children"].append({
             "id": topic.id,
             "title": topic.title,
             "is_completed": status == 'concluido',
             "is_in_progress": status == 'em_andamento',
             "is_favorite": topic.id in favorite_topic_ids
         })
+
+    # OTIMIZAÇÃO LÓGICA: Calcula o progresso com base no contexto do filtro (ex: concurso)
+    all_diploma_ids = list(diplomas_map.keys())
     
-    for diploma, data in diplomas_map.items():
-        subject_name = data["subject"].name if data["subject"] else "Sem Matéria"
+    # Monta uma query base para buscar todos os tópicos relevantes para os diplomas filtrados
+    context_topics_query = db.session.query(Law.parent_id, Law.id).filter(Law.parent_id.in_(all_diploma_ids))
+
+    # Se um concurso foi selecionado, o "total" para o cálculo de progresso são os tópicos daquele concurso
+    if selected_concurso_id:
+        context_topics_query = context_topics_query.join(Law.concursos).filter(Concurso.id == selected_concurso_id)
+
+    if allowed_law_ids is not None:
+        context_topics_query = context_topics_query.filter(Law.id.in_(allowed_law_ids))
+
+    # Agrupa os tópicos de contexto por diploma em um dicionário para consulta rápida
+    context_topics_by_diploma = {}
+    for parent_id, topic_id in context_topics_query.all():
+        context_topics_by_diploma.setdefault(parent_id, set()).add(topic_id)
+        
+    # Itera sobre os diplomas filtrados para calcular a porcentagem correta
+    for diploma_id, data in diplomas_map.items():
+        # Se um contexto (como concurso) foi definido, usa os tópicos relevantes para ele.
+        # Senão, usa todos os tópicos do diploma como total.
+        if selected_concurso_id:
+            relevant_topic_ids = context_topics_by_diploma.get(diploma_id, set())
+        else:
+            # Se não há filtro de concurso, o total são todos os filhos do diploma
+            all_children_ids = {c.id for c in data["diploma_obj"].children}
+            if allowed_law_ids is not None:
+                relevant_topic_ids = all_children_ids.intersection(allowed_law_ids)
+            else:
+                relevant_topic_ids = all_children_ids
+        
+        total_children_in_context = len(relevant_topic_ids)
+        completed_in_context = sum(1 for child_id in relevant_topic_ids if user_progress_map.get(child_id) == 'concluido')
+        
+        progress_percentage = (completed_in_context / total_children_in_context * 100) if total_children_in_context > 0 else 0
+        data['progress_percentage'] = progress_percentage
+
+    # Estrutura final para a resposta JSON
+    subjects_with_diplomas = {}
+    for diploma_id, data in diplomas_map.items():
+        diploma = data["diploma_obj"]
+        subject_name = diploma.subject.name if diploma.subject else "Sem Matéria"
         
         subjects_with_diplomas.setdefault(subject_name, [])
-            
-        total_children = len(data["all_children_ids"])
-        completed_children = sum(1 for child_id in data["all_children_ids"] if user_progress_map.get(child_id) == 'concluido')
-        progress_percentage = (completed_children / total_children * 100) if total_children > 0 else 0
-
+        
         subjects_with_diplomas[subject_name].append({
-            "title": data["title"],
-            "progress_percentage": progress_percentage,
+            "title": diploma.title,
+            "progress_percentage": data['progress_percentage'],
             "subject_name": subject_name,
-            "filtered_children": sorted(data["children"], key=lambda x: x['title'])
+            "filtered_children": sorted(data["display_children"], key=lambda x: x['title'])
         })
         
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
