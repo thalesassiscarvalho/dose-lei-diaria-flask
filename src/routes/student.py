@@ -36,17 +36,7 @@ ALLOWED_TAGS = [
 ALLOWED_ATTRIBUTES = {
     '*': ['style', 'class', 'title', 'id'],
     'a': ['href', 'title', 'target']
-    'p': ['style', 'class', 'id'],
-    'li': ['style', 'class', 'id'],
-    'blockquote': ['style', 'class', 'id'],
-    'h1': ['style', 'class', 'id'],
-    'h2': ['style', 'class', 'id'],
-    'h3': ['style', 'class', 'id'],
-    'h4': ['style', 'class', 'id'],
-    'h5': ['style', 'class', 'id'],
-    'h6': ['style', 'class', 'id'],
-    'div': ['style', 'class', 'id']
-}
+    }
 ALLOWED_STYLES = [
     'color', 'background-color', 'font-weight', 'font-style', 'text-decoration',
     'text-align', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
