@@ -10,10 +10,6 @@
         height: 60vh;
         overflow-y: auto;
         padding: 1.5rem;
-        background-color: white;
-    }
-    .content-panel.original {
-        background-color: #f9fafb;
     }
     .content-panel h3 {
         font-size: 1.25rem;
@@ -22,33 +18,47 @@
         padding-bottom: 0.75rem;
         margin-bottom: 1rem;
         position: sticky;
-        top: -1.5rem;
-        background-color: inherit;
+        top: -1.5rem; /* Ajuste para compensar o padding do painel */
+        background-color: inherit; /* Herda a cor de fundo do painel */
         padding-top: 1.5rem;
         z-index: 10;
     }
     .prose {
-        line-height: 1.7;
+        /* Estilos básicos para o conteúdo da lei, pode ajustar conforme necessário */
+        line-height: 1.6;
     }
-    /* Estilos para destaques do usuário, para que apareçam na revisão */
     .prose .user-highlight-yellow { background-color: #fef9c3; }
     .prose .user-highlight-green { background-color: #dcfce7; }
     .prose .user-highlight-blue { background-color: #dbeafe; }
     .prose .user-highlight-pink { background-color: #fce7f3; }
-    
+
     /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO 1/2: ESTILO PARA ANOTAÇÕES DA COMUNIDADE >>> */
+    /* <<< INÍCIO DA ALTERAÇÃO 1/2: ESTILOS PARA AS ANOTAÇÕES >>> */
     /* ===================================================================== */
-    /* Este é o estilo para as anotações que serão exibidas na tela de revisão. */
-    .community-comment-display {
+    .submitted-comments-container {
+        margin-top: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
+    }
+    .submitted-comment {
         background-color: #fff7ed;
-        border-left: 3px solid #f97316;
-        padding: 10px 15px;
-        margin-top: 5px;
-        margin-bottom: 15px;
-        border-radius: 0 5px 5px 0;
+        border-left: 4px solid #f97316;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 0.25rem;
+    }
+    .submitted-comment p {
+        margin: 0;
+        color: #c2410c;
         font-style: italic;
-        color: #92400e;
+    }
+    .submitted-comment code {
+        font-style: normal;
+        font-size: 0.8em;
+        background-color: #fed7aa;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #7c2d12;
     }
     /* ===================================================================== */
     /* <<< FIM DA ALTERAÇÃO 1/2 >>> */
@@ -70,7 +80,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
-            <div class="content-panel original">
+            <div class="content-panel bg-gray-50">
                 <h3 class="text-gray-700">Versão Original da Lei</h3>
                 <div class="prose max-w-none">
                     {{ contribution.law.content|safe }}
@@ -78,12 +88,29 @@
             </div>
         </div>
         <div>
-            <div id="contribution-content" class="content-panel">
+            <div class="content-panel bg-white">
                 <h3 class="text-blue-700">Versão Enviada pelo Usuário</h3>
+                
                 <div class="prose max-w-none">
                     {{ contribution.content|safe }}
                 </div>
-            </div>
+
+                {% if contribution.comments and contribution.comments.count() > 0 %}
+                <div class="submitted-comments-container">
+                    <h4 class="font-semibold text-gray-600 mb-2">Anotações de Parágrafo Enviadas:</h4>
+                    
+                    {% for comment in contribution.comments %}
+                    <div class="submitted-comment">
+                        <p>
+                           {{ comment.content }}
+                           <br>
+                           <small class="text-xs text-gray-500 font-sans not-italic">(Ancorado no parágrafo: <code>{{ comment.anchor_paragraph_id }}</code>)</small>
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                </div>
         </div>
     </div>
 
@@ -91,13 +118,17 @@
         <h2 class="text-xl font-semibold text-gray-700 mb-4">Ação de Moderação</h2>
         <form action="{{ url_for('admin.process_contribution', contribution_id=contribution.id) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <div class="mb-4">
                 <label for="reviewer_notes" class="block text-sm font-medium text-gray-700">Notas para o Usuário (Opcional)</label>
                 <textarea name="reviewer_notes" id="reviewer_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Ótimas marcações, mas revisei a ortografia."></textarea>
                 <p class="mt-2 text-xs text-gray-500">Estas notas podem ser usadas para referência futura.</p>
             </div>
+
             <div class="flex justify-end items-center space-x-4">
-                <a href="{{ url_for('admin.review_contributions') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Cancelar</a>
+                <a href="{{ url_for('admin.review_contributions') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Cancelar
+                </a>
                 <button type="submit" name="action" value="reject" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
                     <i class="fas fa-times-circle mr-2"></i>
                     <span>Rejeitar</span>
@@ -109,55 +140,6 @@
             </div>
         </form>
     </div>
+
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Pega a lista de comentários que o backend (admin.py) enviou.
-    const comments = {{ contribution.comments | tojson }};
-    
-    // Pega o painel onde o conteúdo da contribuição está.
-    const contributionContentPanel = document.getElementById('contribution-content');
-
-    // Função para "desenhar" um comentário na tela, no modo de apenas leitura.
-    function displayReadOnlyComment(comment) {
-        const anchorElement = contributionContentPanel.querySelector('#' + comment.anchor_paragraph_id);
-        if (!anchorElement || !anchorElement.parentNode) {
-            console.warn('Âncora não encontrada para o comentário:', comment.anchor_paragraph_id);
-            return;
-        }
-
-        const commentDiv = document.createElement('div');
-        commentDiv.className = 'community-comment-display'; // Usa o novo estilo CSS
-        
-        const commentParagraph = document.createElement('p');
-        // Usa replace para transformar quebras de linha em <br> para exibição correta
-        commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
-        
-        commentDiv.appendChild(commentParagraph);
-        
-        // Insere a anotação logo após o parágrafo correspondente.
-        anchorElement.parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
-    }
-
-    // Se existirem comentários, percorre a lista e exibe cada um.
-    if (comments && comments.length > 0) {
-        // Primeiro, envolve todos os parágrafos em um 'wrapper' para garantir a ancoragem correta
-        contributionContentPanel.querySelectorAll('p, li, blockquote').forEach((p, index) => {
-            if (!p.id) {
-                p.id = `law-p-${index}`; // Garante que cada parágrafo tenha um ID
-            }
-            const wrapper = document.createElement('div');
-            p.parentNode.insertBefore(wrapper, p);
-            wrapper.appendChild(p);
-        });
-
-        // Agora, exibe os comentários
-        comments.forEach(comment => displayReadOnlyComment(comment));
-    }
-});
-</script>
 {% endblock %}
