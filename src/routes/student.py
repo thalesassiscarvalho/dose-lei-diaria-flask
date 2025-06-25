@@ -3,7 +3,8 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import or_, func, Date
+# OTIMIZAÇÃO: Importando 'text' para consultas SQL puras e 'and_' para condições complexas
+from sqlalchemy import or_, func, Date, and_, text
 from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import datetime
@@ -302,32 +303,70 @@ def _record_study_activity(user: User):
             db.session.rollback()
             logging.error(f"Erro ao registrar atividade de estudo para o usuário {user.id}: {e}")
 
+# =========================================================================================
+# <<< INÍCIO DA ALTERAÇÃO (PASSO 1) >>>
+# =========================================================================================
+def _get_brazil_time_now():
+    """Função auxiliar para obter a hora atual no fuso horário de São Paulo, que é o padrão para o usuário."""
+    try:
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        return datetime.datetime.now(pytz.utc).astimezone(brazil_tz)
+    except pytz.UnknownTimeZoneError:
+        logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
+        return datetime.datetime.now(pytz.utc)
+
 def _calculate_user_streak(user: User) -> int:
-    activities = user.study_activities.order_by(StudyActivity.study_date.desc()).all()
-    
-    if not activities:
-        return 0
-
-    today = date.today()
+    """
+    OTIMIZAÇÃO: Calcula a sequência de estudos usando uma única e eficiente consulta SQL.
+    Isto é muito mais escalável do que carregar todos os registros em Python, especialmente
+    para usuários com longo histórico de estudo.
+    """
+    today = _get_brazil_time_now().date()
     yesterday = today - timedelta(days=1)
-    
-    latest_activity_date = activities[0].study_date
-    
-    if latest_activity_date not in [today, yesterday]:
-        return 0
 
-    streak_count = 1
-    current_date = latest_activity_date
+    # Esta consulta usa Common Table Expressions (CTE) para calcular a sequência de forma eficiente.
+    # 1. `distinct_dates`: Pega apenas as datas únicas de estudo para evitar contagem dupla no mesmo dia.
+    # 2. `date_groups`: Cria grupos de datas consecutivas. A mágica está em subtrair um número de linha
+    #    da data, o que resulta no mesmo valor para todos os dias de uma mesma sequência.
+    # 3. `streaks`: Conta o tamanho de cada sequência.
+    # 4. A consulta final pega o tamanho da sequência mais recente que inclui hoje ou ontem.
+    streak_query = text("""
+        WITH distinct_dates AS (
+            SELECT DISTINCT study_date
+            FROM study_activity
+            WHERE user_id = :user_id AND study_date <= :today
+        ),
+        date_groups AS (
+            SELECT
+                study_date,
+                (study_date - (ROW_NUMBER() OVER (ORDER BY study_date))::integer * INTERVAL '1 day') AS group_start_date
+            FROM distinct_dates
+        ),
+        streaks AS (
+            SELECT
+                group_start_date,
+                COUNT(*) AS streak_length,
+                MAX(study_date) as last_day_of_streak
+            FROM date_groups
+            GROUP BY group_start_date
+        )
+        SELECT streak_length
+        FROM streaks
+        WHERE last_day_of_streak = :today OR last_day_of_streak = :yesterday
+        ORDER BY last_day_of_streak DESC
+        LIMIT 1;
+    """)
 
-    for activity in activities[1:]:
-        expected_previous_day = current_date - timedelta(days=1)
-        if activity.study_date == expected_previous_day:
-            streak_count += 1
-            current_date = activity.study_date
-        else:
-            break
-            
-    return streak_count
+    result = db.session.execute(
+        streak_query,
+        {'user_id': user.id, 'today': today, 'yesterday': yesterday}
+    ).scalar_one_or_none()
+
+    return result or 0
+# =========================================================================================
+# <<< FIM DA ALTERAÇÃO (PASSO 1) >>>
+# =========================================================================================
+
 
 @student_bp.route("/dashboard")
 @login_required
