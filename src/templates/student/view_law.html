@@ -2229,14 +2229,31 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-    if(formatBoldBtn) formatBoldBtn.addEventListener('click', () => applyMarkup('bold'));
-    if(formatItalicBtn) formatItalicBtn.addEventListener('click', () => applyMarkup('italic'));
-    if(formatStrikethroughBtn) formatStrikethroughBtn.addEventListener('click', () => applyMarkup('strikethrough'));
-    if(formatHighlightYellowBtn) formatHighlightYellowBtn.addEventListener('click', () => applyMarkup('highlight-yellow'));
-    if(formatHighlightGreenBtn) formatHighlightGreenBtn.addEventListener('click', () => applyMarkup('highlight-green'));
-    if(formatHighlightBlueBtn) formatHighlightBlueBtn.addEventListener('click', () => applyMarkup('highlight-blue'));
-    if(formatHighlightPinkBtn) formatHighlightPinkBtn.addEventListener('click', () => applyMarkup('highlight-pink'));
-    if(formatUnformatBtn) formatUnformatBtn.addEventListener('click', () => applyMarkup('unformat'));
+        // <<< INÍCIO DO NOVO CÓDIGO >>>
+    const editingToolsContainer = document.getElementById('editing-tools-container');
+    if (editingToolsContainer) {
+        editingToolsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button) return;
+    
+            const actions = {
+                'format-bold-btn': 'bold',
+                'format-italic-btn': 'italic',
+                'format-strikethrough-btn': 'strikethrough',
+                'format-highlight-yellow-btn': 'highlight-yellow',
+                'format-highlight-green-btn': 'highlight-green',
+                'format-highlight-blue-btn': 'highlight-blue',
+                'format-highlight-pink-btn': 'highlight-pink',
+                'format-unformat-btn': 'unformat'
+            };
+    
+            const action = actions[button.id];
+            if (action) {
+                applyMarkup(action);
+            }
+        });
+    }
+    // <<< FIM DO NOVO CÓDIGO >>>
 
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
