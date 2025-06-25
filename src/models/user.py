@@ -195,7 +195,7 @@ class CommunityContribution(db.Model):
     # que pertencem a esta contribuição específica. Ex: `contribution.comments`.
     # 'cascade="all, delete-orphan"' garante que se uma contribuição for
     # deletada, todas as suas anotações de comunidade também serão.
-    comments = db.relationship('CommunityComment', backref='contribution', lazy='dynamic', cascade="all, delete-orphan")
+    comments = db.relationship('CommunityComment', backref='contribution', cascade="all, delete-orphan")
     # =====================================================================
     # <<< FIM DA ALTERAÇÃO 1/2 >>>
     # =====================================================================
