@@ -2628,6 +2628,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO 2/2: LÓGICA ATUALIZADA DA VERSÃO DA COMUNIDADE >>>
+    // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
     let userPersonalContent = lawContent.innerHTML;
 
@@ -2659,8 +2662,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                             // =====================================================================
                             // <<< INÍCIO DA CORREÇÃO >>>
-                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar exibir os comentários.
                             // =====================================================================
+                            // Adiciona os IDs aos parágrafos do novo conteúdo ANTES de tentar
+                            // exibir os comentários.
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
                                 if (!p.id) {
                                     p.id = `law-p-${index}`;
@@ -2703,6 +2707,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO 2/2 >>>
+    // =====================================================================
+
 });
 </script>
 {% endblock %}
