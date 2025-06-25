@@ -2090,7 +2090,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function handleFavoriteClick(event) {
-        const button = event.currentTarget;
         button.disabled = true;
         const lawId = button.dataset.lawId;
         const icon = button.querySelector('i');
