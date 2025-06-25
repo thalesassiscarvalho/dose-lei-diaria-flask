@@ -466,7 +466,7 @@ def dashboard():
     start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
     
     study_sessions_week = db.session.query(
-        func.cast(StudySession.recorded_at, Date).label('study_date'),
+        func.cast(func.timezone('America/Sao_Paulo', func.timezone('UTC', StudySession.recorded_at)), Date).label('study_date'),
         func.sum(StudySession.duration_seconds).label('total_seconds')
     ).filter(
         StudySession.user_id == current_user.id,
