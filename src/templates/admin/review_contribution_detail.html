@@ -32,9 +32,6 @@
     .prose .user-highlight-blue { background-color: #dbeafe; }
     .prose .user-highlight-pink { background-color: #fce7f3; }
 
-    /* ===================================================================== */
-    /* <<< INÍCIO DA ALTERAÇÃO 1/2: ESTILOS PARA AS ANOTAÇÕES >>> */
-    /* ===================================================================== */
     .submitted-comments-container {
         margin-top: 1.5rem;
         border-top: 1px solid #e5e7eb;
@@ -60,9 +57,6 @@
         border-radius: 3px;
         color: #7c2d12;
     }
-    /* ===================================================================== */
-    /* <<< FIM DA ALTERAÇÃO 1/2 >>> */
-    /* ===================================================================== */
 </style>
 {% endblock %}
 
@@ -95,7 +89,7 @@
                     {{ contribution.content|safe }}
                 </div>
 
-                {% if contribution.comments and contribution.comments.count() > 0 %}
+                {% if contribution.comments %}
                 <div class="submitted-comments-container">
                     <h4 class="font-semibold text-gray-600 mb-2">Anotações de Parágrafo Enviadas:</h4>
                     
