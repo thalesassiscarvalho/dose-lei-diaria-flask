@@ -2668,7 +2668,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeDashboard() {
-        attachEventListeners();
+        setupEventListeners();
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
             filterControls.concurso.dispatchEvent(new Event('change'));
