@@ -2415,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     async function handleToggleTodoItem(event) {
-        const checkbox = event.currentTarget;
+        const checkbox = event.target;
         const listItem = checkbox.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         
