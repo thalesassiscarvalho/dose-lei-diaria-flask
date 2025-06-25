@@ -3,15 +3,16 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-# OTIMIZAÇÃO: Importando 'text' para consultas SQL puras e 'and_' para condições complexas
-from sqlalchemy import or_, func, Date, and_, text
-from sqlalchemy.orm import joinedload
+# OTIMIZAÇÃO: Importando 'text' e 'and_' para consultas SQL mais complexas
+from sqlalchemy import or_, func, Date, and_, text, case
+from sqlalchemy.orm import joinedload, selectinload
 from datetime import date, timedelta
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from src.extensions import db
 from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
+# CORREÇÃO: Removida a importação de 'user_favorite_laws' que causou o erro.
 from src.models.law import Law, Subject
 from src.models.progress import UserProgress
 from src.models.notes import UserNotes, UserLawMarkup
@@ -303,9 +304,6 @@ def _record_study_activity(user: User):
             db.session.rollback()
             logging.error(f"Erro ao registrar atividade de estudo para o usuário {user.id}: {e}")
 
-# =========================================================================================
-# <<< INÍCIO DA ALTERAÇÃO (PASSO 1) >>>
-# =========================================================================================
 def _get_brazil_time_now():
     """Função auxiliar para obter a hora atual no fuso horário de São Paulo, que é o padrão para o usuário."""
     try:
@@ -318,18 +316,11 @@ def _get_brazil_time_now():
 def _calculate_user_streak(user: User) -> int:
     """
     OTIMIZAÇÃO: Calcula a sequência de estudos usando uma única e eficiente consulta SQL.
-    Isto é muito mais escalável do que carregar todos os registros em Python, especialmente
-    para usuários com longo histórico de estudo.
+    Isto é muito mais escalável do que carregar todos os registros em Python.
     """
     today = _get_brazil_time_now().date()
     yesterday = today - timedelta(days=1)
-
-    # Esta consulta usa Common Table Expressions (CTE) para calcular a sequência de forma eficiente.
-    # 1. `distinct_dates`: Pega apenas as datas únicas de estudo para evitar contagem dupla no mesmo dia.
-    # 2. `date_groups`: Cria grupos de datas consecutivas. A mágica está em subtrair um número de linha
-    #    da data, o que resulta no mesmo valor para todos os dias de uma mesma sequência.
-    # 3. `streaks`: Conta o tamanho de cada sequência.
-    # 4. A consulta final pega o tamanho da sequência mais recente que inclui hoje ou ontem.
+    
     streak_query = text("""
         WITH distinct_dates AS (
             SELECT DISTINCT study_date
@@ -356,17 +347,13 @@ def _calculate_user_streak(user: User) -> int:
         ORDER BY last_day_of_streak DESC
         LIMIT 1;
     """)
-
+    
     result = db.session.execute(
         streak_query,
         {'user_id': user.id, 'today': today, 'yesterday': yesterday}
     ).scalar_one_or_none()
 
     return result or 0
-# =========================================================================================
-# <<< FIM DA ALTERAÇÃO (PASSO 1) >>>
-# =========================================================================================
-
 
 @student_bp.route("/dashboard")
 @login_required
@@ -572,6 +559,7 @@ def dashboard():
 @student_bp.route("/filter_laws")
 @login_required
 def filter_laws():
+    # Parâmetros da requisição
     selected_concurso_id_str = request.args.get("concurso_id", "")
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
@@ -581,93 +569,91 @@ def filter_laws():
 
     allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
 
-    user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()
-    progress_map = {p.law_id: p.status for p in user_progress_records}
-    completed_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'concluido'}
-    in_progress_topic_ids = {law_id for law_id, status in progress_map.items() if status == 'em_andamento'}
-    favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
+    # A consulta base agora é sobre os TÓPICOS (leis com parent_id)
+    topics_query = Law.query.filter(Law.parent_id.isnot(None))\
+                           .options(selectinload(Law.parent).joinedload(Law.subject))
 
-    diplomas_query = Law.query.filter(Law.parent_id.is_(None)).options(joinedload(Law.children), joinedload(Law.subject))
-    
     if allowed_law_ids is not None:
-        diplomas_query = diplomas_query.filter(Law.id.in_(allowed_law_ids))
-
-    topic_ids_to_show = None
+        topics_query = topics_query.filter(Law.id.in_(allowed_law_ids))
 
     if selected_concurso_id_str.isdigit():
-        concurso = Concurso.query.get(int(selected_concurso_id_str))
-        if concurso and (allowed_concurso_ids is None or concurso.id in allowed_concurso_ids):
-            topics_in_concurso = concurso.laws.filter(Law.parent_id.isnot(None)).all()
-            topic_ids_to_show = {topic.id for topic in topics_in_concurso}
-            
-            parent_ids = {topic.parent_id for topic in topics_in_concurso if topic.parent_id}
-            
-            diplomas_query = diplomas_query.filter(Law.id.in_(parent_ids))
-    else:
-        selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
-        if selected_subject_id:
-            diplomas_query = diplomas_query.filter(Law.subject_id == selected_subject_id)
+        topics_query = topics_query.join(Law.concursos).filter(Concurso.id == int(selected_concurso_id_str))
 
     selected_diploma_id = int(selected_diploma_id_str) if selected_diploma_id_str.isdigit() else None
     if selected_diploma_id:
-        diplomas_query = diplomas_query.filter(Law.id == selected_diploma_id)
+        topics_query = topics_query.filter(Law.parent_id == selected_diploma_id)
+    else:
+        selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
+        if selected_subject_id:
+            topics_query = topics_query.join(Subject, Law.subject_id == Subject.id).filter(Subject.id == selected_subject_id)
 
-    all_diplomas = diplomas_query.join(Law.subject).order_by(Subject.name, Law.title).all()
-    
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
-    
-    processed_diplomas = []
-    for diploma in all_diplomas:
-        children_to_display = []
+    if selected_topic_id:
+        topics_query = topics_query.filter(Law.id == selected_topic_id)
         
-        children_iterator = diploma.children
-        if topic_ids_to_show is not None:
-            children_iterator = [child for child in diploma.children if child.id in topic_ids_to_show]
-        elif allowed_law_ids is not None:
-            children_iterator = [child for child in diploma.children if child.id in allowed_law_ids]
+    topics_query = topics_query.outerjoin(UserProgress, and_(
+        UserProgress.law_id == Law.id,
+        UserProgress.user_id == current_user.id
+    ))
 
-        for topic in children_iterator:
-            is_completed = topic.id in completed_topic_ids
-            is_in_progress = topic.id in in_progress_topic_ids
-            is_not_read = not is_completed and not is_in_progress
-            is_favorite = topic.id in favorite_topic_ids
-            
-            passes_status = (not selected_status or
-                             (selected_status == 'completed' and is_completed) or
-                             (selected_status == 'in_progress' and is_in_progress) or
-                             (selected_status == 'not_read' and is_not_read))
-            passes_topic = (not selected_topic_id or topic.id == selected_topic_id)
-            passes_favorite = not show_favorites or is_favorite
-            
-            if passes_status and passes_topic and passes_favorite:
-                children_to_display.append({
-                    "id": topic.id, "title": topic.title,
-                    "is_completed": is_completed, "is_in_progress": is_in_progress,
-                    "is_favorite": is_favorite
-                })
+    if selected_status == 'completed':
+        topics_query = topics_query.filter(UserProgress.status == 'concluido')
+    elif selected_status == 'in_progress':
+        topics_query = topics_query.filter(UserProgress.status == 'em_andamento')
+    elif selected_status == 'not_read':
+        topics_query = topics_query.filter(UserProgress.id.is_(None))
 
-        if children_to_display:
-            allowed_children_ids_in_diploma = {child.id for child in children_iterator}
-            total_children_in_diploma = len(allowed_children_ids_in_diploma)
-            completed_children_count = sum(1 for child_id in allowed_children_ids_in_diploma if child_id in completed_topic_ids)
-            progress_percentage = (completed_children_count / total_children_in_diploma * 100) if total_children_in_diploma > 0 else 0
-            
-            diploma_data = {
-                "title": diploma.title,
-                "progress_percentage": progress_percentage,
-                "subject_name": diploma.subject.name if diploma.subject else "Sem Matéria",
-                "filtered_children": children_to_display
-            }
-            processed_diplomas.append(diploma_data)
+    # CORREÇÃO: A filtragem de favoritos foi alterada para usar o relacionamento do modelo.
+    if show_favorites:
+        topics_query = topics_query.join(Law.favorite_of_users).filter(User.id == current_user.id)
 
+    all_filtered_topics = topics_query.all()
+    
     subjects_with_diplomas = {}
-    for diploma_data in processed_diplomas:
-        subject_name = diploma_data["subject_name"]
-        if subject_name not in subjects_with_diplomas:
-            subjects_with_diplomas[subject_name] = []
-        subjects_with_diplomas[subject_name].append(diploma_data)
+    user_progress_map = {p.law_id: p.status for p in current_user.progresses}
+    favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
+
+    diplomas_map = {}
+    for topic in all_filtered_topics:
+        diploma = topic.parent
+        if not diploma: continue
+        
+        if diploma not in diplomas_map:
+            diplomas_map[diploma] = {
+                "id": diploma.id,
+                "title": diploma.title,
+                "subject": diploma.subject,
+                "children": [],
+                "all_children_ids": {c.id for c in diploma.children if (allowed_law_ids is None or c.id in allowed_law_ids)}
+            }
+        
+        status = user_progress_map.get(topic.id)
+        diplomas_map[diploma]["children"].append({
+            "id": topic.id,
+            "title": topic.title,
+            "is_completed": status == 'concluido',
+            "is_in_progress": status == 'em_andamento',
+            "is_favorite": topic.id in favorite_topic_ids
+        })
+    
+    for diploma, data in diplomas_map.items():
+        subject_name = data["subject"].name if data["subject"] else "Sem Matéria"
+        
+        subjects_with_diplomas.setdefault(subject_name, [])
+            
+        total_children = len(data["all_children_ids"])
+        completed_children = sum(1 for child_id in data["all_children_ids"] if user_progress_map.get(child_id) == 'concluido')
+        progress_percentage = (completed_children / total_children * 100) if total_children > 0 else 0
+
+        subjects_with_diplomas[subject_name].append({
+            "title": data["title"],
+            "progress_percentage": progress_percentage,
+            "subject_name": subject_name,
+            "filtered_children": sorted(data["children"], key=lambda x: x['title'])
+        })
         
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
+
 
 @student_bp.route("/law/<int:law_id>")
 @login_required
