@@ -2021,31 +2021,40 @@ document.addEventListener("DOMContentLoaded", function () {
         notesChevron.style.transform = notesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
     });
 
-    const neuralWaveButtons = document.querySelectorAll('.neural-wave-button');
+        // <<< INÍCIO DO NOVO CÓDIGO >>>
+    const neuralWavesContainer = document.querySelector('.neural-waves-container');
     let currentlyPlaying = null;
-    neuralWaveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const waveType = this.getAttribute('data-wave');
+    
+    if (neuralWavesContainer) {
+        neuralWavesContainer.addEventListener('click', function(event) {
+            const button = event.target.closest('.neural-wave-button');
+            if (!button) return;
+    
+            const waveType = button.dataset.wave;
             const audioElement = document.getElementById(`audio-${waveType}`);
-            if (this.classList.contains('playing')) {
+    
+            if (button.classList.contains('playing')) {
                 audioElement.pause();
                 audioElement.currentTime = 0;
-                this.classList.remove('playing');
+                button.classList.remove('playing');
                 currentlyPlaying = null;
-                return;
+            } else {
+                if (currentlyPlaying) {
+                    const currentlyPlayingButton = document.querySelector(`.neural-wave-button.playing`);
+                    const currentlyPlayingAudio = document.getElementById(`audio-${currentlyPlaying}`);
+                    if (currentlyPlayingButton) currentlyPlayingButton.classList.remove('playing');
+                    if (currentlyPlayingAudio) {
+                        currentlyPlayingAudio.pause();
+                        currentlyPlayingAudio.currentTime = 0;
+                    }
+                }
+                audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
+                button.classList.add('playing');
+                currentlyPlaying = waveType;
             }
-            if (currentlyPlaying) {
-                const playingButton = document.querySelector(`.neural-wave-button[data-wave="${currentlyPlaying}"]`);
-                const playingAudio = document.getElementById(`audio-${currentlyPlaying}`);
-                playingButton.classList.remove('playing');
-                playingAudio.pause();
-                playingAudio.currentTime = 0;
-            }
-            audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
-            this.classList.add('playing');
-            currentlyPlaying = waveType;
         });
-    });
+    }
+    // <<< FIM DO NOVO CÓDIGO >>>
 
     const notesEditor = document.getElementById('notes-editor');
     const saveNotesBtn = document.getElementById('save-notes-btn');
