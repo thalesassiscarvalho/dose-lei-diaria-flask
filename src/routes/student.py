@@ -610,7 +610,7 @@ def filter_laws():
     all_filtered_topics = topics_query.all()
     
     subjects_with_diplomas = {}
-    user_progress_map = {p.law_id: p.status for p in current_user.progresses}
+    user_progress_map = {p.law_id: p.status for p in current_user.progress}
     favorite_topic_ids = {law.id for law in current_user.favorite_laws if law.parent_id is not None}
 
     diplomas_map = {}
