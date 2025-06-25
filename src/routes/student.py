@@ -1220,6 +1220,7 @@ def get_community_version(law_id):
 
     comments_data = [
         {
+            "id": comment.id,
             "content": comment.content,
             "anchor_paragraph_id": comment.anchor_paragraph_id
         } 
