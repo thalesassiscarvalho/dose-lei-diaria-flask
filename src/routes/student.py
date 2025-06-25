@@ -34,7 +34,7 @@ ALLOWED_TAGS = [
     'span', 'div'
 ]
 ALLOWED_ATTRIBUTES = {
-    '*': ['style', 'class', 'title'],
+    '*': ['style', 'class', 'title', 'id'],
     'a': ['href', 'title', 'target']
 }
 ALLOWED_STYLES = [
