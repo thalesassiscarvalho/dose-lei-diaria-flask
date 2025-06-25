@@ -2136,8 +2136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => { button.disabled = false; });
     }
 
-    function handleMarkIncompleteClick(event) {
-        const buttonEl = event.currentTarget;
+    function handleMarkIncompleteClick(event) {        
         buttonEl.disabled = true;
         const lawId = buttonEl.dataset.lawId;
         fetch(`/student/law/review/${lawId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
