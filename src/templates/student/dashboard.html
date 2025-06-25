@@ -2477,7 +2477,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleDeleteTodoItem(event) {
         if (!confirm('Tem certeza que deseja excluir este item?')) return;
-        const button = event.currentTarget;
+        const button = event.target.closest('.todo-delete-btn');
         const listItem = button.closest('.todo-item');
         const itemId = listItem.dataset.itemId;
         try {
