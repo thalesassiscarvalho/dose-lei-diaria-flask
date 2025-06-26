@@ -718,14 +718,20 @@ def view_law(law_id):
     if allowed_law_ids is not None and law_id not in allowed_law_ids:
         flash("Você não tem permissão para acessar este tópico.", "danger")
         return redirect(url_for('student.dashboard'))
-    
+
     law = Law.query.options(joinedload(Law.banner)).get_or_404(law_id)
     if law.parent_id is None:
         flash("Selecione um tópico de estudo específico para visualizar.", "info")
         return redirect(url_for('student.dashboard'))
+
     _record_study_activity(current_user)
     progress = UserProgress.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
+    # LÓGICA ALTERADA AQUI
     user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+    markup_json = user_markup.content_json if user_markup and user_markup.content_json else []
+    display_content = law.content # Sempre começa com o conteúdo limpo da lei
+
     is_favorited = law in current_user.favorite_laws
     now = datetime.datetime.utcnow()
     if progress:
@@ -733,9 +739,9 @@ def view_law(law_id):
     else:
         progress = UserProgress(user_id=current_user.id, law_id=law_id, status='em_andamento', last_accessed_at=now)
         db.session.add(progress)
+
     db.session.commit()
-    content_to_display = user_markup.content if user_markup else law.content
-    if content_to_display is None: content_to_display = ""
+
     banner_to_show = None
     if law.banner:
         seen_banner_record = UserSeenLawBanner.query.filter_by(
@@ -745,10 +751,13 @@ def view_law(law_id):
         ).first()
         if not seen_banner_record:
             banner_to_show = law.banner
+
     return render_template("student/view_law.html",
                            law=law, is_completed=(progress.status == 'concluido'),
                            last_read_article=progress.last_read_article, current_status=progress.status,
-                           is_favorited=is_favorited, display_content=content_to_display,
+                           is_favorited=is_favorited,
+                           display_content=display_content,
+                           markup_json=markup_json, # Envia o JSON de marcações para o frontend
                            banner_to_show=banner_to_show
                            )
 
