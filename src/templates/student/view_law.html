@@ -1438,6 +1438,147 @@ document.addEventListener("DOMContentLoaded", function () {
     // =====================================================================
     // <<< FIM DO CÓDIGO A SER ADICIONADO NESTE PASSO >>>
     // =====================================================================
+
+    // =====================================================================
+    // <<< PASSO 3: INÍCIO DO CÓDIGO FINAL PARA ADICIONAR >>>
+    // (Este bloco substitui toda a lógica de marcação antiga)
+    // =====================================================================
+    
+    // 3. FUNÇÕES DE AÇÃO DO USUÁRIO (Criam e removem marcações)
+    
+    /**
+     * Nova função applyMarkup, que agora cria objetos JSON.
+     * @param {string} type - O tipo de marcação, ex: 'highlight'.
+     * @param {object} options - Opções, como a cor.
+     */
+    function applyMarkup(type, options = {}) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+        
+        const range = selection.getRangeAt(0);
+        const startParagraph = range.startContainer.parentElement.closest('p, li, blockquote');
+        const endParagraph = range.endContainer.parentElement.closest('p, li, blockquote');
+    
+        if (!startParagraph || !endParagraph || startParagraph.id !== endParagraph.id) {
+            Swal.fire('Ação Inválida', 'Por favor, faça marcações dentro de um único parágrafo por vez.', 'warning');
+            return;
+        }
+    
+        const paragraphId = startParagraph.id;
+        const fullRange = document.createRange();
+        fullRange.selectNodeContents(startParagraph);
+        
+        const preSelectionRange = document.createRange();
+        preSelectionRange.setStart(fullRange.startContainer, fullRange.startOffset);
+        preSelectionRange.setEnd(range.startContainer, range.startOffset);
+        
+        const start = preSelectionRange.toString().length;
+        const end = start + range.toString().length;
+        
+        const newAnnotation = {
+            id: `ann_${Date.now()}`, // ID único temporário
+            type: type,
+            paragraphId: paragraphId,
+            start: start,
+            end: end,
+            ...options // Inclui opções como 'color'
+        };
+    
+        userAnnotations.push(newAnnotation);
+        renderAllAnnotations(); // Re-renderiza tudo para aplicar a nova marcação
+        debounceSaveMarkup();
+    }
+    
+    /** Remove uma marcação com base na seleção atual */
+    function removeMarkup() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+    
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const markedSpan = container.nodeType === Node.ELEMENT_NODE ? container.querySelector('[data-annotation-id]') || container : container.parentElement;
+        
+        const annotationId = markedSpan.closest('span[data-annotation-id]')?.dataset.annotationId;
+        if (annotationId) {
+            userAnnotations = userAnnotations.filter(ann => ann.id !== annotationId);
+            renderAllAnnotations();
+            debounceSaveMarkup();
+        } else {
+            Swal.fire('Ação Inválida', 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.', 'info');
+        }
+    }
+    
+    // 4. FUNÇÕES DE SALVAMENTO E INICIALIZAÇÃO
+    
+    /** Salva a lista de anotações no backend após um tempo de inatividade */
+    function debounceSaveMarkup() {
+        clearTimeout(saveMarkupTimeout);
+        saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
+    }
+    
+    /** Envia a lista de anotações JSON para o servidor */
+    async function saveLawMarkup() {
+        fetch(`/student/law/${lawId}/save_markup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ markups: userAnnotations }) // Envia o nosso "estado"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                console.log("Marcações salvas com sucesso!");
+                Toastify({ text: data.message || "Suas marcações foram salvas!", duration: 2000, gravity: "bottom" }).showToast();
+            } else {
+                Swal.fire('Erro ao Salvar', data.error || 'Não foi possível salvar suas marcações.', 'error');
+            }
+        })
+        .catch(err => console.error("Erro ao salvar marcações:", err));
+    }
+    
+    /** Função principal que inicializa toda a página */
+    function initializePage() {
+        // Garante que todos os parágrafos tenham um ID único para serem referenciados
+        lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+            if (!p.id) p.id = `law-p-${index}`;
+        });
+    
+        // Renderiza as marcações existentes que vieram do backend
+        renderAllAnnotations();
+    
+        // Configura o listener DELEGADO para a barra de ferramentas de marcação
+        const editingToolsContainer = document.getElementById('editing-tools-container');
+        if (editingToolsContainer) {
+            editingToolsContainer.addEventListener('click', (event) => {
+                const button = event.target.closest('button');
+                if (!button) return;
+    
+                const actions = {
+                    'format-highlight-yellow-btn': { type: 'highlight', options: { color: 'yellow' } },
+                    'format-highlight-green-btn': { type: 'highlight', options: { color: 'green' } },
+                    'format-highlight-blue-btn': { type: 'highlight', options: { color: 'blue' } },
+                    'format-highlight-pink-btn': { type: 'highlight', options: { color: 'pink' } }
+                    // Futuramente, botões de negrito/itálico podem ser adicionados aqui
+                };
+    
+                const action = actions[button.id];
+                if (action) {
+                    applyMarkup(action.type, action.options);
+                } else if (button.id === 'format-unformat-btn') {
+                    removeMarkup();
+                }
+            });
+        }
+        
+        // Aqui você pode chamar as funções de inicialização de outras funcionalidades que não foram alteradas
+        // Ex: initCommentSystem(); setupTimerListeners(); etc.
+    }
+    
+    // Inicia todo o processo!
+    initializePage();
+    
+    // =====================================================================
+    // <<< FIM DO CÓDIGO FINAL PARA ADICIONAR >>>
+    // =====================================================================
     
     let isCommunityViewActive = false;
     let userPersonalContent = lawContent.innerHTML;
