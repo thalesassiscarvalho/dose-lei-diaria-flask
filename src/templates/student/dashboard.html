@@ -1121,13 +1121,8 @@
 
         <div class="stat-card streak-card" id="streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
-            <div class="streak-display-container">
-                {% if user_streak > 0 %}
-                    <div class="streak-display">{{ user_streak }}</div>
-                    <p class="streak-text">dias consecutivos!</p>
-                {% else %}
-                    <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
-                {% endif %}
+            <div class="streak-display-container text-center text-gray-500">
+                <p>Carregando...</p>
             </div>
             <div class="streak-chart-container">
                 <canvas id="streakChart"></canvas>
@@ -1136,25 +1131,10 @@
 
         <div class="stat-card level-card" id="level-card">
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
-            <div class="level-info">
-                <i class="{{ level_info.current_level.icon }} level-icon"></i>
-                <div>
-                    <div class="level-name">{{ level_info.current_level.name }}</div>
-                    <div class="level-points">{{ user_points }} pontos</div>
-                </div>
+            <div class="level-content-container text-center text-gray-500">
+                <p>Carregando...</p>
             </div>
-            <div class="xp-bar-container">
-                <div class="xp-bar-fill" style="width: {{ '%.2f'|format(level_info.progress_percent) }}%;"></div>
-            </div>
-            {% if level_info.next_level %}
-                <p class="next-level-info">
-                    Faltam <strong>{{ level_info.points_to_next }}</strong> pontos para <i class="{{ level_info.next_level.icon }}"></i> <strong>{{ level_info.next_level.name }}</strong>
-                </p>
-            {% else %}
-                <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
-            {% endif %}
         </div>
-    </div>
 
     <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
         <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
