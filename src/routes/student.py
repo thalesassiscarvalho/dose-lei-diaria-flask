@@ -1368,12 +1368,13 @@ def get_community_version(law_id):
     contributor_name = approved_contribution.user.full_name or approved_contribution.user.email
     user_has_liked = current_user in approved_contribution.liked_by_users
 
-    # <<< INÍCIO DA CORREÇÃO >>>
-    # Agora enviamos o conteúdo original da lei e o JSON das marcações separadamente
+    # CORREÇÃO: Enviando o conteúdo JSON da contribuição, e não da marcação do usuário.
+    annotations_json = approved_contribution.content_json or []
+
     return jsonify(
         success=True,
-        original_content=approved_contribution.law.content, # HTML Limpo
-        annotations=approved_contribution.content_json or [], # JSON das marcações
+        original_content=approved_contribution.law.content,
+        annotations=annotations_json, # Enviando o JSON da contribuição aprovada
         comments=comments_data,
         contributor_name=contributor_name,
         contribution_id=approved_contribution.id,
@@ -1382,4 +1383,3 @@ def get_community_version(law_id):
         user_has_liked=user_has_liked,
         is_own_contribution=(current_user.id == approved_contribution.user_id)
     )
-    # <<< FIM DA CORREÇÃO >>>
