@@ -2834,13 +2834,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (result.isConfirmed) {
                     shareContributionBtn.disabled = true;
                     shareContributionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
+    
+                    // A grande mudança está aqui: enviamos o JSON das marcações.
                     fetch(`/student/law/${lawId}/share_contribution`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': csrfToken
-                        }
+                        },
+                        body: JSON.stringify({ markups: userAnnotations }) // <-- AQUI!
                     })
                     .then(response => response.json())
                     .then(data => {
