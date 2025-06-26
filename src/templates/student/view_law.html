@@ -2913,7 +2913,19 @@ document.addEventListener("DOMContentLoaded", function () {
                     .then(data => {
                         if (data.success) {
                             isCommunityViewActive = true;
-                            lawContent.innerHTML = data.content;
+                            // <<< INÍCIO DA CORREÇÃO >>>
+                            // 1. Coloca o HTML limpo no container
+                            lawContent.innerHTML = data.original_content;
+                            // 2. Garante que os parágrafos tenham IDs
+                            lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+                                if (!p.id) p.id = `law-p-community-${index}`;
+                            });
+                            // 3. Renderiza as anotações sobre o HTML limpo
+                            if (data.annotations && Array.isArray(data.annotations)) {
+                                const sortedAnnotations = [...data.annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+                                // Reutiliza a função que já criamos!
+                                sortedAnnotations.forEach(renderSingleAnnotation);
+                            }
 
                             if (contributorBanner && data.contributor_name) {
                                 contributorBanner.innerHTML = ''; 
