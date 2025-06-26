@@ -1258,31 +1258,42 @@ def get_study_stats():
 @student_bp.route("/law/<int:law_id>/share_contribution", methods=["POST"])
 @login_required
 def share_contribution(law_id):
+    Law.query.get_or_404(law_id)
+
+    # A rota agora espera receber o JSON das marcações diretamente do frontend
+    data = request.get_json()
+    if not data:
+         return jsonify(success=False, error="Requisição sem dados."), 400
+
+    markup_data = data.get('markups')
+    if markup_data is None or not isinstance(markup_data, list):
+        return jsonify(success=False, error="Dados de marcação ausentes ou em formato inválido."), 400
+
     existing_contribution = CommunityContribution.query.filter_by(
         user_id=current_user.id,
         law_id=law_id,
         status='pending'
     ).first()
     if existing_contribution:
-        return jsonify(success=False, error="Você já enviou suas marcações para análise. Por favor, aguarde a revisão."), 400
+        return jsonify(success=False, error="Você já tem uma contribuição pendente para esta lei."), 400
 
-    user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
     user_comments = UserComment.query.filter_by(user_id=current_user.id, law_id=law_id).all()
 
-    base_content = user_markup.content if user_markup else Law.query.get(law_id).content
-    if not base_content and not user_comments:
-         return jsonify(success=False, error="Não há conteúdo para compartilhar."), 400
+    if not markup_data and not user_comments:
+        return jsonify(success=False, error="Não há conteúdo para compartilhar (sem marcações ou anotações)."), 400
 
     try:
         new_contribution = CommunityContribution(
             user_id=current_user.id,
             law_id=law_id,
-            content=base_content or "",
+            content_json=markup_data,  # <-- Salva na nova coluna JSON
+            content="deprecated",        # <-- Marca a coluna antiga como obsoleta
             status='pending'
         )
         db.session.add(new_contribution)
-        db.session.flush()
+        db.session.flush() # Para obter o ID da nova contribuição antes do commit
 
+        # Adiciona os comentários de parágrafo à contribuição
         for comment in user_comments:
             new_community_comment = CommunityComment(
                 contribution_id=new_contribution.id,
@@ -1290,13 +1301,13 @@ def share_contribution(law_id):
                 anchor_paragraph_id=comment.anchor_paragraph_id
             )
             db.session.add(new_community_comment)
-        
+
         db.session.commit()
-        return jsonify(success=True, message="Sua contribuição completa foi enviada para análise. Muito obrigado!")
-    
+        return jsonify(success=True, message="Sua contribuição foi enviada para análise. Muito obrigado!")
+
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao salvar contribuição do usuário {current_user.id} para a lei {law_id}: {e}")
+        logging.error(f"Erro ao salvar contribuição JSON do usuário {current_user.id}: {e}")
         return jsonify(success=False, error="Ocorreu um erro interno ao enviar sua contribuição."), 500
 
 @student_bp.route("/api/contribution/<int:contribution_id>/toggle_like", methods=["POST"])
