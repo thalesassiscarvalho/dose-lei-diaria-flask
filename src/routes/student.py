@@ -854,11 +854,22 @@ def save_last_read(law_id):
 @student_bp.route("/announcement/<int:announcement_id>/mark_seen", methods=["POST"])
 @login_required
 def mark_announcement_seen(announcement_id):
+    # A verificação inicial é mantida para otimizar e evitar trabalho desnecessário do banco.
     existing = UserSeenAnnouncement.query.filter_by(user_id=current_user.id, announcement_id=announcement_id).first()
     if not existing:
-        seen = UserSeenAnnouncement(user_id=current_user.id, announcement_id=announcement_id)
-        db.session.add(seen)
-        db.session.commit()
+        try:
+            # Tentamos criar e salvar o novo registro.
+            seen = UserSeenAnnouncement(user_id=current_user.id, announcement_id=announcement_id)
+            db.session.add(seen)
+            db.session.commit()
+        except IntegrityError:
+            # Se a 'IntegrityError' ocorrer, significa que a condição de corrida aconteceu.
+            # Outra requisição já inseriu o registro entre nossa checagem 'if not existing' e o 'commit'.
+            # Revertemos a transação atual que falhou para manter a sessão do banco limpa.
+            db.session.rollback()
+            # Não fazemos mais nada, pois o estado desejado (registro existe) foi alcançado.
+    
+    # Independentemente se fomos nós que inserimos ou se já existia, o resultado é um sucesso.
     return jsonify(success=True)
 
 @student_bp.route("/law/<int:law_id>/mark_banner_seen", methods=["POST"])
