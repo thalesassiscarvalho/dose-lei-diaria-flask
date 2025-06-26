@@ -1434,17 +1434,17 @@ document.addEventListener("DOMContentLoaded", function () {
     
     /** Renderiza todas as anotações do estado atual. */
     function renderAllAnnotations() {
-        // Limpa marcações antigas que nosso sistema criou (as que têm data-annotation-id)
-        lawContent.querySelectorAll('span[data-annotation-id]').forEach(el => {
-            if (el.parentNode) {
-                // Substitui o <span> pelo seu conteúdo de texto, efetivamente removendo a marcação.
-                el.replaceWith(...el.childNodes);
-            }
+        // GUARDA O HTML ORIGINAL E LIMPO
+        const lawOriginalHTML = userPersonalContent;
+        // APAGA O CONTEÚDO ATUAL E RESTAURA A VERSÃO LIMPA
+        lawContent.innerHTML = lawOriginalHTML;
+        
+        // Re-cria os IDs dos parágrafos, pois o HTML foi resetado
+        lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+            if (!p.id) p.id = `law-p-${index}`;
         });
-        // Junta nós de texto que possam ter ficado separados.
-        lawContent.normalize();
     
-        // Ordena as anotações da maior para a menor para evitar problemas de sobreposição ao renderizar.
+        // AGORA, com a tela limpa, desenha todas as anotações da nossa "fonte da verdade" (a lista JSON)
         const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
         sortedAnnotations.forEach(renderSingleAnnotation);
     }
