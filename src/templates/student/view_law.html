@@ -1354,6 +1354,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
+    const userPersonalContent = lawContent.innerHTML;
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
     const subjectId = {{ law.subject_id | tojson }};
