@@ -1474,7 +1474,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const endParagraph = range.endContainer.parentElement.closest('p, li, blockquote');
     
         if (!startParagraph || !endParagraph || startParagraph.id !== endParagraph.id) {
-            Swal.fire('Ação Inválida', 'Por favor, faça marcações dentro de um único parágrafo por vez.', 'warning');
+            Swal.fire({
+                title: 'Ação Inválida',
+                text: 'Por favor, faça marcações dentro de um único parágrafo por vez.',
+                icon: 'warning',
+                confirmButtonText: 'OK',
+                customClass: {
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                },
+                buttonsStyling: false
+            });
             return;
         }
     
