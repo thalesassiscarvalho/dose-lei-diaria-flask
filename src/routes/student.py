@@ -408,8 +408,6 @@ def dashboard():
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
     
-    user_streak = _calculate_user_streak(current_user)
-
     favorites_by_subject = {}
     
     # OTIMIZAÇÃO: Consultas mais eficientes para obter IDs de tópicos concluídos e em andamento,
@@ -463,7 +461,6 @@ def dashboard():
             "progress": progress_percentage
         })
 
-    level_info = get_user_level_info(current_user.points)
     todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
     
     default_concurso_id = current_user.default_concurso_id
