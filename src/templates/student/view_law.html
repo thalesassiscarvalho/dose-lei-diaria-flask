@@ -1515,26 +1515,30 @@ document.addEventListener("DOMContentLoaded", function () {
     /** Remove uma marcação com base na seleção atual */
     function removeMarkup() {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
-    
+        if (!selection || selection.rangeCount === 0) return;
+
         const range = selection.getRangeAt(0);
-        const container = range.commonAncestorContainer;
+        let container = range.commonAncestorContainer;
+
+        // LÓGICA CORRIGIDA E MAIS ROBUSTA
+        // Procura, a partir de onde o usuário clicou, o elemento "pai" mais próximo
+        // que tenha a nossa marcação (data-annotation-id), não importa qual seja a tag.
+        const markedElement = container.nodeType === Node.ELEMENT_NODE
+            ? container.closest('[data-annotation-id]')
+            : container.parentElement.closest('[data-annotation-id]');
         
-        // Esta linha é a mesma, ela encontra o elemento mais próximo com a marcação.
-        const markedElement = container.nodeType === Node.ELEMENT_NODE ? container.closest('[data-annotation-id]') : container.parentElement.closest('[data-annotation-id]');
-        
-        // <<< CORREÇÃO DA LÓGICA DA BORRACHA >>>
-        // Agora procuramos por QUALQUER tag que tenha o atributo 'data-annotation-id',
-        // e não apenas a tag 'span'. Isso inclui <strong>, <em>, <s>, etc.
+        // Se encontrarmos um elemento marcado, pegamos o ID dele.
         const annotationId = markedElement?.dataset.annotationId;
 
         if (annotationId) {
+            // Se um ID foi encontrado, removemos a anotação da nossa lista.
             userAnnotations = userAnnotations.filter(ann => ann.id !== annotationId);
+            // Redesenhamos a tela para que a marcação suma visualmente.
             renderAllAnnotations();
+            // Agendamos o salvamento automático.
             debounceSaveMarkup();
         } else {
-            // <<< CORREÇÃO DO BOTÃO INVISÍVEL >>>
-            // Usamos a mesma estrutura de antes para estilizar o botão do alerta.
+            // Se nenhum elemento marcado foi encontrado na seleção, o alerta é exibido.
             Swal.fire({
                 title: 'Ação Inválida',
                 text: 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.',
