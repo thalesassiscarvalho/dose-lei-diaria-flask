@@ -1556,13 +1556,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     'format-highlight-yellow-btn': { type: 'highlight', options: { color: 'yellow' } },
                     'format-highlight-green-btn': { type: 'highlight', options: { color: 'green' } },
                     'format-highlight-blue-btn': { type: 'highlight', options: { color: 'blue' } },
-                    'format-highlight-pink-btn': { type: 'highlight', options: { color: 'pink' } }
-                    // Futuramente, botões de negrito/itálico podem ser adicionados aqui
+                    'format-highlight-pink-btn': { type: 'highlight', options: { color: 'pink' } },
+                    'format-bold-btn': { type: 'bold' },
+                    'format-italic-btn': { type: 'italic' },
+                    'format-strikethrough-btn': { type: 'strikethrough' }
                 };
-    
+                
                 const action = actions[button.id];
                 if (action) {
-                    applyMarkup(action.type, action.options);
+                    applyMarkup(action.type, action.options || {});
                 } else if (button.id === 'format-unformat-btn') {
                     removeMarkup();
                 }
