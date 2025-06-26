@@ -1380,11 +1380,26 @@ document.addEventListener("DOMContentLoaded", function () {
         const paragraph = document.getElementById(annotation.paragraphId);
         if (!paragraph) return;
     
+        // Cria o elemento correto para a anotação (<span> para highlight, <strong> para negrito, etc.)
+        let wrapperNode;
+        if (annotation.type === 'highlight') {
+            wrapperNode = document.createElement('span');
+            wrapperNode.className = `user-highlight-${annotation.color}`;
+        } else if (annotation.type === 'bold') {
+            wrapperNode = document.createElement('strong');
+        } else if (annotation.type === 'italic') {
+            wrapperNode = document.createElement('em');
+        } else if (annotation.type === 'strikethrough') {
+            wrapperNode = document.createElement('s');
+        } else {
+            return; // Tipo de anotação desconhecido
+        }
+        wrapperNode.dataset.annotationId = annotation.id;
+    
         const range = document.createRange();
         let charCount = 0;
         let startNode, startOffset, endNode, endOffset;
     
-        // A função 'walker' percorre todos os nós de texto dentro do parágrafo para encontrar as posições exatas
         const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null, false);
         let currentNode;
         while (currentNode = walker.nextNode()) {
@@ -1405,13 +1420,12 @@ document.addEventListener("DOMContentLoaded", function () {
             range.setStart(startNode, startOffset);
             range.setEnd(endNode, endOffset);
     
-            const span = document.createElement('span');
-            if (annotation.type === 'highlight') {
-                span.className = `user-highlight-${annotation.color}`;
-            }
-            span.dataset.annotationId = annotation.id;
+            // Esta nova lógica é mais robusta que 'surroundContents'
             try {
-                range.surroundContents(span);
+                // Clona o conteúdo selecionado para dentro do nosso novo nó (span, strong, etc.)
+                wrapperNode.appendChild(range.extractContents());
+                // Insere o novo nó com o conteúdo dentro dele de volta no lugar
+                range.insertNode(wrapperNode);
             } catch (e) {
                 console.error("Não foi possível aplicar a marcação:", annotation, e);
             }
