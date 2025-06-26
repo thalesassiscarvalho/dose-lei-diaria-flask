@@ -2918,7 +2918,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             lawContent.innerHTML = data.original_content;
                             // 2. Garante que os parágrafos tenham IDs
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
-                                if (!p.id) p.id = `law-p-community-${index}`;
+                                if (!p.id) p.id = `law-p-${index}`;
                             });
                             // 3. Renderiza as anotações sobre o HTML limpo
                             if (data.annotations && Array.isArray(data.annotations)) {
