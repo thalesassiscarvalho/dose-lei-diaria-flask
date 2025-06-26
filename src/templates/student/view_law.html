@@ -1352,35 +1352,29 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // =====================================================================
+    // <<< INÍCIO DO SCRIPT COMPLETO E CORRIGIDO >>>
+    // =====================================================================
+
+    // --- VARIÁVEIS GLOBAIS E CONSTANTES ---
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
-    const subjectId = {{ law.subject_id | tojson }};
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
 
-    // =====================================================================
-    // <<< PASSO 2: INÍCIO DO CÓDIGO A SER ADICIONADO >>>
-    // =====================================================================
-    
-    // 1. ESTADO DA APLICAÇÃO
-    // 'userAnnotations' guardará a lista de objetos de marcação.
-    // Carregamos os dados que o backend nos enviou (inicialmente, será uma lista vazia).
+    // --- ESTADO DA APLICAÇÃO ---
     let userAnnotations = {{ markup_json|tojson|safe }};
     let saveMarkupTimeout;
-    
-    // 2. FUNÇÕES DE RENDERIZAÇÃO (Exibem as marcações na tela)
-    
-    /**
-     * Aplica uma única anotação ao texto. Esta é a função mais complexa.
-     * Ela encontra o texto exato com base nas coordenadas e o "envelopa" com um <span>.
-     * @param {object} annotation - O objeto de anotação, ex: { id, type, paragraphId, start, end, color }
-     */
-    function renderSingleAnnotation(annotation) {
+    let isCommunityViewActive = false;
+    let userPersonalContent = null; // Para guardar a versão do usuário
+
+    // --- ARQUITETURA DE MARCAÇÕES (JSON) ---
+
+    function renderSingleAnnotation(annotation, container = lawContent) {
         if (!annotation || !annotation.paragraphId) return;
-        const paragraph = document.getElementById(annotation.paragraphId);
+        const paragraph = container.querySelector(`#${annotation.paragraphId}`);
         if (!paragraph) return;
-    
-        // Cria o elemento correto para a anotação (<span> para highlight, <strong> para negrito, etc.)
+
         let wrapperNode;
         if (annotation.type === 'highlight') {
             wrapperNode = document.createElement('span');
@@ -1391,15 +1385,12 @@ document.addEventListener("DOMContentLoaded", function () {
             wrapperNode = document.createElement('em');
         } else if (annotation.type === 'strikethrough') {
             wrapperNode = document.createElement('s');
-        } else {
-            return; // Tipo de anotação desconhecido
-        }
+        } else { return; }
+        
         wrapperNode.dataset.annotationId = annotation.id;
-    
         const range = document.createRange();
         let charCount = 0;
         let startNode, startOffset, endNode, endOffset;
-    
         const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null, false);
         let currentNode;
         while (currentNode = walker.nextNode()) {
@@ -1415,38 +1406,29 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             charCount += nodeLength;
         }
-    
         if (startNode && endNode) {
             range.setStart(startNode, startOffset);
             range.setEnd(endNode, endOffset);
-    
-            // Esta nova lógica é mais robusta que 'surroundContents'
             try {
-                // Clona o conteúdo selecionado para dentro do nosso novo nó (span, strong, etc.)
                 wrapperNode.appendChild(range.extractContents());
-                // Insere o novo nó com o conteúdo dentro dele de volta no lugar
                 range.insertNode(wrapperNode);
             } catch (e) {
                 console.error("Não foi possível aplicar a marcação:", annotation, e);
             }
         }
     }
-    
-    /** Renderiza todas as anotações do estado atual. */
-    function renderAllAnnotations() {
-        // Limpa marcações antigas que nosso sistema criou (as que têm data-annotation-id)
-        lawContent.querySelectorAll('span[data-annotation-id]').forEach(el => {
+
+    function renderAllAnnotations(annotations, container = lawContent) {
+        if (!Array.isArray(annotations)) return;
+        const elementsToUnwrap = container.querySelectorAll('span[data-annotation-id], strong[data-annotation-id], em[data-annotation-id], s[data-annotation-id]');
+        elementsToUnwrap.forEach(el => {
             if (el.parentNode) {
-                // Substitui o <span> pelo seu conteúdo de texto, efetivamente removendo a marcação.
                 el.replaceWith(...el.childNodes);
             }
         });
-        // Junta nós de texto que possam ter ficado separados.
-        lawContent.normalize();
-    
-        // Ordena as anotações da maior para a menor para evitar problemas de sobreposição ao renderizar.
-        const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
-        sortedAnnotations.forEach(renderSingleAnnotation);
+        container.normalize();
+        const sortedAnnotations = [...annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+        sortedAnnotations.forEach(ann => renderSingleAnnotation(ann, container));
     }
     
     // =====================================================================
