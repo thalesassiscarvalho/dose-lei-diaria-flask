@@ -1364,22 +1364,16 @@ def get_community_version(law_id):
         db.session.rollback()
         logging.error(f"Erro ao incrementar view_count da contribuição {approved_contribution.id}: {e}")
 
-    comments_data = [
-        {
-            "id": comment.id,
-            "content": comment.content,
-            "anchor_paragraph_id": comment.anchor_paragraph_id
-        } 
-        for comment in approved_contribution.comments
-    ]
-
+    comments_data = [{"id": c.id, "content": c.content, "anchor_paragraph_id": c.anchor_paragraph_id} for c in approved_contribution.comments]
     contributor_name = approved_contribution.user.full_name or approved_contribution.user.email
-    
-    user_has_liked = approved_contribution.liked_by_users.filter_by(id=current_user.id).count() > 0
+    user_has_liked = current_user in approved_contribution.liked_by_users
 
+    # <<< INÍCIO DA CORREÇÃO >>>
+    # Agora enviamos o conteúdo original da lei e o JSON das marcações separadamente
     return jsonify(
-        success=True, 
-        content=approved_contribution.content,
+        success=True,
+        original_content=approved_contribution.law.content, # HTML Limpo
+        annotations=approved_contribution.content_json or [], # JSON das marcações
         comments=comments_data,
         contributor_name=contributor_name,
         contribution_id=approved_contribution.id,
@@ -1388,3 +1382,4 @@ def get_community_version(law_id):
         user_has_liked=user_has_liked,
         is_own_contribution=(current_user.id == approved_contribution.user_id)
     )
+    # <<< FIM DA CORREÇÃO >>>
