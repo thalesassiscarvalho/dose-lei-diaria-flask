@@ -1352,34 +1352,35 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // =====================================================================
-    // <<< INÍCIO DA SEÇÃO UNIFICADA E CORRIGIDA >>>
-    // Este novo bloco de script contém toda a sua lógica antiga e as correções necessárias.
-    // =====================================================================
-    
-    // 1. ESTADO DA APLICAÇÃO E VARIÁVEIS GLOBAIS
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
     const subjectId = {{ law.subject_id | tojson }};
 
-    let userAnnotations = {{ markup_json|tojson|safe }}; // Suas marcações (highlights, etc.)
-    let userPersonalComments = []; // Seus comentários privados
+    // =====================================================================
+    // <<< PASSO 2: INÍCIO DO CÓDIGO A SER ADICIONADO >>>
+    // =====================================================================
+    
+    // 1. ESTADO DA APLICAÇÃO
+    // 'userAnnotations' guardará a lista de objetos de marcação.
+    // Carregamos os dados que o backend nos enviou (inicialmente, será uma lista vazia).
+    let userAnnotations = {{ markup_json|tojson|safe }};
     let saveMarkupTimeout;
-    const userPersonalContentHTML = lawContent.innerHTML; // O HTML "limpo" da lei, guardado para restauração
-    let isCommunityViewActive = false;
     
-    // 2. FUNÇÕES DE RENDERIZAÇÃO DE MARCAÇÕES (Highlights, Negrito, etc.)
+    // 2. FUNÇÕES DE RENDERIZAÇÃO (Exibem as marcações na tela)
     
+    /**
+     * Aplica uma única anotação ao texto. Esta é a função mais complexa.
+     * Ela encontra o texto exato com base nas coordenadas e o "envelopa" com um <span>.
+     * @param {object} annotation - O objeto de anotação, ex: { id, type, paragraphId, start, end, color }
+     */
     function renderSingleAnnotation(annotation) {
         if (!annotation || !annotation.paragraphId) return;
         const paragraph = document.getElementById(annotation.paragraphId);
-        if (!paragraph) {
-            console.warn(`Parágrafo para anotação não encontrado: ${annotation.paragraphId}`);
-            return;
-        }
+        if (!paragraph) return;
     
+        // Cria o elemento correto para a anotação (<span> para highlight, <strong> para negrito, etc.)
         let wrapperNode;
         if (annotation.type === 'highlight') {
             wrapperNode = document.createElement('span');
@@ -1391,7 +1392,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (annotation.type === 'strikethrough') {
             wrapperNode = document.createElement('s');
         } else {
-            return;
+            return; // Tipo de anotação desconhecido
         }
         wrapperNode.dataset.annotationId = annotation.id;
     
@@ -1418,8 +1419,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (startNode && endNode) {
             range.setStart(startNode, startOffset);
             range.setEnd(endNode, endOffset);
+    
+            // Esta nova lógica é mais robusta que 'surroundContents'
             try {
+                // Clona o conteúdo selecionado para dentro do nosso novo nó (span, strong, etc.)
                 wrapperNode.appendChild(range.extractContents());
+                // Insere o novo nó com o conteúdo dentro dele de volta no lugar
                 range.insertNode(wrapperNode);
             } catch (e) {
                 console.error("Não foi possível aplicar a marcação:", annotation, e);
@@ -1427,20 +1432,39 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
-    function renderAllPersonalAnnotations() {
-        lawContent.innerHTML = userPersonalContentHTML;
-        initializeParagraphIds();
-        
-        lawContent.querySelectorAll('.comment-display').forEach(el => el.remove());
-
+    /** Renderiza todas as anotações do estado atual. */
+    function renderAllAnnotations() {
+        // Limpa marcações antigas que nosso sistema criou (as que têm data-annotation-id)
+        lawContent.querySelectorAll('span[data-annotation-id]').forEach(el => {
+            if (el.parentNode) {
+                // Substitui o <span> pelo seu conteúdo de texto, efetivamente removendo a marcação.
+                el.replaceWith(...el.childNodes);
+            }
+        });
+        // Junta nós de texto que possam ter ficado separados.
+        lawContent.normalize();
+    
+        // Ordena as anotações da maior para a menor para evitar problemas de sobreposição ao renderizar.
         const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
         sortedAnnotations.forEach(renderSingleAnnotation);
-
-        userPersonalComments.forEach(comment => displayComment(comment, false));
     }
     
-    // 3. FUNÇÕES DE AÇÃO DO USUÁRIO (Criar/Remover Marcações)
+    // =====================================================================
+    // <<< FIM DO CÓDIGO A SER ADICIONADO NESTE PASSO >>>
+    // =====================================================================
+
+    // =====================================================================
+    // <<< PASSO 3: INÍCIO DO CÓDIGO FINAL PARA ADICIONAR >>>
+    // (Este bloco substitui toda a lógica de marcação antiga)
+    // =====================================================================
     
+    // 3. FUNÇÕES DE AÇÃO DO USUÁRIO (Criam e removem marcações)
+    
+    /**
+     * Nova função applyMarkup, que agora cria objetos JSON.
+     * @param {string} type - O tipo de marcação, ex: 'highlight'.
+     * @param {object} options - Opções, como a cor.
+     */
     function applyMarkup(type, options = {}) {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
@@ -1466,168 +1490,76 @@ document.addEventListener("DOMContentLoaded", function () {
         const end = start + range.toString().length;
         
         const newAnnotation = {
-            id: `ann_${Date.now()}`,
+            id: `ann_${Date.now()}`, // ID único temporário
             type: type,
             paragraphId: paragraphId,
             start: start,
             end: end,
-            ...options
+            ...options // Inclui opções como 'color'
         };
     
         userAnnotations.push(newAnnotation);
-        renderAllPersonalAnnotations();
+        renderAllAnnotations(); // Re-renderiza tudo para aplicar a nova marcação
         debounceSaveMarkup();
     }
     
+    /** Remove uma marcação com base na seleção atual */
     function removeMarkup() {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return;
-
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+    
         const range = selection.getRangeAt(0);
-        let container = range.commonAncestorContainer;
-        let markedElement = container.nodeType === Node.ELEMENT_NODE 
-            ? container.closest('[data-annotation-id]')
-            : container.parentElement.closest('[data-annotation-id]');
-
-        if (markedElement && markedElement.dataset.annotationId) {
-            const annotationId = markedElement.dataset.annotationId;
+        const container = range.commonAncestorContainer;
+        const markedSpan = container.nodeType === Node.ELEMENT_NODE ? container.querySelector('[data-annotation-id]') || container : container.parentElement;
+        
+        const annotationId = markedSpan.closest('span[data-annotation-id]')?.dataset.annotationId;
+        if (annotationId) {
             userAnnotations = userAnnotations.filter(ann => ann.id !== annotationId);
-            renderAllPersonalAnnotations();
+            renderAllAnnotations();
             debounceSaveMarkup();
         } else {
-            Swal.fire('Ação Inválida', 'Para remover uma marcação, selecione parte ou todo o texto já marcado e clique na borracha.', 'info');
+            Swal.fire('Ação Inválida', 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.', 'info');
         }
     }
-
-    // 4. FUNÇÕES DE SALVAMENTO E LÓGICA DE COMUNIDADE
-
+    
+    // 4. FUNÇÕES DE SALVAMENTO E INICIALIZAÇÃO
+    
+    /** Salva a lista de anotações no backend após um tempo de inatividade */
     function debounceSaveMarkup() {
         clearTimeout(saveMarkupTimeout);
         saveMarkupTimeout = setTimeout(saveLawMarkup, 2000);
     }
     
+    /** Envia a lista de anotações JSON para o servidor */
     async function saveLawMarkup() {
         fetch(`/student/law/${lawId}/save_markup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ markups: userAnnotations })
+            body: JSON.stringify({ markups: userAnnotations }) // Envia o nosso "estado"
         })
         .then(res => res.json())
         .then(data => {
             if(data.success) {
-                console.log("Marcações salvas.");
-                Toastify({ text: "Suas marcações foram salvas!", duration: 2000, gravity: "bottom" }).showToast();
+                console.log("Marcações salvas com sucesso!");
+                Toastify({ text: data.message || "Suas marcações foram salvas!", duration: 2000, gravity: "bottom" }).showToast();
             } else {
                 Swal.fire('Erro ao Salvar', data.error || 'Não foi possível salvar suas marcações.', 'error');
             }
         })
         .catch(err => console.error("Erro ao salvar marcações:", err));
     }
-
-    const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
-    if (toggleCommunityBtn) {
-        toggleCommunityBtn.addEventListener('click', () => {
-            if (isCommunityViewActive) {
-                isCommunityViewActive = false;
-                renderAllPersonalAnnotations(); 
-                document.getElementById('community-contributor-banner').classList.add('hidden');
-                document.getElementById('editing-tools-container').classList.remove('editing-disabled');
-                toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
-            } else {
-                toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
-                toggleCommunityBtn.disabled = true;
-
-                fetch(`/student/api/law/${lawId}/community-version`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            isCommunityViewActive = true;
-                            lawContent.innerHTML = data.original_content;
-                            initializeParagraphIds();
-                            
-                            if (data.annotations && Array.isArray(data.annotations)) {
-                                const sortedAnnotations = [...data.annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
-                                sortedAnnotations.forEach(renderSingleAnnotation);
-                            }
-                            
-                            lawContent.querySelectorAll('.comment-display').forEach(el => el.remove());
-                            if (data.comments && Array.isArray(data.comments)) {
-                                data.comments.forEach(comment => displayComment(comment, true));
-                            }
-
-                            displayContributorBanner(data);
-                            document.getElementById('editing-tools-container').classList.add('editing-disabled');
-                            toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
-                        } else {
-                            Toastify({ text: data.error, duration: 3000, style: { background: "linear-gradient(to right, #ef4444, #dc2626)" } }).showToast();
-                        }
-                    })
-                    .catch(err => console.error("Erro ao buscar versão da comunidade:", err))
-                    .finally(() => {
-                        toggleCommunityBtn.disabled = false;
-                    });
-            }
-        });
-    }
-
-    function displayContributorBanner(data) {
-        const contributorBanner = document.getElementById('community-contributor-banner');
-        if (!contributorBanner || !data.contributor_name) return;
-
-        contributorBanner.innerHTML = ''; 
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'contributor-info';
-        infoDiv.innerHTML = `<i class="fas fa-medal"></i> <span>Colaboração de: <strong>${data.contributor_name}</strong></span>`;
-        
-        const statsDiv = document.createElement('div');
-        statsDiv.className = 'contribution-stats';
-
-        const viewsSpan = document.createElement('span');
-        viewsSpan.className = 'stat-item';
-        viewsSpan.innerHTML = `<i class="fas fa-eye"></i> <span id="view-count">${data.view_count || 0}</span>`;
-
-        if (!data.is_own_contribution) {
-            const likeButton = document.createElement('button');
-            likeButton.className = 'like-btn';
-            likeButton.id = 'contribution-like-btn';
-            likeButton.dataset.contributionId = data.contribution_id;
-            if(data.user_has_liked) {
-                likeButton.classList.add('liked');
-            }
-            likeButton.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
-            statsDiv.appendChild(likeButton);
-        } else {
-            const likesSpan = document.createElement('span');
-            likesSpan.className = 'stat-item';
-            likesSpan.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
-            statsDiv.appendChild(likesSpan);
-        }
-        
-        statsDiv.appendChild(viewsSpan);
-        
-        contributorBanner.appendChild(infoDiv);
-        contributorBanner.appendChild(statsDiv);
-        contributorBanner.classList.remove('hidden');
-
-        const likeBtn = document.getElementById('contribution-like-btn');
-        if (likeBtn) {
-            likeBtn.addEventListener('click', handleLikeClick);
-        }
-    }
-
-    // 5. FUNÇÕES DE INICIALIZAÇÃO E DEMAIS FUNCIONALIDADES (SEM ALTERAÇÕES)
-
-    function initializeParagraphIds() {
+    
+    /** Função principal que inicializa toda a página */
+    function initializePage() {
+        // Garante que todos os parágrafos tenham um ID único para serem referenciados
         lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
             if (!p.id) p.id = `law-p-${index}`;
         });
-    }
-
-    function initializePage() {
-        initializeParagraphIds();
-        initCommentSystem();
-        
+    
+        // Renderiza as marcações existentes que vieram do backend
+        renderAllAnnotations();
+    
+        // Configura o listener DELEGADO para a barra de ferramentas de marcação
         const editingToolsContainer = document.getElementById('editing-tools-container');
         if (editingToolsContainer) {
             editingToolsContainer.addEventListener('click', (event) => {
@@ -1653,16 +1585,20 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
         
-        setupTimerListeners();
-        fixDuplicateDescription();
-        updateProgressBar();
-        indexArticles();
-        loadNotes();
-        applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
-        applyFontFamily(localStorage.getItem('fontFamily') || 'sans');
-        applyTheme(localStorage.getItem('theme') || 'light');
+        // Aqui você pode chamar as funções de inicialização de outras funcionalidades que não foram alteradas
+        // Ex: initCommentSystem(); setupTimerListeners(); etc.
     }
     
+    // Inicia todo o processo!
+    initializePage();
+    
+    // =====================================================================
+    // <<< FIM DO CÓDIGO FINAL PARA ADICIONAR >>>
+    // =====================================================================
+    
+    let isCommunityViewActive = false;
+    let userPersonalContent = lawContent.innerHTML;
+
     function fixDuplicateDescription() {
         if (!lawContent) return;
         const templateDescriptionP = lawContent.querySelector('p.text-gray-600.italic.mb-6');
@@ -1687,6 +1623,7 @@ document.addEventListener("DOMContentLoaded", function () {
             potentialDuplicate = potentialDuplicate.nextElementSibling;
         }
     }
+    fixDuplicateDescription();
 
     const dismissBannerBtn = document.getElementById('dismiss-banner-btn');
     const bannerContainer = document.getElementById('law-banner-container');
@@ -1742,13 +1679,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     window.addEventListener('scroll', updateProgressBar);
-    
+    updateProgressBar();
+
     const goToNotesBtn = document.getElementById("go-to-notes-btn");
     const notesSection = document.getElementById("notes-section");
     const backToTopBtn = document.getElementById("back-to-top-btn");
     const pageTop = document.getElementById("page-top");
     const saveBookmarkBtn = document.getElementById("save-bookmark-btn");
     const lastReadArticleInput = document.getElementById("last_read_article");
+
     const articleSearchInput = document.getElementById('article-search-input');
     const goToArticleBtn = document.getElementById('go-to-article-btn');
     const stickyActionBar = document.getElementById('sticky-action-bar');
@@ -1844,6 +1783,7 @@ document.addEventListener("DOMContentLoaded", function () {
             findAndGoToArticle();
         }
     });
+    indexArticles();
 
     function setupToggleButton(buttonId, contentSelector) {
         const button = document.getElementById(buttonId);
@@ -2001,151 +1941,323 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function setupTimerListeners() {
-        const timerDisplay = document.getElementById('timer-display');
-        const startTimerBtn = document.getElementById('start-timer-btn');
-        const pauseTimerBtn = document.getElementById('pause-timer-btn');
-        const resetTimerBtn = document.getElementById('reset-timer-btn');
-        const saveTimerBtn = document.getElementById('save-timer-btn');
-        const manualHoursInput = document.getElementById('manual-hours-input');
-        const manualMinutesInput = document.getElementById('manual-minutes-input');
-        const addManualTimeBtn = document.getElementById('add-manual-time-btn');
 
-        let timerInterval;
-        let startTime;
-        let elapsedTime = 0;
+    const timerDisplay = document.getElementById('timer-display');
+    const startTimerBtn = document.getElementById('start-timer-btn');
+    const pauseTimerBtn = document.getElementById('pause-timer-btn');
+    const resetTimerBtn = document.getElementById('reset-timer-btn');
+    const saveTimerBtn = document.getElementById('save-timer-btn');
+    const manualHoursInput = document.getElementById('manual-hours-input');
+    const manualMinutesInput = document.getElementById('manual-minutes-input');
+    const addManualTimeBtn = document.getElementById('add-manual-time-btn');
 
-        function formatTime(seconds) {
-            const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-            const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-            const s = String(Math.floor(seconds % 60)).padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
+    let timerInterval;
+    let startTime;
+    let elapsedTime = 0;
+    let currentSessionId = null;
 
-        function renderTimer() {
-            timerDisplay.textContent = formatTime(elapsedTime);
-        }
+    function formatTime(seconds) {
+        const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const s = String(Math.floor(seconds % 60)).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
 
-        async function registerBackgroundSync(tag, requestUrl, requestOptions, successCallback, errorCallback) {
-            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                try {
-                    const response = await fetch(requestUrl, requestOptions);
-                    if (response.ok) {
-                        const data = await response.json();
-                        successCallback(data);
-                    } else {
-                        const swRegistration = await navigator.serviceWorker.ready;
-                        const requestToStore = new Request(requestUrl, requestOptions);
-                        await swRegistration.active.postMessage({
-                            type: 'SAVE_REQUEST',
-                            request: { url: requestToStore.url, method: requestToStore.method, headers: Array.from(requestToStore.headers.entries()), body: await requestToStore.text() },
-                            tag: tag
-                        });
-                        await swRegistration.sync.register(tag);
-                        Toastify({ text: `Ação agendada! Será sincronizada quando a internet retornar.`, duration: 5000, style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } }).showToast();
-                        if (errorCallback) errorCallback();
-                    }
-                } catch (error) {
-                    if (error.name === 'AbortError') { if (errorCallback) errorCallback(); return; }
+    function renderTimer() {
+        timerDisplay.textContent = formatTime(elapsedTime);
+    }
+
+    async function registerBackgroundSync(tag, requestUrl, requestOptions, successCallback, errorCallback) {
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            try {
+                const response = await fetch(requestUrl, requestOptions);
+                if (response.ok) {
+                    const data = await response.json();
+                    successCallback(data);
+                } else {
+                    console.warn(`[Background Sync] Requisição falhou (status ${response.status}). Registrando sync: ${tag}`);
                     const swRegistration = await navigator.serviceWorker.ready;
+
                     const requestToStore = new Request(requestUrl, requestOptions);
+
                     await swRegistration.active.postMessage({
                         type: 'SAVE_REQUEST',
-                        request: { url: requestToStore.url, method: requestToStore.method, headers: Array.from(requestToStore.headers.entries()), body: await requestToStore.text() },
+                        request: {
+                            url: requestToStore.url,
+                            method: requestToStore.method,
+                            headers: Array.from(requestToStore.headers.entries()),
+                            body: await requestToStore.text()
+                        },
                         tag: tag
                     });
                     await swRegistration.sync.register(tag);
-                    Toastify({ text: `Ação agendada! Será sincronizada quando a internet retornar.`, duration: 5000, style: { background: "linear-gradient(to right, #f59e0b, #d97706)" } }).showToast();
+                    Toastify({
+                        text: `Ação agendada! Será sincronizada quando a internet retornar.`,
+                        duration: 5000,
+                        style: { background: "linear-gradient(to right, #f59e0b, #d97706)" }
+                    }).showToast();
                     if (errorCallback) errorCallback();
                 }
-            } else {
-                fetch(requestUrl, requestOptions).then(response => response.json()).then(data => { if (data.success) successCallback(data); else if (errorCallback) errorCallback(); }).catch(() => { if (errorCallback) errorCallback(); });
+            } catch (error) {
+                console.error(`[Background Sync] Erro de rede para requisição: ${requestUrl}`, error);
+                if (error.name === 'AbortError') {
+                    console.log('Requisição abortada. Não registra sync.');
+                    if (errorCallback) errorCallback();
+                    return;
+                }
+
+                console.warn(`[Background Sync] Offline. Registrando sync: ${tag}`);
+                const swRegistration = await navigator.serviceWorker.ready;
+                const requestToStore = new Request(requestUrl, requestOptions);
+                await swRegistration.active.postMessage({
+                    type: 'SAVE_REQUEST',
+                    request: {
+                        url: requestToStore.url,
+                        method: requestToStore.method,
+                        headers: Array.from(requestToStore.headers.entries()),
+                        body: await requestToStore.text()
+                    },
+                    tag: tag
+                });
+                await swRegistration.sync.register(tag);
+                Toastify({
+                    text: `Ação agendada! Será sincronizada quando a internet retornar.`,
+                    duration: 5000,
+                    style: { background: "linear-gradient(to right, #f59e0b, #d97706)" }
+                }).showToast();
+                if (errorCallback) errorCallback();
             }
+        } else {
+            alert("Seu navegador não suporta sincronização em segundo plano. Por favor, verifique sua conexão.");
+            fetch(requestUrl, requestOptions)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) successCallback(data);
+                    else if (errorCallback) errorCallback();
+                })
+                .catch(() => {
+                    alert("Erro de conexão. Por favor, tente novamente quando estiver online.");
+                    if (errorCallback) errorCallback();
+                });
         }
-
-        function startTimer() {
-            if (timerInterval) return;
-            if (elapsedTime === 0) { startTime = Date.now(); } else { startTime = Date.now() - (elapsedTime * 1000); }
-            timerInterval = setInterval(() => { elapsedTime = Math.floor((Date.now() - startTime) / 1000); renderTimer(); }, 1000);
-            startTimerBtn.classList.add('hidden');
-            pauseTimerBtn.classList.remove('hidden');
-            resetTimerBtn.classList.add('hidden');
-            saveTimerBtn.classList.add('hidden');
-        }
-
-        function pauseTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            startTimerBtn.classList.remove('hidden');
-            pauseTimerBtn.classList.add('hidden');
-            resetTimerBtn.classList.remove('hidden');
-            saveTimerBtn.classList.remove('hidden');
-        }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            elapsedTime = 0;
-            renderTimer();
-            startTimerBtn.classList.remove('hidden');
-            pauseTimerBtn.classList.add('hidden');
-            resetTimerBtn.classList.add('hidden');
-            saveTimerBtn.classList.add('hidden');
-        }
-
-        async function saveCurrentStudySession() {
-            if (elapsedTime === 0) { Toastify({ text: "A sessão de estudo está vazia.", duration: 3000 }).showToast(); return; }
-            pauseTimer();
-            const requestUrl = '/student/api/study_sessions/record';
-            const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ law_id: lawId, subject_id: subjectId, duration_seconds: elapsedTime, entry_type: 'auto', start_time: new Date(startTime).toISOString(), end_time: new Date().toISOString() }) };
-            const originalSaveBtnText = saveTimerBtn.innerHTML;
-            saveTimerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            saveTimerBtn.disabled = true;
-            registerBackgroundSync(`sync-auto-study-${lawId}-${Date.now()}`, requestUrl, requestOptions, (data) => { Toastify({ text: data.message || "Sessão de estudo salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); resetTimer(); saveTimerBtn.innerHTML = originalSaveBtnText; saveTimerBtn.disabled = false; }, () => { saveTimerBtn.innerHTML = originalSaveBtnText; saveTimerBtn.disabled = false; });
-        }
-
-        async function addManualTime() {
-            const hours = parseInt(manualHoursInput.value) || 0;
-            const minutes = parseInt(manualMinutesInput.value) || 0;
-            const totalManualSeconds = (hours * 3600) + (minutes * 60);
-            if (totalManualSeconds <= 0) { Toastify({ text: "Por favor, insira um tempo válido.", duration: 3000 }).showToast(); return; }
-            const requestUrl = '/student/api/study_sessions/record';
-            const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ law_id: lawId, subject_id: subjectId, duration_seconds: totalManualSeconds, entry_type: 'manual' }) };
-            addManualTimeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            addManualTimeBtn.disabled = true;
-            registerBackgroundSync(`sync-manual-study-${lawId}-${Date.now()}`, requestUrl, requestOptions, (data) => { Toastify({ text: data.message || "Tempo manual adicionado!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); manualHoursInput.value = ''; manualMinutesInput.value = ''; addManualTimeBtn.innerHTML = '<i class="fas fa-plus"></i>'; addManualTimeBtn.disabled = false; }, () => { addManualTimeBtn.innerHTML = '<i class="fas fa-plus"></i>'; addManualTimeBtn.disabled = false; });
-        }
-
-        startTimerBtn.addEventListener('click', startTimer);
-        pauseTimerBtn.addEventListener('click', pauseTimer);
-        resetTimerBtn.addEventListener('click', resetTimer);
-        saveTimerBtn.addEventListener('click', saveCurrentStudySession);
-        addManualTimeBtn.addEventListener('click', addManualTime);
-
-        window.addEventListener('beforeunload', () => {
-            if (timerInterval && elapsedTime > 0) {
-                const requestUrl = '/student/api/study_sessions/record';
-                const data = JSON.stringify({ law_id: lawId, subject_id: subjectId, duration_seconds: elapsedTime, entry_type: 'auto', start_time: new Date(startTime).toISOString(), end_time: new Date().toISOString() });
-                if (navigator.sendBeacon) { try { const blob = new Blob([data], {type : 'application/json'}); navigator.sendBeacon(requestUrl, blob); } catch (e) { console.error("Erro ao usar sendBeacon:", e); } }
-            }
-        });
-
-        document.addEventListener('visibilitychange', () => { if (document.hidden && timerInterval) { pauseTimer(); } });
     }
+
+
+    async function startTimer() {
+        if (timerInterval) return;
+
+        if (elapsedTime === 0) {
+            startTime = Date.now();
+            currentSessionId = null;
+            console.log('[Cronômetro] Iniciando nova sessão de estudo...');
+        } else {
+            startTime = Date.now() - (elapsedTime * 1000);
+            console.log('[Cronômetro] Retomando sessão de estudo...');
+        }
+
+        timerInterval = setInterval(() => {
+            elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            renderTimer();
+        }, 1000);
+
+        startTimerBtn.classList.add('hidden');
+        pauseTimerBtn.classList.remove('hidden');
+        resetTimerBtn.classList.add('hidden');
+        saveTimerBtn.classList.add('hidden');
+    }
+
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('[Cronômetro] Pausado. Tempo atual:', formatTime(elapsedTime));
+
+        startTimerBtn.classList.remove('hidden');
+        pauseTimerBtn.classList.add('hidden');
+        resetTimerBtn.classList.remove('hidden');
+        saveTimerBtn.classList.remove('hidden');
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        elapsedTime = 0;
+        currentSessionId = null;
+        renderTimer();
+        console.log('[Cronômetro] Reiniciado.');
+
+        startTimerBtn.classList.remove('hidden');
+        pauseTimerBtn.classList.add('hidden');
+        resetTimerBtn.classList.add('hidden');
+        saveTimerBtn.classList.add('hidden');
+    }
+
+    async function saveCurrentStudySession() {
+        if (elapsedTime === 0) {
+            Toastify({ text: "A sessão de estudo está vazia.", duration: 3000 }).showToast();
+            return;
+        }
+
+        pauseTimer();
+
+        const requestUrl = '/student/api/study_sessions/record';
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId,
+                duration_seconds: elapsedTime,
+                entry_type: 'auto',
+                start_time: new Date(startTime).toISOString(),
+                end_time: new Date().toISOString()
+            })
+        };
+
+        const originalSaveBtnText = saveTimerBtn.innerHTML;
+        saveTimerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+        saveTimerBtn.disabled = true;
+
+        registerBackgroundSync(`sync-auto-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+            (data) => {
+                Toastify({ text: data.message || "Sessão de estudo salva com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                resetTimer();
+                saveTimerBtn.innerHTML = originalSaveBtnText;
+                saveTimerBtn.disabled = false;
+            },
+            () => {
+                saveTimerBtn.innerHTML = originalSaveBtnText;
+                saveTimerBtn.disabled = false;
+            }
+        );
+    }
+
+    async function addManualTime() {
+        const hours = parseInt(manualHoursInput.value) || 0;
+        const minutes = parseInt(manualMinutesInput.value) || 0;
+        const totalManualSeconds = (hours * 3600) + (minutes * 60);
+
+        if (totalManualSeconds <= 0) {
+            Toastify({ text: "Por favor, insira um tempo válido (horas ou minutos).", duration: 3000 }).showToast();
+            return;
+        }
+
+        const requestUrl = '/student/api/study_sessions/record';
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId,
+                duration_seconds: totalManualSeconds,
+                entry_type: 'manual'
+            })
+        };
+
+        addManualTimeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Adicionando...';
+        addManualTimeBtn.disabled = true;
+
+        registerBackgroundSync(`sync-manual-study-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+            (data) => {
+                Toastify({ text: data.message || "Tempo manual adicionado com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                manualHoursInput.value = '';
+                manualMinutesInput.value = '';
+                addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
+                addManualTimeBtn.disabled = false;
+            },
+            () => {
+                addManualTimeBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Adicionar';
+                addManualTimeBtn.disabled = false;
+            }
+        );
+    }
+
+    startTimerBtn.addEventListener('click', startTimer);
+    pauseTimerBtn.addEventListener('click', pauseTimer);
+    resetTimerBtn.addEventListener('click', resetTimer);
+    saveTimerBtn.addEventListener('click', saveCurrentStudySession);
+    addManualTimeBtn.addEventListener('click', addManualTime);
+
+    window.addEventListener('beforeunload', () => {
+        if (timerInterval && elapsedTime > 0) {
+            const requestUrl = '/student/api/study_sessions/record';
+            const data = JSON.stringify({
+                law_id: lawId,
+                subject_id: subjectId,
+                duration_seconds: elapsedTime,
+                entry_type: 'auto',
+                start_time: new Date(startTime).toISOString(),
+                end_time: new Date().toISOString()
+            });
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob([data], {type : 'application/json'});
+                    navigator.sendBeacon(requestUrl, blob);
+                    console.log("[sendBeacon] Sessão enviada ao descarregar.");
+                } catch (e) {
+                    console.error("[sendBeacon] Erro ao usar sendBeacon:", e);
+                }
+            } else {
+                console.warn("sendBeacon não suportado. Sessão pode não ser salva ao descarregar.");
+            }
+        }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && timerInterval) {
+            pauseTimer();
+        } else if (!document.hidden && !timerInterval && elapsedTime > 0) {
+        }
+    });
 
     if (saveBookmarkBtn) {
         saveBookmarkBtn.addEventListener("click", function() {
             const lastReadArticle = lastReadArticleInput.value.trim();
-            if (!lastReadArticle) { alert("Por favor, informe onde você parou."); return; }
+            if (!lastReadArticle) {
+                alert("Por favor, informe onde você parou.");
+                return;
+            }
+
             const originalText = saveBookmarkBtn.innerHTML;
             saveBookmarkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
             saveBookmarkBtn.disabled = true;
+
             const formData = new URLSearchParams();
             formData.append('last_read_article', lastReadArticle);
             formData.append('csrf_token', csrfToken);
+
             const requestUrl = `/student/save_last_read/${lawId}`;
-            const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken }, body: formData };
-            registerBackgroundSync(`sync-save-bookmark-${lawId}-${Date.now()}`, requestUrl, requestOptions, (data) => { Toastify({ text: data.message || "Último artigo lido salvo!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!'; let messageDiv = document.querySelector('.last-read-info'); if (!messageDiv) { messageDiv = document.createElement('div'); messageDiv.className = 'last-read-info'; messageDiv.setAttribute('role', 'alert'); const mainContent = document.getElementById('main-content-below-header'); mainContent.prepend(messageDiv); } messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`; setTimeout(() => { saveBookmarkBtn.innerHTML = originalText; saveBookmarkBtn.disabled = false; }, 2000); }, () => { saveBookmarkBtn.innerHTML = originalText; saveBookmarkBtn.disabled = false; });
+            const requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            };
+
+            registerBackgroundSync(`sync-save-bookmark-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+                (data) => {
+                    Toastify({ text: data.message || "Último artigo lido salvo com sucesso!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                    saveBookmarkBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                    let messageDiv = document.querySelector('.last-read-info');
+                    if (!messageDiv) {
+                        messageDiv = document.createElement('div');
+                        messageDiv.className = 'last-read-info';
+                        messageDiv.setAttribute('role', 'alert');
+                        const mainContent = document.getElementById('main-content-below-header');
+                        mainContent.prepend(messageDiv);
+                    }
+                    messageDiv.innerHTML = `<i class="fas fa-bookmark mr-2"></i> Você parou no artigo: <strong>${lastReadArticle}</strong>`;
+                    setTimeout(() => {
+                        saveBookmarkBtn.innerHTML = originalText;
+                        saveBookmarkBtn.disabled = false;
+                    }, 2000);
+                },
+                () => {
+                    saveBookmarkBtn.innerHTML = originalText;
+                    saveBookmarkBtn.disabled = false;
+                }
+            );
         });
     }
 
@@ -2157,6 +2269,7 @@ document.addEventListener("DOMContentLoaded", function () {
         notesChevron.style.transform = notesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
     });
 
+        // <<< INÍCIO DO NOVO CÓDIGO >>>
     const neuralWavesContainer = document.querySelector('.neural-waves-container');
     let currentlyPlaying = null;
     
@@ -2164,19 +2277,43 @@ document.addEventListener("DOMContentLoaded", function () {
         neuralWavesContainer.addEventListener('click', function(event) {
             const button = event.target.closest('.neural-wave-button');
             if (!button) return;
+    
             const waveType = button.dataset.wave;
             const audioElement = document.getElementById(`audio-${waveType}`);
-            if (button.classList.contains('playing')) { audioElement.pause(); audioElement.currentTime = 0; button.classList.remove('playing'); currentlyPlaying = null; } else { if (currentlyPlaying) { const currentlyPlayingButton = document.querySelector(`.neural-wave-button.playing`); const currentlyPlayingAudio = document.getElementById(`audio-${currentlyPlaying}`); if (currentlyPlayingButton) currentlyPlayingButton.classList.remove('playing'); if (currentlyPlayingAudio) { currentlyPlayingAudio.pause(); currentlyPlayingAudio.currentTime = 0; } } audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error)); button.classList.add('playing'); currentlyPlaying = waveType; }
+    
+            if (button.classList.contains('playing')) {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                button.classList.remove('playing');
+                currentlyPlaying = null;
+            } else {
+                if (currentlyPlaying) {
+                    const currentlyPlayingButton = document.querySelector(`.neural-wave-button.playing`);
+                    const currentlyPlayingAudio = document.getElementById(`audio-${currentlyPlaying}`);
+                    if (currentlyPlayingButton) currentlyPlayingButton.classList.remove('playing');
+                    if (currentlyPlayingAudio) {
+                        currentlyPlayingAudio.pause();
+                        currentlyPlayingAudio.currentTime = 0;
+                    }
+                }
+                audioElement.play().catch(error => console.error(`Erro ao reproduzir áudio ${waveType}:`, error));
+                button.classList.add('playing');
+                currentlyPlaying = waveType;
+            }
         });
     }
+    // <<< FIM DO NOVO CÓDIGO >>>
 
     const notesEditor = document.getElementById('notes-editor');
     const saveNotesBtn = document.getElementById('save-notes-btn');
     document.getElementById('bold-btn').addEventListener('click', () => { document.execCommand('bold'); notesEditor.focus(); });
     document.getElementById('italic-btn').addEventListener('click', () => { document.execCommand('italic'); notesEditor.focus(); });
 
+
     function loadNotes() {
-        fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => { if (d.success && d.content) notesEditor.innerHTML = d.content; }).catch(e => console.error("Erro ao carregar anotações gerais:", e));
+        fetch(`/student/law/${lawId}/notes`).then(r => r.json()).then(d => {
+            if (d.success && d.content) notesEditor.innerHTML = d.content;
+        }).catch(e => console.error("Erro ao carregar anotações gerais:", e));
     }
 
     saveNotesBtn.addEventListener('click', function() {
@@ -2184,30 +2321,194 @@ document.addEventListener("DOMContentLoaded", function () {
         const originalText = this.innerHTML;
         this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         this.disabled = true;
+
         const requestUrl = `/student/law/${lawId}/notes`;
-        const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content: content }) };
-        registerBackgroundSync(`sync-save-notes-${lawId}-${Date.now()}`, requestUrl, requestOptions, (data) => { Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!'; this.classList.toggle('bg-green-500', true); this.classList.toggle('bg-blue-500', false); setTimeout(() => { this.innerHTML = originalText; this.disabled = false; this.classList.remove('bg-green-500'); this.classList.add('bg-blue-500'); }, 2000); }, () => { this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Agendado!'; this.classList.toggle('bg-orange-500', true); this.classList.toggle('bg-blue-500', false); setTimeout(() => { this.innerHTML = originalText; this.disabled = false; this.classList.remove('bg-orange-500'); this.classList.add('bg-blue-500'); }, 2000); });
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ content: content })
+        };
+
+        registerBackgroundSync(`sync-save-notes-${lawId}-${Date.now()}`, requestUrl, requestOptions,
+            (data) => {
+                Toastify({ text: data.message || "Anotações salvas!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                this.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+                this.classList.toggle('bg-green-500', true);
+                this.classList.toggle('bg-blue-500', false);
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    this.classList.remove('bg-green-500');
+                    this.classList.add('bg-blue-500');
+                }, 2000);
+            },
+            () => {
+                this.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Agendado!';
+                this.classList.toggle('bg-orange-500', true);
+                this.classList.toggle('bg-blue-500', false);
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    this.classList.remove('bg-orange-500');
+                    this.classList.add('bg-blue-500');
+                }, 2000);
+            }
+        );
     });
+
+    loadNotes();
 
     if (lawContent) {
         lawContent.addEventListener('copy', function(event) {
             event.preventDefault();
-            Swal.fire({ title: 'Cópia Desabilitada', html: 'Para proteger a propriedade intelectual e incentivar o uso dos recursos interativos, a função de copiar foi desativada.<br><br>Agradecemos a sua compreensão!', icon: 'info', confirmButtonText: 'Entendi', customClass: { confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded' } });
+            Swal.fire({
+                title: 'Cópia Desabilitada',
+                html: 'Para proteger a propriedade intelectual e incentivar o uso dos recursos interativos, a função de copiar foi desativada.<br><br>Agradecemos a sua compreensão!',
+                icon: 'info',
+                confirmButtonText: 'Entendi',
+                customClass: {
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                }
+            });
         });
     }
-    
+
+    const formatBoldBtn = document.getElementById('format-bold-btn');
+    const formatItalicBtn = document.getElementById('format-italic-btn');
+    const formatStrikethroughBtn = document.getElementById('format-strikethrough-btn');
+    const formatHighlightYellowBtn = document.getElementById('format-highlight-yellow-btn');
+    const formatHighlightGreenBtn = document.getElementById('format-highlight-green-btn');
+    const formatHighlightBlueBtn = document.getElementById('format-highlight-blue-btn');
+    const formatHighlightPinkBtn = document.getElementById('format-highlight-pink-btn');
+    const formatUnformatBtn = document.getElementById('format-unformat-btn');
     const restoreLawBtn = document.getElementById('restore-law-btn');
     
+    // <<< INÍCIO DO NOVO CÓDIGO >>>
+    const editingToolsContainer = document.getElementById('editing-tools-container');
+    if (editingToolsContainer) {
+        editingToolsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button) return;
+    
+            const actions = {
+                'format-bold-btn': 'bold',
+                'format-italic-btn': 'italic',
+                'format-strikethrough-btn': 'strikethrough',
+                'format-highlight-yellow-btn': 'highlight-yellow',
+                'format-highlight-green-btn': 'highlight-green',
+                'format-highlight-blue-btn': 'highlight-blue',
+                'format-highlight-pink-btn': 'highlight-pink',
+                'format-unformat-btn': 'unformat'
+            };
+    
+            const action = actions[button.id];
+            if (action) {
+                applyMarkup(action);
+            }
+        });
+    }
+    // <<< FIM DO NOVO CÓDIGO >>>
+
     if (restoreLawBtn) {
         restoreLawBtn.addEventListener('click', () => {
-            Swal.fire({ title: 'Você tem certeza?', html: "<strong>TODAS</strong> as suas marcações e anotações nesta lei serão <strong>perdidas permanentemente</strong>. Esta ação não pode ser desfeita.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, restaurar!', cancelButtonText: 'Cancelar', customClass: { confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded', cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3' }, buttonsStyling: false }).then((result) => { if (result.isConfirmed) { restoreLawBtn.disabled = true; const requestUrl = `/student/law/${lawId}/restore`; const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } }; registerBackgroundSync(`sync-restore-law-${lawId}`, requestUrl, requestOptions, (data) => { Swal.fire({ title: 'Restaurada!', text: data.message || 'A lei foi restaurada com sucesso. A página será recarregada.', icon: 'success', customClass: { confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded' } }).then(() => { window.location.reload(); }); }, () => { Swal.fire({ title: 'Aguardando Sincronização!', text: 'A restauração foi agendada e será aplicada quando a internet retornar. A página será recarregada após a sincronização.', icon: 'info', customClass: { confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded' } }); window.location.reload(); }); } });
+            Swal.fire({
+                title: 'Você tem certeza?',
+                html: "<strong>TODAS</strong> as suas marcações e anotações nesta lei serão <strong>perdidas permanentemente</strong>. Esta ação não pode ser desfeita.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, restaurar!',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded',
+                    cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    restoreLawBtn.disabled = true;
+
+                    const requestUrl = `/student/law/${lawId}/restore`;
+                    const requestOptions = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    };
+
+                    registerBackgroundSync(`sync-restore-law-${lawId}`, requestUrl, requestOptions,
+                        (data) => {
+                            Swal.fire({
+                                title: 'Restaurada!',
+                                text: data.message || 'A lei foi restaurada com sucesso. A página será recarregada.',
+                                icon: 'success',
+                                customClass: {
+                                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                                }
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        },
+                        () => {
+                            Swal.fire({
+                                title: 'Aguardando Sincronização!',
+                                text: 'A restauração foi agendada e será aplicada quando a internet retornar. A página será recarregada após a sincronização.',
+                                icon: 'info',
+                                customClass: {
+                                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                                }
+                            });
+                            window.location.reload();
+                        }
+                    );
+                }
+            });
         });
     }
 
     const favoriteBtn = document.querySelector('.js-favorite-btn');
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
-            this.disabled = true; const lawTitle = '{{ law.title | e }}'; const requestUrl = `/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`; const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } }; const button = this; registerBackgroundSync(`sync-favorite-${lawId}`, requestUrl, requestOptions, (data) => { button.classList.toggle('favorited', data.favorited); button.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'; button.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star'; const notificationText = data.favorited ? `'${lawTitle}' adicionado aos favoritos!` : `'${lawTitle}' removido dos favoritos.`; Toastify({ text: notificationText, duration: 3000, close: true, gravity: "bottom", position: "right", stopOnFocus: true, style: { background: "linear-gradient(to right, #1f2937, #374151)", borderRadius: "0.5rem" } }).showToast(); button.disabled = false; }, () => { button.disabled = false; });
+            this.disabled = true;
+            const lawTitle = '{{ law.title | e }}';
+
+            const requestUrl = `/student/law/toggle_favorite/${this.getAttribute('data-law-id')}`;
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+            };
+
+            const button = this;
+
+            registerBackgroundSync(`sync-favorite-${lawId}`, requestUrl, requestOptions,
+                (data) => {
+                    button.classList.toggle('favorited', data.favorited);
+                    button.title = data.favorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+                    button.querySelector('i').className = data.favorited ? 'fas fa-star' : 'far fa-star';
+
+                    const notificationText = data.favorited
+                        ? `'${lawTitle}' adicionado aos favoritos!`
+                        : `'${lawTitle}' removido dos favoritos.`;
+
+                    Toastify({
+                        text: notificationText,
+                        duration: 3000,
+                        close: true,
+                        gravity: "bottom",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "linear-gradient(to right, #1f2937, #374151)",
+                            borderRadius: "0.5rem"
+                        }
+                    }).showToast();
+                    button.disabled = false;
+                },
+                () => {
+                    button.disabled = false;
+                }
+            );
         });
     }
 
@@ -2220,126 +2521,535 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentEditingCommentId = null;
 
     function openCommentModalForCreate(anchorId) {
-        currentEditingCommentId = null; currentAnchorId = anchorId; modalTitle.textContent = 'Adicionar Anotação'; modalTextarea.value = ''; modalBackdrop.style.display = 'flex'; modalTextarea.focus();
+        currentEditingCommentId = null;
+        currentAnchorId = anchorId;
+        modalTitle.textContent = 'Adicionar Anotação';
+        modalTextarea.value = '';
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
     }
 
     function openCommentModalForEdit(commentId, currentContent) {
-        currentEditingCommentId = commentId; currentAnchorId = null; modalTitle.textContent = 'Editar Anotação'; modalTextarea.value = currentContent; modalBackdrop.style.display = 'flex'; modalTextarea.focus();
+        currentEditingCommentId = commentId;
+        currentAnchorId = null;
+        modalTitle.textContent = 'Editar Anotação';
+        modalTextarea.value = currentContent;
+        modalBackdrop.style.display = 'flex';
+        modalTextarea.focus();
     }
 
     function closeCommentModal() {
-        modalBackdrop.style.display = 'none'; currentAnchorId = null; currentEditingCommentId = null;
+        modalBackdrop.style.display = 'none';
+        currentAnchorId = null;
+        currentEditingCommentId = null;
     }
 
-    function displayComment(comment, isFromCommunity = false) {
+    function displayComment(comment) {
         const anchorElement = document.getElementById(comment.anchor_paragraph_id);
         if (!anchorElement) return;
+
         const parentNode = anchorElement.parentNode;
         const oldCommentDiv = parentNode.querySelector(`.comment-display[data-comment-id='${comment.id}']`);
         if(oldCommentDiv) oldCommentDiv.remove();
+
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-display';
         commentDiv.setAttribute('data-comment-id', comment.id);
+
         const commentParagraph = document.createElement('p');
         commentParagraph.innerHTML = comment.content.replace(/\n/g, '<br>');
         commentDiv.appendChild(commentParagraph);
-        if (!isFromCommunity) {
+
+        if (!isCommunityViewActive) {
             const deleteButton = document.createElement('button');
             deleteButton.className = 'comment-delete-btn';
             deleteButton.title = 'Excluir anotação';
             deleteButton.innerHTML = '&times;';
             commentDiv.appendChild(deleteButton);
-            commentDiv.addEventListener('click', (e) => { if (e.target.classList.contains('comment-delete-btn')) { return; } openCommentModalForEdit(comment.id, comment.content); });
-            deleteButton.addEventListener('click', (e) => { e.stopPropagation(); deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id); });
+
+            commentDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('comment-delete-btn')) { return; }
+                openCommentModalForEdit(comment.id, comment.content);
+            });
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteComment(comment.id, commentDiv, comment.anchor_paragraph_id);
+            });
         } else {
             commentDiv.style.cursor = 'default';
         }
+
         parentNode.insertBefore(commentDiv, anchorElement.nextSibling);
+
         const wrapper = anchorElement.closest('.paragraph-wrapper');
-        if (wrapper) { const icon = wrapper.querySelector('.comment-icon'); if (icon) icon.classList.add('has-comment'); }
+        if (wrapper) {
+            const icon = wrapper.querySelector('.comment-icon');
+            if (icon) icon.classList.add('has-comment');
+        }
     }
     
     async function saveOrUpdateComment() {
         const content = modalTextarea.value.trim();
         if (!content) return;
+
         const originalSaveBtnText = modalSaveBtn.innerHTML;
         modalSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
         modalSaveBtn.disabled = true;
+
         if (currentEditingCommentId) {
-            const requestUrl = `/student/comments/${currentEditingCommentId}`; const requestOptions = { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content: content }) };
-            registerBackgroundSync(`sync-update-comment-${currentEditingCommentId}`, requestUrl, requestOptions, (data) => { const commentToUpdate = userPersonalComments.find(c => c.id === currentEditingCommentId); if (commentToUpdate) commentToUpdate.content = content; renderAllPersonalAnnotations(); closeCommentModal(); Toastify({ text: data.message || "Anotação atualizada!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); modalSaveBtn.innerHTML = originalSaveBtnText; modalSaveBtn.disabled = false; }, () => { modalSaveBtn.innerHTML = originalSaveBtnText; modalSaveBtn.disabled = false; closeCommentModal(); });
+            const requestUrl = `/student/comments/${currentEditingCommentId}`;
+            const requestOptions = {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ content: content })
+            };
+
+            registerBackgroundSync(`sync-update-comment-${currentEditingCommentId}`, requestUrl, requestOptions,
+                (data) => {
+                    const commentDiv = document.querySelector(`.comment-display[data-comment-id='${currentEditingCommentId}']`);
+                    if (commentDiv) { commentDiv.querySelector('p').innerHTML = content.replace(/\n/g, '<br>'); }
+                    closeCommentModal();
+                    Toastify({ text: data.message || "Anotação atualizada!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
+                },
+                () => {
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
+                    closeCommentModal();
+                }
+            );
         } else {
             if (!currentAnchorId) return;
-            const requestUrl = `/student/law/${lawId}/comments`; const requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId }) };
-            registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions, (data) => { if (data.comment && data.success) { userPersonalComments.push(data.comment); renderAllPersonalAnnotations(); closeCommentModal(); Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); modalSaveBtn.innerHTML = originalSaveBtnText; modalSaveBtn.disabled = false; } }, () => { modalSaveBtn.innerHTML = originalSaveBtnText; modalSaveBtn.disabled = false; closeCommentModal(); });
+            const requestUrl = `/student/law/${lawId}/comments`;
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ content: content, anchor_paragraph_id: currentAnchorId })
+            };
+
+            registerBackgroundSync(`sync-create-comment-${currentAnchorId}-${Date.now()}`, requestUrl, requestOptions,
+                (data) => {
+                    if (data.comment && data.success) {
+                         displayComment(data.comment);
+                         closeCommentModal();
+                         Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                         modalSaveBtn.innerHTML = originalSaveBtnText;
+                         modalSaveBtn.disabled = false;
+                    } else {
+                        fetch(requestUrl, requestOptions)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    displayComment(data.comment);
+                                    closeCommentModal();
+                                    Toastify({ text: data.message || "Anotação salva!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+                                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                                    modalSaveBtn.disabled = false;
+                                } else {
+                                    alert('Erro ao salvar anotação: ' + data.error);
+                                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                                    modalSaveBtn.disabled = false;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro no fetch pós-sincronização para criação de comentário:', error);
+                                alert('Erro de comunicação para criar anotação.');
+                                modalSaveBtn.innerHTML = originalSaveBtnText;
+                                modalSaveBtn.disabled = false;
+                            });
+                    }
+                },
+                () => {
+                    modalSaveBtn.innerHTML = originalSaveBtnText;
+                    modalSaveBtn.disabled = false;
+                    closeCommentModal();
+                }
+            );
         }
     }
 
     async function deleteComment(commentId, commentElement, anchorParagraphId) {
-        Swal.fire({ title: 'Excluir Anotação?', text: "Esta ação não pode ser desfeita.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { const requestUrl = `/student/comments/${commentId}`; const requestOptions = { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } }; registerBackgroundSync(`sync-delete-comment-${commentId}`, requestUrl, requestOptions, (data) => { userPersonalComments = userPersonalComments.filter(c => c.id !== commentId); renderAllPersonalAnnotations(); Toastify({ text: data.message || "Anotação excluída!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); }); } });
+        if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+
+        const requestUrl = `/student/comments/${commentId}`;
+        const requestOptions = {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': csrfToken }
+        };
+
+        registerBackgroundSync(`sync-delete-comment-${commentId}`, requestUrl, requestOptions,
+            (data) => {
+                commentElement.remove();
+                const anchorElement = document.getElementById(anchorParagraphId);
+                if (anchorElement && anchorElement.parentNode) {
+                    const remainingComments = anchorElement.parentNode.querySelectorAll('.comment-display').length;
+                    if (remainingComments === 0) {
+                        const icon = anchorElement.parentNode.querySelector('.comment-icon');
+                        if (icon) icon.classList.remove('has-comment');
+                    }
+                }
+                Toastify({ text: data.message || "Anotação excluída!", duration: 3000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast();
+            },
+            () => {
+            }
+        );
     }
 
     async function initCommentSystem() {
-        lawContent.querySelectorAll('.comment-display, .comment-icon, .paragraph-wrapper').forEach(el => { if (el.classList.contains('paragraph-wrapper')) { el.replaceWith(...el.childNodes); } else { el.remove(); } });
+        lawContent.querySelectorAll('.comment-display, .comment-icon').forEach(el => el.remove());
+        lawContent.querySelectorAll('.paragraph-wrapper').forEach(wrapper => {
+            wrapper.replaceWith(...wrapper.childNodes);
+        });
+
         let areIconsVisible = false;
         const paragraphs = lawContent.querySelectorAll('p, li, blockquote');
         paragraphs.forEach((p, index) => {
-            if (p.closest('[style*="background-color"]')) return;
-            const wrapper = document.createElement('div'); wrapper.className = 'paragraph-wrapper'; p.parentNode.insertBefore(wrapper, p); wrapper.appendChild(p);
+            if (p.style.backgroundColor) return;
+            p.id = `law-p-${index}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'paragraph-wrapper';
+            p.parentNode.insertBefore(wrapper, p);
+            wrapper.appendChild(p);
             const icon = document.createElement('i');
-            if (index === 0) { icon.className = 'fas fa-eye-slash comment-icon'; icon.title = 'Mostrar/Ocultar ícones de anotação'; icon.addEventListener('click', () => { areIconsVisible = !areIconsVisible; icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon'; lawContent.querySelectorAll('.secondary-comment-icon').forEach(secIcon => { secIcon.style.display = areIconsVisible ? 'block' : 'none'; }); }); } else { icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon'; icon.title = 'Adicionar anotação privada'; icon.style.display = 'none'; icon.addEventListener('click', () => openCommentModalForCreate(p.id)); }
+            if (index === 0) {
+                icon.className = 'fas fa-eye-slash comment-icon';
+                icon.title = 'Mostrar ícones de anotação';
+                icon.addEventListener('click', () => {
+                    areIconsVisible = !areIconsVisible;
+                    icon.className = areIconsVisible ? 'fas fa-eye comment-icon' : 'fas fa-eye-slash comment-icon';
+                    icon.title = areIconsVisible ? 'Ocultar ícones de anotação' : 'Mostrar ícones de anotação';
+                    lawContent.querySelectorAll('.secondary-comment-icon').forEach(secIcon => {
+                        secIcon.style.display = areIconsVisible ? 'block' : 'none';
+                    });
+                });
+            } else {
+                icon.className = 'fas fa-comment-dots comment-icon secondary-comment-icon';
+                icon.title = 'Adicionar anotação privada';
+                icon.style.display = 'none';
+                icon.addEventListener('click', () => openCommentModalForCreate(p.id));
+            }
             wrapper.appendChild(icon);
         });
-        try { const response = await fetch(`/student/law/${lawId}/comments`); const data = await response.json(); if (data.success) { userPersonalComments = data.comments; renderAllPersonalAnnotations(); } } catch (error) { console.error("Erro ao carregar anotações por parágrafo:", error); }
+
+        try {
+            const response = await fetch(`/student/law/${lawId}/comments`);
+            const data = await response.json();
+            if (data.success) { data.comments.forEach(displayComment); }
+        } catch (error) { console.error("Erro ao carregar anotações por parágrafo:", error); }
     }
 
     modalSaveBtn.addEventListener('click', saveOrUpdateComment);
     modalCancelBtn.addEventListener('click', closeCommentModal);
-    modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeCommentModal(); });
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeCommentModal();
+    });
+    initCommentSystem();
 
     const increaseFontBtn = document.getElementById('increase-font-btn');
     const decreaseFontBtn = document.getElementById('decrease-font-btn');
     const toggleFontFamilyBtn = document.getElementById('toggle-font-family-btn');
     const fontSizes = ['font-size-sm', 'font-size-md', 'font-size-lg', 'font-size-xl'];
     let currentSizeIndex = fontSizes.indexOf(localStorage.getItem('fontSize')) || 1;
-    function applyFontSize(sizeClass) { fontSizes.forEach(s => lawContent.classList.remove(s)); lawContent.classList.add(sizeClass); localStorage.setItem('fontSize', sizeClass); currentSizeIndex = fontSizes.indexOf(sizeClass); }
-    if(increaseFontBtn) { increaseFontBtn.addEventListener('click', () => { if (currentSizeIndex < fontSizes.length - 1) { applyFontSize(fontSizes[++currentSizeIndex]); } }); }
-    if(decreaseFontBtn) { decreaseFontBtn.addEventListener('click', () => { if (currentSizeIndex > 0) { applyFontSize(fontSizes[--currentSizeIndex]); } }); }
-    function applyFontFamily(fontType) { lawContent.classList.toggle('font-serif', fontType === 'serif'); localStorage.setItem('fontFamily', fontType); }
-    if(toggleFontFamilyBtn) { toggleFontFamilyBtn.addEventListener('click', () => { applyFontFamily(lawContent.classList.contains('font-serif') ? 'sans' : 'serif'); }); }
-    
+    function applyFontSize(sizeClass) {
+        fontSizes.forEach(s => lawContent.classList.remove(s));
+        lawContent.classList.add(sizeClass);
+        localStorage.setItem('fontSize', sizeClass);
+        currentSizeIndex = fontSizes.indexOf(sizeClass);
+    }
+    if(increaseFontBtn) {
+        increaseFontBtn.addEventListener('click', () => {
+            if (currentSizeIndex < fontSizes.length - 1) { applyFontSize(fontSizes[++currentSizeIndex]); }
+        });
+    }
+    if(decreaseFontBtn) {
+        decreaseFontBtn.addEventListener('click', () => {
+            if (currentSizeIndex > 0) { applyFontSize(fontSizes[--currentSizeIndex]); }
+        });
+    }
+    function applyFontFamily(fontType) {
+        lawContent.classList.toggle('font-serif', fontType === 'serif');
+        localStorage.setItem('fontFamily', fontType);
+    }
+    if(toggleFontFamilyBtn) {
+        toggleFontFamilyBtn.addEventListener('click', () => {
+            applyFontFamily(lawContent.classList.contains('font-serif') ? 'sans' : 'serif');
+        });
+    }
+    applyFontSize(localStorage.getItem('fontSize') || 'font-size-md');
+    applyFontFamily(localStorage.getItem('fontFamily') || 'sans');
+
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const body = document.body;
     const themeIcon = themeToggleBtn.querySelector('i');
-    function applyTheme(theme) { body.classList.toggle('dark-mode', theme === 'dark'); themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon'; themeToggleBtn.title = `Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`; localStorage.setItem('theme', theme); }
-    themeToggleBtn.addEventListener('click', () => { applyTheme(body.classList.contains('dark-mode') ? 'light' : 'dark'); });
+    function applyTheme(theme) {
+        body.classList.toggle('dark-mode', theme === 'dark');
+        themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        themeToggleBtn.title = `Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`;
+        localStorage.setItem('theme', theme);
+    }
+    themeToggleBtn.addEventListener('click', () => {
+        applyTheme(body.classList.contains('dark-mode') ? 'light' : 'dark');
+    });
+    applyTheme(localStorage.getItem('theme') || 'light');
 
     const toggleLinksBtn = document.getElementById("toggle-links-btn");
     const linksContentArea = document.getElementById("links-content-area");
     const linksChevron = document.getElementById("links-chevron");
-    if (toggleLinksBtn) { toggleLinksBtn.addEventListener("click", function() { linksContentArea.classList.toggle("hidden"); linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)"; }); }
+    if (toggleLinksBtn) {
+        toggleLinksBtn.addEventListener("click", function() {
+            linksContentArea.classList.toggle("hidden");
+            linksChevron.style.transform = linksContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
 
     const toggleJuridiquesBtn = document.getElementById("toggle-juridiques-btn");
     const juridiquesContentArea = document.getElementById("juridiques-content-area");
     const juridiquesChevron = document.getElementById("juridiques-chevron");
-    if (toggleJuridiquesBtn) { toggleJuridiquesBtn.addEventListener("click", function() { juridiquesContentArea.classList.toggle("hidden"); juridiquesChevron.style.transform = juridiquesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)"; }); }
+    if (toggleJuridiquesBtn) {
+        toggleJuridiquesBtn.addEventListener("click", function() {
+            juridiquesContentArea.classList.toggle("hidden");
+            juridiquesChevron.style.transform = juridiquesContentArea.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
 
     const shareContributionBtn = document.getElementById('share-contribution-btn');
+
     if (shareContributionBtn) {
         shareContributionBtn.addEventListener('click', () => {
-            Swal.fire({ title: 'Compartilhar suas marcações?', html: "Você está prestes a enviar suas marcações e anotações para análise da nossa equipe. Se aprovada, sua contribuição poderá ajudar outros alunos.<br><br><strong>Deseja continuar?</strong>", icon: 'question', showCancelButton: true, confirmButtonText: 'Sim, enviar para análise!', cancelButtonText: 'Cancelar', customClass: { popup: document.body.classList.contains('dark-mode') ? 'dark-mode' : '', confirmButton: 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded', cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3' }, buttonsStyling: false }).then((result) => { if (result.isConfirmed) { shareContributionBtn.disabled = true; shareContributionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; fetch(`/student/law/${lawId}/share_contribution`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ markups: userAnnotations }) }).then(response => response.json()).then(data => { if (data.success) { Toastify({ text: data.message, duration: 5000, style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" } }).showToast(); shareContributionBtn.innerHTML = '<i class="fas fa-check"></i>'; shareContributionBtn.title = 'Sua contribuição foi enviada!'; } else { Toastify({ text: data.error || "Ocorreu um erro ao enviar.", duration: 5000, style: { background: "linear-gradient(to right, #ef4444, #dc2626)" } }).showToast(); shareContributionBtn.disabled = false; shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>'; } }).catch(error => { console.error("Erro de rede ao compartilhar:", error); Toastify({ text: "Erro de comunicação. Verifique sua conexão e tente novamente.", duration: 5000, style: { background: "linear-gradient(to right, #ef4444, #dc2626)" } }).showToast(); shareContributionBtn.disabled = false; shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>'; }); } });
+            Swal.fire({
+                title: 'Compartilhar suas marcações?',
+                html: "Você está prestes a enviar suas marcações e anotações para análise da nossa equipe. Se aprovada, sua contribuição poderá ajudar outros alunos.<br><br><strong>Deseja continuar?</strong>",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, enviar para análise!',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: document.body.classList.contains('dark-mode') ? 'dark-mode' : '',
+                    confirmButton: 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded',
+                    cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded ml-3'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    shareContributionBtn.disabled = true;
+                    shareContributionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+                    // A grande mudança está aqui: enviamos o JSON das marcações.
+                    fetch(`/student/law/${lawId}/share_contribution`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ markups: userAnnotations }) // <-- AQUI!
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toastify({
+                                text: data.message,
+                                duration: 5000,
+                                style: { background: "linear-gradient(to right, #4caf50, #66bb6a)" }
+                            }).showToast();
+                            shareContributionBtn.innerHTML = '<i class="fas fa-check"></i>';
+                            shareContributionBtn.title = 'Sua contribuição foi enviada!';
+                        } else {
+                            Toastify({
+                                text: data.error || "Ocorreu um erro ao enviar.",
+                                duration: 5000,
+                                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                            }).showToast();
+                            shareContributionBtn.disabled = false;
+                            shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro de rede ao compartilhar:", error);
+                        Toastify({
+                            text: "Erro de comunicação. Verifique sua conexão e tente novamente.",
+                            duration: 5000,
+                            style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                        }).showToast();
+                        shareContributionBtn.disabled = false;
+                        shareContributionBtn.innerHTML = '<i class="fas fa-users"></i>';
+                    });
+                }
+            });
+        });
+    }
+    
+    // =====================================================================
+    // <<< INÍCIO DA ALTERAÇÃO 3/3: LÓGICA DA VERSÃO DA COMUNIDADE ATUALIZADA >>>
+    // =====================================================================
+    const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
+    const contributorBanner = document.getElementById('community-contributor-banner');
+
+    if (toggleCommunityBtn) {
+        toggleCommunityBtn.addEventListener('click', () => {
+            if (isCommunityViewActive) {
+                lawContent.innerHTML = userPersonalContent;
+                isCommunityViewActive = false;
+
+                if(contributorBanner) {
+                    contributorBanner.classList.add('hidden');
+                    contributorBanner.innerHTML = '';
+                }
+
+                initCommentSystem();
+                indexArticles();
+
+                document.getElementById('editing-tools-container').classList.remove('editing-disabled');
+                document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
+
+                toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
+            } else {
+                const originalBtnHTML = toggleCommunityBtn.innerHTML;
+                toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
+                toggleCommunityBtn.disabled = true;
+
+                fetch(`/student/api/law/${lawId}/community-version`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            isCommunityViewActive = true;
+                            // <<< INÍCIO DA CORREÇÃO >>>
+                            // 1. Coloca o HTML limpo no container
+                            lawContent.innerHTML = data.original_content;
+                            // 2. Garante que os parágrafos tenham IDs
+                            lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+                                if (!p.id) p.id = `law-p-community-${index}`;
+                            });
+                            // 3. Renderiza as anotações sobre o HTML limpo
+                            if (data.annotations && Array.isArray(data.annotations)) {
+                                const sortedAnnotations = [...data.annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+                                // Reutiliza a função que já criamos!
+                                sortedAnnotations.forEach(renderSingleAnnotation);
+                            }
+
+                            if (contributorBanner && data.contributor_name) {
+                                contributorBanner.innerHTML = ''; 
+
+                                const infoDiv = document.createElement('div');
+                                infoDiv.className = 'contributor-info';
+                                infoDiv.innerHTML = `<i class="fas fa-medal"></i> <span>Colaboração de: <strong>${data.contributor_name}</strong></span>`;
+                                
+                                const statsDiv = document.createElement('div');
+                                statsDiv.className = 'contribution-stats';
+
+                                const viewsSpan = document.createElement('span');
+                                viewsSpan.className = 'stat-item';
+                                viewsSpan.innerHTML = `<i class="fas fa-eye"></i> <span id="view-count">${data.view_count || 0}</span>`;
+
+                                if (!data.is_own_contribution) {
+                                    const likeButton = document.createElement('button');
+                                    likeButton.className = 'like-btn';
+                                    likeButton.id = 'contribution-like-btn';
+                                    likeButton.dataset.contributionId = data.contribution_id;
+                                    if(data.user_has_liked) {
+                                        likeButton.classList.add('liked');
+                                    }
+                                    likeButton.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likeButton);
+                                } else {
+                                    const likesSpan = document.createElement('span');
+                                    likesSpan.className = 'stat-item';
+                                    likesSpan.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likesSpan);
+                                }
+                                
+                                statsDiv.appendChild(viewsSpan);
+                                
+                                contributorBanner.appendChild(infoDiv);
+                                contributorBanner.appendChild(statsDiv);
+                                contributorBanner.classList.remove('hidden');
+
+                                const likeBtn = document.getElementById('contribution-like-btn');
+                                if (likeBtn) {
+                                    likeBtn.addEventListener('click', handleLikeClick);
+                                }
+                            }
+
+                            lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+                                if (!p.id) { p.id = `law-p-${index}`; }
+                            });
+
+                            if (data.comments && Array.isArray(data.comments)) {
+                                data.comments.forEach(comment => displayComment(comment));
+                            }
+
+                            document.getElementById('editing-tools-container').classList.add('editing-disabled');
+                            document.getElementById('right-side-controls-container').classList.add('editing-disabled');
+
+                            toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
+                        } else {
+                            Toastify({
+                                text: data.error || "Não foi possível carregar a versão da comunidade.",
+                                duration: 3000,
+                                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                            }).showToast();
+                            toggleCommunityBtn.innerHTML = originalBtnHTML;
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro ao buscar versão da comunidade:", err);
+                        Toastify({
+                            text: "Erro de rede. Tente novamente.",
+                            duration: 3000,
+                            style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                        }).showToast();
+                        toggleCommunityBtn.innerHTML = originalBtnHTML;
+                    })
+                    .finally(() => {
+                        toggleCommunityBtn.disabled = false;
+                    });
+            }
         });
     }
 
     function handleLikeClick(event) {
         const button = event.currentTarget;
         const contributionId = button.dataset.contributionId;
+        
         button.disabled = true;
-        fetch(`/student/api/contribution/${contributionId}/toggle_like`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } }).then(response => response.json()).then(data => { if (data.success) { const likeCountSpan = document.getElementById('like-count'); likeCountSpan.textContent = data.likes_count; button.classList.toggle('liked', data.liked); } else { Toastify({ text: data.error || "Não foi possível processar a ação.", duration: 3000, style: { background: "linear-gradient(to right, #ef4444, #dc2626)" } }).showToast(); } }).catch(err => { console.error("Erro ao dar like:", err); Toastify({ text: "Erro de rede. Tente novamente.", duration: 3000, style: { background: "linear-gradient(to right, #ef4444, #dc2626)" } }).showToast(); }).finally(() => { button.disabled = false; });
-    }
 
-    // Inicialização final da página
-    initializePage();
+        fetch(`/student/api/contribution/${contributionId}/toggle_like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const likeCountSpan = document.getElementById('like-count');
+                likeCountSpan.textContent = data.likes_count;
+                button.classList.toggle('liked', data.liked);
+            } else {
+                Toastify({
+                    text: data.error || "Não foi possível processar a ação.",
+                    duration: 3000,
+                    style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                }).showToast();
+            }
+        })
+        .catch(err => {
+            console.error("Erro ao dar like:", err);
+            Toastify({
+                text: "Erro de rede. Tente novamente.",
+                duration: 3000,
+                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+            }).showToast();
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    }
+    // =====================================================================
+    // <<< FIM DA ALTERAÇÃO 3/3 >>>
+    // =====================================================================
+
 });
 </script>
 {% endblock %}
