@@ -113,6 +113,13 @@
         white-space: nowrap;
     }
 
+    /* 1. Regra para as GRADES: Define a altura mínima das linhas */
+    #main-cards-grid,
+    #study-stats-cards-grid {
+        grid-auto-rows: minmax(220px, auto);
+    }
+    
+    /* 2. Regra para os CARDS: Força-os a preencher a altura da linha do grid */
     .stat-card {
         background-color: #ffffff;
         border: 1px solid #e5e7eb;
@@ -123,16 +130,14 @@
         transition: all 0.3s ease-in-out;
         position: relative;
         overflow: hidden;
+        
+        /* Propriedades essenciais para o alinhamento */
         display: flex;
         flex-direction: column;
-        min-height: 220px;
-    }
-    
-    #main-cards-grid,
-    #study-stats-cards-grid {
-        grid-auto-rows: minmax(220px, auto);
+        height: 100%; /* <-- Esta é a propriedade chave que faltava! */
     }
         
+    /* 3. Regra para o Efeito Hover (opcional, mas mantém o estilo) */
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
