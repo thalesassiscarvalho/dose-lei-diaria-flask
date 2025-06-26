@@ -2227,27 +2227,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const restoreLawBtn = document.getElementById('restore-law-btn');
     let saveMarkupTimeout;
 
-    function removeHighlightsFromSelection() {
-        const selection = window.getSelection();
-        if (!selection.rangeCount || selection.isCollapsed) return;
-
-        function unwrap(element) {
-            const parent = element.parentNode;
-            while (element.firstChild) {
-                parent.insertBefore(element.firstChild, element);
-            }
-            parent.removeChild(element);
-        }
-
-        const allHighlightSpans = lawContent.querySelectorAll('span[class*="user-highlight-"]');
-
-        allHighlightSpans.forEach(span => {
-            if (selection.containsNode(span, true)) {
-                unwrap(span);
-            }
-        });
-    }
-
     // <<< INÍCIO DO NOVO CÓDIGO >>>
     const editingToolsContainer = document.getElementById('editing-tools-container');
     if (editingToolsContainer) {
