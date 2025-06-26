@@ -1352,29 +1352,35 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // =====================================================================
-    // <<< INÍCIO DO SCRIPT COMPLETO E CORRIGIDO >>>
-    // =====================================================================
-
-    // --- VARIÁVEIS GLOBAIS E CONSTANTES ---
     const lawId = '{{ law.id }}';
     const lawContent = document.getElementById('law-content');
     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
+    const subjectId = {{ law.subject_id | tojson }};
 
-    // --- ESTADO DA APLICAÇÃO ---
+    // =====================================================================
+    // <<< PASSO 2: INÍCIO DO CÓDIGO A SER ADICIONADO >>>
+    // =====================================================================
+    
+    // 1. ESTADO DA APLICAÇÃO
+    // 'userAnnotations' guardará a lista de objetos de marcação.
+    // Carregamos os dados que o backend nos enviou (inicialmente, será uma lista vazia).
     let userAnnotations = {{ markup_json|tojson|safe }};
     let saveMarkupTimeout;
-    let isCommunityViewActive = false;
-    let userPersonalContent = null; // Para guardar a versão do usuário
-
-    // --- ARQUITETURA DE MARCAÇÕES (JSON) ---
-
-    function renderSingleAnnotation(annotation, container = lawContent) {
+    
+    // 2. FUNÇÕES DE RENDERIZAÇÃO (Exibem as marcações na tela)
+    
+    /**
+     * Aplica uma única anotação ao texto. Esta é a função mais complexa.
+     * Ela encontra o texto exato com base nas coordenadas e o "envelopa" com um <span>.
+     * @param {object} annotation - O objeto de anotação, ex: { id, type, paragraphId, start, end, color }
+     */
+    function renderSingleAnnotation(annotation) {
         if (!annotation || !annotation.paragraphId) return;
-        const paragraph = container.querySelector(`#${annotation.paragraphId}`);
+        const paragraph = document.getElementById(annotation.paragraphId);
         if (!paragraph) return;
-
+    
+        // Cria o elemento correto para a anotação (<span> para highlight, <strong> para negrito, etc.)
         let wrapperNode;
         if (annotation.type === 'highlight') {
             wrapperNode = document.createElement('span');
@@ -1385,12 +1391,15 @@ document.addEventListener("DOMContentLoaded", function () {
             wrapperNode = document.createElement('em');
         } else if (annotation.type === 'strikethrough') {
             wrapperNode = document.createElement('s');
-        } else { return; }
-        
+        } else {
+            return; // Tipo de anotação desconhecido
+        }
         wrapperNode.dataset.annotationId = annotation.id;
+    
         const range = document.createRange();
         let charCount = 0;
         let startNode, startOffset, endNode, endOffset;
+    
         const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null, false);
         let currentNode;
         while (currentNode = walker.nextNode()) {
@@ -1406,29 +1415,38 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             charCount += nodeLength;
         }
+    
         if (startNode && endNode) {
             range.setStart(startNode, startOffset);
             range.setEnd(endNode, endOffset);
+    
+            // Esta nova lógica é mais robusta que 'surroundContents'
             try {
+                // Clona o conteúdo selecionado para dentro do nosso novo nó (span, strong, etc.)
                 wrapperNode.appendChild(range.extractContents());
+                // Insere o novo nó com o conteúdo dentro dele de volta no lugar
                 range.insertNode(wrapperNode);
             } catch (e) {
                 console.error("Não foi possível aplicar a marcação:", annotation, e);
             }
         }
     }
-
-    function renderAllAnnotations(annotations, container = lawContent) {
-        if (!Array.isArray(annotations)) return;
-        const elementsToUnwrap = container.querySelectorAll('span[data-annotation-id], strong[data-annotation-id], em[data-annotation-id], s[data-annotation-id]');
-        elementsToUnwrap.forEach(el => {
+    
+    /** Renderiza todas as anotações do estado atual. */
+    function renderAllAnnotations() {
+        // Limpa marcações antigas que nosso sistema criou (as que têm data-annotation-id)
+        lawContent.querySelectorAll('span[data-annotation-id]').forEach(el => {
             if (el.parentNode) {
+                // Substitui o <span> pelo seu conteúdo de texto, efetivamente removendo a marcação.
                 el.replaceWith(...el.childNodes);
             }
         });
-        container.normalize();
-        const sortedAnnotations = [...annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
-        sortedAnnotations.forEach(ann => renderSingleAnnotation(ann, container));
+        // Junta nós de texto que possam ter ficado separados.
+        lawContent.normalize();
+    
+        // Ordena as anotações da maior para a menor para evitar problemas de sobreposição ao renderizar.
+        const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+        sortedAnnotations.forEach(renderSingleAnnotation);
     }
     
     // =====================================================================
@@ -2866,46 +2884,120 @@ document.addEventListener("DOMContentLoaded", function () {
     // =====================================================================
     const toggleCommunityBtn = document.getElementById('toggle-community-version-btn');
     const contributorBanner = document.getElementById('community-contributor-banner');
+
     if (toggleCommunityBtn) {
-        const originalBtnHTML = toggleCommunityBtn.innerHTML;
         toggleCommunityBtn.addEventListener('click', () => {
             if (isCommunityViewActive) {
-                isCommunityViewActive = false;
                 lawContent.innerHTML = userPersonalContent;
-                renderAllAnnotations(userAnnotations);
-                if(contributorBanner) contributorBanner.classList.add('hidden');
+                isCommunityViewActive = false;
+
+                if(contributorBanner) {
+                    contributorBanner.classList.add('hidden');
+                    contributorBanner.innerHTML = '';
+                }
+
+                initCommentSystem();
+                indexArticles();
+
                 document.getElementById('editing-tools-container').classList.remove('editing-disabled');
-                toggleCommunityBtn.innerHTML = originalBtnHTML;
+                document.getElementById('right-side-controls-container').classList.remove('editing-disabled');
+
+                toggleCommunityBtn.innerHTML = '<i class="fas fa-star mr-2"></i><span>Ver Versão da Comunidade</span>';
             } else {
-                if(userPersonalContent === null) userPersonalContent = lawContent.innerHTML;
-                
+                const originalBtnHTML = toggleCommunityBtn.innerHTML;
+                toggleCommunityBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>';
                 toggleCommunityBtn.disabled = true;
-                toggleCommunityBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i><span>Carregando...</span>`;
 
                 fetch(`/student/api/law/${lawId}/community-version`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             isCommunityViewActive = true;
+                            // <<< INÍCIO DA CORREÇÃO >>>
+                            // 1. Coloca o HTML limpo no container
                             lawContent.innerHTML = data.original_content;
+                            // 2. Garante que os parágrafos tenham IDs
                             lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
                                 if (!p.id) p.id = `law-p-community-${index}`;
                             });
-                            
-                            renderAllAnnotations(data.annotations);
+                            // 3. Renderiza as anotações sobre o HTML limpo
+                            if (data.annotations && Array.isArray(data.annotations)) {
+                                const sortedAnnotations = [...data.annotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+                                // Reutiliza a função que já criamos!
+                                sortedAnnotations.forEach(renderSingleAnnotation);
+                            }
 
-                            // O resto da sua lógica para exibir o banner do contribuidor e desabilitar botões
-                            //...
+                            if (contributorBanner && data.contributor_name) {
+                                contributorBanner.innerHTML = ''; 
+
+                                const infoDiv = document.createElement('div');
+                                infoDiv.className = 'contributor-info';
+                                infoDiv.innerHTML = `<i class="fas fa-medal"></i> <span>Colaboração de: <strong>${data.contributor_name}</strong></span>`;
+                                
+                                const statsDiv = document.createElement('div');
+                                statsDiv.className = 'contribution-stats';
+
+                                const viewsSpan = document.createElement('span');
+                                viewsSpan.className = 'stat-item';
+                                viewsSpan.innerHTML = `<i class="fas fa-eye"></i> <span id="view-count">${data.view_count || 0}</span>`;
+
+                                if (!data.is_own_contribution) {
+                                    const likeButton = document.createElement('button');
+                                    likeButton.className = 'like-btn';
+                                    likeButton.id = 'contribution-like-btn';
+                                    likeButton.dataset.contributionId = data.contribution_id;
+                                    if(data.user_has_liked) {
+                                        likeButton.classList.add('liked');
+                                    }
+                                    likeButton.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likeButton);
+                                } else {
+                                    const likesSpan = document.createElement('span');
+                                    likesSpan.className = 'stat-item';
+                                    likesSpan.innerHTML = `<i class="fas fa-heart"></i> <span id="like-count">${data.likes_count || 0}</span>`;
+                                    statsDiv.appendChild(likesSpan);
+                                }
+                                
+                                statsDiv.appendChild(viewsSpan);
+                                
+                                contributorBanner.appendChild(infoDiv);
+                                contributorBanner.appendChild(statsDiv);
+                                contributorBanner.classList.remove('hidden');
+
+                                const likeBtn = document.getElementById('contribution-like-btn');
+                                if (likeBtn) {
+                                    likeBtn.addEventListener('click', handleLikeClick);
+                                }
+                            }
+
+                            lawContent.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+                                if (!p.id) { p.id = `law-p-${index}`; }
+                            });
+
+                            if (data.comments && Array.isArray(data.comments)) {
+                                data.comments.forEach(comment => displayComment(comment));
+                            }
 
                             document.getElementById('editing-tools-container').classList.add('editing-disabled');
+                            document.getElementById('right-side-controls-container').classList.add('editing-disabled');
+
                             toggleCommunityBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i><span>Voltar à Minha Versão</span>';
                         } else {
-                            Toastify({ text: data.error || "Erro ao carregar.", duration: 3000 }).showToast();
+                            Toastify({
+                                text: data.error || "Não foi possível carregar a versão da comunidade.",
+                                duration: 3000,
+                                style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                            }).showToast();
                             toggleCommunityBtn.innerHTML = originalBtnHTML;
                         }
                     })
                     .catch(err => {
-                        console.error("Erro de rede ao buscar versão da comunidade:", err);
+                        console.error("Erro ao buscar versão da comunidade:", err);
+                        Toastify({
+                            text: "Erro de rede. Tente novamente.",
+                            duration: 3000,
+                            style: { background: "linear-gradient(to right, #ef4444, #dc2626)" }
+                        }).showToast();
                         toggleCommunityBtn.innerHTML = originalBtnHTML;
                     })
                     .finally(() => {
