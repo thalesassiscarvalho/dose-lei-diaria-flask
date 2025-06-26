@@ -2890,6 +2890,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (isCommunityViewActive) {
                 lawContent.innerHTML = userPersonalContent;
                 isCommunityViewActive = false;
+                renderAllAnnotations();
 
                 if(contributorBanner) {
                     contributorBanner.classList.add('hidden');
