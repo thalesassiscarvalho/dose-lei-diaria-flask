@@ -1358,6 +1358,87 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : document.querySelector('input[name="csrf_token"]').value;
     const subjectId = {{ law.subject_id | tojson }};
 
+    // =====================================================================
+    // <<< PASSO 2: INÍCIO DO CÓDIGO A SER ADICIONADO >>>
+    // =====================================================================
+    
+    // 1. ESTADO DA APLICAÇÃO
+    // 'userAnnotations' guardará a lista de objetos de marcação.
+    // Carregamos os dados que o backend nos enviou (inicialmente, será uma lista vazia).
+    let userAnnotations = {{ markup_json|tojson|safe }};
+    let saveMarkupTimeout;
+    
+    // 2. FUNÇÕES DE RENDERIZAÇÃO (Exibem as marcações na tela)
+    
+    /**
+     * Aplica uma única anotação ao texto. Esta é a função mais complexa.
+     * Ela encontra o texto exato com base nas coordenadas e o "envelopa" com um <span>.
+     * @param {object} annotation - O objeto de anotação, ex: { id, type, paragraphId, start, end, color }
+     */
+    function renderSingleAnnotation(annotation) {
+        if (!annotation || !annotation.paragraphId) return;
+        const paragraph = document.getElementById(annotation.paragraphId);
+        if (!paragraph) return;
+    
+        const range = document.createRange();
+        let charCount = 0;
+        let startNode, startOffset, endNode, endOffset;
+    
+        // A função 'walker' percorre todos os nós de texto dentro do parágrafo para encontrar as posições exatas
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null, false);
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            const nodeLength = currentNode.textContent.length;
+            if (startNode === undefined && annotation.start < charCount + nodeLength) {
+                startNode = currentNode;
+                startOffset = annotation.start - charCount;
+            }
+            if (endNode === undefined && annotation.end <= charCount + nodeLength) {
+                endNode = currentNode;
+                endOffset = annotation.end - charCount;
+                break;
+            }
+            charCount += nodeLength;
+        }
+    
+        if (startNode && endNode) {
+            range.setStart(startNode, startOffset);
+            range.setEnd(endNode, endOffset);
+    
+            const span = document.createElement('span');
+            if (annotation.type === 'highlight') {
+                span.className = `user-highlight-${annotation.color}`;
+            }
+            span.dataset.annotationId = annotation.id;
+            try {
+                range.surroundContents(span);
+            } catch (e) {
+                console.error("Não foi possível aplicar a marcação:", annotation, e);
+            }
+        }
+    }
+    
+    /** Renderiza todas as anotações do estado atual. */
+    function renderAllAnnotations() {
+        // Limpa marcações antigas que nosso sistema criou (as que têm data-annotation-id)
+        lawContent.querySelectorAll('span[data-annotation-id]').forEach(el => {
+            if (el.parentNode) {
+                // Substitui o <span> pelo seu conteúdo de texto, efetivamente removendo a marcação.
+                el.replaceWith(...el.childNodes);
+            }
+        });
+        // Junta nós de texto que possam ter ficado separados.
+        lawContent.normalize();
+    
+        // Ordena as anotações da maior para a menor para evitar problemas de sobreposição ao renderizar.
+        const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+        sortedAnnotations.forEach(renderSingleAnnotation);
+    }
+    
+    // =====================================================================
+    // <<< FIM DO CÓDIGO A SER ADICIONADO NESTE PASSO >>>
+    // =====================================================================
+    
     let isCommunityViewActive = false;
     let userPersonalContent = lawContent.innerHTML;
 
