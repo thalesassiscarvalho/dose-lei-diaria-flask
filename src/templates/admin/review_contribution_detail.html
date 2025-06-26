@@ -85,9 +85,8 @@
             <div class="content-panel bg-white">
                 <h3 class="text-blue-700">Versão Enviada pelo Usuário</h3>
                 
-                <div class="prose max-w-none">
-                    {{ contribution.content|safe }}
-                </div>
+                <div id="submitted-content-container" class="prose max-w-none">
+                </div>    
 
                 {% if contribution.comments %}
                 <div class="submitted-comments-container">
