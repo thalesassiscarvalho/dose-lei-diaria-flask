@@ -1519,15 +1519,32 @@ document.addEventListener("DOMContentLoaded", function () {
     
         const range = selection.getRangeAt(0);
         const container = range.commonAncestorContainer;
-        const markedSpan = container.nodeType === Node.ELEMENT_NODE ? container.querySelector('[data-annotation-id]') || container : container.parentElement;
         
-        const annotationId = markedSpan.closest('span[data-annotation-id]')?.dataset.annotationId;
+        // Esta linha é a mesma, ela encontra o elemento mais próximo com a marcação.
+        const markedElement = container.nodeType === Node.ELEMENT_NODE ? container.closest('[data-annotation-id]') : container.parentElement.closest('[data-annotation-id]');
+        
+        // <<< CORREÇÃO DA LÓGICA DA BORRACHA >>>
+        // Agora procuramos por QUALQUER tag que tenha o atributo 'data-annotation-id',
+        // e não apenas a tag 'span'. Isso inclui <strong>, <em>, <s>, etc.
+        const annotationId = markedElement?.dataset.annotationId;
+
         if (annotationId) {
             userAnnotations = userAnnotations.filter(ann => ann.id !== annotationId);
             renderAllAnnotations();
             debounceSaveMarkup();
         } else {
-            Swal.fire('Ação Inválida', 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.', 'info');
+            // <<< CORREÇÃO DO BOTÃO INVISÍVEL >>>
+            // Usamos a mesma estrutura de antes para estilizar o botão do alerta.
+            Swal.fire({
+                title: 'Ação Inválida',
+                text: 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                customClass: {
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                },
+                buttonsStyling: false
+            });
         }
     }
     
