@@ -1448,6 +1448,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // AGORA, com a tela limpa, desenha todas as anotações da nossa "fonte da verdade" (a lista JSON)
         const sortedAnnotations = [...userAnnotations].sort((a, b) => (b.end - b.start) - (a.end - a.start));
         sortedAnnotations.forEach(renderSingleAnnotation);
+        initCommentSystem();
     }
     
     // =====================================================================
