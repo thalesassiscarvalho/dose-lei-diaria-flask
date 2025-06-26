@@ -2667,9 +2667,76 @@ function handleFavoriteClick(button) {
             }
         });
     }
-
+    function loadStatsCards() {
+        // 1. Selecionamos os elementos dos cards no HTML que preparamos na Ação 3.
+        const streakCardContainer = document.querySelector('#streak-card .streak-display-container');
+        const levelCardContainer = document.querySelector('#level-card .level-content-container');
+    
+        // 2. Usamos a função 'fetch' para fazer uma requisição GET para a nossa nova rota de API.
+        fetch('/student/api/dashboard/stats-cards')
+            .then(response => {
+                // 3. Verificamos se a resposta da rede foi bem-sucedida.
+                if (!response.ok) {
+                    throw new Error('Erro de rede ao buscar estatísticas.');
+                }
+                // 4. Convertemos a resposta de JSON para um objeto JavaScript.
+                return response.json();
+            })
+            .then(data => {
+                // 5. Se tudo correu bem e a API retornou 'success: true', usamos os dados.
+                if (data.success) {
+    
+                    // ---- Lógica para reconstruir o Card de Sequência ----
+                    if (data.user_streak > 0) {
+                        streakCardContainer.innerHTML = `
+                            <div class="streak-display">${data.user_streak}</div>
+                            <p class="streak-text">dias consecutivos!</p>
+                        `;
+                    } else {
+                        streakCardContainer.innerHTML = `
+                            <p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>
+                        `;
+                    }
+    
+                    // ---- Lógica para reconstruir o Card de Nível ----
+                    const levelInfo = data.level_info;
+                    const nextLevelHTML = levelInfo.next_level ? `
+                        <p class="next-level-info">
+                            Faltam <strong>${levelInfo.points_to_next}</strong> pontos para <i class="${levelInfo.next_level.icon}"></i> <strong>${levelInfo.next_level.name}</strong>
+                        </p>
+                    ` : `
+                        <p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>
+                    `;
+    
+                    levelCardContainer.innerHTML = `
+                        <div class="level-info">
+                            <i class="${levelInfo.current_level.icon} level-icon"></i>
+                            <div>
+                                <div class="level-name">${levelInfo.current_level.name}</div>
+                                <div class="level-points">${data.user_points} pontos</div>
+                            </div>
+                        </div>
+                        <div class="xp-bar-container">
+                            <div class="xp-bar-fill" style="width: ${levelInfo.progress_percent.toFixed(2)}%;"></div>
+                        </div>
+                        ${nextLevelHTML}
+                    `;
+                } else {
+                    // Se a API retornar um erro, mostramos uma mensagem.
+                    streakCardContainer.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
+                    levelCardContainer.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
+                }
+            })
+            .catch(error => {
+                // Se houver um erro de rede (ex: sem internet), também mostramos uma mensagem.
+                console.error('Erro no fetch dos stats cards:', error);
+                streakCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
+                levelCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
+            });
+    }
     function initializeDashboard() {
         setupEventListeners();
+        loadStatsCards();
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
             filterControls.concurso.dispatchEvent(new Event('change'));
