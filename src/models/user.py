@@ -195,6 +195,7 @@ class CommunityContribution(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     law_id = db.Column(db.Integer, db.ForeignKey('law.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    content_json = db.Column(db.JSON, nullable=True)
     status = db.Column(db.String(50), nullable=False, default='pending', index=True) 
     reviewer_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
