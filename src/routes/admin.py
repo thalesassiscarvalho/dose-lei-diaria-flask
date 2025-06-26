@@ -613,16 +613,19 @@ def review_contributions():
 @login_required
 @admin_required
 def review_contribution_detail(contribution_id):
-    # Usamos `joinedload(CommunityContribution.comments)` para carregar as
-    # anotações da comunidade junto com a contribuição principal em uma única
-    # consulta ao banco de dados, o que é mais eficiente.
     contribution = CommunityContribution.query.options(
         joinedload(CommunityContribution.user),
-        joinedload(CommunityContribution.law).joinedload(Law.parent),
+        joinedload(CommunityContribution.law),
         joinedload(CommunityContribution.comments) 
     ).get_or_404(contribution_id)
-    
-    return render_template("admin/review_contribution_detail.html", contribution=contribution)
+
+    # A nova lógica agora envia o conteúdo original e o JSON da contribuição separadamente.
+    return render_template(
+        "admin/review_contribution_detail.html", 
+        contribution=contribution,
+        original_content=contribution.law.content,
+        submitted_content_json=contribution.content_json  # Usando a nova coluna JSON
+    )
 # =====================================================================
 # <<< FIM DA ALTERAÇÃO FINAL >>>
 # =====================================================================
