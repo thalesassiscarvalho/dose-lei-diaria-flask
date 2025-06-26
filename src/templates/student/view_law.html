@@ -1518,27 +1518,42 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!selection || selection.rangeCount === 0) return;
 
         const range = selection.getRangeAt(0);
-        let container = range.commonAncestorContainer;
+        const paragraph = range.startContainer.parentElement.closest('p, li, blockquote');
+        if (!paragraph) return;
 
-        // LÓGICA CORRIGIDA E MAIS ROBUSTA
-        // Procura, a partir de onde o usuário clicou, o elemento "pai" mais próximo
-        // que tenha a nossa marcação (data-annotation-id), não importa qual seja a tag.
-        const markedElement = container.nodeType === Node.ELEMENT_NODE
-            ? container.closest('[data-annotation-id]')
-            : container.parentElement.closest('[data-annotation-id]');
-        
-        // Se encontrarmos um elemento marcado, pegamos o ID dele.
-        const annotationId = markedElement?.dataset.annotationId;
+        // 1. Calcula as coordenadas da seleção do usuário
+        const paragraphId = paragraph.id;
+        const fullRange = document.createRange();
+        fullRange.selectNodeContents(paragraph);
+        const preSelectionRange = document.createRange();
+        preSelectionRange.setStart(fullRange.startContainer, fullRange.startOffset);
+        preSelectionRange.setEnd(range.startContainer, range.startOffset);
+        const selectionStart = preSelectionRange.toString().length;
+        const selectionEnd = selectionStart + range.toString().length;
 
-        if (annotationId) {
-            // Se um ID foi encontrado, removemos a anotação da nossa lista.
-            userAnnotations = userAnnotations.filter(ann => ann.id !== annotationId);
-            // Redesenhamos a tela para que a marcação suma visualmente.
+        // 2. Encontra todas as anotações na lista JSON que se sobrepõem com a seleção
+        const idsToRemove = [];
+        userAnnotations.forEach(ann => {
+            if (ann.paragraphId === paragraphId) {
+                // Condição de sobreposição: o início da seleção é antes do fim da anotação,
+                // E o fim da seleção é depois do início da anotação.
+                if (selectionStart < ann.end && selectionEnd > ann.start) {
+                    idsToRemove.push(ann.id);
+                }
+            }
+        });
+
+        if (idsToRemove.length > 0) {
+            // 3. Remove as anotações encontradas da "fonte da verdade" (a lista JSON)
+            userAnnotations = userAnnotations.filter(ann => !idsToRemove.includes(ann.id));
+            
+            // 4. Manda redesenhar TUDO a partir da lista atualizada.
             renderAllAnnotations();
-            // Agendamos o salvamento automático.
+            
+            // 5. Agenda o salvamento da nova lista
             debounceSaveMarkup();
         } else {
-            // Se nenhum elemento marcado foi encontrado na seleção, o alerta é exibido.
+            // Se não encontrou nenhuma anotação na seleção, mostra o alerta (já corrigido).
             Swal.fire({
                 title: 'Ação Inválida',
                 text: 'Para remover uma marcação, selecione o texto já marcado e clique na borracha.',
