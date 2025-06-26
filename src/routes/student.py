@@ -909,26 +909,35 @@ def handle_user_notes(law_id):
 @login_required
 def save_law_markup(law_id):
     Law.query.get_or_404(law_id)
+
+    # A nova lógica espera uma lista de marcações em JSON
+    markup_data = request.json.get("markups")
+    if markup_data is None or not isinstance(markup_data, list):
+        return jsonify({'success': False, 'error': 'Formato de dados de marcação inválido.'}), 400
+
     try:
-        data = request.get_json()
-        if not data or 'content' not in data:
-            return jsonify({'success': False, 'error': 'Dados de conteúdo ausentes.'}), 400
-        
-        untrusted_content = data.get('content') or ""
-        
-        sanitized_content = bleach.clean(untrusted_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, css_sanitizer=css_sanitizer, strip=True)
-        
         user_markup = UserLawMarkup.query.filter_by(user_id=current_user.id, law_id=law_id).first()
+
         if user_markup:
-            user_markup.content = sanitized_content
+            # Atualiza a coluna JSON
+            user_markup.content_json = markup_data
+            # Por segurança, limpamos a coluna antiga para não usá-la mais para este usuário/lei
+            user_markup.content = "deprecated" 
         else:
-            new_markup = UserLawMarkup(user_id=current_user.id, law_id=law_id, content=sanitized_content)
+            # Cria um novo registro já com a coluna JSON
+            new_markup = UserLawMarkup(
+                user_id=current_user.id,
+                law_id=law_id,
+                content_json=markup_data,
+                content="deprecated" # Marcamos a coluna antiga como não utilizada
+            )
             db.session.add(new_markup)
+
         db.session.commit()
         return jsonify({'success': True, 'message': 'Marcações salvas com sucesso.'})
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro ao salvar marcações para law_id {law_id} para o usuário {current_user.id}: {e}")
+        logging.error(f"Erro ao salvar marcações JSON para law_id {law_id} para o usuário {current_user.id}: {e}")
         return jsonify({'success': False, 'error': 'Um erro interno ocorreu ao salvar as marcações.'}), 500
 
 @student_bp.route("/law/<int:law_id>/comments", methods=["GET", "POST"])
