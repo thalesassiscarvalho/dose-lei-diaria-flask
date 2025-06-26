@@ -1395,3 +1395,30 @@ def get_community_version(law_id):
         user_has_liked=user_has_liked,
         is_own_contribution=(current_user.id == approved_contribution.user_id)
     )
+
+@student_bp.route("/api/dashboard/stats-cards")
+@login_required
+def get_dashboard_stats_cards():
+    """
+    Uma rota de API dedicada a buscar os dados para os cards de
+    estatísticas principais: Nível, Pontos e Sequência de Estudos.
+    """
+    # 1. Reutilizamos as mesmas funções que você já tinha criado.
+    #    Elas calculam o nível do usuário com base nos pontos.
+    level_info = get_user_level_info(current_user.points)
+
+    # 2. Reutilizamos a função otimizada para calcular a sequência de estudos.
+    user_streak = _calculate_user_streak(current_user)
+
+    # 3. Usamos 'jsonify' para criar uma resposta no formato JSON.
+    #    JSON é um formato de texto que o JavaScript entende muito facilmente.
+    #    Estamos enviando um dicionário com todos os dados necessários.
+    return jsonify({
+        "success": True,
+        "level_info": level_info,
+        "user_points": current_user.points,
+        "user_streak": user_streak
+    })
+# =====================================================================
+# <<< FIM DO CÓDIGO PARA ADICIONAR >>>
+# =====================================================================
