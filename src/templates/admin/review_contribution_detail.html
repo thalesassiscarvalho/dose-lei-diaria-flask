@@ -136,3 +136,79 @@
 
 </div>
 {% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pega os dados que o backend enviou
+    const originalContentHTML = {{ original_content|tojson|safe }};
+    const annotationsJSON = {{ submitted_content_json|tojson|safe }};
+    const container = document.getElementById('submitted-content-container');
+
+    if (!container) return;
+
+    // 1. Coloca o HTML limpo e original da lei no container
+    container.innerHTML = originalContentHTML;
+
+    // 2. Garante que todos os parágrafos no conteúdo tenham IDs para referência
+    container.querySelectorAll('p, li, blockquote').forEach((p, index) => {
+        if (!p.id) p.id = `law-p-admin-${index}`;
+    });
+
+    // 3. Função que "pinta" uma única marcação na tela
+    function renderSingleAnnotation(annotation) {
+        if (!annotation || !annotation.paragraphId) return;
+        const paragraph = document.getElementById(annotation.paragraphId);
+        if (!paragraph) return;
+
+        let wrapperNode;
+        if (annotation.type === 'highlight') {
+            wrapperNode = document.createElement('span');
+            wrapperNode.className = `user-highlight-${annotation.color}`;
+        } else if (annotation.type === 'bold') {
+            wrapperNode = document.createElement('strong');
+        } else if (annotation.type === 'italic') {
+            wrapperNode = document.createElement('em');
+        } else if (annotation.type === 'strikethrough') {
+            wrapperNode = document.createElement('s');
+        } else { return; }
+
+        const range = document.createRange();
+        let charCount = 0;
+        let startNode, startOffset, endNode, endOffset;
+
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null, false);
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            const nodeLength = currentNode.textContent.length;
+            if (startNode === undefined && annotation.start < charCount + nodeLength) {
+                startNode = currentNode;
+                startOffset = annotation.start - charCount;
+            }
+            if (endNode === undefined && annotation.end <= charCount + nodeLength) {
+                endNode = currentNode;
+                endOffset = annotation.end - charCount;
+                break;
+            }
+            charCount += nodeLength;
+        }
+
+        if (startNode && endNode) {
+            range.setStart(startNode, startOffset);
+            range.setEnd(endNode, endOffset);
+            try {
+                wrapperNode.appendChild(range.extractContents());
+                range.insertNode(wrapperNode);
+            } catch (e) {
+                console.error("Não foi possível aplicar a marcação:", annotation, e);
+            }
+        }
+    }
+
+    // 4. Renderiza todas as marcações do JSON
+    if (annotationsJSON && Array.isArray(annotationsJSON)) {
+        const sortedAnnotations = [...annotationsJSON].sort((a, b) => (b.end - b.start) - (a.end - a.start));
+        sortedAnnotations.forEach(renderSingleAnnotation);
+    }
+});
+</script>
+{% endblock %}
