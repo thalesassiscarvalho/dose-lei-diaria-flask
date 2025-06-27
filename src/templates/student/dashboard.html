@@ -2783,6 +2783,7 @@ function handleFavoriteClick(button) {
     function initializeDashboard() {
         setupEventListeners();
         loadStatsCards();
+        loadStudyTimeCards();
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
             filterControls.concurso.dispatchEvent(new Event('change'));
@@ -2795,8 +2796,7 @@ function handleFavoriteClick(button) {
         updateDefaultConcursoButtonState();
         fetchAndRenderTodoItems();
         displayDailyMotivation();
-        setupDynamicPlaceholder();
-        initializeSubjectStudyChart();
+        setupDynamicPlaceholder();        
         initializeStreakChart();
     }
 
