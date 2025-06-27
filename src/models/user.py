@@ -168,8 +168,22 @@ class TodoItem(db.Model):
     content = db.Column(db.String(500), nullable=False)
     category = db.Column(db.String(50), nullable=False, default='lembrete')
     is_completed = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    
+    # =====================================================================
+    # <<< INÍCIO DA ALTERAÇÃO: ÍNDICE COMPOSTO >>>
+    # =====================================================================
+    # Este índice otimiza a query da API que busca os itens do usuário,
+    # ordenando por 'is_completed' e 'created_at'. O banco de dados poderá
+    # ler os dados já na ordem correta, o que é muito mais eficiente.
+    __table_args__ = (
+        Index('ix_todoitem_user_id_completed_created', 'user_id', 'is_completed', 'created_at'),
+    )
+    # =====================================================================
+    # <<< FIM DA ALTERAÇÃO >>>
+    # =====================================================================
+
 
     def __repr__(self):
         return f"<TodoItem {self.id} (User: {self.user_id}): {self.content[:30]}...>"
