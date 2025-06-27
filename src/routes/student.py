@@ -1272,6 +1272,7 @@ def get_community_version(law_id):
 
 @student_bp.route("/api/dashboard/stats-cards")
 @login_required
+@cache.cached(timeout=120, key_prefix='stats_cards_%s')
 def get_dashboard_stats_cards():
     """
     Uma rota de API dedicada a buscar os dados para os cards de
