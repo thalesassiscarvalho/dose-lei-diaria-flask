@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import datetime, date
+from sqlalchemy import Index
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
