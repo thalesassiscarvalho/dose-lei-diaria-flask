@@ -2715,6 +2715,67 @@ function handleFavoriteClick(button) {
                 levelCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
             });
     }
+    function loadStudyTimeCards() {
+    const timeCardContainer = document.querySelector('#total-study-time-card');
+    const statsCardContainer = document.querySelector('#subject-stats-card');
+
+    fetch('/student/api/dashboard/study-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // ---- Reconstrói o card "Tempo Total de Estudo" ----
+                timeCardContainer.innerHTML = `
+                    <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
+                    <div class="flex-grow flex flex-col justify-around">
+                        <div class="study-time-item">
+                            <span class="study-time-label">Total:</span>
+                            <span class="study-time-value study-time-total-value">${data.total_study_formatted}</span>
+                        </div>
+                        <div class="study-time-item">
+                            <span class="study-time-label">Semanal:</span>
+                            <span class="study-time-value study-time-weekly-value">${data.weekly_study_formatted}</span>
+                        </div>
+                        <div class="study-time-item">
+                            <span class="study-time-label">Hoje:</span>
+                            <span class="study-time-value study-time-daily-value">${data.daily_study_formatted}</span>
+                        </div>
+                    </div>
+                `;
+
+                // ---- Reconstrói o card "Estatística por Matéria" ----
+                let statsHTML = `<h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>`;
+                if (data.most_studied_subject) {
+                    statsHTML += `
+                        <p class="most-studied-text">Sua matéria mais estudada é <strong>${data.most_studied_subject.name}</strong> com <strong>${data.most_studied_subject.duration}</strong>.</p>
+                        <div class="chart-container">
+                            <canvas id="subjectStudyChart"></canvas>
+                        </div>
+                    `;
+                } else {
+                    statsHTML += `
+                        <div class="no-data-message">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Parece que você ainda não tem estatísticas de estudo!</p>
+                            <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
+                        </div>
+                    `;
+                }
+                statsCardContainer.innerHTML = statsHTML;
+
+                // IMPORTANTE: Após adicionar o <canvas> ao HTML, inicializamos o gráfico.
+                initializeSubjectStudyChart(data.study_data_for_chart);
+
+            } else {
+                timeCardContainer.innerHTML += '<p class="text-red-500">Erro ao carregar.</p>';
+                statsCardContainer.innerHTML += '<p class="text-red-500">Erro ao carregar.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro no fetch das estatísticas de estudo:', error);
+            timeCardContainer.innerHTML += '<p class="text-red-500">Erro de comunicação.</p>';
+            statsCardContainer.innerHTML += '<p class="text-red-500">Erro de comunicação.</p>';
+        });
+    }
     function initializeDashboard() {
         setupEventListeners();
         loadStatsCards();
