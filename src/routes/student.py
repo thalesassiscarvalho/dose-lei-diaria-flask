@@ -1400,5 +1400,6 @@ def get_dashboard_secondary_stats():
         "success": True,
         "study_time": study_time_data,
         "subject_stats": subject_stats_data,
-        "recent_activities": recent_activities_data
+        "recent_activities": recent_activities_data,
+        "weekly_chart_data": weekly_chart_data
     })
