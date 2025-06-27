@@ -471,7 +471,7 @@ def filter_laws():
     query = db.session.query(Law, ParentLaw)\
         .join(ParentLaw, Law.parent_id == ParentLaw.id)\
         .filter(Law.parent_id.isnot(None))\
-        .options(contains_eager(Law.parent, alias=ParentLaw).joinedload(Subject))
+        .options(contains_eager(Law.parent, alias=ParentLaw).joinedload(ParentLaw.subject))
 
     # Etapa 3: Aplicar filtros (a lógica é a mesma, mas a sintaxe de join muda um pouco)
     if allowed_law_ids is not None:
