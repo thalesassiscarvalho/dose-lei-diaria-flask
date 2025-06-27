@@ -1270,8 +1270,22 @@ def get_community_version(law_id):
         is_own_contribution=(current_user.id == approved_contribution.user_id)
     )
 
+def make_cache_key_for_user(*args, **kwargs):
+    """
+    Função para criar uma chave de cache única por usuário.
+    Ex: 'stats_cards_1', 'stats_cards_2', etc.
+    """
+    # Usamos o ID do usuário logado para criar a chave.
+    # Se não houver usuário logado (o que não deveria acontecer aqui por causa do @login_required),
+    # retornamos None para não cachear.
+    if current_user and current_user.is_authenticated:
+        return f"stats_cards_{current_user.id}"
+    return None
+
 @student_bp.route("/api/dashboard/stats-cards")
 @login_required
+# O decorador agora usa a nossa função para gerar a chave
+@cache.cached(timeout=120, make_cache_key=make_cache_key_for_user)
 def get_dashboard_stats_cards():
     """
     Uma rota de API dedicada a buscar os dados para os cards de
