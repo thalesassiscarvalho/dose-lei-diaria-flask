@@ -113,13 +113,12 @@
         white-space: nowrap;
     }
 
-    /* 1. Regra para as GRADES: Define a altura mínima das linhas */
     #main-cards-grid,
-    #study-stats-cards-grid {
-        grid-auto-rows: minmax(220px, auto);
+    #middle-cards-grid {
+        grid-auto-rows: 1fr;
     }
     
-    /* 2. Regra para os CARDS: Força-os a preencher a altura da linha do grid */
+    /* Define as propriedades dos cards para preencherem o espaço e se alinharem */
     .stat-card {
         background-color: #ffffff;
         border: 1px solid #e5e7eb;
@@ -130,14 +129,11 @@
         transition: all 0.3s ease-in-out;
         position: relative;
         overflow: hidden;
-        
-        /* Propriedades essenciais para o alinhamento */
         display: flex;
         flex-direction: column;
-        height: 100%; /* <-- Esta é a propriedade chave que faltava! */
+        height: 100%; 
     }
         
-    /* 3. Regra para o Efeito Hover (opcional, mas mantém o estilo) */
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
@@ -1147,23 +1143,22 @@
             </div>
         </div>
 
-    <div class="stat-card achievements-card md:col-span-3" id="achievements-card">
-        <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
-        {% if user_achievements %}
-            <div class="achievements-list">
-                {% for achievement in user_achievements %}
-                    <span class="achievement-badge" title="{{ achievement.description }}">
-                        <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
-                    </span>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
-        {% endif %}
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="study-stats-cards-grid">
-        <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
+        <div class="stat-card achievements-card" id="achievements-card">
+            <h2 class="stat-card-title"><i class="fas fa-trophy"></i> Medalhas e Feitos</h2>
+            {% if user_achievements %}
+                <div class="achievements-list">
+                    {% for achievement in user_achievements %}
+                        <span class="achievement-badge" title="{{ achievement.description }}">
+                            <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i> {{ achievement.name }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 italic mt-2">Você ainda não desbloqueou nenhuma medalha. Continue estudando!</p>
+            {% endif %}
+        </div>
+    
+        <div class="stat-card total-study-time-card" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
             <div class="flex-grow flex flex-col justify-around">
                 <div class="study-time-item">
@@ -1180,8 +1175,8 @@
                 </div>
             </div>
         </div>
-
-        <div class="stat-card subject-stats-card md:col-span-2" id="subject-stats-card">
+    
+        <div class="stat-card subject-stats-card" id="subject-stats-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
             {% if most_studied_subject %}
                 <p class="most-studied-text">Sua matéria mais estudada é <strong>{{ most_studied_subject.name }}</strong> com <strong>{{ most_studied_subject.duration }}</strong>.</p>
@@ -1196,6 +1191,7 @@
                 </div>
             {% endif %}
         </div>
+    
     </div>
     
     <div class="filter-container">
