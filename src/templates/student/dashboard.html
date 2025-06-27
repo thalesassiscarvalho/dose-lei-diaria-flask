@@ -2582,8 +2582,6 @@ function handleFavoriteClick(button) {
         const ctx = document.getElementById('streakChart');
         if (!ctx) return;
 
-        const weeklyData = {{ weekly_activity_data|tojson|safe }};
-
         const labels = weeklyData.map(item => item.label);
         const dataInMinutes = weeklyData.map(item => item.minutes);
 
