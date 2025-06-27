@@ -2578,10 +2578,11 @@ function handleFavoriteClick(button) {
 
     let streakChart = null;
 
-    function initializeStreakChart() {
+    function initializeStreakChart(weeklyData) {
         const ctx = document.getElementById('streakChart');
         if (!ctx) return;
 
+        // CORREÇÃO 2: Acessa o parâmetro 'weeklyData' em vez de uma variável global
         const labels = weeklyData.map(item => item.label);
         const dataInMinutes = weeklyData.map(item => item.minutes);
 
@@ -2608,44 +2609,28 @@ function handleFavoriteClick(button) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        // Personaliza o tooltip que aparece ao passar o mouse
                         callbacks: {
                             label: function(context) {
                                 const totalMinutes = context.parsed.y || 0;
-
-                                if (totalMinutes === 0) {
-                                    return "Nenhum estudo";
-                                }
-
+                                if (totalMinutes === 0) return "Nenhum estudo";
                                 const hours = Math.floor(totalMinutes / 60);
                                 const minutes = totalMinutes % 60;
                                 const parts = [];
-
-                                if (hours > 0) {
-                                    parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
-                                }
-                                if (minutes > 0) {
-                                    parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`);
-                                }
-
+                                if (hours > 0) parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
+                                if (minutes > 0) parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`);
                                 return parts.join(' e ');
                             }
                         }
                     }
                 },
                 scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#ef6c00' }
-                    },
-                    y: {
-                        display: false,
-                        beginAtZero: true
-                    }
+                    x: { grid: { display: false }, ticks: { color: '#ef6c00' } },
+                    y: { display: false, beginAtZero: true }
                 }
             }
         });
     }
+
     function loadStatsCards() {
         const streakCardContainer = document.querySelector('#streak-card .streak-display-container');
         const levelCardContainer = document.querySelector('#level-card .level-content-container');
@@ -2654,19 +2639,17 @@ function handleFavoriteClick(button) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Lógica para o card de Sequência (continua a mesma)
                     if (data.user_streak > 0) {
                         streakCardContainer.innerHTML = `<div class="streak-display">${data.user_streak}</div><p class="streak-text">dias consecutivos!</p>`;
                     } else {
                         streakCardContainer.innerHTML = `<p class="text-gray-500 italic mt-2">Estude hoje para começar uma nova sequência! 🔥</p>`;
                     }
     
-                    // Lógica para o card de Nível (continua a mesma)
                     const levelInfo = data.level_info;
                     const nextLevelHTML = levelInfo.next_level ? `<p class="next-level-info">Faltam <strong>${levelInfo.points_to_next}</strong> pontos para <i class="${levelInfo.next_level.icon}"></i> <strong>${levelInfo.next_level.name}</strong></p>` : `<p class="next-level-info">Parabéns! Você alcançou o nível máximo!</p>`;
                     levelCardContainer.innerHTML = `<div class="level-info"><i class="${levelInfo.current_level.icon} level-icon"></i><div><div class="level-name">${levelInfo.current_level.name}</div><div class="level-points">${data.user_points} pontos</div></div></div><div class="xp-bar-container"><div class="xp-bar-fill" style="width: ${levelInfo.progress_percent.toFixed(2)}%;"></div></div>${nextLevelHTML}`;
     
-                    // NOVIDADE: Chamando a função do gráfico com os dados da API
+                    // CORREÇÃO 3: Chama a função do gráfico com os dados corretos da API
                     initializeStreakChart(data.weekly_activity_data);
     
                 } else {
@@ -2680,66 +2663,71 @@ function handleFavoriteClick(button) {
                 levelCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
             });
     }
+
     function loadStudyTimeCards() {
-    const timeCardContainer = document.querySelector('#total-study-time-card');
-    const statsCardContainer = document.querySelector('#subject-stats-card');
+        const timeCardContainer = document.querySelector('#total-study-time-card');
+        const statsCardContainer = document.querySelector('#subject-stats-card');
 
-    fetch('/student/api/dashboard/study-stats')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // ---- Reconstrói o card "Tempo Total de Estudo" ----
-                timeCardContainer.innerHTML = `
-                    <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-                    <div class="flex-grow flex flex-col justify-around">
-                        <div class="study-time-item">
-                            <span class="study-time-label">Total:</span>
-                            <span class="study-time-value study-time-total-value">${data.total_study_formatted}</span>
-                        </div>
-                        <div class="study-time-item">
-                            <span class="study-time-label">Semanal:</span>
-                            <span class="study-time-value study-time-weekly-value">${data.weekly_study_formatted}</span>
-                        </div>
-                        <div class="study-time-item">
-                            <span class="study-time-label">Hoje:</span>
-                            <span class="study-time-value study-time-daily-value">${data.daily_study_formatted}</span>
-                        </div>
-                    </div>
-                `;
-
-                // ---- Reconstrói o card "Estatística por Matéria" ----
-                let statsHTML = `<h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>`;
-                if (data.most_studied_subject) {
-                    statsHTML += `
-                        <p class="most-studied-text">Sua matéria mais estudada é <strong>${data.most_studied_subject.name}</strong> com <strong>${data.most_studied_subject.duration}</strong>.</p>
-                        <div class="chart-container">
-                            <canvas id="subjectStudyChart"></canvas>
-                        </div>
-                    `;
-                } else {
-                    statsHTML += `
-                        <div class="no-data-message">
-                            <i class="fas fa-chart-bar"></i>
-                            <p>Parece que você ainda não tem estatísticas de estudo!</p>
-                            <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
-                        </div>
-                    `;
+        // CORREÇÃO 4: A URL foi corrigida para corresponder à rota do backend.
+        fetch('/student/api/study-stats')
+            .then(response => {
+                // Adicionamos uma verificação para garantir que a resposta é JSON antes de tentar analisá-la.
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                statsCardContainer.innerHTML = statsHTML;
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // ---- Reconstrói o card "Tempo Total de Estudo" com os dados da nova API ----
+                    timeCardContainer.innerHTML = `
+                        <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
+                        <div class="flex-grow flex flex-col justify-around">
+                            <div class="study-time-item">
+                                <span class="study-time-label">Total:</span>
+                                <span class="study-time-value study-time-total-value">${data.total_study_formatted}</span>
+                            </div>
+                            <div class="study-time-item">
+                                <span class="study-time-label">Semanal:</span>
+                                <span class="study-time-value study-time-weekly-value">${data.weekly_study_formatted}</span>
+                            </div>
+                            <div class="study-time-item">
+                                <span class="study-time-label">Hoje:</span>
+                                <span class="study-time-value study-time-daily-value">${data.daily_study_formatted}</span>
+                            </div>
+                        </div>`;
 
-                // IMPORTANTE: Após adicionar o <canvas> ao HTML, inicializamos o gráfico.
-                initializeSubjectStudyChart(data.study_data_for_chart);
+                    // ---- Reconstrói o card "Estatística por Matéria" ----
+                    let statsHTML = `<h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>`;
+                    if (data.most_studied_subject) {
+                        statsHTML += `
+                            <p class="most-studied-text">Sua matéria mais estudada é <strong>${data.most_studied_subject.name}</strong> com <strong>${data.most_studied_subject.duration}</strong>.</p>
+                            <div class="chart-container">
+                                <canvas id="subjectStudyChart"></canvas>
+                            </div>`;
+                    } else {
+                        statsHTML += `
+                            <div class="no-data-message" style="display: flex;">
+                                <i class="fas fa-chart-bar"></i>
+                                <p>Parece que você ainda não tem estatísticas de estudo!</p>
+                                <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
+                            </div>`;
+                    }
+                    statsCardContainer.innerHTML = statsHTML;
 
-            } else {
-                timeCardContainer.innerHTML += '<p class="text-red-500">Erro ao carregar.</p>';
-                statsCardContainer.innerHTML += '<p class="text-red-500">Erro ao carregar.</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Erro no fetch das estatísticas de estudo:', error);
-            timeCardContainer.innerHTML += '<p class="text-red-500">Erro de comunicação.</p>';
-            statsCardContainer.innerHTML += '<p class="text-red-500">Erro de comunicação.</p>';
-        });
+                    // Após adicionar o <canvas> ao HTML, inicializamos o gráfico com os dados corretos.
+                    initializeSubjectStudyChart(data.study_data_for_chart);
+
+                } else {
+                    timeCardContainer.innerHTML = '<div class="flex-grow flex items-center justify-center text-red-500">Erro ao carregar dados.</div>';
+                    statsCardContainer.innerHTML = '<div class="flex-grow flex items-center justify-center text-red-500">Erro ao carregar dados.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro no fetch das estatísticas de estudo:', error);
+                timeCardContainer.innerHTML = '<div class="flex-grow flex items-center justify-center text-red-500">Erro de comunicação.</div>';
+                statsCardContainer.innerHTML = '<div class="flex-grow flex items-center justify-center text-red-500">Erro de comunicação.</div>';
+            });
     }
     function initializeDashboard() {
         setupEventListeners();
