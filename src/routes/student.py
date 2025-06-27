@@ -1290,7 +1290,7 @@ def get_dashboard_stats_cards():
 # <<< NOVO CÓDIGO >>>
 @student_bp.route("/api/dashboard/secondary-stats")
 @login_required
-def get_dashboard_secondary_stats():
+def get_dashboard_secondary_stats():    
     """
     Nova rota de API para carregar dados de cards secundários de forma assíncrona.
     Isso inclui: Tempo de Estudo, Estatísticas por Matéria e Atividades Recentes.
@@ -1367,7 +1367,35 @@ def get_dashboard_secondary_stats():
             "url": url_for('student.view_law', law_id=progress.law.id),
             "time_ago": _humanize_time_delta(progress.last_accessed_at)
         })
-
+    now_in_brazil = _get_brazil_time_now()
+    today_in_brazil = now_in_brazil.date()
+    days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    
+    start_date_of_week = today_in_brazil - timedelta(days=6)
+    start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(pytz.timezone('America/Sao_Paulo')).astimezone(pytz.utc)
+    
+    study_sessions_week = db.session.query(
+        func.cast(func.timezone('America/Sao_Paulo', func.timezone('UTC', StudySession.recorded_at)), Date).label('study_date'),
+        func.sum(StudySession.duration_seconds).label('total_seconds')
+    ).filter(
+        StudySession.user_id == current_user.id,
+        StudySession.recorded_at >= start_date_utc
+    ).group_by('study_date').all()
+    
+    study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
+    
+    weekly_chart_data = []
+    for i in range(7):
+        current_day = start_date_of_week + timedelta(days=i)
+        duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
+    
+        day_label = "Hoje" if current_day == today_in_brazil else days_of_week_br[current_day.weekday()]
+    
+        weekly_chart_data.append({
+            "label": day_label,
+            "minutes": duration_minutes
+    })
+    
     return jsonify({
         "success": True,
         "study_time": study_time_data,
