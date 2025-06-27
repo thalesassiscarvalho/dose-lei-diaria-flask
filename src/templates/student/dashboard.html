@@ -1574,15 +1574,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const toggleCardsBtn = document.getElementById('toggle-cards-btn');
-    const cardsToToggle = [
+    const cardsToToggle = [        
         document.getElementById('announcement-cards-section'),
-        document.querySelector('.todo-list-card'),
-        document.getElementById('recent-activities-card'),
-        document.getElementById('daily-motivation-card'),
-        document.getElementById('streak-card'),
-        document.getElementById('level-card'),
-        document.getElementById('achievements-card'),
-        document.getElementById('study-stats-cards-grid')
+        document.getElementById('main-cards-grid'),       // O container da grade de cima
+        document.getElementById('middle-cards-grid')
     ];
 
     function applyCardsVisibility(hidden) {
