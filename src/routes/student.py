@@ -448,10 +448,12 @@ def dashboard():
 
 @student_bp.route("/filter_laws")
 @login_required
+@student_bp.route("/filter_laws")
+@login_required
 def filter_laws():
     """
-    Versão final, corrigida e otimizada da rota de filtro de leis.
-    Usa um 'alias' explícito para o auto-relacionamento, resolvendo o ArgumentError.
+    Versão final e simplificada. Usa joinedload para carregar os relacionamentos
+    de forma eficiente, resolvendo os erros anteriores de forma robusta.
     """
     # Etapa 1: Coletar parâmetros (sem alterações)
     selected_concurso_id_str = request.args.get("concurso_id", "")
@@ -463,17 +465,16 @@ def filter_laws():
 
     allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
 
-    # Etapa 2: Construir a consulta base com um ALIAS explícito
-    # CORREÇÃO PRINCIPAL: Criamos um "apelido" para a tabela Law para representar o "diploma pai".
-    ParentLaw = aliased(Law)
-    
-    # A query agora seleciona o Tópico (Law) e o Diploma (ParentLaw)
-    query = db.session.query(Law, ParentLaw)\
-        .join(ParentLaw, Law.parent_id == ParentLaw.id)\
-        .filter(Law.parent_id.isnot(None))\
-        .options(contains_eager(Law.parent, alias=ParentLaw).joinedload(ParentLaw.subject))
+    # Etapa 2: Construir a consulta base (Query)
+    # CORREÇÃO PRINCIPAL: Simplificamos drasticamente a query.
+    # Pedimos apenas os tópicos (Law) e usamos .options() para dizer ao SQLAlchemy
+    # para já trazer o "pai" (diploma) e o "assunto do pai" na mesma consulta.
+    query = db.session.query(Law).options(
+        joinedload(Law.parent).joinedload(Law.subject)
+    ).filter(Law.parent_id.isnot(None))
 
-    # Etapa 3: Aplicar filtros (a lógica é a mesma, mas a sintaxe de join muda um pouco)
+
+    # Etapa 3: Aplicar filtros
     if allowed_law_ids is not None:
         query = query.filter(Law.id.in_(allowed_law_ids))
 
@@ -487,7 +488,8 @@ def filter_laws():
     else:
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
-            query = query.filter(ParentLaw.subject_id == selected_subject_id)
+            # Como já fizemos o JOIN otimizado com .options(), podemos filtrar aqui.
+            query = query.filter(Law.parent.has(Law.subject_id == selected_subject_id))
 
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
     if selected_topic_id:
@@ -505,17 +507,18 @@ def filter_laws():
         query = query.filter(UserProgress.id.is_(None))
         
     # Etapa 4: Executar a query
+    # A query agora retorna uma lista de objetos 'Law' (tópicos) com seus pais já carregados.
     query_results = query.all()
     if not query_results:
         return jsonify(subjects_with_diplomas={})
 
-    relevant_diploma_ids = {row.ParentLaw.id for row in query_results}
+    relevant_diploma_ids = {topic.parent_id for topic in query_results}
     
-    # Etapa 5: Carregar progresso e favoritos (sem alteração)
-    progress_map = {p.law_id: p.status for p in UserProgress.query.filter_by(user_id=current_user.id).filter(UserProgress.law_id.in_([row.Law.id for row in query_results])).all()}
+    # Etapa 5: Carregar progresso e favoritos
+    progress_map = {p.law_id: p.status for p in UserProgress.query.filter_by(user_id=current_user.id).filter(UserProgress.law_id.in_([topic.id for topic in query_results])).all()}
     favorite_topic_ids = {f.id for f in current_user.favorite_laws.all()}
 
-    # Etapa 6: Calcular o progresso dos diplomas (sem alteração na lógica)
+    # Etapa 6: Calcular o progresso dos diplomas
     total_topics_sq = db.session.query(
         Law.parent_id, func.count(Law.id).label('total_count')
     ).filter(Law.parent_id.in_(relevant_diploma_ids))
@@ -539,10 +542,10 @@ def filter_laws():
     subjects_with_diplomas = {}
     diplomas_map = {}
 
-    for row in query_results:
-        # Agora acessamos o tópico por row.Law e o diploma por row.ParentLaw
-        topic = row.Law
-        diploma = row.ParentLaw
+    for topic in query_results:
+        # Acessar o diploma é mais simples agora.
+        diploma = topic.parent
+        # Não há risco de erro aqui, pois a query já carregou o subject.
         subject_name = diploma.subject.name
         
         if subject_name not in subjects_with_diplomas:
