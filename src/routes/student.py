@@ -1148,39 +1148,62 @@ def record_study_session():
 @student_bp.route("/api/study_stats", methods=["GET"])
 @login_required
 def get_study_stats():
-    study_data = db.session.query(
-        Subject.name,
-        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
-    ).join(Subject, StudySession.subject_id == Subject.id)\
-     .filter(StudySession.user_id == current_user.id)\
-     .group_by(Subject.name)\
-     .order_by(Subject.name)\
-     .all()
-    
-    stats_by_subject = []
-    total_study_seconds = 0
-    for subject_name, duration_seconds in study_data:
-        total_study_seconds += duration_seconds
-        hours = duration_seconds // 3600
-        minutes = (duration_seconds % 3600) // 60
-        seconds = duration_seconds % 60
-        stats_by_subject.append({
-            'subject_name': subject_name,
-            'total_seconds': duration_seconds,
-            'formatted_duration': f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
-        })
-    
-    total_hours = total_study_seconds // 3600
-    total_minutes = (total_study_seconds % 3600) // 60
+    """
+    API aprimorada para buscar estatísticas de estudo.
+    Calcula o tempo total, semanal e diário, além dos dados para o gráfico.
+    """
+    try:
+        # Define o fuso horário correto
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        now_utc = datetime.datetime.now(pytz.utc)
+        today_br = now_utc.astimezone(brazil_tz).date()
+        start_of_week_br = today_br - timedelta(days=today_br.weekday())
+        
+        # Converte as datas de início para UTC para a consulta no banco
+        start_of_today_utc = brazil_tz.localize(datetime.datetime.combine(today_br, datetime.time.min)).astimezone(pytz.utc)
+        start_of_week_utc = brazil_tz.localize(datetime.datetime.combine(start_of_week_br, datetime.time.min)).astimezone(pytz.utc)
 
-    return jsonify(success=True, 
-                   stats_by_subject=stats_by_subject,
-                   total_study_seconds=total_study_seconds,
-                   total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
-                )
+        # Query base
+        base_query = db.session.query(
+            func.sum(StudySession.duration_seconds).label('total_duration')
+        ).filter(StudySession.user_id == current_user.id)
 
-@student_bp.route("/law/<int:law_id>/share_contribution", methods=["POST"])
-@login_required
+        # Calcula os totais
+        total_seconds = base_query.scalar() or 0
+        weekly_seconds = base_query.filter(StudySession.recorded_at >= start_of_week_utc).scalar() or 0
+        daily_seconds = base_query.filter(StudySession.recorded_at >= start_of_today_utc).scalar() or 0
+
+        # Busca dados para o gráfico de pizza por matéria
+        study_data_for_chart = db.session.query(
+            Subject.name,
+            func.sum(StudySession.duration_seconds).label('duration_seconds')
+        ).join(Subject, StudySession.subject_id == Subject.id)\
+         .filter(StudySession.user_id == current_user.id)\
+         .group_by(Subject.name)\
+         .order_by(func.sum(StudySession.duration_seconds).desc())\
+         .all()
+
+        # Prepara dados para o gráfico de pizza
+        chart_data = [{'name': name, 'duration_seconds': duration} for name, duration in study_data_for_chart]
+        
+        most_studied_subject_info = None
+        if chart_data:
+            most_studied_subject_info = {
+                'name': chart_data[0]['name'],
+                'duration': _format_duration(chart_data[0]['duration_seconds'])
+            }
+
+        return jsonify(
+            success=True, 
+            total_study_formatted=_format_duration(total_seconds),
+            weekly_study_formatted=_format_duration(weekly_seconds),
+            daily_study_formatted=_format_duration(daily_seconds),
+            study_data_for_chart=chart_data,
+            most_studied_subject=most_studied_subject_info
+        )
+    except Exception as e:
+        logging.error(f"Erro ao buscar estatísticas de estudo para o usuário {current_user.id}: {e}")
+        return jsonify(success=False, error="Erro interno ao buscar estatísticas."), 500
 def share_contribution(law_id):
     Law.query.get_or_404(law_id)
 
