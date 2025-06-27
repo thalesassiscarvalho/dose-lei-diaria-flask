@@ -2557,20 +2557,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let streakChart = null;
 
-    function initializeStreakChart() {
-        // Esta função agora será chamada pela `loadSecondaryStats`, mas o código interno é o mesmo.
-        // Por enquanto, os dados de streak não estão na nova API, então mantemos como está.
-        // Futuramente, poderíamos mover os dados de `weekly_activity_data` para a API também.
+    function initializeStreakChart(weeklyData) { // <-- Parâmetro adicionado
         const ctx = document.getElementById('streakChart');
         if (!ctx) return;
-        const weeklyData = {{ weekly_activity_data|tojson|safe if weekly_activity_data else [] }};
-        if (!weeklyData || weeklyData.length === 0) return;
-
+    
+        // A linha que lia a variável do Jinja2 foi removida.
+        // Agora verificamos se os dados recebidos são válidos.
+        if (!weeklyData || weeklyData.length === 0) {
+            // Opcional: pode-se esconder o gráfico se não houver dados
+            const chartContainer = document.querySelector('.streak-chart-container');
+            if (chartContainer) chartContainer.style.display = 'none';
+            return;
+        }
+    
         const labels = weeklyData.map(item => item.label);
         const dataInMinutes = weeklyData.map(item => item.minutes);
-
+    
         if (streakChart) { streakChart.destroy(); }
-
+    
         streakChart = new Chart(ctx, {
             type: 'bar',
             data: {
