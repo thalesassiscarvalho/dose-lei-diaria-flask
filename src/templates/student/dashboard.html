@@ -2505,11 +2505,7 @@ function handleFavoriteClick(button) {
     let subjectStudyChart = null;
 
     function initializeSubjectStudyChart(studyData) { // MUDANÇA 1: A função agora recebe 'studyData' como um parâmetro.
-        const ctx = document.getElementById('subjectStudyChart');
-        
-        // MUDANÇA 2: A linha abaixo, que pegava os dados do Python, foi REMOVIDA.
-        // const studyData = {{ study_data_for_chart | tojson|safe }}; 
-    
+        const ctx = document.getElementById('subjectStudyChart');            
         const chartContainer = document.querySelector('.subject-stats-card .chart-container');
         const noDataMessage = document.querySelector('.subject-stats-card .no-data-message');
     
