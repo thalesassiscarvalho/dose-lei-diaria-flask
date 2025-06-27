@@ -2701,6 +2701,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="study-time-label">Hoje:</span>
                             <span class="study-time-value study-time-daily-value">${data.study_time.daily}</span>
                         </div>
+                        initializeStreakChart(data.weekly_chart_data);
                     `;
 
                     // ---- Card de Estatísticas por Matéria ----
