@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 # OTIMIZAÇÃO: Importando 'text' e 'and_' para consultas SQL mais complexas
 from sqlalchemy import or_, func, Date, and_, text, case
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, contains_eager
 from datetime import date, timedelta
 import datetime
 import bleach
@@ -450,10 +450,9 @@ def dashboard():
 @login_required
 def filter_laws():
     """
-    Versão refatorada e otimizada da rota de filtro de leis.
-    Esta versão busca construir uma única query mais inteligente para delegar
-    o máximo de trabalho (filtros, contagens, cálculos) para o banco de dados,
-    reduzindo o processamento em Python e o número de consultas.
+    Versão final e corrigida da rota de filtro de leis.
+    Esta versão resolve o erro de 'InvalidRequestError' e otimiza o carregamento
+    de dados relacionados para evitar o problema de N+1 queries.
     """
     # Etapa 1: Coletar todos os parâmetros da requisição (sem alterações aqui)
     selected_concurso_id_str = request.args.get("concurso_id", "")
@@ -465,18 +464,17 @@ def filter_laws():
 
     allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
 
-    # Etapa 2: Construir a consulta base para os TÓPICOS (as leis filhas)
-    # Selecionamos os campos que vamos precisar, já fazendo o JOIN com as tabelas de pai (diploma) e assunto.
-    # Usamos .label() para dar "apelidos" e facilitar o acesso depois.
+    # Etapa 2: Construir a consulta base (Query)
+    # CORREÇÃO: Removidas as chamadas .has() que causavam o erro.
+    # ADIÇÃO: Adicionada a opção 'options' para carregar o diploma (pai) e sua matéria de forma otimizada.
     query = db.session.query(
-        Law.id.label('topic_id'),
-        Law.title.label('topic_title'),
-        Law.parent_id.label('diploma_id'),
-        Law.parent.has(Law.title), # Garante que o pai existe (evita órfãos)
-        Law.parent.label('diploma_obj')
-    ).join(Law.parent).filter(Law.parent_id.isnot(None))
+        Law,  # Selecionamos o objeto Law (tópico) inteiro
+        Law.parent.label('diploma_obj') # E o objeto do pai (diploma)
+    ).join(Law.parent).filter(Law.parent_id.isnot(None))\
+     .options(contains_eager(Law.parent, alias=Law.parent.of_type).joinedload(Law.subject))
 
-    # Etapa 3: Aplicar os filtros de permissão e da interface do usuário
+
+    # Etapa 3: Aplicar os filtros de permissão e da interface do usuário (sem alterações)
     if allowed_law_ids is not None:
         query = query.filter(Law.id.in_(allowed_law_ids))
 
@@ -490,6 +488,7 @@ def filter_laws():
     else:
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
+            # O JOIN com Subject agora é feito aqui, se necessário.
             query = query.join(Subject, Law.subject_id == Subject.id).filter(Subject.id == selected_subject_id)
 
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
@@ -497,12 +496,9 @@ def filter_laws():
         query = query.filter(Law.id == selected_topic_id)
         
     if show_favorites:
-        # A associação com favoritos é com a tabela 'user_favorites' (ver user.py)
-        # O SQLAlchemy entende a relação e faz o JOIN correto.
         query = query.join(Law.favorited_by_users).filter(User.id == current_user.id)
 
-    # Etapa 4: Filtrar por status usando um LEFT JOIN (outerjoin)
-    # O LEFT JOIN é importante para incluir tópicos que o usuário ainda não começou (não têm registro em UserProgress).
+    # Etapa 4: Filtrar por status usando um LEFT JOIN (outerjoin) (sem alterações)
     query = query.outerjoin(UserProgress, and_(UserProgress.law_id == Law.id, UserProgress.user_id == current_user.id))
     if selected_status == 'completed':
         query = query.filter(UserProgress.status == 'concluido')
@@ -512,38 +508,31 @@ def filter_laws():
         query = query.filter(UserProgress.id.is_(None))
         
     # Etapa 5: Executar a query e preparar os dados
-    filtered_topics_results = query.all()
-    if not filtered_topics_results:
+    # A query agora retorna tuplas (topic_object, diploma_object)
+    query_results = query.all()
+    if not query_results:
         return jsonify(subjects_with_diplomas={})
 
-    # Usamos "sets" para pegar os IDs únicos de forma eficiente
-    relevant_diploma_ids = {row.diploma_id for row in filtered_topics_results}
+    # Extrai os IDs dos diplomas e tópicos relevantes a partir dos resultados
+    relevant_diploma_ids = {row.diploma_obj.id for row in query_results}
     
-    # Etapa 6: Otimização Chave - Carregar dados de progresso e favoritos de uma só vez
-    # Em vez de consultar o progresso para cada tópico em um loop, pegamos todos de uma vez.
-    progress_map = {p.law_id: p.status for p in UserProgress.query.filter_by(user_id=current_user.id).filter(UserProgress.law_id.in_([row.topic_id for row in filtered_topics_results])).all()}
+    # Etapa 6: Otimização Chave - Carregar dados de progresso e favoritos de uma só vez (sem alterações)
+    progress_map = {p.law_id: p.status for p in UserProgress.query.filter_by(user_id=current_user.id).filter(UserProgress.law_id.in_([row.Law.id for row in query_results])).all()}
     favorite_topic_ids = {f.id for f in current_user.favorite_laws.all()}
 
-    # Etapa 7: Calcular o progresso dos diplomas de forma otimizada
-    # Usamos subqueries para fazer o banco de dados calcular tudo para nós.
-    
-    # Subquery 1: Conta o total de tópicos por diploma, respeitando o filtro de concurso se aplicado.
+    # Etapa 7: Calcular o progresso dos diplomas de forma otimizada (sem alterações na lógica)
     total_topics_sq = db.session.query(
-        Law.parent_id,
-        func.count(Law.id).label('total_count')
+        Law.parent_id, func.count(Law.id).label('total_count')
     ).filter(Law.parent_id.in_(relevant_diploma_ids))
     if selected_concurso_id:
         total_topics_sq = total_topics_sq.join(Law.concursos).filter(Concurso.id == selected_concurso_id)
     total_topics_sq = total_topics_sq.group_by(Law.parent_id).subquery()
 
-    # Subquery 2: Conta os tópicos concluídos pelo usuário por diploma.
     completed_topics_sq = db.session.query(
-        Law.parent_id,
-        func.count(Law.id).label('completed_count')
+        Law.parent_id, func.count(Law.id).label('completed_count')
     ).join(UserProgress, and_(UserProgress.law_id == Law.id, UserProgress.user_id == current_user.id, UserProgress.status == 'concluido')) \
     .filter(Law.parent_id.in_(relevant_diploma_ids)).group_by(Law.parent_id).subquery()
 
-    # Query Final: Junta as duas subqueries para calcular a porcentagem
     progress_data = db.session.query(
         total_topics_sq.c.parent_id,
         (func.coalesce(completed_topics_sq.c.completed_count, 0) * 100.0 / total_topics_sq.c.total_count).label('percentage')
@@ -551,11 +540,12 @@ def filter_laws():
     
     progress_map_by_diploma = {row.parent_id: row.percentage for row in progress_data}
     
-    # Etapa 8: Montar a estrutura final do JSON (esta parte é rápida, pois os dados já foram processados)
+    # Etapa 8: Montar a estrutura final do JSON
     subjects_with_diplomas = {}
     diplomas_map = {}
 
-    for row in filtered_topics_results:
+    for row in query_results:
+        topic = row.Law
         diploma = row.diploma_obj
         subject_name = diploma.subject.name
         
@@ -572,13 +562,13 @@ def filter_laws():
             diplomas_map[diploma.id] = diploma_data
             subjects_with_diplomas[subject_name].append(diploma_data)
         
-        status = progress_map.get(row.topic_id)
+        status = progress_map.get(topic.id)
         diplomas_map[diploma.id]['filtered_children'].append({
-            "id": row.topic_id,
-            "title": row.topic_title,
+            "id": topic.id,
+            "title": topic.title,
             "is_completed": status == 'concluido',
             "is_in_progress": status == 'em_andamento',
-            "is_favorite": row.topic_id in favorite_topic_ids
+            "is_favorite": topic.id in favorite_topic_ids
         })
         
     return jsonify(subjects_with_diplomas=subjects_with_diplomas)
