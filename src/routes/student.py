@@ -359,74 +359,48 @@ def _calculate_user_streak(user: User) -> int:
 @student_bp.route("/dashboard")
 @login_required
 def dashboard():
+    """
+    OTIMIZAÇÃO: Esta rota agora está muito mais leve.
+    Ela carrega apenas os dados essenciais para a estrutura da página (filtros, anúncios, favoritos).
+    Os dados estatísticos pesados (nível, streak, tempo de estudo, etc.) são carregados
+    de forma assíncrona por chamadas de API feitas pelo JavaScript.
+    """
     allowed_concurso_ids, allowed_law_ids, allowed_subject_ids = get_user_permissions()
 
+    # Queries para os filtros e para a estrutura inicial da página
     subjects_query = Subject.query
     concursos_query = Concurso.query
-    total_topics_query = Law.query.filter(Law.parent_id.isnot(None))
-    recent_progresses_query = UserProgress.query.join(UserProgress.law).filter(
-        UserProgress.user_id == current_user.id,
-        UserProgress.last_accessed_at.isnot(None),
-        Law.parent_id.isnot(None)
-    )
-    favorite_topics_query = current_user.favorite_laws.options(
-        joinedload(Law.parent).joinedload(Law.subject)
-    ).filter(Law.parent_id.isnot(None))
     
-    if allowed_law_ids is not None:
+    if allowed_subject_ids is not None:
         subjects_query = subjects_query.filter(Subject.id.in_(allowed_subject_ids))
+    if allowed_concurso_ids is not None:
         concursos_query = concursos_query.filter(Concurso.id.in_(allowed_concurso_ids))
-        total_topics_query = total_topics_query.filter(Law.id.in_(allowed_law_ids))
-        recent_progresses_query = recent_progresses_query.filter(UserProgress.law_id.in_(allowed_law_ids))
-        favorite_topics_query = favorite_topics_query.filter(Law.id.in_(allowed_law_ids))
 
     subjects_for_filter = subjects_query.order_by(Subject.name).all()
     concursos_for_filter = concursos_query.order_by(Concurso.name).all()
-    total_topics_count = total_topics_query.count()
-    
-    completed_count = UserProgress.query.filter_by(user_id=current_user.id, status='concluido')
-    if allowed_law_ids is not None:
-        completed_count = completed_count.filter(UserProgress.law_id.in_(allowed_law_ids))
-    completed_count = completed_count.count()
 
-    global_progress_percentage = (completed_count / total_topics_count * 100) if total_topics_count > 0 else 0
-
-    recent_progresses = recent_progresses_query.options(
-        joinedload(UserProgress.law).joinedload(Law.parent)
-    ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
-
-    recent_activities = []
-    for progress in recent_progresses:
-        recent_activities.append({
-            "law": progress.law,
-            "time_ago": _humanize_time_delta(progress.last_accessed_at)
-        })
-
+    # Queries para os anúncios fixos e não fixos (mantido, pois é importante carregar rápido)
     fixed_announcements = Announcement.query.filter_by(is_active=True, is_fixed=True).order_by(Announcement.created_at.desc()).all()
     seen_announcement_ids = db.session.query(UserSeenAnnouncement.announcement_id).filter_by(user_id=current_user.id).scalar_subquery()
     non_fixed_announcements = Announcement.query.filter(
         Announcement.is_active==True, Announcement.is_fixed==False, Announcement.id.notin_(seen_announcement_ids)
     ).order_by(Announcement.created_at.desc()).all()
     
-    favorites_by_subject = {}
+    # Query para a seção de favoritos (mantido, pois é o conteúdo principal inicial)
+    favorite_topics_query = current_user.favorite_laws.options(
+        joinedload(Law.parent).joinedload(Law.subject)
+    ).filter(Law.parent_id.isnot(None))
+
+    if allowed_law_ids is not None:
+        favorite_topics_query = favorite_topics_query.filter(Law.id.in_(allowed_law_ids))
     
-    # OTIMIZAÇÃO: Consultas mais eficientes para obter IDs de tópicos concluídos e em andamento,
-    # evitando carregar todos os registros de progresso do usuário na memória.
-    # Isto substitui a antiga linha: 'user_progress_records = UserProgress.query.filter_by(user_id=current_user.id).all()'
-    completed_topic_ids = {
-        row.law_id for row in UserProgress.query.filter_by(
-            user_id=current_user.id, status='concluido'
-        ).with_entities(UserProgress.law_id).all()
-    }
-    in_progress_topic_ids = {
-        row.law_id for row in UserProgress.query.filter_by(
-            user_id=current_user.id, status='em_andamento'
-        ).with_entities(UserProgress.law_id).all()
-    }
+    completed_topic_ids = {row.law_id for row in UserProgress.query.filter_by(user_id=current_user.id, status='concluido').with_entities(UserProgress.law_id).all()}
+    in_progress_topic_ids = {row.law_id for row in UserProgress.query.filter_by(user_id=current_user.id, status='em_andamento').with_entities(UserProgress.law_id).all()}
     
     favorite_topics = favorite_topics_query.all()
-
+    favorites_by_subject = {}
     grouped_by_law = {}
+
     for topic in favorite_topics:
         if topic.parent:
             if topic.parent not in grouped_by_law:
@@ -435,9 +409,7 @@ def dashboard():
     
     for law, topics in grouped_by_law.items():
         subject = law.subject
-        if not subject:
-            continue
-
+        if not subject: continue
         if subject not in favorites_by_subject:
             favorites_by_subject[subject] = []
             
@@ -445,7 +417,6 @@ def dashboard():
         total_in_group = len(topics)
         progress_percentage = (completed_in_group / total_in_group * 100) if total_in_group > 0 else 0
         
-        # OTIMIZAÇÃO: A definição de 'in_progress_topic_ids' foi movida para fora do loop para maior eficiência.
         topic_details_list = []
         for topic in sorted(topics, key=lambda t: t.id):
             topic_details_list.append({
@@ -461,109 +432,17 @@ def dashboard():
             "progress": progress_percentage
         })
 
-    todo_items = current_user.todo_items.order_by(TodoItem.is_completed.asc(), TodoItem.created_at.desc()).all()
-    
-    default_concurso_id = current_user.default_concurso_id
-
-    # Código Novo (versão otimizada):
-    
-    # OTIMIZAÇÃO: Consolida três consultas de tempo de estudo em uma única consulta.
-    # Isto reduz a latência de rede e a carga no banco de dados.
-    one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
-    try:
-        brazil_tz = pytz.timezone('America/Sao_Paulo')
-        now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
-        today_start_in_brazil = now_in_brazil.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_start_utc = today_start_in_brazil.astimezone(pytz.utc)
-    except pytz.UnknownTimeZoneError:
-        logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
-        today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    study_time_stats = db.session.query(
-        func.sum(StudySession.duration_seconds).label('total'),
-        func.sum(case((StudySession.recorded_at >= one_week_ago, StudySession.duration_seconds), else_=0)).label('weekly'),
-        func.sum(case((StudySession.recorded_at >= today_start_utc, StudySession.duration_seconds), else_=0)).label('daily')
-    ).filter(StudySession.user_id == current_user.id).one()
-    
-    total_study_seconds = study_time_stats.total or 0
-    weekly_study_seconds = study_time_stats.weekly or 0
-    daily_study_seconds = study_time_stats.daily or 0
-    
-    formatted_total_study = _format_duration(total_study_seconds)
-    formatted_weekly_study = _format_duration(weekly_study_seconds)
-    formatted_daily_study = _format_duration(daily_study_seconds)
-    
-    weekly_activity_data = []
-    days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-    today_in_brazil = now_in_brazil.date()
-
-    start_date_of_week = today_in_brazil - timedelta(days=6)
-    start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
-    
-    study_sessions_week = db.session.query(
-        func.cast(func.timezone('America/Sao_Paulo', func.timezone('UTC', StudySession.recorded_at)), Date).label('study_date'),
-        func.sum(StudySession.duration_seconds).label('total_seconds')
-    ).filter(
-        StudySession.user_id == current_user.id,
-        StudySession.recorded_at >= start_date_utc
-    ).group_by('study_date').all()
-    
-    study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
-
-    for i in range(7):
-        current_day = today_in_brazil - timedelta(days=6-i)
-        duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
-        
-        day_label = "Hoje" if current_day == today_in_brazil else days_of_week_br[current_day.weekday()]
-        
-        weekly_activity_data.append({
-            "label": day_label,
-            "minutes": duration_minutes
-        })
-
-    study_by_subject_data = db.session.query(
-        Subject.name,
-        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
-    ).join(StudySession, StudySession.subject_id == Subject.id)\
-     .filter(StudySession.user_id == current_user.id)\
-     .group_by(Subject.name)\
-     .order_by(func.sum(StudySession.duration_seconds).desc())\
-     .all()
-    
-    most_studied_subject = None
-    study_data_for_chart = []
-    if study_by_subject_data:
-        most_studied_subject = {
-            'name': study_by_subject_data[0][0],
-            'duration': _format_duration(study_by_subject_data[0][1])
-        }
-        for subject_name, duration_seconds in study_by_subject_data:
-            study_data_for_chart.append({
-                'name': subject_name,
-                'duration_seconds': duration_seconds
-            })
-
+    # Os dados de Lembretes/Metas já são carregados via API, então removemos a query daqui.
+    # A rota agora renderiza o template com um conjunto mínimo de dados.
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            concursos=concursos_for_filter,
-                           progress_percentage=global_progress_percentage,
-                           completed_count=completed_count,
-                           total_laws=total_topics_count,
-                           user_points=current_user.points,
                            user_achievements=current_user.achievements,
                            fixed_announcements=fixed_announcements,
                            non_fixed_announcements=non_fixed_announcements,
-                           recent_activities=recent_activities,
                            favorites_by_subject=favorites_by_subject,                           
-                           todo_items=todo_items,
                            custom_favorite_title=current_user.favorite_label,
-                           default_concurso_id=default_concurso_id,
-                           total_study_formatted=formatted_total_study,
-                           weekly_study_formatted=formatted_weekly_study,
-                           daily_study_formatted=formatted_daily_study,
-                           most_studied_subject=most_studied_subject,
-                           study_data_for_chart=study_data_for_chart,
-                           weekly_activity_data=weekly_activity_data
+                           default_concurso_id=current_user.default_concurso_id
                            )
 
 
@@ -1398,16 +1277,9 @@ def get_dashboard_stats_cards():
     Uma rota de API dedicada a buscar os dados para os cards de
     estatísticas principais: Nível, Pontos e Sequência de Estudos.
     """
-    # 1. Reutilizamos as mesmas funções que você já tinha criado.
-    #    Elas calculam o nível do usuário com base nos pontos.
     level_info = get_user_level_info(current_user.points)
-
-    # 2. Reutilizamos a função otimizada para calcular a sequência de estudos.
     user_streak = _calculate_user_streak(current_user)
 
-    # 3. Usamos 'jsonify' para criar uma resposta no formato JSON.
-    #    JSON é um formato de texto que o JavaScript entende muito facilmente.
-    #    Estamos enviando um dicionário com todos os dados necessários.
     return jsonify({
         "success": True,
         "level_info": level_info,
@@ -1415,5 +1287,90 @@ def get_dashboard_stats_cards():
         "user_streak": user_streak
     })
     
+# <<< NOVO CÓDIGO >>>
+@student_bp.route("/api/dashboard/secondary-stats")
+@login_required
+def get_dashboard_secondary_stats():
+    """
+    Nova rota de API para carregar dados de cards secundários de forma assíncrona.
+    Isso inclui: Tempo de Estudo, Estatísticas por Matéria e Atividades Recentes.
+    """
+    # 1. Lógica para Tempo de Estudo
+    one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
+    try:
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
+        today_start_in_brazil = now_in_brazil.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start_utc = today_start_in_brazil.astimezone(pytz.utc)
+    except pytz.UnknownTimeZoneError:
+        logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
+        today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    study_time_stats = db.session.query(
+        func.sum(StudySession.duration_seconds).label('total'),
+        func.sum(case((StudySession.recorded_at >= one_week_ago, StudySession.duration_seconds), else_=0)).label('weekly'),
+        func.sum(case((StudySession.recorded_at >= today_start_utc, StudySession.duration_seconds), else_=0)).label('daily')
+    ).filter(StudySession.user_id == current_user.id).one()
+    
+    study_time_data = {
+        "total": _format_duration(study_time_stats.total or 0),
+        "weekly": _format_duration(study_time_stats.weekly or 0),
+        "daily": _format_duration(study_time_stats.daily or 0)
+    }
 
+    # 2. Lógica para Estatísticas por Matéria (Gráfico)
+    study_by_subject_data = db.session.query(
+        Subject.name,
+        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
+    ).join(StudySession, StudySession.subject_id == Subject.id)\
+     .filter(StudySession.user_id == current_user.id)\
+     .group_by(Subject.name)\
+     .order_by(func.sum(StudySession.duration_seconds).desc())\
+     .all()
+    
+    most_studied_subject = None
+    study_data_for_chart = []
+    if study_by_subject_data:
+        most_studied_subject = {
+            'name': study_by_subject_data[0][0],
+            'duration': _format_duration(study_by_subject_data[0][1])
+        }
+        for subject_name, duration_seconds in study_by_subject_data:
+            study_data_for_chart.append({
+                'name': subject_name,
+                'duration_seconds': duration_seconds
+            })
+    
+    subject_stats_data = {
+        "most_studied": most_studied_subject,
+        "chart_data": study_data_for_chart
+    }
 
+    # 3. Lógica para Atividades Recentes
+    _, allowed_law_ids, _ = get_user_permissions()
+    recent_progresses_query = UserProgress.query.join(UserProgress.law).filter(
+        UserProgress.user_id == current_user.id,
+        UserProgress.last_accessed_at.isnot(None),
+        Law.parent_id.isnot(None)
+    )
+    if allowed_law_ids is not None:
+        recent_progresses_query = recent_progresses_query.filter(UserProgress.law_id.in_(allowed_law_ids))
+
+    recent_progresses = recent_progresses_query.options(
+        joinedload(UserProgress.law).joinedload(Law.parent)
+    ).order_by(UserProgress.last_accessed_at.desc()).limit(3).all()
+
+    recent_activities_data = []
+    for progress in recent_progresses:
+        recent_activities_data.append({
+            "title": f"{progress.law.parent.title} - {progress.law.title}" if progress.law.parent else progress.law.title,
+            "url": url_for('student.view_law', law_id=progress.law.id),
+            "time_ago": _humanize_time_delta(progress.last_accessed_at)
+        })
+
+    return jsonify({
+        "success": True,
+        "study_time": study_time_data,
+        "subject_stats": subject_stats_data,
+        "recent_activities": recent_activities_data
+    })
