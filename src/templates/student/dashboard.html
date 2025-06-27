@@ -1157,21 +1157,10 @@
             {% endif %}
         </div>
     
-        <div class="stat-card total-study-time-card" id="total-study-time-card">
+        <div class="stat-card total-study-time-card md:col-span-1" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <div class="flex-grow flex flex-col justify-around">
-                <div class="study-time-item">
-                    <span class="study-time-label">Total:</span>
-                    <span class="study-time-value study-time-total-value">{{ total_study_formatted }}</span>
-                </div>
-                <div class="study-time-item">
-                    <span class="study-time-label">Semanal:</span>
-                    <span class="study-time-value study-time-weekly-value">{{ weekly_study_formatted }}</span>
-                </div>
-                <div class="study-time-item">
-                    <span class="study-time-label">Hoje:</span>
-                    <span class="study-time-value study-time-daily-value">{{ daily_study_formatted }}</span>
-                </div>
+            <div class="flex-grow flex flex-col justify-around text-center text-gray-500">
+                <p>Carregando...</p>
             </div>
         </div>
     
