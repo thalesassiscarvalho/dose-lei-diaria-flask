@@ -11,7 +11,7 @@ from datetime import date, timedelta
 import datetime
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-from src.extensions import db
+from src.extensions import db, cache
 from src.models.user import Achievement, Announcement, User, UserSeenAnnouncement, LawBanner, UserSeenLawBanner, StudyActivity, TodoItem, CommunityContribution, CommunityComment
 # CORREÇÃO: Removida a importação de 'user_favorite_laws' que causou o erro.
 from src.models.law import Law, Subject
