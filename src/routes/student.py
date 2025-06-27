@@ -1313,30 +1313,6 @@ def get_community_version(law_id):
 def get_dashboard_stats_cards():
     """
     Uma rota de API dedicada a buscar os dados para os cards de
-    estatísticas principais: Nível, Pontos e Sequência de Estudos.
-    """
-    # 1. Reutilizamos as mesmas funções que você já tinha criado.
-    #    Elas calculam o nível do usuário com base nos pontos.
-    level_info = get_user_level_info(current_user.points)
-
-    # 2. Reutilizamos a função otimizada para calcular a sequência de estudos.
-    user_streak = _calculate_user_streak(current_user)
-
-    # 3. Usamos 'jsonify' para criar uma resposta no formato JSON.
-    #    JSON é um formato de texto que o JavaScript entende muito facilmente.
-    #    Estamos enviando um dicionário com todos os dados necessários.
-    return jsonify({
-        "success": True,
-        "level_info": level_info,
-        "user_points": current_user.points,
-        "user_streak": user_streak
-    })
-    
-@student_bp.route("/api/dashboard/study-stats")
-@login_required
-def get_dashboard_stats_cards():
-    """
-    Uma rota de API dedicada a buscar os dados para os cards de
     estatísticas principais: Nível, Pontos, Sequência de Estudos e o gráfico de sequência.
     """
     # 1. Lógica do Nível (continua a mesma)
@@ -1346,7 +1322,6 @@ def get_dashboard_stats_cards():
     user_streak = _calculate_user_streak(current_user)
 
     # 3. LÓGICA DO GRÁFICO (NOVA NESTA API)
-    #    Este é o mesmo código que estava antes na sua rota dashboard principal.
     weekly_activity_data = []
     try:
         brazil_tz = pytz.timezone('America/Sao_Paulo')
@@ -1377,7 +1352,6 @@ def get_dashboard_stats_cards():
             })
     except Exception as e:
         logging.error(f"Erro ao calcular dados do gráfico de streak: {e}")
-        # Em caso de erro, retorna uma lista vazia para não quebrar o frontend
         weekly_activity_data = []
 
 
@@ -1387,5 +1361,5 @@ def get_dashboard_stats_cards():
         "level_info": level_info,
         "user_points": current_user.points,
         "user_streak": user_streak,
-        "weekly_activity_data": weekly_activity_data  # <-- A NOVA INFORMAÇÃO
+        "weekly_activity_data": weekly_activity_data
     })
