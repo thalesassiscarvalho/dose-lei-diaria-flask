@@ -450,11 +450,10 @@ def dashboard():
 @login_required
 def filter_laws():
     """
-    Versão final e corrigida da rota de filtro de leis.
-    Esta versão resolve o erro de 'InvalidRequestError' e otimiza o carregamento
-    de dados relacionados para evitar o problema de N+1 queries.
+    Versão final, corrigida e otimizada da rota de filtro de leis.
+    Usa um 'alias' explícito para o auto-relacionamento, resolvendo o ArgumentError.
     """
-    # Etapa 1: Coletar todos os parâmetros da requisição (sem alterações aqui)
+    # Etapa 1: Coletar parâmetros (sem alterações)
     selected_concurso_id_str = request.args.get("concurso_id", "")
     selected_subject_id_str = request.args.get("subject_id", "")
     selected_diploma_id_str = request.args.get("diploma_id", "")
@@ -464,17 +463,17 @@ def filter_laws():
 
     allowed_concurso_ids, allowed_law_ids, _ = get_user_permissions()
 
-    # Etapa 2: Construir a consulta base (Query)
-    # CORREÇÃO: Removidas as chamadas .has() que causavam o erro.
-    # ADIÇÃO: Adicionada a opção 'options' para carregar o diploma (pai) e sua matéria de forma otimizada.
-    query = db.session.query(
-        Law,  # Selecionamos o objeto Law (tópico) inteiro
-        Law.parent.label('diploma_obj') # E o objeto do pai (diploma)
-    ).join(Law.parent).filter(Law.parent_id.isnot(None))\
-     .options(contains_eager(Law.parent, alias=Law.parent.of_type).joinedload(Law.subject))
+    # Etapa 2: Construir a consulta base com um ALIAS explícito
+    # CORREÇÃO PRINCIPAL: Criamos um "apelido" para a tabela Law para representar o "diploma pai".
+    ParentLaw = aliased(Law)
+    
+    # A query agora seleciona o Tópico (Law) e o Diploma (ParentLaw)
+    query = db.session.query(Law, ParentLaw)\
+        .join(ParentLaw, Law.parent_id == ParentLaw.id)\
+        .filter(Law.parent_id.isnot(None))\
+        .options(contains_eager(Law.parent, alias=ParentLaw).joinedload(Subject))
 
-
-    # Etapa 3: Aplicar os filtros de permissão e da interface do usuário (sem alterações)
+    # Etapa 3: Aplicar filtros (a lógica é a mesma, mas a sintaxe de join muda um pouco)
     if allowed_law_ids is not None:
         query = query.filter(Law.id.in_(allowed_law_ids))
 
@@ -488,8 +487,7 @@ def filter_laws():
     else:
         selected_subject_id = int(selected_subject_id_str) if selected_subject_id_str.isdigit() else None
         if selected_subject_id:
-            # O JOIN com Subject agora é feito aqui, se necessário.
-            query = query.join(Subject, Law.subject_id == Subject.id).filter(Subject.id == selected_subject_id)
+            query = query.filter(ParentLaw.subject_id == selected_subject_id)
 
     selected_topic_id = int(selected_topic_id_str) if selected_topic_id_str.isdigit() else None
     if selected_topic_id:
@@ -498,7 +496,6 @@ def filter_laws():
     if show_favorites:
         query = query.join(Law.favorited_by_users).filter(User.id == current_user.id)
 
-    # Etapa 4: Filtrar por status usando um LEFT JOIN (outerjoin) (sem alterações)
     query = query.outerjoin(UserProgress, and_(UserProgress.law_id == Law.id, UserProgress.user_id == current_user.id))
     if selected_status == 'completed':
         query = query.filter(UserProgress.status == 'concluido')
@@ -507,20 +504,18 @@ def filter_laws():
     elif selected_status == 'not_read':
         query = query.filter(UserProgress.id.is_(None))
         
-    # Etapa 5: Executar a query e preparar os dados
-    # A query agora retorna tuplas (topic_object, diploma_object)
+    # Etapa 4: Executar a query
     query_results = query.all()
     if not query_results:
         return jsonify(subjects_with_diplomas={})
 
-    # Extrai os IDs dos diplomas e tópicos relevantes a partir dos resultados
-    relevant_diploma_ids = {row.diploma_obj.id for row in query_results}
+    relevant_diploma_ids = {row.ParentLaw.id for row in query_results}
     
-    # Etapa 6: Otimização Chave - Carregar dados de progresso e favoritos de uma só vez (sem alterações)
+    # Etapa 5: Carregar progresso e favoritos (sem alteração)
     progress_map = {p.law_id: p.status for p in UserProgress.query.filter_by(user_id=current_user.id).filter(UserProgress.law_id.in_([row.Law.id for row in query_results])).all()}
     favorite_topic_ids = {f.id for f in current_user.favorite_laws.all()}
 
-    # Etapa 7: Calcular o progresso dos diplomas de forma otimizada (sem alterações na lógica)
+    # Etapa 6: Calcular o progresso dos diplomas (sem alteração na lógica)
     total_topics_sq = db.session.query(
         Law.parent_id, func.count(Law.id).label('total_count')
     ).filter(Law.parent_id.in_(relevant_diploma_ids))
@@ -540,13 +535,14 @@ def filter_laws():
     
     progress_map_by_diploma = {row.parent_id: row.percentage for row in progress_data}
     
-    # Etapa 8: Montar a estrutura final do JSON
+    # Etapa 7: Montar a estrutura final do JSON
     subjects_with_diplomas = {}
     diplomas_map = {}
 
     for row in query_results:
+        # Agora acessamos o tópico por row.Law e o diploma por row.ParentLaw
         topic = row.Law
-        diploma = row.diploma_obj
+        diploma = row.ParentLaw
         subject_name = diploma.subject.name
         
         if subject_name not in subjects_with_diplomas:
