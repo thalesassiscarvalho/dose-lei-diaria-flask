@@ -115,7 +115,7 @@
 
     #main-cards-grid,
     #middle-cards-grid {
-        grid-auto-rows: 1fr;
+        grid-auto-rows: minmax(220px, auto);
     }
     
     /* Define as propriedades dos cards para preencherem o espaço e se alinharem */
@@ -130,8 +130,7 @@
         position: relative;
         overflow: hidden;
         display: flex;
-        flex-direction: column;
-        height: 100%; 
+        flex-direction: column;         
     }
         
     .stat-card:hover {
