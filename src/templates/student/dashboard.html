@@ -138,6 +138,17 @@
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
         border-color: #93c5fd;
     }
+    
+    /* <<< NOVO ESTILO >>> Placeholder para conteúdo carregando */
+    .card-loading-placeholder {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
+        flex-grow: 1; /* Faz o placeholder ocupar o espaço disponível */
+    }
 
     .stat-card-title { display: flex; align-items: center; font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
     .stat-card-title i { margin-right: 0.75rem; font-size: 1.25rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
@@ -177,6 +188,10 @@
     }
     .streak-display-container {
         text-align: center;
+        flex-grow: 1; /* Adicionado para centralizar verticalmente */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     .streak-display {
         font-size: 2.75rem;
@@ -209,6 +224,12 @@
         flex-direction: column;
         justify-content: center;
         box-shadow: 0 4px 8px -2px rgba(0, 188, 212, 0.1), 0 2px 4px -2px rgba(0, 188, 212, 0.07);
+    }
+    .level-card .level-content-container {
+        flex-grow: 1; /* Adicionado para centralizar */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     .level-card .stat-card-title i {
         color: #00838f;
@@ -801,6 +822,12 @@
         border-color: #4fc3f7;
         box-shadow: 0 10px 20px -5px rgba(3, 169, 244, 0.15), 0 4px 6px -4px rgba(3, 169, 244, 0.1);
     }
+    .total-study-time-card .card-content-area {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+    }
     .study-time-info, .study-time-today {
         margin-bottom: 0;
         font-size: inherit;
@@ -857,6 +884,9 @@
     .subject-stats-card:hover {
         border-color: #81c784;
         box-shadow: 0 10px 20px -5px rgba(76, 175, 80, 0.15), 0 4px 6px -4px rgba(76, 175, 80, 0.1);
+    }
+    .subject-stats-card .card-content-area {
+        flex-grow: 1;
     }
     .most-studied-text {
         font-size: 0.95rem;
@@ -1101,23 +1131,14 @@
                 </ul>
         </div>
 
-        {% if recent_activities %}
         <div class="stat-card recent-activities-card" id="recent-activities-card">
             <h2 class="stat-card-title"><i class="fas fa-history"></i> Atividades Recentes</h2>
-            <div class="flex flex-col space-y-2">
-                {% for activity in recent_activities %}
-                <a href="{{ url_for('student.view_law', law_id=activity.law.id) }}" class="compact-activity-link">
-                    <div class="compact-activity-content">
-                        <span class="compact-activity-title" title="{{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}">
-                            {{ activity.law.parent.title + ' - ' if activity.law.parent else '' }}{{ activity.law.title }}
-                        </span>
-                        <span class="compact-activity-time">{{ activity.time_ago }}</span>
-                    </div>
-                </a>
-                {% endfor %}
+            <div id="recent-activities-content" class="flex flex-col space-y-2">
+                <div class="card-loading-placeholder">
+                    <p>Carregando atividades...</p>
+                </div>
             </div>
         </div>
-        {% endif %}
 
         <div class="stat-card daily-motivation-card" id="daily-motivation-card">
             <h2 class="stat-card-title"><i class="fas fa-brain"></i> Motivação Diária</h2>
@@ -1128,7 +1149,9 @@
         <div class="stat-card streak-card" id="streak-card">
             <h2 class="stat-card-title"><i class="fas fa-fire"></i> Sequência de Estudos</h2>
             <div class="streak-display-container text-center text-gray-500">
-                <p>Carregando...</p>
+                <div class="card-loading-placeholder">
+                    <p>Carregando sequência...</p>
+                </div>
             </div>
             <div class="streak-chart-container">
                 <canvas id="streakChart"></canvas>
@@ -1137,8 +1160,8 @@
 
         <div class="stat-card level-card" id="level-card">
             <h2 class="stat-card-title"><i class="fas fa-gem"></i> Meu Nível</h2>
-            <div class="level-content-container text-center text-gray-500">
-                <p>Carregando...</p>
+            <div class="level-content-container card-loading-placeholder">
+                <p>Carregando nível...</p>
             </div>
         </div>
 
@@ -1159,36 +1182,20 @@
     
         <div class="stat-card total-study-time-card" id="total-study-time-card">
             <h2 class="stat-card-title"><i class="fas fa-clock"></i> Tempo Total de Estudo</h2>
-            <div class="flex-grow flex flex-col justify-around">
-                <div class="study-time-item">
-                    <span class="study-time-label">Total:</span>
-                    <span class="study-time-value study-time-total-value">{{ total_study_formatted }}</span>
-                </div>
-                <div class="study-time-item">
-                    <span class="study-time-label">Semanal:</span>
-                    <span class="study-time-value study-time-weekly-value">{{ weekly_study_formatted }}</span>
-                </div>
-                <div class="study-time-item">
-                    <span class="study-time-label">Hoje:</span>
-                    <span class="study-time-value study-time-daily-value">{{ daily_study_formatted }}</span>
+            <div class="card-content-area">
+                <div class="card-loading-placeholder">
+                    <p>Carregando tempo de estudo...</p>
                 </div>
             </div>
         </div>
     
         <div class="stat-card subject-stats-card" id="subject-stats-card">
             <h2 class="stat-card-title"><i class="fas fa-chart-pie"></i> Estatística por Matéria</h2>
-            {% if most_studied_subject %}
-                <p class="most-studied-text">Sua matéria mais estudada é <strong>{{ most_studied_subject.name }}</strong> com <strong>{{ most_studied_subject.duration }}</strong>.</p>
-                <div class="chart-container">
-                    <canvas id="subjectStudyChart"></canvas>
+            <div class="card-content-area">
+                 <div class="card-loading-placeholder">
+                    <p>Carregando estatísticas...</p>
                 </div>
-            {% else %}
-                <div class="no-data-message">
-                    <i class="fas fa-chart-bar"></i>
-                    <p>Parece que você ainda não tem estatísticas de estudo!</p>
-                    <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
-                </div>
-            {% endif %}
+            </div>
         </div>
     
     </div>
@@ -1806,21 +1813,13 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    // <<< INÍCIO DO CÓDIGO PARA ADICIONAR >>>
-
-    /**
-     * OTIMIZAÇÃO: Função central que "despacha" os cliques ocorridos nos containers
-     * para a função apropriada com base na classe do elemento clicado.
-     * @param {Event} event - O objeto do evento de clique.
-     */
     function handleContainerClick(event) {
         const target = event.target;
         
-        // Procura pelo elemento clicado ou seus pais para encontrar a ação correta
         const favoriteBtn = target.closest('.js-favorite-btn');
         if (favoriteBtn) {
             handleFavoriteClick(favoriteBtn);
-            return; // Encerra a função após tratar o evento
+            return;
         }
 
         const incompleteBtn = target.closest('.js-mark-incomplete-btn');
@@ -1831,7 +1830,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const accordionHeader = target.closest('.subject-accordion-header, .accordion-header, .favorite-card-header');
         if (accordionHeader) {
-            // Previne que o clique no ícone de progresso dispare a ação do acordeão pai
             if (accordionHeader.classList.contains('accordion-header') && target.closest('.diploma-progress')) {
                  event.stopPropagation();
             }
@@ -1839,14 +1837,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // <<< CÓDIGO NOVO E CORRIGIDO PARA SUBSTITUIR >>>
     function setupEventListeners() {
         const accordionContainer = document.getElementById('laws-accordion-container');
         const favoriteCardsContainer = document.getElementById('favorite-cards-container');
         const nonFixedAnnouncementsContainer = document.getElementById('non-fixed-announcements-container');
         const todoList = document.getElementById('todo-list');
     
-        // Listener delegado para os acordeões e botões das leis
         if (accordionContainer) {
             accordionContainer.addEventListener('click', handleContainerClick);
         }
@@ -1854,34 +1850,28 @@ document.addEventListener('DOMContentLoaded', function() {
             favoriteCardsContainer.addEventListener('click', handleContainerClick);
         }
     
-        // Listener delegado para a lista de Lembretes/Metas
         if (todoList) {
             todoList.addEventListener('click', (event) => {
-                // Ação de deletar
                 if (event.target.closest('.todo-delete-btn')) {
                     handleDeleteTodoItem(event);
                 }
-                // Ação de clicar no texto para marcar o checkbox
                 const contentContainer = event.target.closest('.todo-item-content');
                 if (contentContainer && !event.target.closest('a') && !event.target.closest('input')) {
                      const checkbox = contentContainer.querySelector('.todo-checkbox');
                      if(checkbox) {
                         checkbox.checked = !checkbox.checked;
-                        // Dispara o evento 'change' manualmente para que nosso outro listener o capture
                         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                      }
                 }
             });
     
             todoList.addEventListener('change', (event) => {
-                // Ação de marcar/desmarcar
                 if (event.target.classList.contains('todo-checkbox')) {
                     handleToggleTodoItem(event);
                 }
             });
         }
 
-        // Listener delegado para os avisos
         if (nonFixedAnnouncementsContainer) {
             nonFixedAnnouncementsContainer.addEventListener('change', (event) => {
                  if (event.target.classList.contains('mark-seen-checkbox')) {
@@ -2084,72 +2074,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // <<< INÍCIO DO CÓDIGO PARA SUBSTITUIR A FUNÇÃO ANTIGA >>>
+    function handleFavoriteClick(button) {
+        button.disabled = true;
+        const lawId = button.dataset.lawId;
+        const icon = button.querySelector('i');
+        const topicItem = button.closest('.topic-item');
+        const topicTitle = topicItem ? topicItem.querySelector('.topic-info span').textContent : 'Item';
 
-/**
- * CORREÇÃO: Função que trata o clique no botão de favoritar.
- * Agora ela aceita o elemento 'button' como parâmetro direto.
- * @param {HTMLElement} button - O elemento do botão que foi clicado.
- */
-function handleFavoriteClick(button) {
-    button.disabled = true;
-    const lawId = button.dataset.lawId;
-    const icon = button.querySelector('i');
-    const topicItem = button.closest('.topic-item');
-    const topicTitle = topicItem ? topicItem.querySelector('.topic-info span').textContent : 'Item';
-
-    fetch(`/student/law/toggle_favorite/${lawId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        let notificationText;
-        if (data.favorited) {
-            button.classList.add('favorited');
-            icon.className = 'fas fa-star';
-            button.title = 'Remover dos Favoritos';
-            notificationText = `'${topicTitle}' adicionado aos favoritos!`;
-        } else {
-            button.classList.remove('favorited');
-            icon.className = 'far fa-star'; // Mostra a estrela vazia
-            button.title = 'Adicionar aos Favoritos';
-            notificationText = `'${topicTitle}' removido dos favoritos.`;
-            
-            // Se a visualização atual for de favoritos, remove o item da tela.
-            const favoritesCheckbox = document.getElementById('show_favorites');
-            if (button.closest('#initial-prompt') || (favoritesCheckbox && favoritesCheckbox.checked)) {
-                const topicToRemove = button.closest('.topic-item');
-                if (topicToRemove) {
-                    const card = topicToRemove.closest('.favorite-card');
-                    topicToRemove.remove();
-                    // Se o card ficar vazio, remove o card também
-                    if (card && card.querySelector('.topic-item') === null) {
-                        const subjectContainer = card.closest('.subject-accordion-item');
-                        card.remove();
-                        // Se a matéria ficar vazia, remove a matéria
-                        if (subjectContainer && subjectContainer.querySelector('.favorite-card') === null) {
-                            subjectContainer.remove();
-                        }
-                        // Se não houver mais nenhum favorito, recarrega a página para mostrar a mensagem inicial
-                        if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
-                            window.location.reload();
+        fetch(`/student/law/toggle_favorite/${lawId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            let notificationText;
+            if (data.favorited) {
+                button.classList.add('favorited');
+                icon.className = 'fas fa-star';
+                button.title = 'Remover dos Favoritos';
+                notificationText = `'${topicTitle}' adicionado aos favoritos!`;
+            } else {
+                button.classList.remove('favorited');
+                icon.className = 'far fa-star'; // Mostra a estrela vazia
+                button.title = 'Adicionar aos Favoritos';
+                notificationText = `'${topicTitle}' removido dos favoritos.`;
+                
+                const favoritesCheckbox = document.getElementById('show_favorites');
+                if (button.closest('#initial-prompt') || (favoritesCheckbox && favoritesCheckbox.checked)) {
+                    const topicToRemove = button.closest('.topic-item');
+                    if (topicToRemove) {
+                        const card = topicToRemove.closest('.favorite-card');
+                        topicToRemove.remove();
+                        if (card && card.querySelector('.topic-item') === null) {
+                            const subjectContainer = card.closest('.subject-accordion-item');
+                            card.remove();
+                            if (subjectContainer && subjectContainer.querySelector('.favorite-card') === null) {
+                                subjectContainer.remove();
+                            }
+                            if (!document.querySelector('#favorite-cards-container .subject-accordion-item')) {
+                                window.location.reload();
+                            }
                         }
                     }
                 }
             }
-        }
-        Toastify({ text: notificationText, duration: 3000, style: { background: "linear-gradient(to right, #1f2937, #374151)" } }).showToast();
-    })
-    .finally(() => {
-        button.disabled = false;
-    });
-}
-
-// <<< FIM DO CÓDIGO DE SUBSTITUIÇÃO >>>
+            Toastify({ text: notificationText, duration: 3000, style: { background: "linear-gradient(to right, #1f2937, #374151)" } }).showToast();
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    }
 
     function handleMarkIncompleteClick(buttonEl) {
         buttonEl.disabled = true;
@@ -2165,28 +2142,20 @@ function handleFavoriteClick(button) {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.new_status === 'em_andamento') {
-                // Verifica se o botão clicado estava na seção de favoritos da tela inicial
                 if (buttonEl.closest('#initial-prompt')) {
-                    // Se sim, a forma mais simples de atualizar a UI é recarregar a página
                     window.location.reload();
                 } else {
-                    // Se foi na seção de filtros, apenas recarrega a lista de leis
                     fetchAndRenderLaws();
                 }
             } else {
-                // Se falhar, reabilita o botão
                 buttonEl.disabled = false;
             }
         })
         .catch(() => {
-            // Em caso de erro de rede, também reabilita o botão
             buttonEl.disabled = false;
         });
     }
     
-    // ===============================================================================================
-    // <<< INÍCIO DA ALTERAÇÃO JAVASCRIPT: VINCULAR LEI AOS LEMBRETES >>>
-    // ===============================================================================================
     const newTodoItemInput = document.getElementById('new-todo-item');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const todoListUl = document.getElementById('todo-list');
@@ -2208,13 +2177,11 @@ function handleFavoriteClick(button) {
     let attachedLawId = null;
     let lawSearchDebounceTimer;
 
-    // Abrir o modal
     attachLawBtn.addEventListener('click', () => {
         lawSearchModal.style.display = 'flex';
         lawSearchInput.focus();
     });
 
-    // Fechar o modal
     function closeModal() {
         lawSearchModal.style.display = 'none';
         lawSearchInput.value = '';
@@ -2227,7 +2194,6 @@ function handleFavoriteClick(button) {
         }
     });
 
-    // Buscar tópicos de lei no modal
     lawSearchInput.addEventListener('input', () => {
         clearTimeout(lawSearchDebounceTimer);
         const query = lawSearchInput.value.trim();
@@ -2239,7 +2205,6 @@ function handleFavoriteClick(button) {
 
         lawSearchResultsDiv.innerHTML = '<p class="text-center p-4">Buscando...</p>';
         lawSearchDebounceTimer = setTimeout(() => {
-            // Usamos o type=topic para buscar apenas tópicos específicos
             fetch(`/student/api/autocomplete_search?q=${query}&type=topic`)
                 .then(response => response.json())
                 .then(data => {
@@ -2260,7 +2225,6 @@ function handleFavoriteClick(button) {
         }, 400);
     });
 
-    // Selecionar um tópico da busca
     lawSearchResultsDiv.addEventListener('click', (e) => {
         if (e.target.classList.contains('result-item')) {
             attachedLawId = e.target.dataset.lawId;
@@ -2268,13 +2232,12 @@ function handleFavoriteClick(button) {
 
             attachedLawNameSpan.textContent = lawTitle;
             attachedLawInfoDiv.style.display = 'flex';
-            attachLawBtn.classList.add('active'); // Destaca o botão de anexo
+            attachLawBtn.classList.add('active'); 
 
             closeModal();
         }
     });
     
-    // Remover o anexo
     function removeAttachment() {
         attachedLawId = null;
         attachedLawInfoDiv.style.display = 'none';
@@ -2283,8 +2246,6 @@ function handleFavoriteClick(button) {
     }
     removeAttachedLawBtn.addEventListener('click', removeAttachment);
 
-
-    // Função para aplicar o filtro atual aos itens da lista
     function applyTodoFilter() {
         const items = todoListUl.querySelectorAll('.todo-item');
         let hasVisibleItems = false;
@@ -2311,7 +2272,6 @@ function handleFavoriteClick(button) {
         }
     }
 
-    // Adiciona evento aos botões de filtro
     todoFilterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             todoFilterBtns.forEach(b => b.classList.remove('active'));
@@ -2369,7 +2329,6 @@ function handleFavoriteClick(button) {
             </button>
         </div>
     `;
-    // Nenhum addEventListener é adicionado aqui. A mágica acontece no listener delegado.
     return listItem;
     }
 
@@ -2381,7 +2340,7 @@ function handleFavoriteClick(button) {
         const requestBody = {
             content: content,
             category: category,
-            law_id: attachedLawId // Adiciona o ID da lei anexada (pode ser null)
+            law_id: attachedLawId
         };
 
         try {
@@ -2396,7 +2355,6 @@ function handleFavoriteClick(button) {
                 const newItemElement = renderTodoItem(data.todo_item);
                 todoListUl.prepend(newItemElement);
                 
-                // Limpa o estado após adicionar
                 newTodoItemInput.value = '';
                 removeAttachment(); 
                 newTodoItemInput.focus();
@@ -2524,23 +2482,20 @@ function handleFavoriteClick(button) {
 
     let subjectStudyChart = null;
 
-    function initializeSubjectStudyChart() {
-        const ctx = document.getElementById('subjectStudyChart');
-        const studyData = {{ study_data_for_chart | tojson|safe }};
-        const chartContainer = document.querySelector('.subject-stats-card .chart-container');
-        const noDataMessage = document.querySelector('.subject-stats-card .no-data-message');
+    // <<< ALTERAÇÃO AQUI >>> A função agora aceita os dados como parâmetro
+    function initializeSubjectStudyChart(studyData) {
+        const subjectStatsCard = document.getElementById('subject-stats-card');
+        const contentArea = subjectStatsCard.querySelector('.card-content-area');
 
-        if (!ctx) return;
-
-        if (studyData.length === 0) {
-            ctx.style.display = 'none';
-            if (noDataMessage) noDataMessage.style.display = 'flex';
-            if (chartContainer) chartContainer.style.height = 'auto';
+        if (!studyData || studyData.length === 0) {
+            contentArea.innerHTML = `
+                <div class="no-data-message">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Parece que você ainda não tem estatísticas de estudo!</p>
+                    <small>Comece a estudar uma matéria para ver seu progresso aqui.</small>
+                </div>
+            `;
             return;
-        } else {
-            ctx.style.display = 'block';
-            if (noDataMessage) noDataMessage.style.display = 'none';
-            if (chartContainer) chartContainer.style.height = '200px';
         }
 
         const labels = studyData.map(item => item.name);
@@ -2557,6 +2512,10 @@ function handleFavoriteClick(button) {
             'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
             'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(201, 203, 207, 1)'
         ];
+
+        // Cria o elemento canvas dinamicamente
+        contentArea.innerHTML = '<div class="chart-container"><canvas id="subjectStudyChart"></canvas></div>';
+        const ctx = document.getElementById('subjectStudyChart');
 
         if (subjectStudyChart) {
             subjectStudyChart.destroy();
@@ -2599,17 +2558,18 @@ function handleFavoriteClick(button) {
     let streakChart = null;
 
     function initializeStreakChart() {
+        // Esta função agora será chamada pela `loadSecondaryStats`, mas o código interno é o mesmo.
+        // Por enquanto, os dados de streak não estão na nova API, então mantemos como está.
+        // Futuramente, poderíamos mover os dados de `weekly_activity_data` para a API também.
         const ctx = document.getElementById('streakChart');
         if (!ctx) return;
-
-        const weeklyData = {{ weekly_activity_data|tojson|safe }};
+        const weeklyData = {{ weekly_activity_data|tojson|safe if weekly_activity_data else [] }};
+        if (!weeklyData || weeklyData.length === 0) return;
 
         const labels = weeklyData.map(item => item.label);
         const dataInMinutes = weeklyData.map(item => item.minutes);
 
-        if (streakChart) {
-            streakChart.destroy();
-        }
+        if (streakChart) { streakChart.destroy(); }
 
         streakChart = new Chart(ctx, {
             type: 'bar',
@@ -2630,64 +2590,40 @@ function handleFavoriteClick(button) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        // Personaliza o tooltip que aparece ao passar o mouse
                         callbacks: {
                             label: function(context) {
                                 const totalMinutes = context.parsed.y || 0;
-
-                                if (totalMinutes === 0) {
-                                    return "Nenhum estudo";
-                                }
-
+                                if (totalMinutes === 0) { return "Nenhum estudo"; }
                                 const hours = Math.floor(totalMinutes / 60);
                                 const minutes = totalMinutes % 60;
                                 const parts = [];
-
-                                if (hours > 0) {
-                                    parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
-                                }
-                                if (minutes > 0) {
-                                    parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`);
-                                }
-
+                                if (hours > 0) { parts.push(`${hours} hora${hours > 1 ? 's' : ''}`); }
+                                if (minutes > 0) { parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`); }
                                 return parts.join(' e ');
                             }
                         }
                     }
                 },
                 scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#ef6c00' }
-                    },
-                    y: {
-                        display: false,
-                        beginAtZero: true
-                    }
+                    x: { grid: { display: false }, ticks: { color: '#ef6c00' } },
+                    y: { display: false, beginAtZero: true }
                 }
             }
         });
     }
+
     function loadStatsCards() {
-        // 1. Selecionamos os elementos dos cards no HTML que preparamos na Ação 3.
         const streakCardContainer = document.querySelector('#streak-card .streak-display-container');
         const levelCardContainer = document.querySelector('#level-card .level-content-container');
     
-        // 2. Usamos a função 'fetch' para fazer uma requisição GET para a nossa nova rota de API.
         fetch('/student/api/dashboard/stats-cards')
             .then(response => {
-                // 3. Verificamos se a resposta da rede foi bem-sucedida.
-                if (!response.ok) {
-                    throw new Error('Erro de rede ao buscar estatísticas.');
-                }
-                // 4. Convertemos a resposta de JSON para um objeto JavaScript.
+                if (!response.ok) { throw new Error('Erro de rede ao buscar estatísticas.'); }
                 return response.json();
             })
             .then(data => {
-                // 5. Se tudo correu bem e a API retornou 'success: true', usamos os dados.
                 if (data.success) {
-    
-                    // ---- Lógica para reconstruir o Card de Sequência ----
+                    // ---- Card de Sequência ----
                     if (data.user_streak > 0) {
                         streakCardContainer.innerHTML = `
                             <div class="streak-display">${data.user_streak}</div>
@@ -2699,7 +2635,7 @@ function handleFavoriteClick(button) {
                         `;
                     }
     
-                    // ---- Lógica para reconstruir o Card de Nível ----
+                    // ---- Card de Nível ----
                     const levelInfo = data.level_info;
                     const nextLevelHTML = levelInfo.next_level ? `
                         <p class="next-level-info">
@@ -2723,21 +2659,93 @@ function handleFavoriteClick(button) {
                         ${nextLevelHTML}
                     `;
                 } else {
-                    // Se a API retornar um erro, mostramos uma mensagem.
                     streakCardContainer.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
                     levelCardContainer.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
                 }
             })
             .catch(error => {
-                // Se houver um erro de rede (ex: sem internet), também mostramos uma mensagem.
                 console.error('Erro no fetch dos stats cards:', error);
                 streakCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
                 levelCardContainer.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
             });
     }
+
+    // <<< NOVA FUNÇÃO >>>
+    function loadSecondaryStats() {
+        const timeCardContent = document.querySelector('#total-study-time-card .card-content-area');
+        const subjectCardContent = document.querySelector('#subject-stats-card .card-content-area');
+        const activitiesContent = document.getElementById('recent-activities-content');
+        
+        fetch('/student/api/dashboard/secondary-stats')
+            .then(response => {
+                if (!response.ok) { throw new Error('Erro de rede ao buscar estatísticas secundárias.'); }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // ---- Card de Tempo de Estudo ----
+                    timeCardContent.innerHTML = `
+                        <div class="study-time-item">
+                            <span class="study-time-label">Total:</span>
+                            <span class="study-time-value study-time-total-value">${data.study_time.total}</span>
+                        </div>
+                        <div class="study-time-item">
+                            <span class="study-time-label">Semanal:</span>
+                            <span class="study-time-value study-time-weekly-value">${data.study_time.weekly}</span>
+                        </div>
+                        <div class="study-time-item">
+                            <span class="study-time-label">Hoje:</span>
+                            <span class="study-time-value study-time-daily-value">${data.study_time.daily}</span>
+                        </div>
+                    `;
+
+                    // ---- Card de Estatísticas por Matéria ----
+                    const mostStudied = data.subject_stats.most_studied;
+                    if (mostStudied) {
+                        subjectCardContent.innerHTML = `
+                            <p class="most-studied-text">Sua matéria mais estudada é <strong>${mostStudied.name}</strong> com <strong>${mostStudied.duration}</strong>.</p>
+                        `;
+                    } else {
+                        subjectCardContent.innerHTML = '';
+                    }
+                    // A função do gráfico agora recebe os dados da API
+                    initializeSubjectStudyChart(data.subject_stats.chart_data);
+
+
+                    // ---- Card de Atividades Recentes ----
+                    if (data.recent_activities && data.recent_activities.length > 0) {
+                        activitiesContent.innerHTML = data.recent_activities.map(activity => `
+                            <a href="${activity.url}" class="compact-activity-link">
+                                <div class="compact-activity-content">
+                                    <span class="compact-activity-title" title="${activity.title}">
+                                        ${activity.title}
+                                    </span>
+                                    <span class="compact-activity-time">${activity.time_ago}</span>
+                                </div>
+                            </a>
+                        `).join('');
+                    } else {
+                        activitiesContent.innerHTML = '<p class="text-gray-500 italic">Nenhuma atividade recente.</p>';
+                    }
+                } else {
+                     timeCardContent.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
+                     subjectCardContent.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
+                     activitiesContent.innerHTML = '<p class="text-red-500">Erro ao carregar.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro no fetch dos stats secundários:', error);
+                timeCardContent.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
+                subjectCardContent.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
+                activitiesContent.innerHTML = '<p class="text-red-500">Erro de comunicação.</p>';
+            });
+    }
+
     function initializeDashboard() {
         setupEventListeners();
         loadStatsCards();
+        loadSecondaryStats(); // <-- Chamando nossa nova função
+        
         if (defaultConcursoId) {
             filterControls.concurso.value = defaultConcursoId;
             filterControls.concurso.dispatchEvent(new Event('change'));
@@ -2751,7 +2759,6 @@ function handleFavoriteClick(button) {
         fetchAndRenderTodoItems();
         displayDailyMotivation();
         setupDynamicPlaceholder();
-        initializeSubjectStudyChart();
         initializeStreakChart();
     }
 
