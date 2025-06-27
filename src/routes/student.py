@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 # OTIMIZAÇÃO: Importando 'text' e 'and_' para consultas SQL mais complexas
 from sqlalchemy import or_, func, Date, and_, text, case
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload, selectinload, contains_eager, aliased
+from sqlalchemy.orm import joinedload, selectinload
 from datetime import date, timedelta
 import datetime
 import bleach
