@@ -465,7 +465,84 @@ def dashboard():
     
     default_concurso_id = current_user.default_concurso_id
 
+    # Código Novo (versão otimizada):
     
+    # OTIMIZAÇÃO: Consolida três consultas de tempo de estudo em uma única consulta.
+    # Isto reduz a latência de rede e a carga no banco de dados.
+    one_week_ago = datetime.datetime.utcnow() - timedelta(days=7)
+    try:
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
+        today_start_in_brazil = now_in_brazil.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start_utc = today_start_in_brazil.astimezone(pytz.utc)
+    except pytz.UnknownTimeZoneError:
+        logging.warning("Fuso horário 'America/Sao_Paulo' não encontrado. Usando UTC como padrão.")
+        today_start_utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    study_time_stats = db.session.query(
+        func.sum(StudySession.duration_seconds).label('total'),
+        func.sum(case((StudySession.recorded_at >= one_week_ago, StudySession.duration_seconds), else_=0)).label('weekly'),
+        func.sum(case((StudySession.recorded_at >= today_start_utc, StudySession.duration_seconds), else_=0)).label('daily')
+    ).filter(StudySession.user_id == current_user.id).one()
+    
+    total_study_seconds = study_time_stats.total or 0
+    weekly_study_seconds = study_time_stats.weekly or 0
+    daily_study_seconds = study_time_stats.daily or 0
+    
+    formatted_total_study = _format_duration(total_study_seconds)
+    formatted_weekly_study = _format_duration(weekly_study_seconds)
+    formatted_daily_study = _format_duration(daily_study_seconds)
+    
+    weekly_activity_data = []
+    days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    today_in_brazil = now_in_brazil.date()
+
+    start_date_of_week = today_in_brazil - timedelta(days=6)
+    start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
+    
+    study_sessions_week = db.session.query(
+        func.cast(func.timezone('America/Sao_Paulo', func.timezone('UTC', StudySession.recorded_at)), Date).label('study_date'),
+        func.sum(StudySession.duration_seconds).label('total_seconds')
+    ).filter(
+        StudySession.user_id == current_user.id,
+        StudySession.recorded_at >= start_date_utc
+    ).group_by('study_date').all()
+    
+    study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
+
+    for i in range(7):
+        current_day = today_in_brazil - timedelta(days=6-i)
+        duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
+        
+        day_label = "Hoje" if current_day == today_in_brazil else days_of_week_br[current_day.weekday()]
+        
+        weekly_activity_data.append({
+            "label": day_label,
+            "minutes": duration_minutes
+        })
+
+    study_by_subject_data = db.session.query(
+        Subject.name,
+        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
+    ).join(StudySession, StudySession.subject_id == Subject.id)\
+     .filter(StudySession.user_id == current_user.id)\
+     .group_by(Subject.name)\
+     .order_by(func.sum(StudySession.duration_seconds).desc())\
+     .all()
+    
+    most_studied_subject = None
+    study_data_for_chart = []
+    if study_by_subject_data:
+        most_studied_subject = {
+            'name': study_by_subject_data[0][0],
+            'duration': _format_duration(study_by_subject_data[0][1])
+        }
+        for subject_name, duration_seconds in study_by_subject_data:
+            study_data_for_chart.append({
+                'name': subject_name,
+                'duration_seconds': duration_seconds
+            })
+
     return render_template("student/dashboard.html",
                            subjects=subjects_for_filter,
                            concursos=concursos_for_filter,
@@ -480,7 +557,13 @@ def dashboard():
                            favorites_by_subject=favorites_by_subject,                           
                            todo_items=todo_items,
                            custom_favorite_title=current_user.favorite_label,
-                           default_concurso_id=default_concurso_id,                           
+                           default_concurso_id=default_concurso_id,
+                           total_study_formatted=formatted_total_study,
+                           weekly_study_formatted=formatted_weekly_study,
+                           daily_study_formatted=formatted_daily_study,
+                           most_studied_subject=most_studied_subject,
+                           study_data_for_chart=study_data_for_chart,
+                           weekly_activity_data=weekly_activity_data
                            )
 
 
@@ -1148,62 +1231,39 @@ def record_study_session():
 @student_bp.route("/api/study_stats", methods=["GET"])
 @login_required
 def get_study_stats():
-    """
-    API aprimorada para buscar estatísticas de estudo.
-    Calcula o tempo total, semanal e diário, além dos dados para o gráfico.
-    """
-    try:
-        # Define o fuso horário correto
-        brazil_tz = pytz.timezone('America/Sao_Paulo')
-        now_utc = datetime.datetime.now(pytz.utc)
-        today_br = now_utc.astimezone(brazil_tz).date()
-        start_of_week_br = today_br - timedelta(days=today_br.weekday())
-        
-        # Converte as datas de início para UTC para a consulta no banco
-        start_of_today_utc = brazil_tz.localize(datetime.datetime.combine(today_br, datetime.time.min)).astimezone(pytz.utc)
-        start_of_week_utc = brazil_tz.localize(datetime.datetime.combine(start_of_week_br, datetime.time.min)).astimezone(pytz.utc)
+    study_data = db.session.query(
+        Subject.name,
+        func.sum(StudySession.duration_seconds).label('total_duration_seconds')
+    ).join(Subject, StudySession.subject_id == Subject.id)\
+     .filter(StudySession.user_id == current_user.id)\
+     .group_by(Subject.name)\
+     .order_by(Subject.name)\
+     .all()
+    
+    stats_by_subject = []
+    total_study_seconds = 0
+    for subject_name, duration_seconds in study_data:
+        total_study_seconds += duration_seconds
+        hours = duration_seconds // 3600
+        minutes = (duration_seconds % 3600) // 60
+        seconds = duration_seconds % 60
+        stats_by_subject.append({
+            'subject_name': subject_name,
+            'total_seconds': duration_seconds,
+            'formatted_duration': f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+        })
+    
+    total_hours = total_study_seconds // 3600
+    total_minutes = (total_study_seconds % 3600) // 60
 
-        # Query base
-        base_query = db.session.query(
-            func.sum(StudySession.duration_seconds).label('total_duration')
-        ).filter(StudySession.user_id == current_user.id)
+    return jsonify(success=True, 
+                   stats_by_subject=stats_by_subject,
+                   total_study_seconds=total_study_seconds,
+                   total_formatted_duration=f"{int(total_hours)}h {int(total_minutes)}m"
+                )
 
-        # Calcula os totais
-        total_seconds = base_query.scalar() or 0
-        weekly_seconds = base_query.filter(StudySession.recorded_at >= start_of_week_utc).scalar() or 0
-        daily_seconds = base_query.filter(StudySession.recorded_at >= start_of_today_utc).scalar() or 0
-
-        # Busca dados para o gráfico de pizza por matéria
-        study_data_for_chart = db.session.query(
-            Subject.name,
-            func.sum(StudySession.duration_seconds).label('duration_seconds')
-        ).join(Subject, StudySession.subject_id == Subject.id)\
-         .filter(StudySession.user_id == current_user.id)\
-         .group_by(Subject.name)\
-         .order_by(func.sum(StudySession.duration_seconds).desc())\
-         .all()
-
-        # Prepara dados para o gráfico de pizza
-        chart_data = [{'name': name, 'duration_seconds': duration} for name, duration in study_data_for_chart]
-        
-        most_studied_subject_info = None
-        if chart_data:
-            most_studied_subject_info = {
-                'name': chart_data[0]['name'],
-                'duration': _format_duration(chart_data[0]['duration_seconds'])
-            }
-
-        return jsonify(
-            success=True, 
-            total_study_formatted=_format_duration(total_seconds),
-            weekly_study_formatted=_format_duration(weekly_seconds),
-            daily_study_formatted=_format_duration(daily_seconds),
-            study_data_for_chart=chart_data,
-            most_studied_subject=most_studied_subject_info
-        )
-    except Exception as e:
-        logging.error(f"Erro ao buscar estatísticas de estudo para o usuário {current_user.id}: {e}")
-        return jsonify(success=False, error="Erro interno ao buscar estatísticas."), 500
+@student_bp.route("/law/<int:law_id>/share_contribution", methods=["POST"])
+@login_required
 def share_contribution(law_id):
     Law.query.get_or_404(law_id)
 
@@ -1336,53 +1396,24 @@ def get_community_version(law_id):
 def get_dashboard_stats_cards():
     """
     Uma rota de API dedicada a buscar os dados para os cards de
-    estatísticas principais: Nível, Pontos, Sequência de Estudos e o gráfico de sequência.
+    estatísticas principais: Nível, Pontos e Sequência de Estudos.
     """
-    # 1. Lógica do Nível (continua a mesma)
+    # 1. Reutilizamos as mesmas funções que você já tinha criado.
+    #    Elas calculam o nível do usuário com base nos pontos.
     level_info = get_user_level_info(current_user.points)
 
-    # 2. Lógica da Sequência (continua a mesma)
+    # 2. Reutilizamos a função otimizada para calcular a sequência de estudos.
     user_streak = _calculate_user_streak(current_user)
 
-    # 3. LÓGICA DO GRÁFICO (NOVA NESTA API)
-    weekly_activity_data = []
-    try:
-        brazil_tz = pytz.timezone('America/Sao_Paulo')
-        now_in_brazil = datetime.datetime.utcnow().astimezone(brazil_tz)
-        today_in_brazil = now_in_brazil.date()
-
-        days_of_week_br = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-        start_date_of_week = today_in_brazil - timedelta(days=6)
-        start_date_utc = datetime.datetime.combine(start_date_of_week, datetime.time.min).astimezone(brazil_tz).astimezone(pytz.utc)
-        
-        study_sessions_week = db.session.query(
-            func.cast(func.timezone('America/Sao_Paulo', func.timezone('UTC', StudySession.recorded_at)), Date).label('study_date'),
-            func.sum(StudySession.duration_seconds).label('total_seconds')
-        ).filter(
-            StudySession.user_id == current_user.id,
-            StudySession.recorded_at >= start_date_utc
-        ).group_by('study_date').all()
-        
-        study_by_date = {session.study_date: session.total_seconds for session in study_sessions_week}
-
-        for i in range(7):
-            current_day = today_in_brazil - timedelta(days=6-i)
-            duration_minutes = round((study_by_date.get(current_day, 0) or 0) / 60)
-            day_label = "Hoje" if current_day == today_in_brazil else days_of_week_br[current_day.weekday()]
-            weekly_activity_data.append({
-                "label": day_label,
-                "minutes": duration_minutes
-            })
-    except Exception as e:
-        logging.error(f"Erro ao calcular dados do gráfico de streak: {e}")
-        weekly_activity_data = []
-
-
-    # 4. Enviando tudo junto na resposta JSON.
+    # 3. Usamos 'jsonify' para criar uma resposta no formato JSON.
+    #    JSON é um formato de texto que o JavaScript entende muito facilmente.
+    #    Estamos enviando um dicionário com todos os dados necessários.
     return jsonify({
         "success": True,
         "level_info": level_info,
         "user_points": current_user.points,
-        "user_streak": user_streak,
-        "weekly_activity_data": weekly_activity_data
+        "user_streak": user_streak
     })
+    
+
+
